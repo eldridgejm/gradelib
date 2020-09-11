@@ -28,7 +28,7 @@ jobs:
         run: pip install .
 
       - name: Build the docs
-        run: PYTHONPATH=$(pwd) cd doc && make html
+        run: python -m gradelib
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

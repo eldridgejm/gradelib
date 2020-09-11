@@ -235,6 +235,15 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.read_gradescope_gradebook" title="gradelib.read_gradescope_gradebook"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gradelib.read_gradescope_gradebook</span></code></a></p></td>
+<td><p>Read a CSV exported from Gradescope into a Gradebook.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.read_canvas_gradebook" title="gradelib.read_canvas_gradebook"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_canvas_gradebook</span></code></a></p></td>
+<td><p>Read a CSV exported from Canvas into a Gradebook.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.read_egrades_roster" title="gradelib.read_egrades_roster"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_egrades_roster</span></code></a></p></td>
+<td><p>Read an eGrades roster CSV into a pandas dataframe.</p></td>
+</tr>
 </tbody>
 </table>
 <p><strong>Gradebooks</strong></p>
@@ -244,6 +253,42 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook</span></code></a></p></td>
+<td><p>Data structure which facilitates common grading policies.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.assignments" title="gradelib.Gradebook.assignments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.assignments</span></code></a></p></td>
+<td><p>All assignments in the gradebook.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.pids" title="gradelib.Gradebook.pids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.pids</span></code></a></p></td>
+<td><p>All student PIDs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.combine" title="gradelib.Gradebook.combine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.combine</span></code></a></p></td>
+<td><p>Create a gradebook by safely combining several existing gradebooks.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.drop_lowest" title="gradelib.Gradebook.drop_lowest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.drop_lowest</span></code></a></p></td>
+<td><p>Drop the lowest n grades within a group of assignments.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.forgive_lates" title="gradelib.Gradebook.forgive_lates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.forgive_lates</span></code></a></p></td>
+<td><p>Forgive the first n lates within a group of assignments.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.give_equal_weights" title="gradelib.Gradebook.give_equal_weights"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.give_equal_weights</span></code></a></p></td>
+<td><p>Normalize maximum points so that all assignments are worth the same.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.number_of_lates" title="gradelib.Gradebook.number_of_lates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.number_of_lates</span></code></a></p></td>
+<td><p>Return the number of late assignments for each student as a Series.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.restrict_assignments" title="gradelib.Gradebook.restrict_assignments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.restrict_assignments</span></code></a></p></td>
+<td><p>Restrict the gradebook to only the supplied assignments.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.restrict_pids" title="gradelib.Gradebook.restrict_pids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.restrict_pids</span></code></a></p></td>
+<td><p>Restrict the gradebook to only the supplied PIDS.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.score" title="gradelib.Gradebook.score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.score</span></code></a></p></td>
+<td><p>Computes the fraction of possible points earned across one or more assignments.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.total" title="gradelib.Gradebook.total"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.total</span></code></a></p></td>
+<td><p>Computes the total points earned and available within one or more assignments.</p></td>
+</tr>
 </tbody>
 </table>
 <p><strong>Assignments</strong></p>
@@ -253,6 +298,15 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Assignments" title="gradelib.Assignments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Assignments</span></code></a>(names)</p></td>
+<td><p>A sequence of assignments.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Assignments.starting_with" title="gradelib.Assignments.starting_with"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Assignments.starting_with</span></code></a>(prefix)</p></td>
+<td><p>Return only assignments starting with the prefix.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Assignments.containing" title="gradelib.Assignments.containing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Assignments.containing</span></code></a>(substring)</p></td>
+<td><p>Return only assignments containing the substring.</p></td>
+</tr>
 </tbody>
 </table>
 <p><strong>Grading Scales</strong></p>
@@ -262,16 +316,428 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.DEFAULT_SCALE" title="gradelib.DEFAULT_SCALE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEFAULT_SCALE</span></code></a></p></td>
+<td><p>Dictionary that remembers insertion order</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.map_scores_to_letter_grades" title="gradelib.map_scores_to_letter_grades"><code class="xref py py-obj docutils literal notranslate"><span class="pre">map_scores_to_letter_grades</span></code></a></p></td>
+<td><p>Map each raw score to a letter grade.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.average_gpa" title="gradelib.average_gpa"><code class="xref py py-obj docutils literal notranslate"><span class="pre">average_gpa</span></code></a></p></td>
+<td><p>Compute the average GPA.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.letter_grade_distribution" title="gradelib.letter_grade_distribution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">letter_grade_distribution</span></code></a></p></td>
+<td><p>Counts the frequency of each letter grade.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.plot_grade_distribution" title="gradelib.plot_grade_distribution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_grade_distribution</span></code></a></p></td>
+<td><p>Visualize the grade distribution with respect to a scale.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.find_robust_scale" title="gradelib.find_robust_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_robust_scale</span></code></a></p></td>
+<td><p>Find a robust grading scale.</p></td>
+</tr>
 </tbody>
 </table>
 <div class="section" id="i-o">
 <h2>I/O<a class="headerlink" href="#i-o" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="gradelib.read_gradescope_gradebook">
+<code class="sig-prename descclassname">gradelib.</code><code class="sig-name descname">read_gradescope_gradebook</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">standardize_pids</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">standardize_assignments</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.read_gradescope_gradebook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a CSV exported from Gradescope into a Gradebook.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em><em> or </em><em>pathlib.Path</em>) – Path to the CSV file that will be read.</p></li>
+<li><p><strong>standardize_pids</strong> (<em>bool</em>) – Whether to standardize PIDs so that they are all uppercased. This can be
+useful when students who manually join gradescope enter their own PID
+without uppercasing it. Default: True.</p></li>
+<li><p><strong>standardize_assignments</strong> (<em>bool</em>) – Whether to standardize assignment names so that they are all lowercased.
+Default: True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gradelib.read_canvas_gradebook">
+<code class="sig-prename descclassname">gradelib.</code><code class="sig-name descname">read_canvas_gradebook</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">standardize_pids</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">standardize_assignments</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">remove_assignment_ids</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.read_canvas_gradebook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a CSV exported from Canvas into a Gradebook.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em><em> or </em><em>pathlib.Path</em>) – Path to the CSV file that will be read.</p></li>
+<li><p><strong>standardize_pids</strong> (<em>bool</em>) – Whether to standardize PIDs so that they are all uppercased. Default:
+True.</p></li>
+<li><p><strong>standardize_assignments</strong> (<em>bool</em>) – Whether to standardize assignment names so that they are all lowercased.
+Default: True</p></li>
+<li><p><strong>remove_assignment_ids</strong> (<em>bool</em>) – Whether to remove the unique ID code that Canvas appends to each
+assignment name.  Default: True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gradelib.read_egrades_roster">
+<code class="sig-prename descclassname">gradelib.</code><code class="sig-name descname">read_egrades_roster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.read_egrades_roster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read an eGrades roster CSV into a pandas dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em><em> or </em><em>pathlib.Path</em>) – Path to the CSV file that will be read.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dataframe indexed by PIDs.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 <div class="section" id="gradebooks">
 <h2>Gradebooks<a class="headerlink" href="#gradebooks" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="gradelib.Gradebook">
+<em class="property">class </em><code class="sig-prename descclassname">gradelib.</code><code class="sig-name descname">Gradebook</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">points</span></em>, <em class="sig-param"><span class="n">maximums</span></em>, <em class="sig-param"><span class="n">late</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dropped</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data structure which facilitates common grading policies.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>points</strong> (<em>pandas.DataFrame</em>) – A dataframe with one row per student, and one column for each assignment.
+Each entry should be the number of points earned by the student on the
+given assignment. The index of the dataframe should consist of student
+PIDs.</p></li>
+<li><p><strong>maximums</strong> (<em>pandas.Series</em>) – A series containing the maximum number of points possible for each
+assignment. The index of the series should match the columns of the
+<cite>points</cite> dataframe.</p></li>
+<li><p><strong>late</strong> (<em>pandas.DataFrame</em>) – A Boolean dataframe with the same columns/index as <cite>points</cite>. An entry
+that is <cite>True</cite> indicates that the assignment was late. If <cite>None</cite> is
+passed, a dataframe of all <a href="#id1"><span class="problematic" id="id2">`</span></a>False`s is used by default.</p></li>
+<li><p><strong>dropped</strong> (<em>pandas.DataFrame</em>) – A Boolean dataframe with the same columns/index as <cite>points</cite>. An entry
+that is <cite>True</cite> indicates that the assignment should be dropped. If
+<cite>None</cite> is passed, a dataframe of all <a href="#id3"><span class="problematic" id="id4">`</span></a>False`s is used by default.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Typically a Gradebook is not created manually, but is instead produced
+by reading grades exported from Gradescope or Canvas, using
+<a class="reference internal" href="#gradelib.read_gradescope_gradebook" title="gradelib.read_gradescope_gradebook"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_gradescope_gradebook()</span></code></a> or <a class="reference internal" href="#gradelib.read_canvas_gradebook" title="gradelib.read_canvas_gradebook"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_canvas_gradebook()</span></code></a>.</p>
+<dl class="py method">
+<dt id="gradelib.Gradebook.assignments">
+<em class="property">property </em><code class="sig-name descname">assignments</code><a class="headerlink" href="#gradelib.Gradebook.assignments" title="Permalink to this definition">¶</a></dt>
+<dd><p>All assignments in the gradebook.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#gradelib.Assignments" title="gradelib.Assignments">Assignments</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gradelib.Gradebook.combine">
+<em class="property">classmethod </em><code class="sig-name descname">combine</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gradebooks</span></em>, <em class="sig-param"><span class="n">restrict_pids</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.combine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a gradebook by safely combining several existing gradebooks.</p>
+<p>It is crucial that the combined gradebooks have exactly the same
+students – we don’t want students to have missing grades. This
+function checks to make sure that the gradebooks have the same students
+before combining them. Similarly, it verifies that each gradebook has
+unique assignments, so that no conflicts occur when combining them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gradebooks</strong> (<em>Collection</em><em>[</em><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook"><em>Gradebook</em></a><em>]</em>) – The gradebooks to combine. Must have matching indices and unique
+column names.</p></li>
+<li><p><strong>restrict_pids</strong> (<em>Collection</em><em>[</em><em>str</em><em>] or </em><em>None</em>) – If provided, each input gradebook will be restricted to the PIDs
+given before attempting to combine them. This is a convenience
+option, and it simply calls <a class="reference internal" href="#gradelib.Gradebook.restrict_pids" title="gradelib.Gradebook.restrict_pids"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Gradebook.restrict_pids()</span></code></a> on
+each of the inputs.  Default: None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A gradebook combining all of the input gradebooks.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the PID indices of gradebooks do not match, or if there is a
+    duplicate assignment name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gradelib.Gradebook.drop_lowest">
+<code class="sig-name descname">drop_lowest</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n</span></em>, <em class="sig-param"><span class="n">within</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.drop_lowest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop the lowest n grades within a group of assignments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em>) – The number of grades to drop.</p></li>
+<li><p><strong>within</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – A collection of assignments; the lowest among them will be dropped.
+If None, all assignments will be used. Default: None</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Unless all assignments are worth the same number of points, dropping
+the lowest is non-trivial. In this implementation, dropping assignments
+is performed via a brute-force algorithm: each possible combination of
+kept assignments is tested, and the one which yields the largest
+total_points / maximum_points_possible is used.  Therefore, this method
+is not recommended beyond small problem sizes.  For a better algorithm,
+see: <a class="reference external" href="http://cseweb.ucsd.edu/~dakane/droplowest.pdf">http://cseweb.ucsd.edu/~dakane/droplowest.pdf</a></p>
+<p>If an assignment is marked as late, it will be considered a zero for
+the purposes of dropping. Therefore it is usually preferable to use
+<a class="reference internal" href="#gradelib.Gradebook.forgive_lates" title="gradelib.Gradebook.forgive_lates"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Gradebook.forgive_lates()</span></code></a> before this method.</p>
+<p>If an assignment has already been marked as dropped, it won’t be
+considered for dropping. This is useful, for instance, when a student’s
+assignment is dropped due to an external circumstance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The gradebook with the specified assignments dropped.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If <cite>within</cite> is empty, or if n is not a positive integer.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gradelib.Gradebook.forgive_lates">
+<code class="sig-name descname">forgive_lates</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n</span></em>, <em class="sig-param"><span class="n">within</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.forgive_lates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forgive the first n lates within a group of assignments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em>) – The number of lates to forgive.</p></li>
+<li><p><strong>within</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – A collection of assignments within which lates will be forgiven.
+If None, all assignments will be used. Default: None</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>By “first n”, we mean with respect to the order specified by the <cite>within</cite>
+argument. As such, the <cite>within</cite> argument must be an ordered <em>sequence</em>.
+If not, a ValueError will be raised. For convenience, the result of
+<a class="reference internal" href="#gradelib.Gradebook.assignments" title="gradelib.Gradebook.assignments"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Gradebook.assignments</span></code></a> is an ordered sequence, and the order is guaranteed
+to be the same as the order of the underlying column names in the <cite>points</cite>
+table.</p>
+<p>If a late assignment is marked as dropped it will not be forgiven, as
+it is advantageous for the student to use the forgiveness elsewhere.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The gradebook with the specified lates forgiven.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ValueError</strong> – If <cite>within</cite> is empty, or if n is not a positive integer.</p></li>
+<li><p><strong>TypeError</strong> – If <cite>within</cite> is not an ordered sequence.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gradelib.Gradebook.give_equal_weights">
+<code class="sig-name descname">give_equal_weights</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">within</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.give_equal_weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalize maximum points so that all assignments are worth the same.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>within</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – The assignments to reweight.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gradelib.Gradebook.number_of_lates">
+<code class="sig-name descname">number_of_lates</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">within</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.number_of_lates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of late assignments for each student as a Series.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>within</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – A collection of assignment names that will be used to restrict the
+gradebook. If None, all assignments will be used. Default: None</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A series mapping PID to number of late assignments.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pd.Series</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <cite>within</cite> is empty.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gradelib.Gradebook.pids">
+<em class="property">property </em><code class="sig-name descname">pids</code><a class="headerlink" href="#gradelib.Gradebook.pids" title="Permalink to this definition">¶</a></dt>
+<dd><p>All student PIDs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>set</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gradelib.Gradebook.restrict_assignments">
+<code class="sig-name descname">restrict_assignments</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">to</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.restrict_assignments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restrict the gradebook to only the supplied assignments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>to</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – A collection of assignment names.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A Gradebook with only these assignments.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>KeyError</strong> – If an assignment was specified that was not in the gradebook.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gradelib.Gradebook.restrict_pids">
+<code class="sig-name descname">restrict_pids</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">to</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.restrict_pids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restrict the gradebook to only the supplied PIDS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>to</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – A collection of PIDs. For instance, from the final course roster.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A Gradebook with only these PIDs.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>KeyError</strong> – If a PID was specified that is not in the gradebook.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gradelib.Gradebook.score">
+<code class="sig-name descname">score</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">within</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the fraction of possible points earned across one or more assignments.</p>
+<p>Takes into account late assignments (treats them as zeros) and dropped
+assignments (acts as if they were never assigned).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>within</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – The assignments whose overall score should be computed.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The score for each student as a number between 0 and 1.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pd.Series</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gradelib.Gradebook.total">
+<code class="sig-name descname">total</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">within</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.total" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the total points earned and available within one or more assignments.</p>
+<p>Takes into account late assignments (treats them as zeros) and dropped
+assignments (acts as if they were never assigned).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>within</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – The assignments whose total points will be calculated</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>pd.Series</em> – The total points earned by each student.</p></li>
+<li><p><em>pd.Series</em> – The total points available for each student.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="assignments">
 <h2>Assignments<a class="headerlink" href="#assignments" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="gradelib.Assignments">
+<em class="property">class </em><code class="sig-prename descclassname">gradelib.</code><code class="sig-name descname">Assignments</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">names</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Assignments" title="Permalink to this definition">¶</a></dt>
+<dd><p>A sequence of assignments.</p>
+<p>Behaves essentially like a standard Python list, but has some additional
+methods which make it faster to create groups of assignments. In particular,
+<a class="reference internal" href="#gradelib.Assignments.starting_with" title="gradelib.Assignments.starting_with"><code class="xref py py-meth docutils literal notranslate"><span class="pre">starting_with()</span></code></a> and <a class="reference internal" href="#gradelib.Assignments.containing" title="gradelib.Assignments.containing"><code class="xref py py-meth docutils literal notranslate"><span class="pre">containing()</span></code></a>.</p>
+<dl class="py method">
+<dt id="gradelib.Assignments.containing">
+<code class="sig-name descname">containing</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">substring</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Assignments.containing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return only assignments containing the substring.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>substring</strong> (<em>str</em>) – The substring to search for.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Only those assignments containing the substring.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Assignments" title="gradelib.Assignments">Assignments</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gradelib.Assignments.starting_with">
+<code class="sig-name descname">starting_with</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prefix</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Assignments.starting_with" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return only assignments starting with the prefix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>prefix</strong> (<em>str</em>) – The prefix to search for.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Only those assignments starting with the prefix.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Assignments" title="gradelib.Assignments">Assignments</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="grading-scales">
 <h2>Grading Scales<a class="headerlink" href="#grading-scales" title="Permalink to this headline">¶</a></h2>
@@ -280,6 +746,121 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <code class="sig-prename descclassname">gradelib.</code><code class="sig-name descname">DEFAULT_SCALE</code><a class="headerlink" href="#gradelib.DEFAULT_SCALE" title="Permalink to this definition">¶</a></dt>
 <dd><p>The standard grading scale as an OrderedDict. E.g., 93+ is an A, [90, 93)
 is an A-, etc.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gradelib.map_scores_to_letter_grades">
+<code class="sig-prename descclassname">gradelib.</code><code class="sig-name descname">map_scores_to_letter_grades</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scores</span></em>, <em class="sig-param"><span class="n">scale</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.map_scores_to_letter_grades" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map each raw score to a letter grade.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scores</strong> (<em>pandas.Series</em>) – A series contains scores as floats between 0 and 1.</p></li>
+<li><p><strong>scale</strong> (<em>OrderedDict</em>) – An ordered dictionary mapping letter grades to their thresholds.
+Default: <a class="reference internal" href="#gradelib.DEFAULT_SCALE" title="gradelib.DEFAULT_SCALE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DEFAULT_SCALE</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A series containing the resulting letter grades.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas.Series</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the provided scale has invalid letter grades.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gradelib.average_gpa">
+<code class="sig-prename descclassname">gradelib.</code><code class="sig-name descname">average_gpa</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">letter_grades</span></em>, <em class="sig-param"><span class="n">include_failing</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.average_gpa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the average GPA.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>letter_grades</strong> – A Series containing the letter grades.</p></li>
+<li><p><strong>include_failing</strong> (<em>Bool</em>) – Whether or not to include failing grades in the calculation.
+Default: False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The average GPA.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gradelib.letter_grade_distribution">
+<code class="sig-prename descclassname">gradelib.</code><code class="sig-name descname">letter_grade_distribution</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">letters</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.letter_grade_distribution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Counts the frequency of each letter grade.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>letters</strong> (<em>pd.Series</em>) – The letter grades.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The count of each letter grade. The letters are guaranteed to be in
+order, from highest to lowest.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pd.Series</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gradelib.plot_grade_distribution">
+<code class="sig-prename descclassname">gradelib.</code><code class="sig-name descname">plot_grade_distribution</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scores</span></em>, <em class="sig-param"><span class="n">scale</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">x_min</span><span class="o">=</span><span class="default_value">0.6</span></em>, <em class="sig-param"><span class="n">x_max</span><span class="o">=</span><span class="default_value">1.02</span></em>, <em class="sig-param"><span class="n">bins</span><span class="o">=</span><span class="default_value">'auto'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.plot_grade_distribution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Visualize the grade distribution with respect to a scale.</p>
+<p>This will plot a histogram of the grade distribution, with each individual
+grade marked as a dot. Furthermore, if a gradine scale is provided,
+the letter grade thresholds are marked on the histogram as vertical lines,
+and the frequency of each letter grade is shown.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scores</strong> (<em>pd.Series</em>) – A series of scores between 0 and 1, with one score per student.</p></li>
+<li><p><strong>scale</strong> (<em>OrderedDict</em>) – An ordered dictionary specifying the cutoffs for each letter grade.
+Optional. If <cite>None</cite> is passed, <a class="reference internal" href="#gradelib.DEFAULT_SCALE" title="gradelib.DEFAULT_SCALE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DEFAULT_SCALE</span></code></a> is used. If
+<cite>False</cite> is passed, no scale will be displayed. Default: <cite>None</cite>.</p></li>
+<li><p><strong>x_min</strong> (<em>float</em>) – The smallest extent of the axis containing scores. Default: 0.6</p></li>
+<li><p><strong>x_max</strong> (<em>float</em>) – The greatest extent of the axis containing scores. Default: 1.02</p></li>
+<li><p><strong>bins</strong> – What to pass as the <cite>bins</cite> argument to <cite>np.hist</cite>. Default: “auto”</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gradelib.find_robust_scale">
+<code class="sig-prename descclassname">gradelib.</code><code class="sig-name descname">find_robust_scale</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scores</span></em>, <em class="sig-param"><span class="n">scale</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">grade_gap</span><span class="o">=</span><span class="default_value">0.005</span></em>, <em class="sig-param"><span class="n">threshold_gap</span><span class="o">=</span><span class="default_value">0.01</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.find_robust_scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find a robust grading scale.</p>
+<p>Given an initial grading scale, finds the largest value of each threshold
+which is at least <cite>grade_gap</cite> larger than the highest grade below the
+threshold.</p>
+<p>In other words, lowers the threshold for each letter grade until no student
+is agonizingly close to a higher letter grade.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scores</strong> (<em>pd.Series</em>) – A series containing the total scores for each student.</p></li>
+<li><p><strong>scale</strong> – An initial grading scale to relax and make robust.
+Default: <a class="reference internal" href="#gradelib.DEFAULT_SCALE" title="gradelib.DEFAULT_SCALE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DEFAULT_SCALE</span></code></a></p></li>
+<li><p><strong>grade_gap</strong> (<em>float</em>) – The minimum difference between a threshold and the highest grade below
+the threshold.</p></li>
+<li><p><strong>threshold_gap</strong> (<em>float</em>) – The minimum difference between consecutive thresholds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The robust grading scale.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>OrderedDict</p>
+</dd>
+</dl>
 </dd></dl>
 
 <div class="toctree-wrapper compound">

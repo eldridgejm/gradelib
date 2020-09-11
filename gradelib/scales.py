@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+#: the default, standard grading scale
 DEFAULT_SCALE = collections.OrderedDict(
     [
         ("A+", 0.97),
@@ -32,8 +33,8 @@ def _check_that_scale_monotonically_decreases(scale):
         prev = threshold
 
 
-def map_scores_to_letter_grades(scores, scale=DEFAULT_SCALE):
-    """Map each score to a letter grade according to a scale.
+def map_scores_to_letter_grades(scores, scale=None):
+    """Map each raw score to a letter grade.
 
     Parameters
     ----------
@@ -41,6 +42,7 @@ def map_scores_to_letter_grades(scores, scale=DEFAULT_SCALE):
         A series contains scores as floats between 0 and 1.
     scale : OrderedDict
         An ordered dictionary mapping letter grades to their thresholds.
+        Default: :attr:`DEFAULT_SCALE`.
 
     Returns
     -------
@@ -53,6 +55,8 @@ def map_scores_to_letter_grades(scores, scale=DEFAULT_SCALE):
         If the provided scale has invalid letter grades.
 
     """
+    if scale is None:
+        scale = DEFAULT_SCALE
 
     def _map(score):
         for letter, threshold in scale.items():
@@ -112,12 +116,12 @@ def average_gpa(letter_grades, include_failing=False):
 
 
 def letter_grade_distribution(letters):
-    """Counts the number of each letter grade given.
+    """Counts the frequency of each letter grade.
 
     Parameters
     ----------
     letters : pd.Series
-        The letter grades given.
+        The letter grades.
     
     Returns
     -------
@@ -131,9 +135,33 @@ def letter_grade_distribution(letters):
 
 
 def plot_grade_distribution(
-    scores, scale=DEFAULT_SCALE, x_min=0.6, x_max=1.02, bins="auto",
+    scores, scale=None, x_min=0.6, x_max=1.02, bins="auto",
 ):
-    """Plot a grading scale."""
+    """Visualize the grade distribution with respect to a scale.
+
+    This will plot a histogram of the grade distribution, with each individual
+    grade marked as a dot. Furthermore, if a gradine scale is provided,
+    the letter grade thresholds are marked on the histogram as vertical lines,
+    and the frequency of each letter grade is shown.
+
+    Parameters
+    ----------
+    scores : pd.Series
+        A series of scores between 0 and 1, with one score per student.
+    scale : OrderedDict
+        An ordered dictionary specifying the cutoffs for each letter grade.
+        Optional. If `None` is passed, :attr:`DEFAULT_SCALE` is used. If 
+        `False` is passed, no scale will be displayed. Default: `None`.
+    x_min : float
+        The smallest extent of the axis containing scores. Default: 0.6
+    x_max : float
+        The greatest extent of the axis containing scores. Default: 1.02
+    bins
+        What to pass as the `bins` argument to `np.hist`. Default: "auto"
+
+    """
+    if scale is None:
+        scale = DEFAULT_SCALE
 
     # discard scores below the minimum
     scores = scores[scores >= x_min]
@@ -144,7 +172,7 @@ def plot_grade_distribution(
         scores, np.zeros_like(scores) - 0.1, marker="o", color="red", s=20, zorder=10
     )
 
-    if scale is not None:
+    if scale:
         letters = map_scores_to_letter_grades(scores, scale)
         counts = letter_grade_distribution(letters)
         for letter, threshold in scale.items():
@@ -159,12 +187,15 @@ def plot_grade_distribution(
     ax.set_yticks([])
 
 
-def find_robust_scale(scores, scale=DEFAULT_SCALE, grade_gap=0.005, threshold_gap=0.01):
+def find_robust_scale(scores, scale=None, grade_gap=0.005, threshold_gap=0.01):
     """Find a robust grading scale.
     
     Given an initial grading scale, finds the largest value of each threshold
     which is at least `grade_gap` larger than the highest grade below the
     threshold.
+
+    In other words, lowers the threshold for each letter grade until no student
+    is agonizingly close to a higher letter grade.
     
     Parameters
     ----------
@@ -172,7 +203,7 @@ def find_robust_scale(scores, scale=DEFAULT_SCALE, grade_gap=0.005, threshold_ga
         A series containing the total scores for each student.
     scale
         An initial grading scale to relax and make robust.
-        Default: gradelib.DEFAULT_SCALE
+        Default: :attr:`DEFAULT_SCALE`
     grade_gap : float
         The minimum difference between a threshold and the highest grade below
         the threshold.
@@ -181,9 +212,13 @@ def find_robust_scale(scores, scale=DEFAULT_SCALE, grade_gap=0.005, threshold_ga
 
     Returns
     -------
+    OrderedDict
         The robust grading scale.
     
     """
+    if scale is None:
+        scale = DEFAULT_SCALE
+
     scale_dummy_scores = np.array(list(scale.values()))
     scores = np.append(scores, scale_dummy_scores)
 

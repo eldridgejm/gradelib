@@ -6,23 +6,37 @@ from .gradebook import Gradebook
 
 
 def read_egrades_roster(path):
-    """Read an eGrades roster CSV into a pandas dataframe."""
+    """Read an eGrades roster CSV into a pandas dataframe.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        Path to the CSV file that will be read.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A dataframe indexed by PIDs.
+
+    """
     return pd.read_csv(path, delimiter="\t").set_index("Student ID")
 
 
-def read_gradescope_gradebook(path, normalize_pids=True, normalize_assignments=True):
+def read_gradescope_gradebook(
+    path, standardize_pids=True, standardize_assignments=True
+):
     """Read a CSV exported from Gradescope into a Gradebook.
 
     Parameters
     ----------
     path : str or pathlib.Path
         Path to the CSV file that will be read.
-    normalize_pids : bool
-        Whether to normalize PIDs so that they are all uppercased. This is useful
-        since students who manually join gradescope might enter their own PID,
-        and may not uppercase it. Default: True.
-    normalize_assignments : bool
-        Whether to normalize assignment names so that they are all lowercased.
+    standardize_pids : bool
+        Whether to standardize PIDs so that they are all uppercased. This can be
+        useful when students who manually join gradescope enter their own PID
+        without uppercasing it. Default: True.
+    standardize_assignments : bool
+        Whether to standardize assignment names so that they are all lowercased.
         Default: True.
 
     Returns
@@ -35,7 +49,7 @@ def read_gradescope_gradebook(path, normalize_pids=True, normalize_assignments=T
     # drop the total lateness column; it just gets in the way
     table = table.drop(columns="Total Lateness (H:M:S)")
 
-    if normalize_pids:
+    if standardize_pids:
         table.index = table.index.str.upper()
 
     # now we create the points table. We use the assumption that the first
@@ -48,7 +62,7 @@ def read_gradescope_gradebook(path, normalize_pids=True, normalize_assignments=T
     # extract the points
     points = table.iloc[:, starting_index::stride].astype(float)
 
-    if normalize_assignments:
+    if standardize_assignments:
         points.columns = [x.lower() for x in points.columns]
 
     # the max_points are replicated on every row; we'll just use the first row
@@ -70,7 +84,10 @@ def _remove_assignment_id(s):
 
 
 def read_canvas_gradebook(
-    path, normalize_pids=True, normalize_assignments=True, remove_assignment_ids=True
+    path,
+    standardize_pids=True,
+    standardize_assignments=True,
+    remove_assignment_ids=True,
 ):
     """Read a CSV exported from Canvas into a Gradebook.
 
@@ -78,12 +95,11 @@ def read_canvas_gradebook(
     ----------
     path : str or pathlib.Path
         Path to the CSV file that will be read.
-    normalize_pids : bool
-        Whether to normalize PIDs so that they are all uppercased. This is
-        useful since students who manually join gradescope might enter their
-        own PID, and may not uppercase it. Default: True.
-    normalize_assignments : bool
-        Whether to normalize assignment names so that they are all lowercased.
+    standardize_pids : bool
+        Whether to standardize PIDs so that they are all uppercased. Default:
+        True.
+    standardize_assignments : bool
+        Whether to standardize assignment names so that they are all lowercased.
         Default: True
     remove_assignment_ids : bool
         Whether to remove the unique ID code that Canvas appends to each
@@ -126,10 +142,10 @@ def read_canvas_gradebook(
     # NaN indices
     points = table[~pd.isna(table.index)].drop(columns=["Student"]).astype(float)
 
-    if normalize_assignments:
+    if standardize_assignments:
         points.columns = points.columns.str.lower()
 
-    if normalize_pids:
+    if standardize_pids:
         points.index = points.index.str.upper()
 
     if remove_assignment_ids:

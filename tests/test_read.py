@@ -44,7 +44,7 @@ def test_read_gradescope_same_shapes_and_columns_in_all_tables():
     assert (gradebook.points.columns == gradebook.maximums.index).all()
 
 
-def test_read_gradescope_normalizes_pids_by_default():
+def test_read_gradescope_standardizes_pids_by_default():
     # when
     gradebook = gradelib.read_gradescope_gradebook(
         EXAMPLES_DIRECTORY / "gradescope.csv"
@@ -57,7 +57,7 @@ def test_read_gradescope_normalizes_pids_by_default():
     )
 
 
-def test_read_gradescope_normalizes_assignments_by_default():
+def test_read_gradescope_standardizes_assignments_by_default():
     # when
     gradebook = gradelib.read_gradescope_gradebook(
         EXAMPLES_DIRECTORY / "gradescope.csv"
@@ -89,7 +89,7 @@ def test_read_canvas_same_shapes_and_columns_in_all_tables():
     assert (gradebook.points.columns == gradebook.maximums.index).all()
 
 
-def test_read_canvas_normalizes_pids_by_default():
+def test_read_canvas_standardizes_pids_by_default():
     # when
     gradebook = gradelib.read_canvas_gradebook(EXAMPLES_DIRECTORY / "canvas.csv")
 
@@ -100,7 +100,7 @@ def test_read_canvas_normalizes_pids_by_default():
     )
 
 
-def test_read_canvas_normalizes_assignments_by_default():
+def test_read_canvas_standardizes_assignments_by_default():
     # when
     gradebook = gradelib.read_canvas_gradebook(EXAMPLES_DIRECTORY / "canvas.csv")
 

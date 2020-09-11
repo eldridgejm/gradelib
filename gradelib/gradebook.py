@@ -6,8 +6,13 @@ import itertools
 import pandas as pd
 
 
-class Assignments(collections.abc.Collection):
-    """A collection of assignments."""
+class Assignments(collections.abc.Sequence):
+    """A sequence of assignments.
+
+    Behaves essentially like a standard Python list, but has some additional
+    methods which make it faster to create groups of assignments. In particular,
+    :meth:`starting_with` and :meth:`containing`.
+    """
 
     def __init__(self, names):
         self._names = list(names)
@@ -22,11 +27,35 @@ class Assignments(collections.abc.Collection):
         return iter(self._names)
 
     def starting_with(self, prefix):
-        """Return only assignments starting with the prefix."""
+        """Return only assignments starting with the prefix.
+
+        Parameters
+        ----------
+        prefix : str
+            The prefix to search for.
+
+        Returns
+        -------
+        Assignments
+            Only those assignments starting with the prefix.
+
+        """
         return self.__class__(x for x in self._names if x.startswith(prefix))
 
     def containing(self, substring):
-        """Return only assignments containing the substring."""
+        """Return only assignments containing the substring.
+
+        Parameters
+        ----------
+        substring : str
+            The substring to search for.
+
+        Returns
+        -------
+        Assignments
+            Only those assignments containing the substring.
+
+        """
         return self.__class__(x for x in self._names if substring in x)
 
     def __repr__(self):
@@ -47,7 +76,35 @@ def _empty_mask_like(table):
 
 
 class Gradebook:
-    """A collection of grades."""
+    """Data structure which facilitates common grading policies.
+
+    Parameters
+    ----------
+    points : pandas.DataFrame
+        A dataframe with one row per student, and one column for each assignment.
+        Each entry should be the number of points earned by the student on the
+        given assignment. The index of the dataframe should consist of student
+        PIDs.
+    maximums : pandas.Series
+        A series containing the maximum number of points possible for each
+        assignment. The index of the series should match the columns of the
+        `points` dataframe.
+    late : pandas.DataFrame
+        A Boolean dataframe with the same columns/index as `points`. An entry
+        that is `True` indicates that the assignment was late. If `None` is 
+        passed, a dataframe of all `False`s is used by default.
+    dropped : pandas.DataFrame
+        A Boolean dataframe with the same columns/index as `points`. An entry
+        that is `True` indicates that the assignment should be dropped. If
+        `None` is passed, a dataframe of all `False`s is used by default.
+
+    Notes
+    -----
+    Typically a Gradebook is not created manually, but is instead produced
+    by reading grades exported from Gradescope or Canvas, using
+    :func:`read_gradescope_gradebook` or :func:`read_canvas_gradebook`.
+
+    """
 
     def __init__(self, points, maximums, late=None, dropped=None):
         self.points = points
@@ -62,15 +119,37 @@ class Gradebook:
             f"and {len(self.pids)} students>"
         )
 
+    @property
+    def assignments(self):
+        """All assignments in the gradebook.
+
+        Returns
+        -------
+        Assignments
+
+        """
+        return Assignments(self.points.columns)
+
+    @property
+    def pids(self):
+        """All student PIDs.
+
+        Returns
+        -------
+        set
+
+        """
+        return set(self.points.index)
+
     @classmethod
     def combine(cls, gradebooks, restrict_pids=None):
         """Create a gradebook by safely combining several existing gradebooks.
 
         It is crucial that the combined gradebooks have exactly the same
-        students -- we don't want students to be missing grades. This function
-        checks to make sure that the gradebooks have the same students before
-        combining them. Similarly, it verifies that each gradebook has different
-        assignments.
+        students -- we don't want students to have missing grades. This
+        function checks to make sure that the gradebooks have the same students
+        before combining them. Similarly, it verifies that each gradebook has
+        unique assignments, so that no conflicts occur when combining them.
 
         Parameters
         ----------
@@ -80,8 +159,8 @@ class Gradebook:
         restrict_pids : Collection[str] or None
             If provided, each input gradebook will be restricted to the PIDs
             given before attempting to combine them. This is a convenience
-            option, and it simply calls Gradebook.restrict_pids on each of the
-            inputs.  Default: None
+            option, and it simply calls :meth:`Gradebook.restrict_pids` on
+            each of the inputs.  Default: None
 
         Returns
         -------
@@ -127,14 +206,6 @@ class Gradebook:
         dropped = concat_attr("dropped")
 
         return cls(points, maximums, late, dropped)
-
-    @property
-    def assignments(self):
-        return Assignments(self.points.columns)
-
-    @property
-    def pids(self):
-        return set(self.points.index)
 
     def restrict_pids(self, to):
         """Restrict the gradebook to only the supplied PIDS.
@@ -233,15 +304,15 @@ class Gradebook:
         n : int
             The number of lates to forgive.
         within : Sequence[str]
-            A collection of assignment names that will be used to restrict the
-            gradebook. If None, all assignments will be used. Default: None
+            A collection of assignments within which lates will be forgiven.
+            If None, all assignments will be used. Default: None
 
         Notes
         -----
-        By "first n", we mean in reference to the order specified by the `within`
+        By "first n", we mean with respect to the order specified by the `within`
         argument. As such, the `within` argument must be an ordered *sequence*.
         If not, a ValueError will be raised. For convenience, the result of
-        Gradebook.assignments is an ordered sequence, and the order is guaranteed
+        :attr:`Gradebook.assignments` is an ordered sequence, and the order is guaranteed
         to be the same as the order of the underlying column names in the `points`
         table.
 
@@ -298,22 +369,22 @@ class Gradebook:
         n : int
             The number of grades to drop.
         within : Collection[str]
-            A collection of assignment names that will be used to restrict the
-            gradebook. If None, all assignments will be used. Default: None
+            A collection of assignments; the lowest among them will be dropped.
+            If None, all assignments will be used. Default: None
 
         Notes
         -----
         Unless all assignments are worth the same number of points, dropping
-        the lowest is non-trivial. Here, dropping assignments is performed via
-        a brute-force algorithm: each possible combination of kept assignments
-        is tested, and the one which yields the largest total_points /
-        maximum_points_possible is used.  Therefore, this method is not
-        recommended beyond small problem sizes.  For a better algorithm, see:
-        http://cseweb.ucsd.edu/~dakane/droplowest.pdf
+        the lowest is non-trivial. In this implementation, dropping assignments
+        is performed via a brute-force algorithm: each possible combination of
+        kept assignments is tested, and the one which yields the largest
+        total_points / maximum_points_possible is used.  Therefore, this method
+        is not recommended beyond small problem sizes.  For a better algorithm,
+        see: http://cseweb.ucsd.edu/~dakane/droplowest.pdf
 
         If an assignment is marked as late, it will be considered a zero for
         the purposes of dropping. Therefore it is usually preferable to use
-        .forgive_lates() before this method.
+        :meth:`Gradebook.forgive_lates` before this method.
 
         If an assignment has already been marked as dropped, it won't be
         considered for dropping. This is useful, for instance, when a student's

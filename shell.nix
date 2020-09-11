@@ -1,16 +1,9 @@
 with import <nixpkgs> {};
+with python37Packages;
 
-mkShell {
-
-  buildInputs = with python38Packages; [
-    venvShellHook
-  ];
-
-  venvDir = ".venv";
-
-  postShellHook = ''
-    pip install black pytest ipython
-    pip install -r requirements.txt
-  '';
-
+buildPythonPackage rec {
+  name = "gradelib";
+  src = ./.;
+  propagatedBuildInputs = [ pandas numpy ];
+  nativeBuildInputs = [ black pytest jupyter ipython ];
 }

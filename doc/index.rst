@@ -88,7 +88,7 @@ API
 .. autosummary::
     :nosignatures:
 
-    read_gradescope_gradebook
+    gradelib.read_gradescope_gradebook
     read_canvas_gradebook
     read_egrades_roster
 

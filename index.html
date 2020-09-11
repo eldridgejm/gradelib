@@ -223,6 +223,9 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 
 <span class="c1"># assign letter grades</span>
 <span class="n">letters</span> <span class="o">=</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">map_scores_to_letter_grades</span><span class="p">(</span><span class="n">overall</span><span class="p">,</span> <span class="n">robust_scale</span><span class="p">)</span>
+
+<span class="c1"># export letter grades in egrades format</span>
+<span class="n">gradelib</span><span class="o">.</span><span class="n">write_egrades</span><span class="p">(</span><span class="s1">&#39;roster.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;letter-grades.csv&#39;</span><span class="p">,</span> <span class="n">letters</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

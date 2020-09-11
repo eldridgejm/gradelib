@@ -3,6 +3,6 @@ from setuptools import setup, find_packages
 setup(
     name="gradelib",
     version="0.1.0",
-    py_modules=["gradelib"],
+    packages=find_packages(),
     install_requires=["pandas"],
 )

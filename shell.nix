@@ -4,6 +4,6 @@ with python37Packages;
 buildPythonPackage rec {
   name = "gradelib";
   src = ./.;
-  propagatedBuildInputs = [ pandas numpy ];
+  propagatedBuildInputs = [ pandas matplotlib numpy ];
   nativeBuildInputs = [ black pytest jupyter ipython ];
 }

@@ -208,13 +208,13 @@ def test_forgive_lates_does_not_forgive_dropped():
 
 def test_drop_lowest_on_simple_example_1():
     # given
-    columns = ['hw01', 'hw02', 'hw03', 'lab01']
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name='A1')
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name='A2')
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with('hw')
+    homeworks = gradebook.assignments.starting_with("hw")
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
@@ -231,13 +231,13 @@ def test_drop_lowest_on_simple_example_1():
 
 def test_drop_lowest_on_simple_example_2():
     # given
-    columns = ['hw01', 'hw02', 'hw03', 'lab01']
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name='A1')
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name='A2')
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with('hw')
+    homeworks = gradebook.assignments.starting_with("hw")
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
@@ -254,9 +254,9 @@ def test_drop_lowest_on_simple_example_2():
 
 def test_drop_lowest_counts_lates_as_zeros():
     # given
-    columns = ['hw01', 'hw02']
-    p1 = pd.Series(data=[10, 5], index=columns, name='A1')
-    p2 = pd.Series(data=[10, 10], index=columns, name='A2')
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 5], index=columns, name="A1")
+    p2 = pd.Series(data=[10, 10], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([10, 10], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
@@ -276,14 +276,14 @@ def test_drop_lowest_counts_lates_as_zeros():
 
 def test_drop_lowest_ignores_assignments_alread_dropped():
     # given
-    columns = ['hw01', 'hw02', 'hw03', 'hw04']
-    p1 = pd.Series(data=[9, 0, 7, 0], index=columns, name='A1')
-    p2 = pd.Series(data=[10, 10, 10, 10], index=columns, name='A2')
+    columns = ["hw01", "hw02", "hw03", "hw04"]
+    p1 = pd.Series(data=[9, 0, 7, 0], index=columns, name="A1")
+    p2 = pd.Series(data=[10, 10, 10, 10], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([10, 10, 10, 10], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    gradebook.dropped.loc['A1', 'hw02'] = True
-    gradebook.dropped.loc['A1', 'hw04'] = True
+    gradebook.dropped.loc["A1", "hw02"] = True
+    gradebook.dropped.loc["A1", "hw04"] = True
 
     # since A1's perfect homeworks are already dropped, we should drop a third
     # homework, too: this will be HW03
@@ -292,9 +292,9 @@ def test_drop_lowest_ignores_assignments_alread_dropped():
     actual = gradebook.drop_lowest(1)
 
     # then
-    assert actual.dropped.loc['A1', 'hw04']
-    assert actual.dropped.loc['A1', 'hw02']
-    assert actual.dropped.loc['A1', 'hw03']
+    assert actual.dropped.loc["A1", "hw04"]
+    assert actual.dropped.loc["A1", "hw02"]
+    assert actual.dropped.loc["A1", "hw03"]
     assert list(actual.dropped.sum(axis=1)) == [3, 1]
     assert_gradebook_is_sound(actual)
 
@@ -302,83 +302,85 @@ def test_drop_lowest_ignores_assignments_alread_dropped():
 # give_equal_weights()
 # -----------------------------------------------------------------------------
 
+
 def test_give_equal_weights_on_example():
     # given
-    columns = ['hw01', 'hw02', 'hw03', 'lab01']
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name='A1')
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name='A2')
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with('hw')
+    homeworks = gradebook.assignments.starting_with("hw")
 
-    # when 
+    # when
     actual = gradebook.give_equal_weights(within=homeworks)
 
     # then
-    assert actual.maximums.loc['hw01'] == 1
-    assert actual.maximums.loc['hw02'] == 1
-    assert actual.maximums.loc['hw03'] == 1
-    assert actual.maximums.loc['lab01'] == 20
-    assert actual.points.loc['A1', 'hw01'] == 1/2
-    assert actual.points.loc['A1', 'hw02'] == 30/50
+    assert actual.maximums.loc["hw01"] == 1
+    assert actual.maximums.loc["hw02"] == 1
+    assert actual.maximums.loc["hw03"] == 1
+    assert actual.maximums.loc["lab01"] == 20
+    assert actual.points.loc["A1", "hw01"] == 1 / 2
+    assert actual.points.loc["A1", "hw02"] == 30 / 50
 
 
 # score()
 # -----------------------------------------------------------------------------
 
+
 def test_score_on_simple_example():
     # given
-    columns = ['hw01', 'hw02', 'hw03', 'lab01']
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name='A1')
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name='A2')
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with('hw')
+    homeworks = gradebook.assignments.starting_with("hw")
 
     # when
     actual = gradebook.score(homeworks)
 
     # then
-    assert np.allclose(actual.values, [121/152, 24/152], atol=1e-6)
+    assert np.allclose(actual.values, [121 / 152, 24 / 152], atol=1e-6)
 
 
 def test_score_counts_lates_as_zero():
     # given
-    columns = ['hw01', 'hw02', 'hw03', 'lab01']
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name='A1')
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name='A2')
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    gradebook.late.loc['A1', 'hw01'] = True
-    gradebook.late.loc['A1', 'hw03'] = True
-    gradebook.late.loc['A2', 'hw03'] = True
-    homeworks = gradebook.assignments.starting_with('hw')
+    gradebook.late.loc["A1", "hw01"] = True
+    gradebook.late.loc["A1", "hw03"] = True
+    gradebook.late.loc["A2", "hw03"] = True
+    homeworks = gradebook.assignments.starting_with("hw")
 
     # when
     actual = gradebook.score(homeworks)
 
     # then
-    assert np.allclose(actual.values, [30/152, 9/152], atol=1e-6)
+    assert np.allclose(actual.values, [30 / 152, 9 / 152], atol=1e-6)
 
 
 def test_score_ignores_dropped_assignments():
     # given
-    columns = ['hw01', 'hw02', 'hw03', 'lab01']
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name='A1')
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name='A2')
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    gradebook.dropped.loc['A1', 'hw01'] = True
-    gradebook.dropped.loc['A1', 'hw03'] = True
-    gradebook.dropped.loc['A2', 'hw03'] = True
-    homeworks = gradebook.assignments.starting_with('hw')
+    gradebook.dropped.loc["A1", "hw01"] = True
+    gradebook.dropped.loc["A1", "hw03"] = True
+    gradebook.dropped.loc["A2", "hw03"] = True
+    homeworks = gradebook.assignments.starting_with("hw")
 
     # when
     actual = gradebook.score(homeworks)
 
     # then
-    assert np.allclose(actual.values, [30/50, 9/52], atol=1e-6)
+    assert np.allclose(actual.values, [30 / 50, 9 / 52], atol=1e-6)

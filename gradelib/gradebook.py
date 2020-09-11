@@ -374,13 +374,21 @@ class Gradebook:
 
         Notes
         -----
-        Unless all assignments are worth the same number of points, dropping
-        the lowest is non-trivial. In this implementation, dropping assignments
-        is performed via a brute-force algorithm: each possible combination of
-        kept assignments is tested, and the one which yields the largest
-        total_points / maximum_points_possible is used.  Therefore, this method
-        is not recommended beyond small problem sizes.  For a better algorithm,
-        see: http://cseweb.ucsd.edu/~dakane/droplowest.pdf
+        If all assignments are worth the same number of points, dropping the
+        assignment with the lowest score is most advantageous to the student.
+        However, if the assignments are not worth the same number of points,
+        the best strategy for the student is not necessarily to drop to
+        assignment with the smallest score. In this case, the problem of
+        determining the optimal set of assignments to drop in order to maximize
+        the overall score is non-trivial.
+
+        In this implementation, dropping assignments is performed via a
+        brute-force algorithm: each possible combination of kept assignments is
+        tested, and the one which yields the largest total_points /
+        maximum_points_possible is used. The time complexity of this approach
+        is combinatorial, and therefore it is not recommended beyond small
+        problem sizes. For a better algorithm, see:
+        http://cseweb.ucsd.edu/~dakane/droplowest.pdf
 
         If an assignment is marked as late, it will be considered a zero for
         the purposes of dropping. Therefore it is usually preferable to use

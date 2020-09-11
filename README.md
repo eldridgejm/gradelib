@@ -79,6 +79,9 @@ gradelib.plot_grade_distribution(overall, robust_scale)
 
 # assign letter grades
 letters = gradelib.map_scores_to_letter_grades(overall, robust_scale)
+
+# export letter grades in egrades format
+gradelib.write_egrades('roster.csv', 'letter-grades.csv', letters) 
 ```
 
 

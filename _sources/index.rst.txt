@@ -91,6 +91,8 @@ API
     read_gradescope_gradebook
     read_canvas_gradebook
     read_egrades_roster
+    write_canvas_grades
+    write_egrades
 
 **Gradebooks**
 
@@ -136,6 +138,8 @@ I/O
 .. autofunction:: gradelib.read_gradescope_gradebook
 .. autofunction:: gradelib.read_canvas_gradebook
 .. autofunction:: gradelib.read_egrades_roster
+.. autofunction:: gradelib.write_canvas_grades
+.. autofunction:: gradelib.write_egrades
 
 
 Gradebooks

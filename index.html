@@ -244,6 +244,12 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.read_egrades_roster" title="gradelib.read_egrades_roster"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_egrades_roster</span></code></a></p></td>
 <td><p>Read an eGrades roster CSV into a pandas dataframe.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.write_canvas_grades" title="gradelib.write_canvas_grades"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_canvas_grades</span></code></a></p></td>
+<td><p>Export new assignments to a Canvas-compatible CSV.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.write_egrades" title="gradelib.write_egrades"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_egrades</span></code></a></p></td>
+<td><p>Export egrades to csv.</p></td>
+</tr>
 </tbody>
 </table>
 <p><strong>Gradebooks</strong></p>
@@ -400,6 +406,42 @@ assignment name.  Default: True.</p></li>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gradelib.write_canvas_grades">
+<code class="sig-prename descclassname">gradelib.</code><code class="sig-name descname">write_canvas_grades</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">existing</span></em>, <em class="sig-param"><span class="n">output</span></em>, <em class="sig-param"><span class="n">grades</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.write_canvas_grades" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export new assignments to a Canvas-compatible CSV.</p>
+<p>This is mostly useful for uploading computed summary grades to Canvas,
+such as the overall homework score, etc. It will create a CSV that can be
+uploaded directly to gradescope in order to create new assignments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>existing</strong> (<em>str</em>) – Path to an existing canvas CSV.</p></li>
+<li><p><strong>output</strong> (<em>str</em>) – Path where the output will be written.</p></li>
+<li><p><strong>grades</strong> (<em>pd.DataFrame</em>) – A dataframe, indexed by student PIDS, where each column is an assignment
+that will be uploaded to canvas.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gradelib.write_egrades">
+<code class="sig-prename descclassname">gradelib.</code><code class="sig-name descname">write_egrades</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">existing</span></em>, <em class="sig-param"><span class="n">output</span></em>, <em class="sig-param"><span class="n">letters</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.write_egrades" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export egrades to csv.</p>
+<p>Students who have elected to take the class on a P/NP basis will
+automatically have their letter grade converted to P or NP, as appropriate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>existing</strong> (<em>str</em>) – Path to an existing egrades roster CSV.</p></li>
+<li><p><strong>output</strong> (<em>str</em>) – Path where the output will be written.</p></li>
+<li><p><strong>letters</strong> (<em>pd.Series</em>) – The letter grades, indexed by PID.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>

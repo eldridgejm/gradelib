@@ -1,6 +1,12 @@
 """A package for computing overall grades in courses @ UCSD."""
 
-from .io import read_egrades_roster, read_canvas_gradebook, read_gradescope_gradebook
+from .io import (
+    read_egrades_roster,
+    read_canvas_gradebook,
+    read_gradescope_gradebook,
+    write_canvas_grades,
+    write_egrades,
+)
 from .gradebook import Gradebook, Assignments
 from .scales import (
     DEFAULT_SCALE,

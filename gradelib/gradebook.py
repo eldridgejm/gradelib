@@ -488,24 +488,30 @@ class Gradebook:
 
         return self.replace(points=new_points, maximums=new_maximums)
 
-    def score(self, within):
-        """Compute the score of the assignment group.
+    def total(self, within):
+        """Computes the total points earned and available within one or more assignments.
+
+        Takes into account late assignments (treats them as zeros) and dropped
+        assignments (acts as if they were never assigned).
 
         Parameters
         ----------
         within : Collection[str]
-            The assignments whose overall score should be computed.
+            The assignments whose total points will be calculated
 
         Returns
         -------
-        float
-            The score.
+        pd.Series
+            The total points earned by each student.
+        pd.Series
+            The total points available for each student.
 
         """
         if isinstance(within, str):
             within = [within]
         else:
             within = list(within)
+
         points_with_lates_as_zeros = self._points_with_lates_replaced_by_zeros()[within]
 
         # create a full array of points available
@@ -515,4 +521,24 @@ class Gradebook:
         effective_points = points_with_lates_as_zeros[~self.dropped].sum(axis=1)
         effective_possible = points_available[~self.dropped].sum(axis=1)
 
-        return effective_points / effective_possible
+        return effective_points, effective_possible
+
+    def score(self, within):
+        """Computes the fraction of possible points earned across one or more assignments.
+
+        Takes into account late assignments (treats them as zeros) and dropped
+        assignments (acts as if they were never assigned).
+
+        Parameters
+        ----------
+        within : Collection[str]
+            The assignments whose overall score should be computed.
+
+        Returns
+        -------
+        pd.Series
+            The score for each student as a number between 0 and 1.
+
+        """
+        earned, available = self.total(within)
+        return earned / available

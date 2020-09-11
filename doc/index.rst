@@ -108,6 +108,7 @@ API
     Gradebook.restrict_assignments
     Gradebook.restrict_pids
     Gradebook.score
+    Gradebook.total
 
 **Assignments**
 

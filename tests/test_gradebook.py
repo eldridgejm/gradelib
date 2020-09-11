@@ -384,3 +384,67 @@ def test_score_ignores_dropped_assignments():
 
     # then
     assert np.allclose(actual.values, [30 / 50, 9 / 52], atol=1e-6)
+
+
+# total()
+# -----------------------------------------------------------------------------
+
+
+def test_total_on_simple_example():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    earned, available = gradebook.total(homeworks)
+
+    # then
+    assert np.allclose(earned.values, [121, 24], atol=1e-6)
+    assert np.allclose(available.values, [152, 152], atol=1e-6)
+
+
+def test_total_counts_lates_as_zero():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+    gradebook.late.loc["A1", "hw01"] = True
+    gradebook.late.loc["A1", "hw03"] = True
+    gradebook.late.loc["A2", "hw03"] = True
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    earned, available = gradebook.total(homeworks)
+
+    # then
+    assert np.allclose(earned.values, [30, 9], atol=1e-6)
+    assert np.allclose(available.values, [152, 152], atol=1e-6)
+
+
+def test_total_ignores_dropped_assignments():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+    gradebook.dropped.loc["A1", "hw01"] = True
+    gradebook.dropped.loc["A1", "hw03"] = True
+    gradebook.dropped.loc["A2", "hw03"] = True
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    earned, available = gradebook.total(homeworks)
+
+    # then
+    assert np.allclose(earned.values, [30, 9], atol=1e-6)
+    assert np.allclose(available.values, [50, 52], atol=1e-6)

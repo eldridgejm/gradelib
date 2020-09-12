@@ -33,8 +33,8 @@ import gradelib
 roster = gradelib.read_egrades_roster('roster.csv')
 
 # read grades from canvas and gradescope
-gradescope_grades = gradelib.read_gradescope_gradebook('gradescope.csv')
-canvas_grades = gradelib.read_canvas_gradebook('canvas.csv')
+gradescope_grades = gradelib.Gradebook.from_gradescope('gradescope.csv')
+canvas_grades = gradelib.Gradebook.from_canvas('canvas.csv')
 
 # combine canvas and gradescope grades into a single gradebook, 
 # checking that all enrolled students are accounted for

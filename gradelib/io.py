@@ -2,8 +2,6 @@ import re
 
 import pandas as pd
 
-from .gradebook import Gradebook
-
 
 def read_egrades_roster(path):
     """Read an eGrades roster CSV into a pandas dataframe.
@@ -22,10 +20,15 @@ def read_egrades_roster(path):
     return pd.read_csv(path, delimiter="\t").set_index("Student ID")
 
 
-def read_gradescope_gradebook(
-    path, standardize_pids=True, standardize_assignments=True
-):
-    """Read a CSV exported from Gradescope into a Gradebook.
+def read_gradescope(path, standardize_pids=True, standardize_assignments=True):
+    """Read a CSV exported from Gradescope.
+
+    Warning
+    -------
+
+    This is a low-level function which returns a pandas DataFrame. A 
+    higher-level convenience function for reading a gradescope CSV directly into
+    a :class:`Gradebook` is provided by :meth:`Gradebook.from_gradescope`.
 
     Parameters
     ----------
@@ -41,7 +44,12 @@ def read_gradescope_gradebook(
 
     Returns
     -------
-    Gradebook
+    points : pd.DataFrame
+        Points table, one row per student.
+    maximums : pd.Series
+        Maximum points for each assignment.
+    lateness : pd.DataFrame
+        The lateness of each submission, as a string.
 
     """
     table = pd.read_csv(path).set_index("SID")
@@ -70,12 +78,11 @@ def read_gradescope_gradebook(
     max_points.index = points.columns
     max_points.name = "Max Points"
 
-    # the csv contains time since late deadline; we'll booleanize this as
-    # simply late or not
-    late = (table.iloc[:, starting_index + 3 :: stride] != "00:00:00").astype(bool)
-    late.columns = points.columns
+    # the csv contains time since late deadline
+    lateness = table.iloc[:, starting_index + 3 :: stride]
+    lateness.columns = points.columns
 
-    return Gradebook(points, max_points, late, dropped=None)
+    return points, max_points, lateness
 
 
 def _remove_assignment_id(s):
@@ -83,13 +90,21 @@ def _remove_assignment_id(s):
     return re.sub(r" +\(\d+\)$", "", s)
 
 
-def read_canvas_gradebook(
+def read_canvas(
     path,
+    *,
     standardize_pids=True,
     standardize_assignments=True,
     remove_assignment_ids=True,
 ):
-    """Read a CSV exported from Canvas into a Gradebook.
+    """Read a CSV exported from Canvas.
+
+    Warning
+    -------
+
+    This is a low-level function which returns a pandas DataFrame. A 
+    higher-level convenience function for reading a canvas CSV directly into
+    a :class:`Gradebook` is provided by :meth:`Gradebook.from_canvas`.
 
     Parameters
     ----------
@@ -107,7 +122,10 @@ def read_canvas_gradebook(
 
     Returns
     -------
-    Gradebook
+    points : pd.DataFrame
+        Points table, one row per student.
+    maximums : pd.Series
+        Maximum points for each assignment.
 
     """
     table = pd.read_csv(path).set_index("SIS User ID")
@@ -155,7 +173,7 @@ def read_canvas_gradebook(
     # changes to max_points
     max_points.index = points.columns
 
-    return Gradebook(points, max_points, late=None, dropped=None)
+    return points, max_points
 
 
 def write_canvas_grades(existing, output, grades):

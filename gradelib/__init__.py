@@ -2,8 +2,8 @@
 
 from .io import (
     read_egrades_roster,
-    read_canvas_gradebook,
-    read_gradescope_gradebook,
+    read_canvas,
+    read_gradescope,
     write_canvas_grades,
     write_egrades,
 )

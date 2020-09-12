@@ -8,10 +8,10 @@ import gradelib
 
 
 EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent / "examples"
-GRADESCOPE_EXAMPLE = gradelib.read_gradescope_gradebook(
+GRADESCOPE_EXAMPLE = gradelib.Gradebook.from_gradescope(
     EXAMPLES_DIRECTORY / "gradescope.csv"
 )
-CANVAS_EXAMPLE = gradelib.read_canvas_gradebook(EXAMPLES_DIRECTORY / "canvas.csv")
+CANVAS_EXAMPLE = gradelib.Gradebook.from_canvas(EXAMPLES_DIRECTORY / "canvas.csv")
 
 # the canvas example has Lab 01, which is also in Gradescope. Let's remove it
 CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.Gradebook(

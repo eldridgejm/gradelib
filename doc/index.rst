@@ -29,8 +29,8 @@ algorithm which finds "robust" thresholds for every letter grade.
     roster = gradelib.read_egrades_roster('roster.csv')
 
     # read grades from canvas and gradescope
-    gradescope_grades = gradelib.read_gradescope_gradebook('gradescope.csv')
-    canvas_grades = gradelib.read_canvas_gradebook('canvas.csv')
+    gradescope_grades = gradelib.Gradebook.from_gradescope('gradescope.csv')
+    canvas_grades = gradelib.Gradebook.from_canvas('canvas.csv')
 
     # combine canvas and gradescope grades into a single gradebook, 
     # checking that all enrolled students are accounted for
@@ -86,26 +86,17 @@ API
 
 .. currentmodule:: gradelib
 
-**I/O**
-
-.. autosummary::
-    :nosignatures:
-
-    read_gradescope_gradebook
-    read_canvas_gradebook
-    read_egrades_roster
-    write_canvas_grades
-    write_egrades
-
 **Gradebooks**
 
 .. autosummary::
     :nosignatures:
 
     Gradebook
+    Gradebook.from_canvas
+    Gradebook.from_gradescope
+    Gradebook.combine
     Gradebook.assignments
     Gradebook.pids
-    Gradebook.combine
     Gradebook.drop_lowest
     Gradebook.forgive_lates
     Gradebook.give_equal_weights
@@ -134,15 +125,16 @@ API
     plot_grade_distribution
     find_robust_scale
 
+**I/O**
 
-I/O
----
+.. autosummary::
+    :nosignatures:
 
-.. autofunction:: gradelib.read_gradescope_gradebook
-.. autofunction:: gradelib.read_canvas_gradebook
-.. autofunction:: gradelib.read_egrades_roster
-.. autofunction:: gradelib.write_canvas_grades
-.. autofunction:: gradelib.write_egrades
+    read_gradescope
+    read_canvas
+    read_egrades_roster
+    write_canvas_grades
+    write_egrades
 
 
 Gradebooks
@@ -175,6 +167,16 @@ Grading Scales
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+
+I/O
+---
+
+.. autofunction:: gradelib.read_gradescope
+.. autofunction:: gradelib.read_canvas
+.. autofunction:: gradelib.read_egrades_roster
+.. autofunction:: gradelib.write_canvas_grades
+.. autofunction:: gradelib.write_egrades
 
 
 

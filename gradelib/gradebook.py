@@ -5,6 +5,8 @@ import itertools
 
 import pandas as pd
 
+from . import io
+
 
 class Assignments(collections.abc.Sequence):
     """A sequence of assignments.
@@ -119,27 +121,66 @@ class Gradebook:
             f"and {len(self.pids)} students>"
         )
 
-    @property
-    def assignments(self):
-        """All assignments in the gradebook.
+    @classmethod
+    def from_gradescope(
+        cls, path, *, standardize_pids=True, standardize_assignments=True
+    ):
+        """Read a gradescope CSV into a gradebook.
 
-        Returns
-        -------
-        Assignments
+        Parameters
+        ----------
+        path : str or pathlib.Path
+            Path to the CSV file that will be read.
+        standardize_pids : bool
+            Whether to standardize PIDs so that they are all uppercased. This can be
+            useful when students who manually join gradescope enter their own PID
+            without uppercasing it. Default: True.
+        standardize_assignments : bool
+            Whether to standardize assignment names so that they are all lowercased.
+            Default: True.
+        """
+        points, maximums, late = io.read_gradescope(
+            path,
+            standardize_pids=standardize_pids,
+            standardize_assignments=standardize_assignments,
+        )
+        # lates are given as strings expressing lateness... booleanize them
+        late = (late != "00:00:00").astype(bool)
+        return cls(points, maximums, late)
+
+    @classmethod
+    def from_canvas(
+        cls,
+        path,
+        *,
+        standardize_pids=True,
+        standardize_assignments=True,
+        remove_assignment_ids=True,
+    ):
+        """Read a CSV exported from Canvas.
+
+        Parameters
+        ----------
+        path : str or pathlib.Path
+            Path to the CSV file that will be read.
+        standardize_pids : bool
+            Whether to standardize PIDs so that they are all uppercased. Default:
+            True.
+        standardize_assignments : bool
+            Whether to standardize assignment names so that they are all lowercased.
+            Default: True
+        remove_assignment_ids : bool
+            Whether to remove the unique ID code that Canvas appends to each
+            assignment name.  Default: True.
 
         """
-        return Assignments(self.points.columns)
-
-    @property
-    def pids(self):
-        """All student PIDs.
-
-        Returns
-        -------
-        set
-
-        """
-        return set(self.points.index)
+        points, maximums = io.read_canvas(
+            path,
+            standardize_pids=standardize_pids,
+            standardize_assignments=standardize_assignments,
+            remove_assignment_ids=remove_assignment_ids,
+        )
+        return cls(points, maximums)
 
     @classmethod
     def combine(cls, gradebooks, restrict_pids=None):
@@ -206,6 +247,28 @@ class Gradebook:
         dropped = concat_attr("dropped")
 
         return cls(points, maximums, late, dropped)
+
+    @property
+    def assignments(self):
+        """All assignments in the gradebook.
+
+        Returns
+        -------
+        Assignments
+
+        """
+        return Assignments(self.points.columns)
+
+    @property
+    def pids(self):
+        """All student PIDs.
+
+        Returns
+        -------
+        set
+
+        """
+        return set(self.points.index)
 
     def restrict_pids(self, to):
         """Restrict the gradebook to only the supplied PIDS.

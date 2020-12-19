@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>gradelib &mdash; gradelib 0.1.0 documentation</title>
+  <title>gradelib &mdash; gradelib 0.2.0 documentation</title>
   
 
   
@@ -250,6 +250,12 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.combine" title="gradelib.Gradebook.combine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.combine</span></code></a></p></td>
 <td><p>Create a gradebook by safely combining several existing gradebooks.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.add_assignment" title="gradelib.Gradebook.add_assignment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.add_assignment</span></code></a></p></td>
+<td><p>Adds a single assignment to the gradebook.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.unify" title="gradelib.Gradebook.unify"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.unify</span></code></a></p></td>
+<td><p>Unifies the assignment parts into one single assignment with the new name.</p></td>
+</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.assignments" title="gradelib.Gradebook.assignments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.assignments</span></code></a></p></td>
 <td><p>All assignments in the gradebook.</p></td>
 </tr>
@@ -380,6 +386,38 @@ that is <cite>True</cite> indicates that the assignment should be dropped. If
 <p>Typically a Gradebook is not created manually, but is instead produced
 by reading grades exported from Gradescope or Canvas, using
 <code class="xref py py-func docutils literal notranslate"><span class="pre">read_gradescope_gradebook()</span></code> or <code class="xref py py-func docutils literal notranslate"><span class="pre">read_canvas_gradebook()</span></code>.</p>
+<dl class="py method">
+<dt id="gradelib.Gradebook.add_assignment">
+<code class="sig-name descname">add_assignment</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">points</span></em>, <em class="sig-param"><span class="n">maximums</span></em>, <em class="sig-param"><span class="n">late</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dropped</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.add_assignment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a single assignment to the gradebook.</p>
+<p>Usually Gradebook do not need to have individual assignments added to them.
+Instead, Gradebooks are read from Canvas, Gradescope, etc. In some instances,
+though, it can be useful to manually add an assignment to a Gradebook – this
+method makes it easy to do so.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – The name of the new assignment. Must be unique.</p></li>
+<li><p><strong>points</strong> (<em>Series</em><em>[</em><em>float</em><em>]</em>) – A Series of points earned by each student.</p></li>
+<li><p><strong>maximums</strong> (<em>float</em>) – The maximum number of points possible on the assignment.</p></li>
+<li><p><strong>late</strong> (<em>Series</em><em>[</em><em>bool</em><em>]</em>) – Whether each student turned in the assignment late. Default: all False.</p></li>
+<li><p><strong>dropped</strong> (<em>Series</em><em>[</em><em>bool</em><em>]</em>) – Whether the assignment should be dropped for any given student. Default:
+all False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A new Gradebook object with the new assignment in place.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If an assignment with the given name already exists, or if grades for a student
+    are missing / grades for an unknown student are provided.</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt id="gradelib.Gradebook.assignments">
 <em class="property">property </em><code class="sig-name descname">assignments</code><a class="headerlink" href="#gradelib.Gradebook.assignments" title="Permalink to this definition">¶</a></dt>
@@ -676,6 +714,42 @@ assignments (acts as if they were never assigned).</p>
 <li><p><em>pd.Series</em> – The total points available for each student.</p></li>
 </ul>
 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gradelib.Gradebook.unify">
+<code class="sig-name descname">unify</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parts</span></em>, <em class="sig-param"><span class="n">new_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.unify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unifies the assignment parts into one single assignment with the new name.</p>
+<p>Sometimes assignments may have several parts which are recorded separately
+in the grading software. For instance, a homework might
+have a written part and a programming part. This method makes it easy
+to unify these parts into a single assignment.</p>
+<p>The new point total and maximum possible points are calculated by
+addition. The new assignment is considered late if either of the parts
+are marked as late.</p>
+<p>It is unclear what the result should be if any of the assignments to be
+unified has been dropped, but other parts have not. For this reason,
+this method will raise a <cite>ValueError</cite> if <em>any</em> of the parts have been
+dropped.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parts</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – The assignments that should be unified into one assignment.</p></li>
+<li><p><strong>new_name</strong> (<em>str</em>) – The name that should be given to the new assignment.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The gradebook with the assignments unified to one assignment. Other
+assignments are left untouched.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the assignments to be unified is marked as dropped. See above for
+    rationale.</p>
 </dd>
 </dl>
 </dd></dl>

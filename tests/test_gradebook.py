@@ -448,3 +448,171 @@ def test_total_ignores_dropped_assignments():
     # then
     assert np.allclose(earned.values, [30, 9], atol=1e-6)
     assert np.allclose(available.values, [50, 52], atol=1e-6)
+
+
+# unify()
+# -----------------------------------------------------------------------------
+
+
+def test_unify():
+    """test that points / maximums are added across unified assignments"""
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
+
+    # when
+    result = gradebook.unify(HOMEWORK_01_PARTS, "hw01")
+
+    # then
+    assert len(result.assignments) == 3
+    assert result.maximums["hw01"] == 52
+    assert result.points.loc["A1", "hw01"] == 31
+
+
+def test_unify_considers_new_assignment_late_if_any_part_late():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    gradebook.late.loc["A1", "hw01"] = True
+    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
+
+    # when
+    result = gradebook.unify(HOMEWORK_01_PARTS, "hw01")
+
+    # then
+    assert result.late.loc["A1", "hw01"] == True
+
+
+def test_unify_raises_if_any_part_is_dropped():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    gradebook.dropped.loc["A1", "hw01"] = True
+    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
+
+    with pytest.raises(ValueError):
+        result = gradebook.unify(HOMEWORK_01_PARTS, "hw01")
+
+
+# add_assignment()
+# -----------------------------------------------------------------------------
+
+
+def test_add_assignment():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    assignment_points = pd.Series([10, 20], index=["A1", "A2"])
+    assignment_max = 20
+    assignment_late = pd.Series([True, False], index=["A1", "A2"])
+    assignment_dropped = pd.Series([False, True], index=["A1", "A2"])
+
+    # when
+    result = gradebook.add_assignment(
+        "new", assignment_points, 20, late=assignment_late, dropped=assignment_dropped
+    )
+
+    # then
+    assert len(result.assignments) == 5
+    assert result.points.loc["A1", "new"] == 10
+    assert result.maximums.loc["new"] == 20
+
+
+def test_add_assignment_default_none_dropped_or_late():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    assignment_points = pd.Series([10, 20], index=["A1", "A2"])
+    assignment_max = 20
+
+    # when
+    result = gradebook.add_assignment("new", assignment_points, 20,)
+
+    # then
+    assert result.late.loc["A1", "new"] == False
+    assert result.dropped.loc["A1", "new"] == False
+
+
+def test_add_assignment_raises_on_missing_student():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    # A2 is missing
+    assignment_points = pd.Series([10], index=["A1"])
+    assignment_max = 20
+
+    # when
+    with pytest.raises(ValueError):
+        gradebook.add_assignment(
+            "new", assignment_points, 20,
+        )
+
+
+def test_add_assignment_raises_on_unknown_student():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    # foo is unknown
+    assignment_points = pd.Series([10, 20, 30], index=["A1", "A2", "A3"])
+    assignment_max = 20
+
+    # when
+    with pytest.raises(ValueError):
+        gradebook.add_assignment(
+            "new", assignment_points, 20,
+        )
+
+
+def test_add_assignment_raises_if_duplicate_name():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    assignment_points = pd.Series([10, 20], index=["A1", "A2"])
+    assignment_max = 20
+
+    # when
+    with pytest.raises(ValueError):
+        gradebook.add_assignment(
+            "hw01", assignment_points, 20,
+        )

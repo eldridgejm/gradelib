@@ -531,6 +531,9 @@ class Gradebook:
         new_dropped = dropped if dropped is not None else self.dropped.copy()
         return Gradebook(new_points, new_maximums, new_late, new_dropped)
 
+    def copy(self):
+        return self.replace()
+
     def give_equal_weights(self, within):
         """Normalize maximum points so that all assignments are worth the same.
 
@@ -613,3 +616,122 @@ class Gradebook:
         """
         earned, available = self.total(within)
         return earned / available
+
+    def unify(self, parts, new_name):
+        """Unifies the assignment parts into one single assignment with the new name.
+
+        Sometimes assignments may have several parts which are recorded separately
+        in the grading software. For instance, a homework might
+        have a written part and a programming part. This method makes it easy
+        to unify these parts into a single assignment.
+
+        The new point total and maximum possible points are calculated by
+        addition. The new assignment is considered late if either of the parts
+        are marked as late.
+
+        It is unclear what the result should be if any of the assignments to be
+        unified has been dropped, but other parts have not. For this reason,
+        this method will raise a `ValueError` if *any* of the parts have been
+        dropped.
+
+        Parameters
+        ----------
+        parts : Collection[str]
+            The assignments that should be unified into one assignment.
+        new_name : str
+            The name that should be given to the new assignment.
+
+        Returns
+        -------
+        Gradebook
+            The gradebook with the assignments unified to one assignment. Other 
+            assignments are left untouched.
+
+        Raises
+        ------
+        ValueError
+            If any of the assignments to be unified is marked as dropped. See above for
+            rationale.
+
+        """
+        parts = list(parts)
+        if self.dropped[parts].any(axis=None):
+            raise ValueError("Cannot unify assignments with drops.")
+
+        assignment_points = self.points[parts].sum(axis=1)
+        assignment_max = self.maximums[parts].sum()
+        assignment_late = self.late[parts].any(axis=1)
+
+        new_points = self.points.copy().drop(columns=parts)
+        new_max = self.maximums.copy().drop(columns=parts)
+        new_late = self.late.copy().drop(columns=parts)
+
+        new_points[new_name] = assignment_points
+        new_max[new_name] = assignment_max
+        new_late[new_name] = assignment_late
+
+        return Gradebook(new_points, new_max, late=new_late)
+
+    def add_assignment(self, name, points, maximums, late=None, dropped=None):
+        """Adds a single assignment to the gradebook.
+
+        Usually Gradebook do not need to have individual assignments added to them.
+        Instead, Gradebooks are read from Canvas, Gradescope, etc. In some instances,
+        though, it can be useful to manually add an assignment to a Gradebook -- this
+        method makes it easy to do so.
+
+        Parameters
+        ----------
+        name : str
+            The name of the new assignment. Must be unique.
+        points : Series[float]
+            A Series of points earned by each student.
+        maximums : float
+            The maximum number of points possible on the assignment.
+        late : Series[bool]
+            Whether each student turned in the assignment late. Default: all False.
+        dropped : Series[bool]
+            Whether the assignment should be dropped for any given student. Default:
+            all False.
+
+        Returns
+        -------
+        Gradebook
+            A new Gradebook object with the new assignment in place.
+
+        Raises
+        ------
+        ValueError
+            If an assignment with the given name already exists, or if grades for a student
+            are missing / grades for an unknown student are provided.
+
+        """
+        if name in self.assignments:
+            raise ValueError(f'An assignment with the name "{name}" already exists.')
+
+        if late is None:
+            late = pd.Series(False, index=self.pids)
+
+        if dropped is None:
+            dropped = pd.Series(False, index=self.pids)
+
+        result = self.copy()
+
+        def _match_pids(pids, where):
+            theirs = set(pids)
+            ours = set(self.pids)
+            if theirs - ours:
+                raise ValueError(f'Unknown pids {theirs - ours} provided in "{where}".')
+            if ours - theirs:
+                raise ValueError(f'"{where}" is missing PIDs: {ours - theirs}')
+
+        _match_pids(points.index, "points")
+        _match_pids(late.index, "late")
+        _match_pids(dropped.index, "dropped")
+
+        result.points[name] = points
+        result.maximums[name] = maximums
+        result.late[name] = late
+        result.dropped[name] = dropped
+
+        return result

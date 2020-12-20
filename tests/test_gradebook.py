@@ -474,6 +474,11 @@ def test_unify():
     assert result.maximums["hw01"] == 52
     assert result.points.loc["A1", "hw01"] == 31
 
+    assert result.maximums.shape[0] == 3
+    assert result.late.shape[1] == 3
+    assert result.dropped.shape[1] == 3
+    assert result.points.shape[1] == 3
+
 
 def test_unify_considers_new_assignment_late_if_any_part_late():
     # given

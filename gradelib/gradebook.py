@@ -663,7 +663,7 @@ class Gradebook:
         assignment_late = self.late[parts].any(axis=1)
 
         new_points = self.points.copy().drop(columns=parts)
-        new_max = self.maximums.copy().drop(columns=parts)
+        new_max = self.maximums.copy().drop(parts)
         new_late = self.late.copy().drop(columns=parts)
 
         new_points[new_name] = assignment_points

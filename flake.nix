@@ -15,7 +15,6 @@
               name = "gradelib";
               src = ./.;
               propagatedBuildInputs = with python3Packages; [ pandas matplotlib numpy ];
-              # nativeBuildInputs = with python3Packages; [ black pytest jupyter ipython sphinx sphinx_rtd_theme ];
               nativeBuildInputs = with python3Packages; [ black pytest ipython sphinx sphinx_rtd_theme ];
             }
           );

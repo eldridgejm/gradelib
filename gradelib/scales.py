@@ -57,6 +57,12 @@ def map_scores_to_letter_grades(scores, scale=None):
     """
     if scale is None:
         scale = DEFAULT_SCALE
+    else:
+        if list(scale) != list(DEFAULT_SCALE):
+            raise ValueError(
+                f"Scale has invalid letter grades. Must be in {set(DEFAULT_SCALE.keys())}"
+            )
+        _check_that_scale_monotonically_decreases(scale)
 
     def _map(score):
         for letter, threshold in scale.items():
@@ -64,13 +70,6 @@ def map_scores_to_letter_grades(scores, scale=None):
                 return letter
         else:
             return "F"
-
-    _check_that_scale_monotonically_decreases(scale)
-
-    if list(scale) != list(DEFAULT_SCALE):
-        raise ValueError(
-            f"Scale has invalid letter grades. Must be in {set(DEFAULT_SCALE.keys())}"
-        )
 
     return scores.apply(_map)
 

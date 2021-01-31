@@ -62,6 +62,17 @@ def test_read_gradescope_standardizes_assignments_by_default():
     assert "homework 02" in points.columns
 
 
+def test_read_gradescope_without_canvas_link_produces_correct_assignments():
+    # when
+    path = EXAMPLES_DIRECTORY / "gradescope_not_linked_with_canvas.csv"
+    points, *_ = gradelib.read_gradescope(path)
+
+    # then
+    assert points.columns[0] == "demo midterm"
+    assert points.columns[1] == "fake assignment"
+    assert len(points.columns) == 2
+
+
 # read_canvas
 # =============================================================================
 

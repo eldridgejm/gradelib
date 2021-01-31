@@ -52,7 +52,7 @@ def read_gradescope(path, standardize_pids=True, standardize_assignments=True):
         The lateness of each submission, as a string.
 
     """
-    table = pd.read_csv(path).set_index("SID")
+    table = pd.read_csv(path, dtype={"SID": str}).set_index("SID")
 
     # drop the total lateness column; it just gets in the way
     table = table.drop(columns="Total Lateness (H:M:S)")
@@ -60,12 +60,21 @@ def read_gradescope(path, standardize_pids=True, standardize_assignments=True):
     if standardize_pids:
         table.index = table.index.str.upper()
 
-    # now we create the points table. We use the assumption that the first
-    # assignment is in the fifth column (starting_index = 4), and the
-    # assignments are in every fourth column thereafter (stride = 4). this
-    # assumption is liable to break if gradescope changes their CSV schema.
-    starting_index = 4
+    # now we read the assignments to create the points table.
+    # there are four columns for each assignment: one with the assignment's name
+    # a second with the max points for the assignment, a third with the submission
+    # time, and a fourth with the lateness.
     stride = 4
+
+    # the first column containing an assignment varies depending on whether the
+    # gradescope account has been linked with canvas or not. if linked with canvas,
+    # there will be an extra column named "section_name" before the assignment columns
+    # note that we have set the index to the SID column, so the columns numbers below
+    # are one less than appear in the actual .csv
+    if "section_name" in table.columns:
+        starting_index = 4
+    else:
+        starting_index = 3
 
     # extract the points
     points = table.iloc[:, starting_index::stride].astype(float)

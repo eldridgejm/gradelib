@@ -20,6 +20,24 @@ def read_egrades_roster(path):
     return pd.read_csv(path, delimiter="\t").set_index("Student ID")
 
 
+def _find_index_of_first_assignment_column(columns):
+    # the first column containing an assignment varies depending on whether the
+    # gradescope account has been linked with canvas or not. if linked with canvas,
+    # there will be an extra column named "section_name" before the assignment columns
+    # note that we have set the index to the SID column, so the columns numbers below
+    # are one less than appear in the actual .csv. furthermore, sometimes the csv will
+    # contain a single "name" column, and other times it will contain a "first name"
+    # column as well as a "last name" column.
+    #
+    # we'll handle these situations by simply searching for the first column name that
+    # isn't a header column
+    header_columns = {"first name", "last name", "name", "email", "sid", "section_name"}
+    for i, column in enumerate(columns):
+        if column.lower() not in header_columns:
+            return i
+    raise ValueError("There is no assignment column.")
+
+
 def read_gradescope(path, standardize_pids=True, standardize_assignments=True):
     """Read a CSV exported from Gradescope.
 
@@ -66,15 +84,7 @@ def read_gradescope(path, standardize_pids=True, standardize_assignments=True):
     # time, and a fourth with the lateness.
     stride = 4
 
-    # the first column containing an assignment varies depending on whether the
-    # gradescope account has been linked with canvas or not. if linked with canvas,
-    # there will be an extra column named "section_name" before the assignment columns
-    # note that we have set the index to the SID column, so the columns numbers below
-    # are one less than appear in the actual .csv
-    if "section_name" in table.columns:
-        starting_index = 4
-    else:
-        starting_index = 3
+    starting_index = _find_index_of_first_assignment_column(table.columns)
 
     # extract the points
     points = table.iloc[:, starting_index::stride].astype(float)

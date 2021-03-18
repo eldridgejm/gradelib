@@ -88,7 +88,7 @@ gradelib.plot_grade_distribution(overall, robust_scale)
 
 The result of the visualization is the image below:
 
-~[robust grading scale](./robust_scale.png)
+![robust grading scale](./robust_scale.png)
 
 Letter grades can be assigned using this scale and exported to egrades:
 

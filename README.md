@@ -24,8 +24,7 @@ The following example shows the complete workflow for calculating final grades
 in a typical scenario. In this case, some grades were kept on Canvas, while
 others were kept on Gradescope. The grading policy allowed for 4 late
 assignments between homeworks and labs, as well as one dropped homework and one
-dropped lab. The final grading scale is determined by a simple clustering
-algorithm which finds "robust" thresholds for every letter grade.
+dropped lab.
 
 
 ```python
@@ -72,13 +71,28 @@ overall = (
     +
     .30 * gradebook.score('final exam')
 )
+```
 
+ The final grading scale is determined by a simple clustering algorithm which finds
+ "robust" thresholds for every letter grade. These are thresholds which are far from the
+ nearest grade on the left; that is, there are no students "on the cusp" of the next
+ highest letter grade.
+
+```python
 # find robust letter grade cutoffs by clustering grades
 robust_scale = gradelib.find_robust_scale(overall)
 
 # visualize the grade distribution
 gradelib.plot_grade_distribution(overall, robust_scale)
+```
 
+The result of the visualization is the image below:
+
+~[robust grading scale](./robust_scale.png)
+
+Letter grades can be assigned using this scale and exported to egrades:
+
+```python
 # assign letter grades
 letters = gradelib.map_scores_to_letter_grades(overall, robust_scale)
 

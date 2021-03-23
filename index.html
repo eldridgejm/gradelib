@@ -278,12 +278,6 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.number_of_lates" title="gradelib.Gradebook.number_of_lates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.number_of_lates</span></code></a></p></td>
 <td><p>Return the number of late assignments for each student as a Series.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.restrict_assignments" title="gradelib.Gradebook.restrict_assignments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.restrict_assignments</span></code></a></p></td>
-<td><p>Restrict the gradebook to only the supplied assignments.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.restrict_pids" title="gradelib.Gradebook.restrict_pids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.restrict_pids</span></code></a></p></td>
-<td><p>Restrict the gradebook to only the supplied PIDS.</p></td>
-</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.score" title="gradelib.Gradebook.score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.score</span></code></a></p></td>
 <td><p>Computes the fraction of possible points earned across one or more assignments.</p></td>
 </tr>
@@ -441,7 +435,7 @@ all False.</p></li>
 
 <dl class="py method">
 <dt id="gradelib.Gradebook.combine">
-<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">combine</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gradebooks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restrict_pids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.combine" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">combine</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gradebooks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_pids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.combine" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a gradebook by safely combining several existing gradebooks.</p>
 <p>It is crucial that the combined gradebooks have exactly the same
 students – we don’t want students to have missing grades. This
@@ -453,9 +447,9 @@ unique assignments, so that no conflicts occur when combining them.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>gradebooks</strong> (<em>Collection</em><em>[</em><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook"><em>Gradebook</em></a><em>]</em>) – The gradebooks to combine. Must have matching indices and unique
 column names.</p></li>
-<li><p><strong>restrict_pids</strong> (<em>Collection</em><em>[</em><em>str</em><em>] or </em><em>None</em>) – If provided, each input gradebook will be restricted to the PIDs
+<li><p><strong>keep_pids</strong> (<em>Collection</em><em>[</em><em>str</em><em>] or </em><em>None</em>) – If provided, each input gradebook will be restricted to the PIDs
 given before attempting to combine them. This is a convenience
-option, and it simply calls <a class="reference internal" href="#gradelib.Gradebook.restrict_pids" title="gradelib.Gradebook.restrict_pids"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Gradebook.restrict_pids()</span></code></a> on
+option, and it simply calls <a class="reference internal" href="#gradelib.Gradebook.keep_pids" title="gradelib.Gradebook.keep_pids"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Gradebook.keep_pids()</span></code></a> on
 each of the inputs.  Default: None</p></li>
 </ul>
 </dd>
@@ -612,6 +606,46 @@ Default: True.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt id="gradelib.Gradebook.keep_assignments">
+<code class="sig-name descname"><span class="pre">keep_assignments</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assignments</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.keep_assignments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restrict the gradebook to only the supplied assignments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>assignments</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – A collection of assignment names.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A Gradebook with only these assignments.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>KeyError</strong> – If an assignment was specified that was not in the gradebook.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gradelib.Gradebook.keep_pids">
+<code class="sig-name descname"><span class="pre">keep_pids</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.keep_pids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restrict the gradebook to only the supplied PIDS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>to</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – A collection of PIDs. For instance, from the final course roster.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A Gradebook with only these PIDs.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>KeyError</strong> – If a PID was specified that is not in the gradebook.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="gradelib.Gradebook.number_of_lates">
 <code class="sig-name descname"><span class="pre">number_of_lates</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">within</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.number_of_lates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the number of late assignments for each student as a Series.</p>
@@ -647,12 +681,12 @@ gradebook. If None, all assignments will be used. Default: None</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.restrict_assignments">
-<code class="sig-name descname"><span class="pre">restrict_assignments</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.restrict_assignments" title="Permalink to this definition">¶</a></dt>
-<dd><p>Restrict the gradebook to only the supplied assignments.</p>
+<dt id="gradelib.Gradebook.remove_assignments">
+<code class="sig-name descname"><span class="pre">remove_assignments</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assignments</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.remove_assignments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove the assignments from the gradebook.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>to</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – A collection of assignment names.</p>
+<dd class="field-odd"><p><strong>assignments</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – A collection of assignment names.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A Gradebook with only these assignments.</p>
@@ -662,26 +696,6 @@ gradebook. If None, all assignments will be used. Default: None</p>
 </dd>
 <dt class="field-even">Raises</dt>
 <dd class="field-even"><p><strong>KeyError</strong> – If an assignment was specified that was not in the gradebook.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt id="gradelib.Gradebook.restrict_pids">
-<code class="sig-name descname"><span class="pre">restrict_pids</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.restrict_pids" title="Permalink to this definition">¶</a></dt>
-<dd><p>Restrict the gradebook to only the supplied PIDS.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>to</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – A collection of PIDs. For instance, from the final course roster.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A Gradebook with only these PIDs.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>KeyError</strong> – If a PID was specified that is not in the gradebook.</p>
 </dd>
 </dl>
 </dd></dl>

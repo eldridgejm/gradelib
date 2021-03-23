@@ -617,7 +617,27 @@ class Gradebook:
         earned, available = self.total(within)
         return earned / available
 
-    def unify(self, parts, new_name):
+    def _unify_assignment(self, new_name, parts):
+        """A helper function to unify assignments under the new name."""
+        parts = list(parts)
+        if self.dropped[parts].any(axis=None):
+            raise ValueError("Cannot unify assignments with drops.")
+
+        assignment_points = self.points[parts].sum(axis=1)
+        assignment_max = self.maximums[parts].sum()
+        assignment_late = self.late[parts].any(axis=1)
+
+        new_points = self.points.copy().drop(columns=parts)
+        new_max = self.maximums.copy().drop(parts)
+        new_late = self.late.copy().drop(columns=parts)
+
+        new_points[new_name] = assignment_points
+        new_max[new_name] = assignment_max
+        new_late[new_name] = assignment_late
+
+        return Gradebook(new_points, new_max, late=new_late)
+
+    def unify_assignments(self, dct_or_callable):
         """Unifies the assignment parts into one single assignment with the new name.
 
         Sometimes assignments may have several parts which are recorded separately
@@ -636,10 +656,11 @@ class Gradebook:
 
         Parameters
         ----------
-        parts : Collection[str]
-            The assignments that should be unified into one assignment.
-        new_name : str
-            The name that should be given to the new assignment.
+        dct : Mapping[str, Collection[str]]
+            Either: 1) a mapping whose keys are new assignment names, and whose
+            values are collections of assignments that should be unified under
+            their common key; or 2) a callable which maps assignment names to
+            new assignment by which they should be grouped.
 
         Returns
         -------
@@ -653,24 +674,38 @@ class Gradebook:
             If any of the assignments to be unified is marked as dropped. See above for
             rationale.
 
+        Example
+        -------
+
+        Assuming the gradebook has assignments named `homework 01`, `homework 01 - programming`,
+        `homework 02`, `homework 02 - programming`, etc., the following will "unify" the
+        assignments into `homework 01`, `homework 02`, etc:
+
+            >>> gradebook.unify_assignments(lambda s: s.split('-')[0].strip())
+
+        Alternatively, you could write:
+
+            >>> gradebook.unify_assignments({
+                'homework 01': {'homework 01', 'homework 01 - programming'},
+                'homework 02': {'homework 02', 'homework 02 - programming'}
+                })
+
         """
-        parts = list(parts)
-        if self.dropped[parts].any(axis=None):
-            raise ValueError("Cannot unify assignments with drops.")
+        if not callable(dct_or_callable):
+            dct = dct_or_callable
+        else:
+            to_key = dct_or_callable
+            dct = {}
+            for assignment in self.assignments:
+                key = to_key(assignment)
+                if key not in dct:
+                    dct[key] = []
+                dct[key].append(assignment)
 
-        assignment_points = self.points[parts].sum(axis=1)
-        assignment_max = self.maximums[parts].sum()
-        assignment_late = self.late[parts].any(axis=1)
-
-        new_points = self.points.copy().drop(columns=parts)
-        new_max = self.maximums.copy().drop(parts)
-        new_late = self.late.copy().drop(columns=parts)
-
-        new_points[new_name] = assignment_points
-        new_max[new_name] = assignment_max
-        new_late[new_name] = assignment_late
-
-        return Gradebook(new_points, new_max, late=new_late)
+        result = self
+        for key, value in dct.items():
+            result = result._unify_assignment(key, value)
+        return result
 
     def add_assignment(self, name, points, maximums, late=None, dropped=None):
         """Adds a single assignment to the gradebook.

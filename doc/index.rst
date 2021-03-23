@@ -96,7 +96,7 @@ API
     Gradebook.from_gradescope
     Gradebook.combine
     Gradebook.add_assignment
-    Gradebook.unify
+    Gradebook.unify_assignments
     Gradebook.assignments
     Gradebook.pids
     Gradebook.drop_lowest

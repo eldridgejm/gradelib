@@ -450,11 +450,11 @@ def test_total_ignores_dropped_assignments():
     assert np.allclose(available.values, [50, 52], atol=1e-6)
 
 
-# unify()
+# unify_assignments()
 # -----------------------------------------------------------------------------
 
 
-def test_unify():
+def test_unify_assignments():
     """test that points / maximums are added across unified assignments"""
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
@@ -467,7 +467,7 @@ def test_unify():
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
     # when
-    result = gradebook.unify(HOMEWORK_01_PARTS, "hw01")
+    result = gradebook.unify_assignments({"hw01": HOMEWORK_01_PARTS})
 
     # then
     assert len(result.assignments) == 3
@@ -478,6 +478,73 @@ def test_unify():
     assert result.late.shape[1] == 3
     assert result.dropped.shape[1] == 3
     assert result.points.shape[1] == 3
+
+
+def test_unify_assignments_with_multiple_in_dictionary():
+    """test that points / maximums are added across unified assignments"""
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "hw02 - testing"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
+    HOMEWORK_02_PARTS = gradebook.assignments.starting_with("hw02")
+
+    # when
+    result = gradebook.unify_assignments(
+        {"hw01": HOMEWORK_01_PARTS, "hw02": HOMEWORK_02_PARTS}
+    )
+
+    # then
+    assert len(result.assignments) == 2
+
+    assert result.maximums["hw01"] == 52
+    assert result.points.loc["A1", "hw01"] == 31
+
+    assert result.maximums["hw02"] == 120
+    assert result.points.loc["A1", "hw02"] == 110
+
+    assert result.maximums.shape[0] == 2
+    assert result.late.shape[1] == 2
+    assert result.dropped.shape[1] == 2
+    assert result.points.shape[1] == 2
+
+
+def test_unify_assignments_with_callable():
+    """test that points / maximums are added across unified assignments"""
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "hw02 - testing"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
+    HOMEWORK_02_PARTS = gradebook.assignments.starting_with("hw02")
+
+    def assignment_to_key(s):
+        return s.split("-")[0].strip()
+
+    # when
+    result = gradebook.unify_assignments(assignment_to_key)
+
+    # then
+    assert len(result.assignments) == 2
+
+    assert result.maximums["hw01"] == 52
+    assert result.points.loc["A1", "hw01"] == 31
+
+    assert result.maximums["hw02"] == 120
+    assert result.points.loc["A1", "hw02"] == 110
+
+    assert result.maximums.shape[0] == 2
+    assert result.late.shape[1] == 2
+    assert result.dropped.shape[1] == 2
+    assert result.points.shape[1] == 2
 
 
 def test_unify_considers_new_assignment_late_if_any_part_late():
@@ -493,7 +560,7 @@ def test_unify_considers_new_assignment_late_if_any_part_late():
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
     # when
-    result = gradebook.unify(HOMEWORK_01_PARTS, "hw01")
+    result = gradebook.unify_assignments({"hw01": HOMEWORK_01_PARTS})
 
     # then
     assert result.late.loc["A1", "hw01"] == True
@@ -512,7 +579,7 @@ def test_unify_raises_if_any_part_is_dropped():
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
     with pytest.raises(ValueError):
-        result = gradebook.unify(HOMEWORK_01_PARTS, "hw01")
+        result = gradebook.unify_assignments({"hw01": HOMEWORK_01_PARTS})
 
 
 # add_assignment()

@@ -384,7 +384,7 @@ class Gradebook:
         Returns
         -------
         Gradebook
-            A Gradebook with only these assignments.
+            A Gradebook without these assignments.
 
         Raises
         ------

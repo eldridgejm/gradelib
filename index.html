@@ -257,7 +257,7 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.add_assignment" title="gradelib.Gradebook.add_assignment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.add_assignment</span></code></a></p></td>
 <td><p>Adds a single assignment to the gradebook.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.unify" title="gradelib.Gradebook.unify"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.unify</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.unify_assignments" title="gradelib.Gradebook.unify_assignments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.unify_assignments</span></code></a></p></td>
 <td><p>Unifies the assignment parts into one single assignment with the new name.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.assignments" title="gradelib.Gradebook.assignments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.assignments</span></code></a></p></td>
@@ -723,8 +723,8 @@ assignments (acts as if they were never assigned).</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.unify">
-<code class="sig-name descname"><span class="pre">unify</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.unify" title="Permalink to this definition">¶</a></dt>
+<dt id="gradelib.Gradebook.unify_assignments">
+<code class="sig-name descname"><span class="pre">unify_assignments</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dct_or_callable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.unify_assignments" title="Permalink to this definition">¶</a></dt>
 <dd><p>Unifies the assignment parts into one single assignment with the new name.</p>
 <p>Sometimes assignments may have several parts which are recorded separately
 in the grading software. For instance, a homework might
@@ -739,10 +739,10 @@ this method will raise a <cite>ValueError</cite> if <em>any</em> of the parts ha
 dropped.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>parts</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – The assignments that should be unified into one assignment.</p></li>
-<li><p><strong>new_name</strong> (<em>str</em>) – The name that should be given to the new assignment.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>dct</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Collection</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Either: 1) a mapping whose keys are new assignment names, and whose
+values are collections of assignments that should be unified under
+their common key; or 2) a callable which maps assignment names to
+new assignment by which they should be grouped.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>The gradebook with the assignments unified to one assignment. Other
@@ -756,6 +756,20 @@ assignments are left untouched.</p>
     rationale.</p>
 </dd>
 </dl>
+<p class="rubric">Example</p>
+<p>Assuming the gradebook has assignments named <cite>homework 01</cite>, <cite>homework 01 - programming</cite>,
+<cite>homework 02</cite>, <cite>homework 02 - programming</cite>, etc., the following will “unify” the
+assignments into <cite>homework 01</cite>, <cite>homework 02</cite>, etc:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gradebook</span><span class="o">.</span><span class="n">unify_assignments</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>Alternatively, you could write:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gradebook</span><span class="o">.</span><span class="n">unify_assignments</span><span class="p">({</span>
+<span class="go">    &#39;homework 01&#39;: {&#39;homework 01&#39;, &#39;homework 01 - programming&#39;},</span>
+<span class="go">    &#39;homework 02&#39;: {&#39;homework 02&#39;, &#39;homework 02 - programming&#39;}</span>
+<span class="go">    })</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </dd></dl>

@@ -105,7 +105,7 @@ class Assignments(collections.abc.Sequence):
         return {key: Assignments(value) for key, value in dct.items()}
 
     def __repr__(self):
-        return f"Assignments(names={self._names})"
+        return f"Assignments(names={sorted(self._names)})"
 
     def __add__(self, other):
         return Assignments(set(self._names + other._names))

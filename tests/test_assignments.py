@@ -37,3 +37,24 @@ def test_add():
 
     # then
     assert set(actual) == {"a", "b", "c", "d", "e"}
+
+
+def test_group_by():
+    # given
+    assignments = gradelib.Assignments(
+        ["homework 01", "homework 01 - programming", "homework 02", "homework 03", "homework 03 - programming", "lab 01", "lab 02"]
+    )
+
+    # when
+    actual = assignments.group_by(lambda s: s.split('-')[0].strip())
+
+    # then
+    actual_as_sets = {k: set(v) for k, v in actual.items()}
+    assert actual_as_sets == {
+            "homework 01": {"homework 01", "homework 01 - programming"},
+            "homework 02": {"homework 02"},
+            "homework 03": {"homework 03", "homework 03 - programming"},
+            "lab 01": {"lab 01"},
+            "lab 02": {"lab 02"}
+            }
+    assert isinstance(actual['homework 01'], gradelib.Assignments)

@@ -60,6 +60,50 @@ class Assignments(collections.abc.Sequence):
         """
         return self.__class__(x for x in self._names if substring in x)
 
+    def group_by(self, to_key: callable):
+        """Group the assignments according to a key function.
+
+        Parameters
+        ----------
+        to_key : callable
+            A function which accepts an assignment name and returns a string that will
+            be used as the assignment's key in the resulting dictionary.
+
+        Returns
+        -------
+        dict[str, Assignments]
+            A dictionary mapping keys to collections of assignments.
+
+        Example
+        -------
+
+        Suppose that the gradebook has assignments
+
+            >>> assignments = gradelib.Assignments([
+                "homework 01", "homework 01 - programming", "homework 02", 
+                "homework 03", "homework 03 - programming", "lab 01", "lab 02"
+                ])
+            >>> assignments.group_by(lambda s: s.split('-')[0].strip()
+            {'homework 01': Assignments(names=['homework 01', 'homework 01 - programming']),
+             'homework 02': Assignments(names=['homework 02']),
+             'homework 03': Assignments(names=['homework 03', 'homework 03 - programming']),
+             'lab 01': Assignments(names=['lab 01']),
+             'lab 02': Assignments(names=['lab 02'])}
+
+        See Also
+        --------
+        :meth:`Gradebook.unify_assignments`
+
+        """
+        dct = {}
+        for assignment in self:
+            key = to_key(assignment)
+            if key not in dct:
+                dct[key] = []
+            dct[key].append(assignment)
+
+        return {key: Assignments(value) for key, value in dct.items()}
+
     def __repr__(self):
         return f"Assignments(names={self._names})"
 

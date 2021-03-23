@@ -278,10 +278,19 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.number_of_lates" title="gradelib.Gradebook.number_of_lates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.number_of_lates</span></code></a></p></td>
 <td><p>Return the number of late assignments for each student as a Series.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.score" title="gradelib.Gradebook.score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.score</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.keep_assignments" title="gradelib.Gradebook.keep_assignments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.keep_assignments</span></code></a></p></td>
+<td><p>Restrict the gradebook to only the supplied assignments.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.remove_assignments" title="gradelib.Gradebook.remove_assignments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.remove_assignments</span></code></a></p></td>
+<td><p>Remove the assignments from the gradebook.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.keep_pids" title="gradelib.Gradebook.keep_pids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.keep_pids</span></code></a></p></td>
+<td><p>Restrict the gradebook to only the supplied PIDS.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.score" title="gradelib.Gradebook.score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.score</span></code></a></p></td>
 <td><p>Computes the fraction of possible points earned across one or more assignments.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Gradebook.total" title="gradelib.Gradebook.total"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.total</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Gradebook.total" title="gradelib.Gradebook.total"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Gradebook.total</span></code></a></p></td>
 <td><p>Computes the total points earned and available within one or more assignments.</p></td>
 </tr>
 </tbody>
@@ -689,7 +698,7 @@ gradebook. If None, all assignments will be used. Default: None</p>
 <dd class="field-odd"><p><strong>assignments</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – A collection of assignment names.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A Gradebook with only these assignments.</p>
+<dd class="field-even"><p>A Gradebook without these assignments.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>

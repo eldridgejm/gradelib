@@ -114,6 +114,7 @@ API
     Assignments
     Assignments.starting_with
     Assignments.containing
+    Assignments.group_by
 
 **Grading Scales**
 

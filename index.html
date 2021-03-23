@@ -308,6 +308,9 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#gradelib.Assignments.containing" title="gradelib.Assignments.containing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Assignments.containing</span></code></a>(substring)</p></td>
 <td><p>Return only assignments containing the substring.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gradelib.Assignments.group_by" title="gradelib.Assignments.group_by"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Assignments.group_by</span></code></a>(to_key)</p></td>
+<td><p>Group the assignments according to a key function.</p></td>
+</tr>
 </tbody>
 </table>
 <p><strong>Grading Scales</strong></p>
@@ -799,6 +802,42 @@ methods which make it faster to create groups of assignments. In particular,
 <dd class="field-odd"><p><a class="reference internal" href="#gradelib.Assignments" title="gradelib.Assignments">Assignments</a></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gradelib.Assignments.group_by">
+<code class="sig-name descname"><span class="pre">group_by</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_key</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">callable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Assignments.group_by" title="Permalink to this definition">¶</a></dt>
+<dd><p>Group the assignments according to a key function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>to_key</strong> (<em>callable</em>) – A function which accepts an assignment name and returns a string that will
+be used as the assignment’s key in the resulting dictionary.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dictionary mapping keys to collections of assignments.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict[str, <a class="reference internal" href="#gradelib.Assignments" title="gradelib.Assignments">Assignments</a>]</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>Suppose that the gradebook has assignments</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">assignments</span> <span class="o">=</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">Assignments</span><span class="p">([</span>
+<span class="go">    &quot;homework 01&quot;, &quot;homework 01 - programming&quot;, &quot;homework 02&quot;,</span>
+<span class="go">    &quot;homework 03&quot;, &quot;homework 03 - programming&quot;, &quot;lab 01&quot;, &quot;lab 02&quot;</span>
+<span class="go">    ])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">assignments</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<span class="go">{&#39;homework 01&#39;: Assignments(names=[&#39;homework 01&#39;, &#39;homework 01 - programming&#39;]),</span>
+<span class="go"> &#39;homework 02&#39;: Assignments(names=[&#39;homework 02&#39;]),</span>
+<span class="go"> &#39;homework 03&#39;: Assignments(names=[&#39;homework 03&#39;, &#39;homework 03 - programming&#39;]),</span>
+<span class="go"> &#39;lab 01&#39;: Assignments(names=[&#39;lab 01&#39;]),</span>
+<span class="go"> &#39;lab 02&#39;: Assignments(names=[&#39;lab 02&#39;])}</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#gradelib.Gradebook.unify_assignments" title="gradelib.Gradebook.unify_assignments"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Gradebook.unify_assignments()</span></code></a></p>
+</div>
 </dd></dl>
 
 <dl class="py method">

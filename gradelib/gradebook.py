@@ -227,7 +227,7 @@ class Gradebook:
         return cls(points, maximums)
 
     @classmethod
-    def combine(cls, gradebooks, restrict_pids=None):
+    def combine(cls, gradebooks, keep_pids=None):
         """Create a gradebook by safely combining several existing gradebooks.
 
         It is crucial that the combined gradebooks have exactly the same
@@ -241,10 +241,10 @@ class Gradebook:
         gradebooks : Collection[Gradebook]
             The gradebooks to combine. Must have matching indices and unique
             column names.
-        restrict_pids : Collection[str] or None
+        keep_pids : Collection[str] or None
             If provided, each input gradebook will be restricted to the PIDs
             given before attempting to combine them. This is a convenience
-            option, and it simply calls :meth:`Gradebook.restrict_pids` on
+            option, and it simply calls :meth:`Gradebook.keep_pids` on
             each of the inputs.  Default: None
 
         Returns
@@ -261,8 +261,8 @@ class Gradebook:
         """
         gradebooks = list(gradebooks)
 
-        if restrict_pids is not None:
-            gradebooks = [g.restrict_pids(restrict_pids) for g in gradebooks]
+        if keep_pids is not None:
+            gradebooks = [g.keep_pids(keep_pids) for g in gradebooks]
 
         # check that all gradebooks have the same PIDs
         reference_pids = gradebooks[0].pids
@@ -314,7 +314,7 @@ class Gradebook:
         """
         return set(self.points.index)
 
-    def restrict_pids(self, to):
+    def keep_pids(self, to):
         """Restrict the gradebook to only the supplied PIDS.
 
         Parameters
@@ -343,12 +343,12 @@ class Gradebook:
         r_dropped = self.dropped.loc[pids].copy()
         return self.__class__(r_points, self.maximums, r_late, r_dropped)
 
-    def restrict_assignments(self, to):
+    def keep_assignments(self, assignments):
         """Restrict the gradebook to only the supplied assignments.
 
         Parameters
         ----------
-        to : Collection[str]
+        assignments : Collection[str]
             A collection of assignment names.
 
         Returns
@@ -362,7 +362,7 @@ class Gradebook:
             If an assignment was specified that was not in the gradebook.
 
         """
-        assignments = list(to)
+        assignments = list(assignments)
         extras = set(assignments) - set(self.assignments)
         if extras:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
@@ -372,6 +372,32 @@ class Gradebook:
         r_late = self.late.loc[:, assignments].copy()
         r_dropped = self.dropped.loc[:, assignments].copy()
         return self.__class__(r_points, r_maximums, r_late, r_dropped)
+
+    def remove_assignments(self, assignments):
+        """Remove the assignments from the gradebook.
+
+        Parameters
+        ----------
+        assignments : Collection[str]
+            A collection of assignment names.
+
+        Returns
+        -------
+        Gradebook
+            A Gradebook with only these assignments.
+
+        Raises
+        ------
+        KeyError
+            If an assignment was specified that was not in the gradebook.
+
+        """
+        assignments = list(assignments)
+        extras = set(assignments) - set(self.assignments)
+        if extras:
+            raise KeyError(f"These assignments were not in the gradebook: {extras}.")
+
+        return self.keep_assignments(set(self.assignments) - set(assignments))
 
     def number_of_lates(self, within=None):
         """Return the number of late assignments for each student as a Series.
@@ -461,7 +487,7 @@ class Gradebook:
                 if forgiveness_remaining == 0:
                     break
 
-        return self.replace(late=new_late)
+        return self._replace(late=new_late)
 
     def _points_with_lates_replaced_by_zeros(self):
         replaced = self.points.copy()
@@ -566,9 +592,9 @@ class Gradebook:
             tossed = list(combinations[best_combo_ix])
             new_dropped.loc[pid, tossed] = True
 
-        return self.replace(dropped=new_dropped)
+        return self._replace(dropped=new_dropped)
 
-    def replace(self, points=None, maximums=None, late=None, dropped=None):
+    def _replace(self, points=None, maximums=None, late=None, dropped=None):
         new_points = points if points is not None else self.points.copy()
         new_maximums = maximums if maximums is not None else self.maximums.copy()
         new_late = late if late is not None else self.late.copy()
@@ -576,7 +602,7 @@ class Gradebook:
         return Gradebook(new_points, new_maximums, new_late, new_dropped)
 
     def copy(self):
-        return self.replace()
+        return self._replace()
 
     def give_equal_weights(self, within):
         """Normalize maximum points so that all assignments are worth the same.
@@ -604,7 +630,7 @@ class Gradebook:
         new_points = self.points.copy()
         new_points.loc[:, within] = scores
 
-        return self.replace(points=new_points, maximums=new_maximums)
+        return self._replace(points=new_points, maximums=new_maximums)
 
     def total(self, within):
         """Computes the total points earned and available within one or more assignments.

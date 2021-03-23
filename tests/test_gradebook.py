@@ -44,58 +44,88 @@ def test_assignments_are_produced_in_order():
     )
 
 
-# restrict_pids()
+# keep_pids()
 # -----------------------------------------------------------------------------
 
 
-def test_restrict_pids():
+def test_keep_pids():
     # when
-    actual = GRADESCOPE_EXAMPLE.restrict_pids(ROSTER.index)
+    actual = GRADESCOPE_EXAMPLE.keep_pids(ROSTER.index)
 
     # then
     assert len(actual.pids) == 3
     assert_gradebook_is_sound(actual)
 
 
-def test_restrict_pids_raises_if_pid_does_not_exist():
+def test_keep_pids_raises_if_pid_does_not_exist():
     # given
     pids = ["A12345678", "ADNEDNE00"]
 
     # when
     with pytest.raises(KeyError):
-        actual = GRADESCOPE_EXAMPLE.restrict_pids(pids)
+        actual = GRADESCOPE_EXAMPLE.keep_pids(pids)
 
 
-# restrict_assignments()
+# keep_assignments() and remove_assignments()
 # -----------------------------------------------------------------------------
 
 
-def test_restrict_assignments():
+def test_keep_assignments():
     # when
-    actual = GRADESCOPE_EXAMPLE.restrict_assignments(["homework 01", "homework 02"])
+    actual = GRADESCOPE_EXAMPLE.keep_assignments(["homework 01", "homework 02"])
 
     # then
     assert set(actual.assignments) == {"homework 01", "homework 02"}
     assert_gradebook_is_sound(actual)
 
 
-def test_restrict_assignments_raises_if_assignment_does_not_exist():
+def test_keep_assignments_raises_if_assignment_does_not_exist():
     # given
     assignments = ["homework 01", "this aint an assignment"]
 
     # then
     with pytest.raises(KeyError):
-        GRADESCOPE_EXAMPLE.restrict_assignments(assignments)
+        GRADESCOPE_EXAMPLE.keep_assignments(assignments)
+
+
+def test_remove_assignments():
+    # when
+    actual = GRADESCOPE_EXAMPLE.remove_assignments(
+        GRADESCOPE_EXAMPLE.assignments.starting_with("lab")
+    )
+
+    # then
+    assert set(actual.assignments) == {
+        "homework 01",
+        "homework 02",
+        "homework 03",
+        "homework 04",
+        "homework 05",
+        "homework 06",
+        "homework 07",
+        "project 01",
+        "project 02",
+    }
+    assert_gradebook_is_sound(actual)
+
+
+def test_remove_assignments_raises_if_assignment_does_not_exist():
+    # given
+    assignments = ["homework 01", "this aint an assignment"]
+
+    # then
+    with pytest.raises(KeyError):
+        GRADESCOPE_EXAMPLE.remove_assignments(assignments)
 
 
 # combine()
 # -----------------------------------------------------------------------------
 
 
-def test_combine_with_restrict_pids():
+def test_combine_with_keep_pids():
     # when
     combined = gradelib.Gradebook.combine(
-        [GRADESCOPE_EXAMPLE, CANVAS_WITHOUT_LAB_EXAMPLE], restrict_pids=ROSTER.index
+        [GRADESCOPE_EXAMPLE, CANVAS_WITHOUT_LAB_EXAMPLE], keep_pids=ROSTER.index
     )
 
     # then

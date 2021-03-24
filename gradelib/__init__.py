@@ -10,6 +10,7 @@ from .io import (
 from .gradebook import Gradebook, Assignments
 from .scales import (
     DEFAULT_SCALE,
+    ROUNDED_DEFAULT_SCALE,
     map_scores_to_letter_grades,
     average_gpa,
     letter_grade_distribution,

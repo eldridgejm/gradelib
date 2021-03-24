@@ -123,6 +123,7 @@ API
     :nosignatures:
 
     DEFAULT_SCALE
+    ROUNDED_DEFAULT_SCALE
     map_scores_to_letter_grades
     average_gpa
     letter_grade_distribution
@@ -161,6 +162,10 @@ Grading Scales
 
     The standard grading scale as an OrderedDict. E.g., 93+ is an A, [90, 93)
     is an A-, etc.
+
+.. data:: ROUNDED_DEFAULT_SCALE
+
+    A rounded version of the default scale in which each threshold is one half point lower.
 
 .. autofunction:: map_scores_to_letter_grades
 .. autofunction:: average_gpa

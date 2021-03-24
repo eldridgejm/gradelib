@@ -24,6 +24,12 @@ DEFAULT_SCALE = collections.OrderedDict(
     ]
 )
 
+#: a rounded version of the default scale, where each threshold is one half point lower
+ROUNDED_DEFAULT_SCALE = DEFAULT_SCALE.copy()
+for _k, _v in ROUNDED_DEFAULT_SCALE.items():
+    ROUNDED_DEFAULT_SCALE[_k] = _v - .005
+ROUNDED_DEFAULT_SCALE['F'] = 0
+
 
 def _check_that_scale_monotonically_decreases(scale):
     prev = float("inf")

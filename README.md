@@ -41,7 +41,7 @@ canvas_grades = gradelib.Gradebook.from_canvas('canvas.csv')
 # checking that all enrolled students are accounted for
 gradebook = gradelib.Gradebook.combine(
     [gradescope_grades, canvas_grades], 
-    restrict_pids=roster.index
+    keep_pids=roster.index
 )
 
 # define assignment groups

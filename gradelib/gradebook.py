@@ -121,6 +121,14 @@ def _empty_mask_like(table):
     return empty.astype(bool)
 
 
+def _lateness_in_seconds(lateness):
+    """Converts a series of lateness strings in HH:MM:SS format to integer seconds"""
+    hours = lateness.str.split(":").str[0].astype(int)
+    minutes = lateness.str.split(":").str[1].astype(int)
+    seconds = lateness.str.split(":").str[2].astype(int)
+    return 3600 * hours + 60 * minutes + seconds
+
+
 class Gradebook:
     """Data structure which facilitates common grading policies.
 
@@ -167,7 +175,12 @@ class Gradebook:
 
     @classmethod
     def from_gradescope(
-        cls, path, *, standardize_pids=True, standardize_assignments=True
+        cls,
+        path,
+        *,
+        standardize_pids=True,
+        standardize_assignments=True,
+        lateness_fudge=5 * 60,
     ):
         """Read a gradescope CSV into a gradebook.
 
@@ -182,14 +195,30 @@ class Gradebook:
         standardize_assignments : bool
             Whether to standardize assignment names so that they are all lowercased.
             Default: True.
+        lateness_fudge : int
+            An integer number of seconds. If the lateness of an assignment (in seconds)
+            is less than or equal to this number, it will be counted as on-time. The
+            default is 300 seconds (5 minutes). See note.
+
+        Note
+        ----
+        The default `lateness_fudge` is 300 seconds. This default is
+        recommended because Gradescope appears to exhibit some latency around
+        deadlines. There have been cases where the CSV exported by gradescope
+        will show a time of submission that is up to a minute later than what
+        is displayed on the web interface. As a result, students see that their
+        submission is on-time, but the exported CSV shows it as late. The fudge
+        factor accounts for this.
+
         """
-        points, maximums, late = io.read_gradescope(
+        points, maximums, lateness = io.read_gradescope(
             path,
             standardize_pids=standardize_pids,
             standardize_assignments=standardize_assignments,
         )
         # lates are given as strings expressing lateness... booleanize them
-        late = (late != "00:00:00").astype(bool)
+        late_seconds = lateness.apply(_lateness_in_seconds)
+        late = late_seconds > lateness_fudge
         return cls(points, maximums, late)
 
     @classmethod

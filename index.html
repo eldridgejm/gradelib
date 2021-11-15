@@ -1,68 +1,32 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
   <title>gradelib &mdash; gradelib 0.2.4 documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-
-  
-  
-
-  
-  
-
-  
-
-  
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="#" class="icon icon-home"> gradelib
-          
-
-          
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -70,18 +34,7 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <!-- Local TOC -->
               <div class="local-toc"><ul>
 <li><a class="reference internal" href="#">gradelib</a></li>
@@ -96,79 +49,38 @@
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 </div>
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="#">gradelib</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
       <li><a href="#" class="icon icon-home"></a> &raquo;</li>
-        
       <li>gradelib</li>
-    
-    
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <div class="section" id="gradelib">
-<h1>gradelib<a class="headerlink" href="#gradelib" title="Permalink to this headline">¶</a></h1>
+             
+  <section id="gradelib">
+<h1>gradelib<a class="headerlink" href="#gradelib" title="Permalink to this headline"></a></h1>
 <p>gradelib is a python library that streamlines end-of-quarter grading.
 It is designed to work with the common tools used at UC San Diego, including
 gradescope, canvas, and eGrades.</p>
-</div>
-<div class="section" id="workflow">
-<h1>Workflow<a class="headerlink" href="#workflow" title="Permalink to this headline">¶</a></h1>
+</section>
+<section id="workflow">
+<h1>Workflow<a class="headerlink" href="#workflow" title="Permalink to this headline"></a></h1>
 <p>The following example shows the complete workflow for calculating final grades
 in a typical scenario. In this case, some grades were kept on Canvas, while
 others were kept on Gradescope. The grading policy allowed for 4 late
@@ -180,15 +92,21 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <span class="c1"># read the egrades roster</span>
 <span class="n">roster</span> <span class="o">=</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">read_egrades_roster</span><span class="p">(</span><span class="s1">&#39;roster.csv&#39;</span><span class="p">)</span>
 
-<span class="c1"># read grades from canvas and gradescope</span>
-<span class="n">gradescope_grades</span> <span class="o">=</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">Gradebook</span><span class="o">.</span><span class="n">from_gradescope</span><span class="p">(</span><span class="s1">&#39;gradescope.csv&#39;</span><span class="p">)</span>
+<span class="c1"># read grades from canvas</span>
 <span class="n">canvas_grades</span> <span class="o">=</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">Gradebook</span><span class="o">.</span><span class="n">from_canvas</span><span class="p">(</span><span class="s1">&#39;canvas.csv&#39;</span><span class="p">)</span>
+
+<span class="c1"># read grades from gradescope</span>
+<span class="c1"># note: Gradescope is inconsistent with time of submission, sometimes showing</span>
+<span class="c1"># that an assignment is on-time in the web interface, but a minute or so late</span>
+<span class="c1"># in the exported CSV. `from_gradescope` has a default fudge-factor that</span>
+<span class="c1"># is meant to account for this; see the documentation for more details.</span>
+<span class="n">gradescope_grades</span> <span class="o">=</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">Gradebook</span><span class="o">.</span><span class="n">from_gradescope</span><span class="p">(</span><span class="s1">&#39;gradescope.csv&#39;</span><span class="p">)</span>
 
 <span class="c1"># combine canvas and gradescope grades into a single gradebook,</span>
 <span class="c1"># checking that all enrolled students are accounted for</span>
 <span class="n">gradebook</span> <span class="o">=</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">Gradebook</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span>
     <span class="p">[</span><span class="n">gradescope_grades</span><span class="p">,</span> <span class="n">canvas_grades</span><span class="p">],</span>
-    <span class="n">restrict_pids</span><span class="o">=</span><span class="n">roster</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">keep_pids</span><span class="o">=</span><span class="n">roster</span><span class="o">.</span><span class="n">index</span>
 <span class="p">)</span>
 
 <span class="c1"># define assignment groups</span>
@@ -206,17 +124,17 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <span class="c1"># calculate overall grades according to weighted grading</span>
 <span class="c1"># scheme; 25% homeworks, 20% labs, etc.</span>
 <span class="n">overall</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="o">.</span><span class="mi">25</span> <span class="o">*</span> <span class="n">gradebook</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">HOMEWORKS</span><span class="p">)</span>
+    <span class="mf">.25</span> <span class="o">*</span> <span class="n">gradebook</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">HOMEWORKS</span><span class="p">)</span>
     <span class="o">+</span>
-    <span class="o">.</span><span class="mi">20</span> <span class="o">*</span> <span class="n">gradebook</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">LABS</span><span class="p">)</span>
+    <span class="mf">.20</span> <span class="o">*</span> <span class="n">gradebook</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">LABS</span><span class="p">)</span>
     <span class="o">+</span>
-    <span class="o">.</span><span class="mi">05</span> <span class="o">*</span> <span class="n">gradebook</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="s1">&#39;project 01&#39;</span><span class="p">)</span>
+    <span class="mf">.05</span> <span class="o">*</span> <span class="n">gradebook</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="s1">&#39;project 01&#39;</span><span class="p">)</span>
     <span class="o">+</span>
-    <span class="o">.</span><span class="mi">10</span> <span class="o">*</span> <span class="n">gradebook</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="s1">&#39;project 02&#39;</span><span class="p">)</span>
+    <span class="mf">.10</span> <span class="o">*</span> <span class="n">gradebook</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="s1">&#39;project 02&#39;</span><span class="p">)</span>
     <span class="o">+</span>
-    <span class="o">.</span><span class="mi">10</span> <span class="o">*</span> <span class="n">gradebook</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="s1">&#39;midterm exam&#39;</span><span class="p">)</span>
+    <span class="mf">.10</span> <span class="o">*</span> <span class="n">gradebook</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="s1">&#39;midterm exam&#39;</span><span class="p">)</span>
     <span class="o">+</span>
-    <span class="o">.</span><span class="mi">30</span> <span class="o">*</span> <span class="n">gradebook</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="s1">&#39;final exam&#39;</span><span class="p">)</span>
+    <span class="mf">.30</span> <span class="o">*</span> <span class="n">gradebook</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="s1">&#39;final exam&#39;</span><span class="p">)</span>
 <span class="p">)</span>
 
 <span class="c1"># find robust letter grade cutoffs by clustering grades</span>
@@ -232,9 +150,9 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <span class="n">gradelib</span><span class="o">.</span><span class="n">write_egrades</span><span class="p">(</span><span class="s1">&#39;roster.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;letter-grades.csv&#39;</span><span class="p">,</span> <span class="n">letters</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="api">
-<h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
+</section>
+<section id="api">
+<h1>API<a class="headerlink" href="#api" title="Permalink to this headline"></a></h1>
 <p><strong>Gradebooks</strong></p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -370,11 +288,11 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 </tr>
 </tbody>
 </table>
-<div class="section" id="gradebooks">
-<h2>Gradebooks<a class="headerlink" href="#gradebooks" title="Permalink to this headline">¶</a></h2>
+<section id="gradebooks">
+<h2>Gradebooks<a class="headerlink" href="#gradebooks" title="Permalink to this headline"></a></h2>
 <dl class="py class">
-<dt id="gradelib.Gradebook">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">gradelib.</span></code><code class="sig-name descname"><span class="pre">Gradebook</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximums</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">late</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropped</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">Gradebook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximums</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">late</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropped</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook" title="Permalink to this definition"></a></dt>
 <dd><p>Data structure which facilitates common grading policies.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -400,8 +318,8 @@ that is <cite>True</cite> indicates that the assignment should be dropped. If
 by reading grades exported from Gradescope or Canvas, using
 <code class="xref py py-func docutils literal notranslate"><span class="pre">read_gradescope_gradebook()</span></code> or <code class="xref py py-func docutils literal notranslate"><span class="pre">read_canvas_gradebook()</span></code>.</p>
 <dl class="py method">
-<dt id="gradelib.Gradebook.add_assignment">
-<code class="sig-name descname"><span class="pre">add_assignment</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximums</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">late</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropped</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.add_assignment" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook.add_assignment">
+<span class="sig-name descname"><span class="pre">add_assignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximums</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">late</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropped</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.add_assignment" title="Permalink to this definition"></a></dt>
 <dd><p>Adds a single assignment to the gradebook.</p>
 <p>Usually Gradebook do not need to have individual assignments added to them.
 Instead, Gradebooks are read from Canvas, Gradescope, etc. In some instances,
@@ -431,9 +349,9 @@ all False.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="gradelib.Gradebook.assignments">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">assignments</span></code><a class="headerlink" href="#gradelib.Gradebook.assignments" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="gradelib.Gradebook.assignments">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">assignments</span></span><a class="headerlink" href="#gradelib.Gradebook.assignments" title="Permalink to this definition"></a></dt>
 <dd><p>All assignments in the gradebook.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -446,8 +364,8 @@ all False.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.combine">
-<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">combine</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gradebooks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_pids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.combine" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook.combine">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">combine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gradebooks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_pids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.combine" title="Permalink to this definition"></a></dt>
 <dd><p>Create a gradebook by safely combining several existing gradebooks.</p>
 <p>It is crucial that the combined gradebooks have exactly the same
 students – we don’t want students to have missing grades. This
@@ -479,8 +397,8 @@ each of the inputs.  Default: None</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.drop_lowest">
-<code class="sig-name descname"><span class="pre">drop_lowest</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">within</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.drop_lowest" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook.drop_lowest">
+<span class="sig-name descname"><span class="pre">drop_lowest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">within</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.drop_lowest" title="Permalink to this definition"></a></dt>
 <dd><p>Drop the lowest n grades within a group of assignments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -526,8 +444,8 @@ assignment is dropped due to an external circumstance.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.forgive_lates">
-<code class="sig-name descname"><span class="pre">forgive_lates</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">within</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.forgive_lates" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook.forgive_lates">
+<span class="sig-name descname"><span class="pre">forgive_lates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">within</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.forgive_lates" title="Permalink to this definition"></a></dt>
 <dd><p>Forgive the first n lates within a group of assignments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -564,8 +482,8 @@ it is advantageous for the student to use the forgiveness elsewhere.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.from_canvas">
-<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_canvas</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_pids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_assignments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_assignment_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.from_canvas" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook.from_canvas">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_canvas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_pids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_assignments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_assignment_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.from_canvas" title="Permalink to this definition"></a></dt>
 <dd><p>Read a CSV exported from Canvas.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -583,8 +501,8 @@ assignment name.  Default: True.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.from_gradescope">
-<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">from_gradescope</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_pids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_assignments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.from_gradescope" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook.from_gradescope">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_gradescope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_pids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_assignments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lateness_fudge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.from_gradescope" title="Permalink to this definition"></a></dt>
 <dd><p>Read a gradescope CSV into a gradebook.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -595,14 +513,27 @@ useful when students who manually join gradescope enter their own PID
 without uppercasing it. Default: True.</p></li>
 <li><p><strong>standardize_assignments</strong> (<em>bool</em>) – Whether to standardize assignment names so that they are all lowercased.
 Default: True.</p></li>
+<li><p><strong>lateness_fudge</strong> (<em>int</em>) – An integer number of seconds. If the lateness of an assignment (in seconds)
+is less than or equal to this number, it will be counted as on-time. The
+default is 300 seconds (5 minutes). See note.</p></li>
 </ul>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The default <cite>lateness_fudge</cite> is 300 seconds. This default is
+recommended because Gradescope appears to exhibit some latency around
+deadlines. There have been cases where the CSV exported by gradescope
+will show a time of submission that is up to a minute later than what
+is displayed on the web interface. As a result, students see that their
+submission is on-time, but the exported CSV shows it as late. The fudge
+factor accounts for this.</p>
+</div>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.give_equal_weights">
-<code class="sig-name descname"><span class="pre">give_equal_weights</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">within</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.give_equal_weights" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook.give_equal_weights">
+<span class="sig-name descname"><span class="pre">give_equal_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">within</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.give_equal_weights" title="Permalink to this definition"></a></dt>
 <dd><p>Normalize maximum points so that all assignments are worth the same.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -618,8 +549,8 @@ Default: True.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.keep_assignments">
-<code class="sig-name descname"><span class="pre">keep_assignments</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assignments</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.keep_assignments" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook.keep_assignments">
+<span class="sig-name descname"><span class="pre">keep_assignments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assignments</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.keep_assignments" title="Permalink to this definition"></a></dt>
 <dd><p>Restrict the gradebook to only the supplied assignments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -638,8 +569,8 @@ Default: True.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.keep_pids">
-<code class="sig-name descname"><span class="pre">keep_pids</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.keep_pids" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook.keep_pids">
+<span class="sig-name descname"><span class="pre">keep_pids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.keep_pids" title="Permalink to this definition"></a></dt>
 <dd><p>Restrict the gradebook to only the supplied PIDS.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -658,8 +589,8 @@ Default: True.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.number_of_lates">
-<code class="sig-name descname"><span class="pre">number_of_lates</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">within</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.number_of_lates" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook.number_of_lates">
+<span class="sig-name descname"><span class="pre">number_of_lates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">within</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.number_of_lates" title="Permalink to this definition"></a></dt>
 <dd><p>Return the number of late assignments for each student as a Series.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -678,9 +609,9 @@ gradebook. If None, all assignments will be used. Default: None</p>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="gradelib.Gradebook.pids">
-<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">pids</span></code><a class="headerlink" href="#gradelib.Gradebook.pids" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="gradelib.Gradebook.pids">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pids</span></span><a class="headerlink" href="#gradelib.Gradebook.pids" title="Permalink to this definition"></a></dt>
 <dd><p>All student PIDs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -693,8 +624,8 @@ gradebook. If None, all assignments will be used. Default: None</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.remove_assignments">
-<code class="sig-name descname"><span class="pre">remove_assignments</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assignments</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.remove_assignments" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook.remove_assignments">
+<span class="sig-name descname"><span class="pre">remove_assignments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assignments</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.remove_assignments" title="Permalink to this definition"></a></dt>
 <dd><p>Remove the assignments from the gradebook.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -713,8 +644,8 @@ gradebook. If None, all assignments will be used. Default: None</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.score">
-<code class="sig-name descname"><span class="pre">score</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">within</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.score" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook.score">
+<span class="sig-name descname"><span class="pre">score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">within</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.score" title="Permalink to this definition"></a></dt>
 <dd><p>Computes the fraction of possible points earned across one or more assignments.</p>
 <p>Takes into account late assignments (treats them as zeros) and dropped
 assignments (acts as if they were never assigned).</p>
@@ -732,8 +663,8 @@ assignments (acts as if they were never assigned).</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.total">
-<code class="sig-name descname"><span class="pre">total</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">within</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.total" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook.total">
+<span class="sig-name descname"><span class="pre">total</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">within</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.total" title="Permalink to this definition"></a></dt>
 <dd><p>Computes the total points earned and available within one or more assignments.</p>
 <p>Takes into account late assignments (treats them as zeros) and dropped
 assignments (acts as if they were never assigned).</p>
@@ -752,8 +683,8 @@ assignments (acts as if they were never assigned).</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Gradebook.unify_assignments">
-<code class="sig-name descname"><span class="pre">unify_assignments</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dct_or_callable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.unify_assignments" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Gradebook.unify_assignments">
+<span class="sig-name descname"><span class="pre">unify_assignments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dct_or_callable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook.unify_assignments" title="Permalink to this definition"></a></dt>
 <dd><p>Unifies the assignment parts into one single assignment with the new name.</p>
 <p>Sometimes assignments may have several parts which are recorded separately
 in the grading software. For instance, a homework might
@@ -803,19 +734,19 @@ assignments into <cite>homework 01</cite>, <cite>homework 02</cite>, etc:</p>
 
 </dd></dl>
 
-</div>
-<div class="section" id="assignments">
-<h2>Assignments<a class="headerlink" href="#assignments" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="assignments">
+<h2>Assignments<a class="headerlink" href="#assignments" title="Permalink to this headline"></a></h2>
 <dl class="py class">
-<dt id="gradelib.Assignments">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">gradelib.</span></code><code class="sig-name descname"><span class="pre">Assignments</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Assignments" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Assignments">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">Assignments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Assignments" title="Permalink to this definition"></a></dt>
 <dd><p>A sequence of assignments.</p>
 <p>Behaves essentially like a standard Python list, but has some additional
 methods which make it faster to create groups of assignments. In particular,
 <a class="reference internal" href="#gradelib.Assignments.starting_with" title="gradelib.Assignments.starting_with"><code class="xref py py-meth docutils literal notranslate"><span class="pre">starting_with()</span></code></a> and <a class="reference internal" href="#gradelib.Assignments.containing" title="gradelib.Assignments.containing"><code class="xref py py-meth docutils literal notranslate"><span class="pre">containing()</span></code></a>.</p>
 <dl class="py method">
-<dt id="gradelib.Assignments.containing">
-<code class="sig-name descname"><span class="pre">containing</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">substring</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Assignments.containing" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Assignments.containing">
+<span class="sig-name descname"><span class="pre">containing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">substring</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Assignments.containing" title="Permalink to this definition"></a></dt>
 <dd><p>Return only assignments containing the substring.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -831,8 +762,8 @@ methods which make it faster to create groups of assignments. In particular,
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Assignments.group_by">
-<code class="sig-name descname"><span class="pre">group_by</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_key</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">callable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Assignments.group_by" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Assignments.group_by">
+<span class="sig-name descname"><span class="pre">group_by</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">callable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Assignments.group_by" title="Permalink to this definition"></a></dt>
 <dd><p>Group the assignments according to a key function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -867,8 +798,8 @@ be used as the assignment’s key in the resulting dictionary.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gradelib.Assignments.starting_with">
-<code class="sig-name descname"><span class="pre">starting_with</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Assignments.starting_with" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.Assignments.starting_with">
+<span class="sig-name descname"><span class="pre">starting_with</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Assignments.starting_with" title="Permalink to this definition"></a></dt>
 <dd><p>Return only assignments starting with the prefix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -885,25 +816,25 @@ be used as the assignment’s key in the resulting dictionary.</p>
 
 </dd></dl>
 
-</div>
-<div class="section" id="grading-scales">
-<h2>Grading Scales<a class="headerlink" href="#grading-scales" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="grading-scales">
+<h2>Grading Scales<a class="headerlink" href="#grading-scales" title="Permalink to this headline"></a></h2>
 <dl class="py data">
-<dt id="gradelib.DEFAULT_SCALE">
-<code class="sig-prename descclassname"><span class="pre">gradelib.</span></code><code class="sig-name descname"><span class="pre">DEFAULT_SCALE</span></code><a class="headerlink" href="#gradelib.DEFAULT_SCALE" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.DEFAULT_SCALE">
+<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_SCALE</span></span><a class="headerlink" href="#gradelib.DEFAULT_SCALE" title="Permalink to this definition"></a></dt>
 <dd><p>The standard grading scale as an OrderedDict. E.g., 93+ is an A, [90, 93)
 is an A-, etc.</p>
 </dd></dl>
 
 <dl class="py data">
-<dt id="gradelib.ROUNDED_DEFAULT_SCALE">
-<code class="sig-prename descclassname"><span class="pre">gradelib.</span></code><code class="sig-name descname"><span class="pre">ROUNDED_DEFAULT_SCALE</span></code><a class="headerlink" href="#gradelib.ROUNDED_DEFAULT_SCALE" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.ROUNDED_DEFAULT_SCALE">
+<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">ROUNDED_DEFAULT_SCALE</span></span><a class="headerlink" href="#gradelib.ROUNDED_DEFAULT_SCALE" title="Permalink to this definition"></a></dt>
 <dd><p>A rounded version of the default scale in which each threshold is one half point lower.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="gradelib.map_scores_to_letter_grades">
-<code class="sig-prename descclassname"><span class="pre">gradelib.</span></code><code class="sig-name descname"><span class="pre">map_scores_to_letter_grades</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.map_scores_to_letter_grades" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.map_scores_to_letter_grades">
+<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">map_scores_to_letter_grades</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.map_scores_to_letter_grades" title="Permalink to this definition"></a></dt>
 <dd><p>Map each raw score to a letter grade.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -926,8 +857,8 @@ Default: <a class="reference internal" href="#gradelib.DEFAULT_SCALE" title="gra
 </dd></dl>
 
 <dl class="py function">
-<dt id="gradelib.average_gpa">
-<code class="sig-prename descclassname"><span class="pre">gradelib.</span></code><code class="sig-name descname"><span class="pre">average_gpa</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">letter_grades</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_failing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.average_gpa" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.average_gpa">
+<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">average_gpa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">letter_grades</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_failing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.average_gpa" title="Permalink to this definition"></a></dt>
 <dd><p>Compute the average GPA.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -947,8 +878,8 @@ Default: False.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="gradelib.letter_grade_distribution">
-<code class="sig-prename descclassname"><span class="pre">gradelib.</span></code><code class="sig-name descname"><span class="pre">letter_grade_distribution</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">letters</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.letter_grade_distribution" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.letter_grade_distribution">
+<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">letter_grade_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">letters</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.letter_grade_distribution" title="Permalink to this definition"></a></dt>
 <dd><p>Counts the frequency of each letter grade.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -965,8 +896,8 @@ order, from highest to lowest.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="gradelib.plot_grade_distribution">
-<code class="sig-prename descclassname"><span class="pre">gradelib.</span></code><code class="sig-name descname"><span class="pre">plot_grade_distribution</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.02</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.plot_grade_distribution" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.plot_grade_distribution">
+<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">plot_grade_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.02</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.plot_grade_distribution" title="Permalink to this definition"></a></dt>
 <dd><p>Visualize the grade distribution with respect to a scale.</p>
 <p>This will plot a histogram of the grade distribution, with each individual
 grade marked as a dot. Furthermore, if a gradine scale is provided,
@@ -988,8 +919,8 @@ Optional. If <cite>None</cite> is passed, <a class="reference internal" href="#g
 </dd></dl>
 
 <dl class="py function">
-<dt id="gradelib.find_robust_scale">
-<code class="sig-prename descclassname"><span class="pre">gradelib.</span></code><code class="sig-name descname"><span class="pre">find_robust_scale</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grade_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.005</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.find_robust_scale" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.find_robust_scale">
+<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">find_robust_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grade_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.005</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.find_robust_scale" title="Permalink to this definition"></a></dt>
 <dd><p>Find a robust grading scale.</p>
 <p>Given an initial grading scale, finds the largest value of each threshold
 which is at least <cite>grade_gap</cite> larger than the highest grade below the
@@ -1018,12 +949,12 @@ the threshold.</p></li>
 
 <div class="toctree-wrapper compound">
 </div>
-</div>
-<div class="section" id="i-o">
-<h2>I/O<a class="headerlink" href="#i-o" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="i-o">
+<h2>I/O<a class="headerlink" href="#i-o" title="Permalink to this headline"></a></h2>
 <dl class="py function">
-<dt id="gradelib.read_gradescope">
-<code class="sig-prename descclassname"><span class="pre">gradelib.</span></code><code class="sig-name descname"><span class="pre">read_gradescope</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_pids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_assignments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.read_gradescope" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.read_gradescope">
+<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">read_gradescope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_pids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_assignments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.read_gradescope" title="Permalink to this definition"></a></dt>
 <dd><p>Read a CSV exported from Gradescope.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -1054,8 +985,8 @@ Default: True.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="gradelib.read_canvas">
-<code class="sig-prename descclassname"><span class="pre">gradelib.</span></code><code class="sig-name descname"><span class="pre">read_canvas</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_pids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_assignments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_assignment_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.read_canvas" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.read_canvas">
+<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">read_canvas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_pids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_assignments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_assignment_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.read_canvas" title="Permalink to this definition"></a></dt>
 <dd><p>Read a CSV exported from Canvas.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -1086,8 +1017,8 @@ assignment name.  Default: True.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="gradelib.read_egrades_roster">
-<code class="sig-prename descclassname"><span class="pre">gradelib.</span></code><code class="sig-name descname"><span class="pre">read_egrades_roster</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.read_egrades_roster" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.read_egrades_roster">
+<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">read_egrades_roster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.read_egrades_roster" title="Permalink to this definition"></a></dt>
 <dd><p>Read an eGrades roster CSV into a pandas dataframe.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1103,8 +1034,8 @@ assignment name.  Default: True.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="gradelib.write_canvas_grades">
-<code class="sig-prename descclassname"><span class="pre">gradelib.</span></code><code class="sig-name descname"><span class="pre">write_canvas_grades</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grades</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.write_canvas_grades" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.write_canvas_grades">
+<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">write_canvas_grades</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grades</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.write_canvas_grades" title="Permalink to this definition"></a></dt>
 <dd><p>Export new assignments to a Canvas-compatible CSV.</p>
 <p>This is mostly useful for uploading computed summary grades to Canvas,
 such as the overall homework score, etc. It will create a CSV that can be
@@ -1122,8 +1053,8 @@ that will be uploaded to canvas.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="gradelib.write_egrades">
-<code class="sig-prename descclassname"><span class="pre">gradelib.</span></code><code class="sig-name descname"><span class="pre">write_egrades</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">letters</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.write_egrades" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="gradelib.write_egrades">
+<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">write_egrades</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">letters</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.write_egrades" title="Permalink to this definition"></a></dt>
 <dd><p>Export egrades to csv.</p>
 <p>Students who have elected to take the class on a P/NP basis will
 automatically have their letter grade converted to P or NP, as appropriate.</p>
@@ -1138,59 +1069,43 @@ automatically have their letter grade converted to P or NP, as appropriate.</p>
 </dl>
 </dd></dl>
 
-</div>
-</div>
-<div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+</section>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline"></a></h1>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
-</div>
+</section>
 
 
            </div>
-           
           </div>
           <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &#169; Copyright 2020, Justin Eldridge.
-
-    </p>
+    <p>&#169; Copyright 2020, Justin Eldridge.</p>
   </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

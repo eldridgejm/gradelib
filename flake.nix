@@ -1,7 +1,7 @@
 {
   description = "Python package for streamlining end-of-quarter grading.";
 
-  inputs.nixpkgs.url = github:NixOS/nixpkgs/20.03;
+  inputs.nixpkgs.url = github:NixOS/nixpkgs/21.05;
 
   outputs = { self, nixpkgs }: 
     let
@@ -16,19 +16,16 @@
               src = ./.;
               format = "pyproject";
 
-              propagatedBuildInputs = with python3Packages; [ 
+              propagatedBuildInputs = with python3Packages; [
                 pandas
                 matplotlib
                 numpy
               ];
+
               nativeBuildInputs = with python3Packages; [
-                black
-                pytest
-                ipython
-                sphinx
-                sphinx_rtd_theme
-                mypy
+                poetry-core
               ];
+
             }
           );
 
@@ -44,8 +41,13 @@
               buildInputs = [
                 (
                   pkgs.python3.withPackages (p: [
-                    # self.gradelib.${system}
-                    p.poetry
+                    self.gradelib.${system}
+                    p.black
+                    p.pytest
+                    p.ipython
+                    p.sphinx
+                    p.sphinx_rtd_theme
+                    p.mypy
                   ])
                 )
               ];

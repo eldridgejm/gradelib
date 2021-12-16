@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "gradelib"
+version = "0.2.0"
+description = "Streamline end-of-quarter grading."
+authors = ["Justin Eldridge <eldridgejm@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pandas = "^1.2"
+matplotlib = "^3.3"
+numpy = "^1.20"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

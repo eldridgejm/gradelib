@@ -14,14 +14,43 @@
             python3Packages.buildPythonPackage rec {
               name = "gradelib";
               src = ./.;
-              propagatedBuildInputs = with python3Packages; [ pandas matplotlib numpy ];
-              nativeBuildInputs = with python3Packages; [ black pytest ipython sphinx sphinx_rtd_theme ];
+              format = "pyproject";
+
+              propagatedBuildInputs = with python3Packages; [ 
+                pandas
+                matplotlib
+                numpy
+              ];
+              nativeBuildInputs = with python3Packages; [
+                black
+                pytest
+                ipython
+                sphinx
+                sphinx_rtd_theme
+                mypy
+              ];
             }
           );
 
         defaultPackage = forAllSystems (system:
             self.gradelib.${system}
           );
+
+        devShell = forAllSystems (system:
+          let
+            pkgs = import nixpkgs { system = "${system}"; };
+          in
+            pkgs.mkShell {
+              buildInputs = [
+                (
+                  pkgs.python3.withPackages (p: [
+                    # self.gradelib.${system}
+                    p.poetry
+                  ])
+                )
+              ];
+            }
+        );
       };
 
 }

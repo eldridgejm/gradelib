@@ -1,7 +1,7 @@
 {
   description = "Python package for streamlining end-of-quarter grading.";
 
-  inputs.nixpkgs.url = github:NixOS/nixpkgs/21.05;
+  inputs.nixpkgs.url = github:NixOS/nixpkgs/21.11;
 
   outputs = { self, nixpkgs }: 
     let
@@ -35,24 +35,26 @@
 
         devShell = forAllSystems (system:
           let
-            pkgs = import nixpkgs { system = "${system}"; };
+            pkgs = import nixpkgs {
+              inherit system;
+            };
+
           in
             pkgs.mkShell {
               buildInputs = [
-                (
-                  pkgs.python3.withPackages (p: [
-                    self.gradelib.${system}
-                    p.black
-                    p.pytest
-                    p.ipython
-                    p.sphinx
-                    p.sphinx_rtd_theme
-                    p.mypy
-                  ])
-                )
+                pkgs.gnumake
+                pkgs.poetry
               ];
+
+              shellHook = ''
+              poetry install
+              export PATH=$(poetry env info -p)/bin:$PATH
+              export PYTHONPATH=$(poetry env info -p)/lib/python3.8/site-packages:$PYTHONPATH
+              export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [pkgs.stdenv.cc.cc]}
+              '';
             }
         );
+
       };
 
 }

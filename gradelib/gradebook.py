@@ -2,6 +2,19 @@
 
 import collections.abc
 import itertools
+import pathlib
+from typing import (
+    Callable,
+    Sequence,
+    Mapping,
+    Dict,
+    List,
+    Iterable,
+    Union,
+    Collection,
+    Set,
+    Tuple,
+)
 
 import pandas as pd
 
@@ -16,8 +29,8 @@ class Assignments(collections.abc.Sequence):
     :meth:`starting_with` and :meth:`containing`.
     """
 
-    def __init__(self, names):
-        self._names = list(names)
+    def __init__(self, names: Iterable[str]):
+        self._names: List[str] = list(names)
 
     def __contains__(self, element):
         return element in self._names
@@ -28,7 +41,7 @@ class Assignments(collections.abc.Sequence):
     def __iter__(self):
         return iter(self._names)
 
-    def starting_with(self, prefix):
+    def starting_with(self, prefix: str) -> "Assignments":
         """Return only assignments starting with the prefix.
 
         Parameters
@@ -44,7 +57,7 @@ class Assignments(collections.abc.Sequence):
         """
         return self.__class__(x for x in self._names if x.startswith(prefix))
 
-    def containing(self, substring):
+    def containing(self, substring: str) -> "Assignments":
         """Return only assignments containing the substring.
 
         Parameters
@@ -60,7 +73,7 @@ class Assignments(collections.abc.Sequence):
         """
         return self.__class__(x for x in self._names if substring in x)
 
-    def group_by(self, to_key: callable):
+    def group_by(self, to_key: Callable[[str], str]) -> Dict[str, "Assignments"]:
         """Group the assignments according to a key function.
 
         Parameters
@@ -80,7 +93,7 @@ class Assignments(collections.abc.Sequence):
         Suppose that the gradebook has assignments
 
             >>> assignments = gradelib.Assignments([
-                "homework 01", "homework 01 - programming", "homework 02", 
+                "homework 01", "homework 01 - programming", "homework 02",
                 "homework 03", "homework 03 - programming", "lab 01", "lab 02"
                 ])
             >>> assignments.group_by(lambda s: s.split('-')[0].strip()
@@ -95,7 +108,7 @@ class Assignments(collections.abc.Sequence):
         :meth:`Gradebook.unify_assignments`
 
         """
-        dct = {}
+        dct: Dict[str, List[str]] = {}
         for assignment in self:
             key = to_key(assignment)
             if key not in dct:
@@ -107,21 +120,21 @@ class Assignments(collections.abc.Sequence):
     def __repr__(self):
         return f"Assignments(names={sorted(self._names)})"
 
-    def __add__(self, other):
+    def __add__(self, other: "Assignments") -> "Assignments":
         return Assignments(set(self._names + other._names))
 
     def __getitem__(self, index):
         return self._names[index]
 
 
-def _empty_mask_like(table):
+def _empty_mask_like(table: pd.DataFrame) -> pd.DataFrame:
     """Given a dataframe, create another just like it with every entry False."""
     empty = table.copy()
     empty.iloc[:, :] = False
     return empty.astype(bool)
 
 
-def _lateness_in_seconds(lateness):
+def _lateness_in_seconds(lateness: pd.Series) -> pd.Series:
     """Converts a series of lateness strings in HH:MM:SS format to integer seconds"""
     hours = lateness.str.split(":").str[0].astype(int)
     minutes = lateness.str.split(":").str[1].astype(int)
@@ -145,7 +158,7 @@ class Gradebook:
         `points` dataframe.
     late : pandas.DataFrame
         A Boolean dataframe with the same columns/index as `points`. An entry
-        that is `True` indicates that the assignment was late. If `None` is 
+        that is `True` indicates that the assignment was late. If `None` is
         passed, a dataframe of all `False`s is used by default.
     dropped : pandas.DataFrame
         A Boolean dataframe with the same columns/index as `points`. An entry
@@ -176,11 +189,11 @@ class Gradebook:
     @classmethod
     def from_gradescope(
         cls,
-        path,
+        path: Union[str, pathlib.Path],
         *,
         standardize_pids=True,
         standardize_assignments=True,
-        lateness_fudge=5 * 60,
+        lateness_fudge: int = 5 * 60,
     ):
         """Read a gradescope CSV into a gradebook.
 
@@ -224,7 +237,7 @@ class Gradebook:
     @classmethod
     def from_canvas(
         cls,
-        path,
+        path: Union[str, pathlib.Path],
         *,
         standardize_pids=True,
         standardize_assignments=True,
@@ -256,7 +269,9 @@ class Gradebook:
         return cls(points, maximums)
 
     @classmethod
-    def combine(cls, gradebooks, keep_pids=None):
+    def combine(
+        cls, gradebooks: Collection["Gradebook"], keep_pids=None
+    ) -> "Gradebook":
         """Create a gradebook by safely combining several existing gradebooks.
 
         It is crucial that the combined gradebooks have exactly the same
@@ -301,7 +316,7 @@ class Gradebook:
 
         # check that all gradebooks have different assignment names
         number_of_assignments = sum(len(g.assignments) for g in gradebooks)
-        unique_assignments = set()
+        unique_assignments: Set[str] = set()
         for gradebook in gradebooks:
             unique_assignments.update(gradebook.assignments)
 
@@ -322,7 +337,7 @@ class Gradebook:
         return cls(points, maximums, late, dropped)
 
     @property
-    def assignments(self):
+    def assignments(self) -> Assignments:
         """All assignments in the gradebook.
 
         Returns
@@ -333,7 +348,7 @@ class Gradebook:
         return Assignments(self.points.columns)
 
     @property
-    def pids(self):
+    def pids(self) -> Set[str]:
         """All student PIDs.
 
         Returns
@@ -343,7 +358,7 @@ class Gradebook:
         """
         return set(self.points.index)
 
-    def keep_pids(self, to):
+    def keep_pids(self, to: Collection[str]) -> "Gradebook":
         """Restrict the gradebook to only the supplied PIDS.
 
         Parameters
@@ -372,7 +387,7 @@ class Gradebook:
         r_dropped = self.dropped.loc[pids].copy()
         return self.__class__(r_points, self.maximums, r_late, r_dropped)
 
-    def keep_assignments(self, assignments):
+    def keep_assignments(self, assignments: Collection[str]) -> "Gradebook":
         """Restrict the gradebook to only the supplied assignments.
 
         Parameters
@@ -402,7 +417,7 @@ class Gradebook:
         r_dropped = self.dropped.loc[:, assignments].copy()
         return self.__class__(r_points, r_maximums, r_late, r_dropped)
 
-    def remove_assignments(self, assignments):
+    def remove_assignments(self, assignments: Collection[str]) -> "Gradebook":
         """Remove the assignments from the gradebook.
 
         Parameters
@@ -428,7 +443,7 @@ class Gradebook:
 
         return self.keep_assignments(set(self.assignments) - set(assignments))
 
-    def number_of_lates(self, within=None):
+    def number_of_lates(self, within: Collection[str] = None) -> pd.Series:
         """Return the number of late assignments for each student as a Series.
 
         Parameters
@@ -458,7 +473,7 @@ class Gradebook:
 
         return self.late.loc[:, within].sum(axis=1)
 
-    def forgive_lates(self, n, within=None):
+    def forgive_lates(self, n: int, within: Collection[str] = None) -> "Gradebook":
         """Forgive the first n lates within a group of assignments.
 
         Parameters
@@ -518,12 +533,12 @@ class Gradebook:
 
         return self._replace(late=new_late)
 
-    def _points_with_lates_replaced_by_zeros(self):
+    def _points_with_lates_replaced_by_zeros(self) -> pd.DataFrame:
         replaced = self.points.copy()
         replaced[self.late.values] = 0
         return replaced
 
-    def drop_lowest(self, n, within=None):
+    def drop_lowest(self, n: int, within: Collection[str] = None) -> "Gradebook":
         """Drop the lowest n grades within a group of assignments.
 
         Parameters
@@ -595,9 +610,8 @@ class Gradebook:
         # we will try each combination and compute the resulting score for each student
         scores = []
         for possibly_dropped in combinations:
-            possibly_dropped = list(possibly_dropped)
             possibly_dropped_mask = self.dropped.copy()
-            possibly_dropped_mask[possibly_dropped] = True
+            possibly_dropped_mask[list(possibly_dropped)] = True
 
             earned = points_with_lates_as_zeros.copy()
             earned[possibly_dropped_mask] = 0
@@ -623,7 +637,9 @@ class Gradebook:
 
         return self._replace(dropped=new_dropped)
 
-    def _replace(self, points=None, maximums=None, late=None, dropped=None):
+    def _replace(
+        self, points=None, maximums=None, late=None, dropped=None
+    ) -> "Gradebook":
         new_points = points if points is not None else self.points.copy()
         new_maximums = maximums if maximums is not None else self.maximums.copy()
         new_late = late if late is not None else self.late.copy()
@@ -633,7 +649,7 @@ class Gradebook:
     def copy(self):
         return self._replace()
 
-    def give_equal_weights(self, within):
+    def give_equal_weights(self, within: Collection[str]) -> "Gradebook":
         """Normalize maximum points so that all assignments are worth the same.
 
         Parameters
@@ -661,7 +677,7 @@ class Gradebook:
 
         return self._replace(points=new_points, maximums=new_maximums)
 
-    def total(self, within):
+    def total(self, within: Collection[str]) -> Tuple[pd.Series, pd.Series]:
         """Computes the total points earned and available within one or more assignments.
 
         Takes into account late assignments (treats them as zeros) and dropped
@@ -696,7 +712,7 @@ class Gradebook:
 
         return effective_points, effective_possible
 
-    def score(self, within):
+    def score(self, within: Collection[str]) -> pd.Series:
         """Computes the fraction of possible points earned across one or more assignments.
 
         Takes into account late assignments (treats them as zeros) and dropped
@@ -716,7 +732,7 @@ class Gradebook:
         earned, available = self.total(within)
         return earned / available
 
-    def _unify_assignment(self, new_name, parts):
+    def _unify_assignment(self, new_name: str, parts: Collection[str]) -> "Gradebook":
         """A helper function to unify assignments under the new name."""
         parts = list(parts)
         if self.dropped[parts].any(axis=None):
@@ -736,7 +752,10 @@ class Gradebook:
 
         return Gradebook(new_points, new_max, late=new_late)
 
-    def unify_assignments(self, dct_or_callable):
+    def unify_assignments(
+        self,
+        dct_or_callable: Union[Mapping[str, Collection[str]], Callable[[str], str]],
+    ) -> "Gradebook":
         """Unifies the assignment parts into one single assignment with the new name.
 
         Sometimes assignments may have several parts which are recorded separately
@@ -764,7 +783,7 @@ class Gradebook:
         Returns
         -------
         Gradebook
-            The gradebook with the assignments unified to one assignment. Other 
+            The gradebook with the assignments unified to one assignment. Other
             assignments are left untouched.
 
         Raises
@@ -790,8 +809,9 @@ class Gradebook:
                 })
 
         """
+        dct: Dict[str, List[str]] = {}
         if not callable(dct_or_callable):
-            dct = dct_or_callable
+            dct = {k: list(v) for (k, v) in dct_or_callable.items()}
         else:
             to_key = dct_or_callable
             dct = {}
@@ -806,7 +826,14 @@ class Gradebook:
             result = result._unify_assignment(key, value)
         return result
 
-    def add_assignment(self, name, points, maximums, late=None, dropped=None):
+    def add_assignment(
+        self,
+        name: str,
+        points: pd.Series,
+        maximums: pd.Series,
+        late: pd.Series = None,
+        dropped=None,
+    ):
         """Adds a single assignment to the gradebook.
 
         Usually Gradebook do not need to have individual assignments added to them.

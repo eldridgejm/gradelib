@@ -1,9 +1,11 @@
 import re
+import pathlib
+from typing import Union
 
 import pandas as pd
 
 
-def read_egrades_roster(path):
+def read_egrades_roster(path: Union[str, pathlib.Path]) -> pd.DataFrame:
     """Read an eGrades roster CSV into a pandas dataframe.
 
     Parameters
@@ -38,13 +40,15 @@ def _find_index_of_first_assignment_column(columns):
     raise ValueError("There is no assignment column.")
 
 
-def read_gradescope(path, standardize_pids=True, standardize_assignments=True):
+def read_gradescope(
+    path: Union[str, pathlib.Path], standardize_pids=True, standardize_assignments=True
+) -> pd.DataFrame:
     """Read a CSV exported from Gradescope.
 
     Warning
     -------
 
-    This is a low-level function which returns a pandas DataFrame. A 
+    This is a low-level function which returns a pandas DataFrame. A
     higher-level convenience function for reading a gradescope CSV directly into
     a :class:`Gradebook` is provided by :meth:`Gradebook.from_gradescope`.
 
@@ -110,7 +114,7 @@ def _remove_assignment_id(s):
 
 
 def read_canvas(
-    path,
+    path: Union[str, pathlib.Path],
     *,
     standardize_pids=True,
     standardize_assignments=True,
@@ -121,7 +125,7 @@ def read_canvas(
     Warning
     -------
 
-    This is a low-level function which returns a pandas DataFrame. A 
+    This is a low-level function which returns a pandas DataFrame. A
     higher-level convenience function for reading a canvas CSV directly into
     a :class:`Gradebook` is provided by :meth:`Gradebook.from_canvas`.
 

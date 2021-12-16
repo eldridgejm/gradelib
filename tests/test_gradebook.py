@@ -40,15 +40,16 @@ def assert_gradebook_is_sound(gradebook):
 
 def test_lateness_fudge_defaults_to_5_minutes():
     # in the example, student A10000000 submitted Lab 01 1m 05 s late.
+    s = gradelib.Student("Barack Obama", "A10000000")
     gradebook = gradelib.Gradebook.from_gradescope(
         EXAMPLES_DIRECTORY / "gradescope-with-5m-late.csv"
     )
-    assert gradebook.late.loc["A10000000"].sum() == 4
+    assert gradebook.late.loc[s].sum() == 4
 
     gradebook = gradelib.Gradebook.from_gradescope(
         EXAMPLES_DIRECTORY / "gradescope-with-5m-late.csv", lateness_fudge=5*60 - 1
     )
-    assert gradebook.late.loc["A10000000"].sum() == 5
+    assert gradebook.late.loc[s].sum() == 5
 
 
 # assignments property
@@ -223,10 +224,10 @@ def test_forgive_lates_forgives_the_first_n_lates():
     actual = GRADESCOPE_EXAMPLE.forgive_lates(n=2, within=assignments)
 
     # then
-    assert not actual.late.loc["A10000000", "lab 02"]
-    assert not actual.late.loc["A10000000", "lab 07"]
-    assert actual.late.loc["A10000000", "lab 01"]
-    assert actual.late.loc["A10000000", "lab 03"]
+    assert not actual.late.loc[gradelib.Student("Barack Obama", "A10000000"), "lab 02"]
+    assert not actual.late.loc[gradelib.Student("Barack Obama", "A10000000"), "lab 07"]
+    assert actual.late.loc[gradelib.Student("Barack Obama", "A10000000"), "lab 01"]
+    assert actual.late.loc[gradelib.Student("Barack Obama", "A10000000"), "lab 03"]
 
 
 def test_forgive_lates_does_not_forgive_dropped():
@@ -256,8 +257,8 @@ def test_forgive_lates_does_not_forgive_dropped():
 def test_drop_lowest_on_simple_example_1():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name=gradelib.Student("Me", "A1"))
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name=gradelib.Student("You", "A2"))
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)

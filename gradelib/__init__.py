@@ -8,6 +8,7 @@ from .io import (
     write_egrades,
 )
 from .gradebook import Gradebook, Assignments
+from .types import Student
 from .scales import (
     DEFAULT_SCALE,
     ROUNDED_DEFAULT_SCALE,

@@ -19,6 +19,7 @@ from typing import (
 import pandas as pd
 
 from . import io
+from .types import Student
 
 
 class Assignments(collections.abc.Sequence):
@@ -183,7 +184,7 @@ class Gradebook:
         return (
             f"<{self.__class__.__name__} object with "
             f"{len(self.assignments)} assignments "
-            f"and {len(self.pids)} students>"
+            f"and {len(self.students)} students>"
         )
 
     @classmethod
@@ -348,6 +349,17 @@ class Gradebook:
         return Assignments(self.points.columns)
 
     @property
+    def students(self) -> Set[Student]:
+        """All student names and PIDs.
+
+        Returns
+        -------
+        Set[Student]
+
+        """
+        return set(self.points.index)
+
+    @property
     def pids(self) -> Set[str]:
         """All student PIDs.
 
@@ -356,7 +368,18 @@ class Gradebook:
         set
 
         """
-        return set(self.points.index)
+        return set(s.pid for s in self.students)
+
+    @property
+    def names(self) -> Set[str]:
+        """All student names.
+
+        Returns
+        -------
+        set
+
+        """
+        return set(s.names for s in self.students)
 
     def keep_pids(self, to: Collection[str]) -> "Gradebook":
         """Restrict the gradebook to only the supplied PIDS.
@@ -382,9 +405,11 @@ class Gradebook:
         if extras:
             raise KeyError(f"These PIDs were not in the gradebook: {extras}.")
 
-        r_points = self.points.loc[pids].copy()
-        r_late = self.late.loc[pids].copy()
-        r_dropped = self.dropped.loc[pids].copy()
+        students = [s for s in self.students if s.pid in set(pids)]
+
+        r_points = self.points.loc[students].copy()
+        r_late = self.late.loc[students].copy()
+        r_dropped = self.dropped.loc[students].copy()
         return self.__class__(r_points, self.maximums, r_late, r_dropped)
 
     def keep_assignments(self, assignments: Collection[str]) -> "Gradebook":
@@ -519,13 +544,13 @@ class Gradebook:
             raise ValueError("Cannot pass an empty list of assignments.")
 
         new_late = self.late.copy()
-        for pid in self.pids:
+        for student in self.students:
             forgiveness_remaining = n
             for assignment in within:
-                is_late = self.late.loc[pid, assignment]
-                is_dropped = self.dropped.loc[pid, assignment]
+                is_late = self.late.loc[student, assignment]
+                is_dropped = self.dropped.loc[student, assignment]
                 if is_late and not is_dropped:
-                    new_late.loc[pid, assignment] = False
+                    new_late.loc[student, assignment] = False
                     forgiveness_remaining -= 1
 
                 if forgiveness_remaining == 0:
@@ -630,10 +655,10 @@ class Gradebook:
         # loop through the students and mark the assignments which should be
         # dropped
         new_dropped = self.dropped.copy()
-        for pid in self.pids:
-            best_combo_ix = index_of_best_score.loc[pid]
+        for student in self.students:
+            best_combo_ix = index_of_best_score.loc[student]
             tossed = list(combinations[best_combo_ix])
-            new_dropped.loc[pid, tossed] = True
+            new_dropped.loc[student, tossed] = True
 
         return self._replace(dropped=new_dropped)
 
@@ -871,24 +896,24 @@ class Gradebook:
             raise ValueError(f'An assignment with the name "{name}" already exists.')
 
         if late is None:
-            late = pd.Series(False, index=self.pids)
+            late = pd.Series(False, index=self.students)
 
         if dropped is None:
-            dropped = pd.Series(False, index=self.pids)
+            dropped = pd.Series(False, index=self.students)
 
         result = self.copy()
 
-        def _match_pids(pids, where):
-            theirs = set(pids)
-            ours = set(self.pids)
+        def _match_students(students, where):
+            theirs = set(students)
+            ours = set(self.students)
             if theirs - ours:
-                raise ValueError(f'Unknown pids {theirs - ours} provided in "{where}".')
+                raise ValueError(f'Unknown students {theirs - ours} provided in "{where}".')
             if ours - theirs:
-                raise ValueError(f'"{where}" is missing PIDs: {ours - theirs}')
+                raise ValueError(f'"{where}" is missing students: {ours - theirs}')
 
-        _match_pids(points.index, "points")
-        _match_pids(late.index, "late")
-        _match_pids(dropped.index, "dropped")
+        _match_students(points.index, "points")
+        _match_students(late.index, "late")
+        _match_students(dropped.index, "dropped")
 
         result.points[name] = points
         result.maximums[name] = maximums

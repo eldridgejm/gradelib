@@ -4,6 +4,8 @@ from typing import Union
 
 import pandas as pd
 
+from .types import Student
+
 
 def read_egrades_roster(path: Union[str, pathlib.Path]) -> pd.DataFrame:
     """Read an eGrades roster CSV into a pandas dataframe.
@@ -74,13 +76,18 @@ def read_gradescope(
         The lateness of each submission, as a string.
 
     """
-    table = pd.read_csv(path, dtype={"SID": str}).set_index("SID")
+    table = pd.read_csv(path, dtype={"SID": str})
+
+    pids = table['SID']
+    names = table['First Name'] + ' ' + table['Last Name']
+
+    if standardize_pids:
+        pids = pids.str.upper()
+
+    table.index = [Student(name, pid) for name, pid in zip(names, pids)]
 
     # drop the total lateness column; it just gets in the way
     table = table.drop(columns="Total Lateness (H:M:S)")
-
-    if standardize_pids:
-        table.index = table.index.str.upper()
 
     # now we read the assignments to create the points table.
     # there are four columns for each assignment: one with the assignment's name
@@ -179,15 +186,24 @@ def read_canvas(
     max_points = max_points.iloc[0].drop(index="Student").astype(float)
     max_points.name = "Max Points"
 
-    # clean up the table. get rid of the student column, and drop all rows with
-    # NaN indices
-    points = table[~pd.isna(table.index)].drop(columns=["Student"]).astype(float)
+    # clean up the table. drop all rows with NaN indices, as these rows do not
+    # correspond to students
+    table = table[~pd.isna(table.index)]
+
+    # create the new index of Student objects
+    pids = table.index
+    names = table['Student']
+
+    if standardize_pids:
+        pids = pids.str.upper()
+
+    table.index = [Student(name, pid) for name, pid in zip(names, pids)]
+    table = table.drop(columns=['Student'])
+
+    points = table.astype(float)
 
     if standardize_assignments:
         points.columns = points.columns.str.lower()
-
-    if standardize_pids:
-        points.index = points.index.str.upper()
 
     if remove_assignment_ids:
         points.columns = [_remove_assignment_id(c) for c in points.columns]

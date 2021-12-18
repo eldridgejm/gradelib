@@ -78,8 +78,8 @@ def read_gradescope(
     """
     table = pd.read_csv(path, dtype={"SID": str})
 
-    pids = table['SID']
-    names = table['First Name'] + ' ' + table['Last Name']
+    pids = table["SID"]
+    names = table["First Name"] + " " + table["Last Name"]
 
     if standardize_pids:
         pids = pids.str.upper()
@@ -192,13 +192,13 @@ def read_canvas(
 
     # create the new index of Student objects
     pids = table.index
-    names = table['Student']
+    names = table["Student"]
 
     if standardize_pids:
         pids = pids.str.upper()
 
     table.index = [Student(name, pid) for name, pid in zip(names, pids)]
-    table = table.drop(columns=['Student'])
+    table = table.drop(columns=["Student"])
 
     points = table.astype(float)
 

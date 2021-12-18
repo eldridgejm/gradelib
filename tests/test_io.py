@@ -44,12 +44,14 @@ def test_read_gradescope_same_shapes_and_columns_in_all_tables():
 
 def test_read_gradescope_creates_index_of_student_objects():
     # when
-    points, maximums, late = gradelib.read_gradescope(EXAMPLES_DIRECTORY / "gradescope.csv")
+    points, maximums, late = gradelib.read_gradescope(
+        EXAMPLES_DIRECTORY / "gradescope.csv"
+    )
 
     # then
     for ser in [points, late]:
         assert isinstance(ser.index[0], gradelib.Student)
-        assert ser.index[0] == ('Zelda Fitzgerald', 'A16000000')
+        assert ser.index[0] == ("Zelda Fitzgerald", "A16000000")
 
 
 def test_read_gradescope_standardizes_pids_by_default():
@@ -60,10 +62,10 @@ def test_read_gradescope_standardizes_pids_by_default():
     # the last PID is lowercased in the file, should be made uppercase
     assert set(points.index) == set(
         [
-            gradelib.Student("Justin Eldridge", "A12345678"), 
-            gradelib.Student("Barack Obama", "A10000000"), 
-            gradelib.Student("Zelda Fitzgerald", "A16000000"), 
-            gradelib.Student("Another Eldridge", "A87654321")
+            gradelib.Student("Justin Eldridge", "A12345678"),
+            gradelib.Student("Barack Obama", "A10000000"),
+            gradelib.Student("Zelda Fitzgerald", "A16000000"),
+            gradelib.Student("Another Eldridge", "A87654321"),
         ]
     )
 
@@ -115,12 +117,14 @@ def test_read_canvas_standardizes_pids_by_default():
 
     # then
     # the last PID is lowercased in the file, should be made uppercase
-    assert set(points.index) == set([
-        gradelib.Student("Justin Eldridge", "A12345678"), 
-        gradelib.Student("Barack Obama", "A10000000"), 
-        gradelib.Student("Zelda Fitzgerald", "A16000000"), 
-        gradelib.Student("Someone Else", "A22222222")
-        ])
+    assert set(points.index) == set(
+        [
+            gradelib.Student("Justin Eldridge", "A12345678"),
+            gradelib.Student("Barack Obama", "A10000000"),
+            gradelib.Student("Zelda Fitzgerald", "A16000000"),
+            gradelib.Student("Someone Else", "A22222222"),
+        ]
+    )
 
 
 def test_read_canvas_standardizes_assignments_by_default():

@@ -34,6 +34,12 @@ def assert_gradebook_is_sound(gradebook):
     assert (gradebook.points.columns == gradebook.maximums.index).all()
 
 
+def starting_with(prefix):
+    def predicate(s):
+        return s.startswith(prefix)
+    return predicate
+
+
 # from_gradescope()
 # -----------------------------------------------------------------------------
 
@@ -47,7 +53,7 @@ def test_lateness_fudge_defaults_to_5_minutes():
     assert gradebook.late.loc[s].sum() == 4
 
     gradebook = gradelib.Gradebook.from_gradescope(
-        EXAMPLES_DIRECTORY / "gradescope-with-5m-late.csv", lateness_fudge=5*60 - 1
+        EXAMPLES_DIRECTORY / "gradescope-with-5m-late.csv", lateness_fudge=5 * 60 - 1
     )
     assert gradebook.late.loc[s].sum() == 5
 
@@ -60,6 +66,69 @@ def test_assignments_are_produced_in_order():
     assert list(GRADESCOPE_EXAMPLE.assignments) == list(
         GRADESCOPE_EXAMPLE.points.columns
     )
+
+
+# merge_groups()
+# -----------------------------------------------------------------------------
+
+
+def test_merge_groups_by_list_of_strings():
+    gradebook = GRADESCOPE_EXAMPLE.merge_groups(
+        ["lab 01", "lab 02", "lab 03"], name="labs"
+    )
+
+    assert gradebook.groups["labs"].assignments == [
+        "lab 01",
+        "lab 02",
+        "lab 03",
+    ]
+
+
+def test_merge_groups_removes_old_groups():
+    assert "lab 01" in GRADESCOPE_EXAMPLE.groups
+    assert "lab 02" in GRADESCOPE_EXAMPLE.groups
+    assert "lab 03" in GRADESCOPE_EXAMPLE.groups
+
+    gradebook = GRADESCOPE_EXAMPLE.merge_groups(
+        ["lab 01", "lab 02", "lab 03"], name="labs"
+    )
+
+    assert gradebook.groups["labs"].assignments == [
+        "lab 01",
+        "lab 02",
+        "lab 03",
+    ]
+    assert "lab 01" not in gradebook.groups
+    assert "lab 02" not in gradebook.groups
+    assert "lab 03" not in gradebook.groups
+
+
+def test_merge_assignment_with_multiple_merges_and_replace():
+    gradebook = GRADESCOPE_EXAMPLE.merge_groups(
+        ["lab 01", "lab 02"], name="labs"
+    ).merge_groups(["labs", "lab 03"], name="labs")
+
+    assert gradebook.groups["labs"].assignments == [
+        "lab 01",
+        "lab 02",
+        "lab 03",
+    ]
+    assert "lab 01" not in gradebook.groups
+    assert "lab 02" not in gradebook.groups
+    assert "lab 03" not in gradebook.groups
+
+
+def test_merge_assignment_with_predicate_function():
+    is_lab = lambda s: s.startswith("lab")
+
+    gradebook = GRADESCOPE_EXAMPLE.merge_groups(is_lab, name="labs")
+
+    assert gradebook.groups["labs"].assignments == [
+        f"lab 0{i}" for i in range(1, 10)
+    ]
+    assert "lab 01" not in gradebook.groups
+    assert "lab 02" not in gradebook.groups
+    assert "lab 03" not in gradebook.groups
 
 
 # keep_pids()
@@ -257,8 +326,12 @@ def test_forgive_lates_does_not_forgive_dropped():
 def test_drop_lowest_on_simple_example_1():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name=gradelib.Student("Me", "A1"))
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name=gradelib.Student("You", "A2"))
+    p1 = pd.Series(
+        data=[1, 30, 90, 20], index=columns, name=gradelib.Student("Me", "A1")
+    )
+    p2 = pd.Series(
+        data=[2, 7, 15, 20], index=columns, name=gradelib.Student("You", "A2")
+    )
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
@@ -672,7 +745,11 @@ def test_add_assignment_default_none_dropped_or_late():
     assignment_max = 20
 
     # when
-    result = gradebook.add_assignment("new", assignment_points, 20,)
+    result = gradebook.add_assignment(
+        "new",
+        assignment_points,
+        20,
+    )
 
     # then
     assert result.late.loc["A1", "new"] == False
@@ -695,7 +772,9 @@ def test_add_assignment_raises_on_missing_student():
     # when
     with pytest.raises(ValueError):
         gradebook.add_assignment(
-            "new", assignment_points, 20,
+            "new",
+            assignment_points,
+            20,
         )
 
 
@@ -715,7 +794,9 @@ def test_add_assignment_raises_on_unknown_student():
     # when
     with pytest.raises(ValueError):
         gradebook.add_assignment(
-            "new", assignment_points, 20,
+            "new",
+            assignment_points,
+            20,
         )
 
 
@@ -734,5 +815,7 @@ def test_add_assignment_raises_if_duplicate_name():
     # when
     with pytest.raises(ValueError):
         gradebook.add_assignment(
-            "hw01", assignment_points, 20,
+            "hw01",
+            assignment_points,
+            20,
         )

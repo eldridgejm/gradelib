@@ -3,6 +3,7 @@
 import collections.abc
 import itertools
 import pathlib
+import dataclasses
 from typing import (
     Callable,
     Sequence,
@@ -143,6 +144,11 @@ def _lateness_in_seconds(lateness: pd.Series) -> pd.Series:
     return 3600 * hours + 60 * minutes + seconds
 
 
+@dataclasses.dataclass
+class AssignmentGroup:
+    assignments: List[str]
+
+
 class Gradebook:
     """Data structure which facilitates common grading policies.
 
@@ -174,11 +180,23 @@ class Gradebook:
 
     """
 
-    def __init__(self, points, maximums, late=None, dropped=None):
+    def __init__(
+        self, points, maximums, late=None, dropped=None, groups=None
+    ):
         self.points = points
         self.maximums = maximums
         self.late = late if late is not None else _empty_mask_like(points)
         self.dropped = dropped if dropped is not None else _empty_mask_like(points)
+        self._groups = None
+
+        if groups is None:
+            self.groups = {}
+            for assignment in self.points.columns:
+                self.groups[assignment] = AssignmentGroup(
+                    assignments=[assignment]
+                )
+        else:
+            self.groups = groups
 
     def __repr__(self):
         return (
@@ -336,6 +354,34 @@ class Gradebook:
         dropped = concat_attr("dropped")
 
         return cls(points, maximums, late, dropped)
+
+    def merge_groups(
+        self, group_names: Collection[str], name: str
+    ) -> "Gradebook":
+        """Merges the assignment groups to create a new assignment group."""
+        if callable(group_names):
+            group_names = list(filter(group_names, self.groups.keys()))
+
+        if not set(group_names).issubset(self.groups.keys()):
+            raise ValueError("Some group names are invalid.")
+
+        assignments = []
+        for group_name in group_names:
+            assignments.extend(self.groups[group_name].assignments)
+
+        new_group = AssignmentGroup(assignments)
+
+        new_groups = self.groups.copy()
+
+        # remove the old assignment groups that have been merged; do this
+        # before adding new group in case the `name` is one of the old group
+        # names, meaning that it is effectively replaced
+        for group_name in group_names:
+            del new_groups[group_name]
+
+        new_groups[name] = new_group
+
+        return self._replace(groups=new_groups)
 
     @property
     def assignments(self) -> Assignments:
@@ -663,13 +709,27 @@ class Gradebook:
         return self._replace(dropped=new_dropped)
 
     def _replace(
-        self, points=None, maximums=None, late=None, dropped=None
+        self,
+        points=None,
+        maximums=None,
+        late=None,
+        dropped=None,
+        groups=None,
     ) -> "Gradebook":
+
         new_points = points if points is not None else self.points.copy()
         new_maximums = maximums if maximums is not None else self.maximums.copy()
         new_late = late if late is not None else self.late.copy()
         new_dropped = dropped if dropped is not None else self.dropped.copy()
-        return Gradebook(new_points, new_maximums, new_late, new_dropped)
+        new_groups = (
+            groups
+            if groups is not None
+            else self.groups.copy()
+        )
+
+        return Gradebook(
+            new_points, new_maximums, new_late, new_dropped, new_groups
+        )
 
     def copy(self):
         return self._replace()
@@ -907,7 +967,9 @@ class Gradebook:
             theirs = set(students)
             ours = set(self.students)
             if theirs - ours:
-                raise ValueError(f'Unknown students {theirs - ours} provided in "{where}".')
+                raise ValueError(
+                    f'Unknown students {theirs - ours} provided in "{where}".'
+                )
             if ours - theirs:
                 raise ValueError(f'"{where}" is missing students: {ours - theirs}')
 

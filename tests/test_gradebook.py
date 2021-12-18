@@ -241,25 +241,11 @@ def test_combine_raises_if_indices_do_not_match():
 
 def test_number_of_lates():
     # when
-    labs = GRADESCOPE_EXAMPLE.assignments.starting_with("lab")
-    actual = GRADESCOPE_EXAMPLE.number_of_lates(within=labs)
+    gradebook = GRADESCOPE_EXAMPLE.merge_groups(starting_with("lab"), 'labs')
+    actual = gradebook.number_of_lates(within='labs')
 
     # then
     assert list(actual) == [1, 4, 2, 2]
-
-
-def test_number_of_lates_with_empty_assignment_list_raises():
-    # when
-    with pytest.raises(ValueError):
-        actual = GRADESCOPE_EXAMPLE.number_of_lates(within=[])
-
-
-def test_number_of_lates_with_no_assignment_list_uses_all_assignments():
-    # when
-    actual = GRADESCOPE_EXAMPLE.number_of_lates()
-
-    # then
-    assert list(actual) == [1, 5, 2, 2]
 
 
 # forgive_lates()
@@ -268,25 +254,30 @@ def test_number_of_lates_with_no_assignment_list_uses_all_assignments():
 
 def test_forgive_lates():
     # when
-    labs = GRADESCOPE_EXAMPLE.assignments.starting_with("lab")
-    actual = GRADESCOPE_EXAMPLE.forgive_lates(n=3, within=labs)
+    gradebook = GRADESCOPE_EXAMPLE.merge_groups(starting_with('lab'), 'labs')
+    actual = gradebook.forgive_lates(n=3, within='labs')
+
+    # then
+    assert list(actual.number_of_lates(within='labs')) == [0, 1, 0, 0]
+    assert_gradebook_is_sound(actual)
+
+
+def test_forgive_lates_works_when_given_assignments_object():
+    # when
+    gradebook = GRADESCOPE_EXAMPLE
+    labs = gradebook.assignments.starting_with('lab')
+    actual = gradebook.forgive_lates(n=3, within=labs)
 
     # then
     assert list(actual.number_of_lates(within=labs)) == [0, 1, 0, 0]
     assert_gradebook_is_sound(actual)
 
 
-def test_forgive_lates_with_empty_assignment_list_raises():
-    # when
-    with pytest.raises(ValueError):
-        actual = GRADESCOPE_EXAMPLE.forgive_lates(n=3, within=[])
-
-
 def test_forgive_lates_forgives_the_first_n_lates():
     # by "first", we mean in the order specified by the `within` argument
     # student A10000000 had late lab 01, 02, 03, and 07
 
-    assignments = ["lab 02", "lab 07", "lab 01", "lab 03"]
+    assignments = gradelib.Assignments(["lab 02", "lab 07", "lab 01", "lab 03"])
 
     # when
     actual = GRADESCOPE_EXAMPLE.forgive_lates(n=2, within=assignments)
@@ -320,7 +311,6 @@ def test_forgive_lates_does_not_forgive_dropped():
 
 # drop_lowest()
 # -----------------------------------------------------------------------------
-
 
 def test_drop_lowest_on_simple_example_1():
     # given
@@ -374,6 +364,33 @@ def test_drop_lowest_on_simple_example_2():
     assert_gradebook_is_sound(actual)
 
 
+def test_drop_lowest_works_when_given_assignments_object():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    assignments = gradelib.Assignments(columns)
+    p1 = pd.Series(
+        data=[1, 30, 90, 20], index=columns, name=gradelib.Student("Me", "A1")
+    )
+    p2 = pd.Series(
+        data=[2, 7, 15, 20], index=columns, name=gradelib.Student("You", "A2")
+    )
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
+    # for A1 and to drop the 100 point homework for A2
+
+    # when
+    actual = gradebook.drop_lowest(1, within=assignments)
+
+    # then
+    assert actual.dropped.iloc[0, 1]
+    assert actual.dropped.iloc[1, 2]
+    assert list(actual.dropped.sum(axis=1)) == [1, 1]
+    assert_gradebook_is_sound(actual)
+
+
 def test_drop_lowest_counts_lates_as_zeros():
     # given
     columns = ["hw01", "hw02"]
@@ -398,7 +415,7 @@ def test_drop_lowest_counts_lates_as_zeros():
     assert_gradebook_is_sound(actual)
 
 
-def test_drop_lowest_ignores_assignments_alread_dropped():
+def test_drop_lowest_ignores_assignments_already_dropped():
     # given
     columns = ["hw01", "hw02", "hw03", "hw04"]
     p1 = pd.Series(data=[9, 0, 7, 0], index=columns, name="A1")
@@ -450,6 +467,27 @@ def test_give_equal_weights_on_example():
     assert actual.points.loc["A1", "hw01"] == 1 / 2
     assert actual.points.loc["A1", "hw02"] == 30 / 50
 
+
+def test_give_equal_weights_works_when_given_assignments_object():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    actual = gradebook.give_equal_weights(within=homeworks)
+
+    # then
+    assert actual.maximums.loc["hw01"] == 1
+    assert actual.maximums.loc["hw02"] == 1
+    assert actual.maximums.loc["hw03"] == 1
+    assert actual.maximums.loc["lab01"] == 20
+    assert actual.points.loc["A1", "hw01"] == 1 / 2
+    assert actual.points.loc["A1", "hw02"] == 30 / 50
 
 # score()
 # -----------------------------------------------------------------------------

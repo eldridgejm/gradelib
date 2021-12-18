@@ -144,6 +144,9 @@ def _lateness_in_seconds(lateness: pd.Series) -> pd.Series:
     return 3600 * hours + 60 * minutes + seconds
 
 
+WithinSpecifier = Union[str, Sequence[str], Assignments]
+
+
 class Gradebook:
     """Data structure which facilitates common grading policies.
 
@@ -506,14 +509,25 @@ class Gradebook:
 
         return self.keep_assignments(set(self.assignments) - set(assignments))
 
-    def number_of_lates(self, within: Collection[str] = None) -> pd.Series:
+    def _get_assignments(self, within_spec: WithinSpecifier):
+        if isinstance(within_spec, str):
+            return self.groups[within_spec]
+        elif isinstance(within_spec, Assignments):
+            return list(within_spec)
+        else:
+            # it must be a list of group names
+            assignments = []
+            for group in self.groups.values():
+                assignments.extend(group)
+            return assignments
+
+    def number_of_lates(self, within: WithinSpecifier) -> pd.Series:
         """Return the number of late assignments for each student as a Series.
 
         Parameters
         ----------
-        within : Collection[str]
-            A collection of assignment names that will be used to restrict the
-            gradebook. If None, all assignments will be used. Default: None
+        within : WithinSpecifier
+            The assignments to count lates within.
 
         Returns
         -------
@@ -526,26 +540,19 @@ class Gradebook:
             If `within` is empty.
 
         """
-        if within is None:
-            within = self.assignments
-        else:
-            within = list(within)
+        assignments = self._get_assignments(within)
+        return self.late.loc[:, assignments].sum(axis=1)
 
-        if not within:
-            raise ValueError("Cannot pass an empty list of assignments.")
-
-        return self.late.loc[:, within].sum(axis=1)
-
-    def forgive_lates(self, n: int, within: Collection[str] = None) -> "Gradebook":
+    def forgive_lates(self, n: int, within: WithinSpecifier) -> "Gradebook":
         """Forgive the first n lates within a group of assignments.
 
         Parameters
         ----------
         n : int
             The number of lates to forgive.
-        within : Sequence[str]
-            A collection of assignments within which lates will be forgiven.
-            If None, all assignments will be used. Default: None
+        within : WithinSpecifier
+            Assignments within which to forgive lates. Assignments are forgiven in the
+            order that they appear.
 
         Notes
         -----
@@ -575,16 +582,12 @@ class Gradebook:
         if n < 1:
             raise ValueError("Must forgive at least one late.")
 
-        if within is None:
-            within = self.assignments
-
-        if not within:
-            raise ValueError("Cannot pass an empty list of assignments.")
+        assignments = self._get_assignments(within)
 
         new_late = self.late.copy()
         for student in self.students:
             forgiveness_remaining = n
-            for assignment in within:
+            for assignment in assignments:
                 is_late = self.late.loc[student, assignment]
                 is_dropped = self.dropped.loc[student, assignment]
                 if is_late and not is_dropped:
@@ -601,15 +604,15 @@ class Gradebook:
         replaced[self.late.values] = 0
         return replaced
 
-    def drop_lowest(self, n: int, within: str) -> "Gradebook":
+    def drop_lowest(self, n: int, within: WithinSpecifier) -> "Gradebook":
         """Drop the lowest n grades within a group of assignments.
 
         Parameters
         ----------
         n : int
             The number of grades to drop.
-        within : str
-            The name of the assignment group to drop within.
+        within : WithinSpecifier
+            The assignments to drop within.
 
         Notes
         -----
@@ -648,7 +651,7 @@ class Gradebook:
             If `n` is not a positive integer.
 
         """
-        assignments = self.groups[within]
+        assignments = self._get_assignments(within)
 
         # the combinations of assignments to drop
         combinations = list(itertools.combinations(assignments, n))

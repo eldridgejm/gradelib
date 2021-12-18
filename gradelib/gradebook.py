@@ -136,6 +136,13 @@ def _empty_mask_like(table: pd.DataFrame) -> pd.DataFrame:
     return empty.astype(bool)
 
 
+def _empty_zeros_like(table: pd.DataFrame) -> pd.DataFrame:
+    """Given a dataframe, create another just like it with every entry 0."""
+    empty = table.copy()
+    empty.iloc[:, :] = 0.0
+    return empty.astype(float)
+
+
 def _lateness_in_seconds(lateness: pd.Series) -> pd.Series:
     """Converts a series of lateness strings in HH:MM:SS format to integer seconds"""
     hours = lateness.str.split(":").str[0].astype(int)
@@ -169,6 +176,8 @@ class Gradebook:
         A Boolean dataframe with the same columns/index as `points`. An entry
         that is `True` indicates that the assignment should be dropped. If
         `None` is passed, a dataframe of all `False`s is used by default.
+    groups
+    penalty
 
     Notes
     -----
@@ -178,12 +187,14 @@ class Gradebook:
 
     """
 
-    def __init__(self, points, maximums, late=None, dropped=None, groups=None):
+    def __init__(
+        self, points, maximums, late=None, dropped=None, groups=None, penalty=None
+    ):
         self.points = points
         self.maximums = maximums
         self.late = late if late is not None else _empty_mask_like(points)
+        self.penalty = penalty if penalty is not None else _empty_zeros_like(points)
         self.dropped = dropped if dropped is not None else _empty_mask_like(points)
-        self._groups = None
 
         if groups is None:
             self.groups = {}
@@ -756,6 +767,7 @@ class Gradebook:
         late=None,
         dropped=None,
         groups=None,
+        penalty=None,
     ) -> "Gradebook":
 
         new_points = points if points is not None else self.points.copy()
@@ -763,8 +775,11 @@ class Gradebook:
         new_late = late if late is not None else self.late.copy()
         new_dropped = dropped if dropped is not None else self.dropped.copy()
         new_groups = groups if groups is not None else self.groups.copy()
+        new_penalty = penalty if penalty is not None else self.penalty.copy()
 
-        return Gradebook(new_points, new_maximums, new_late, new_dropped, new_groups)
+        return Gradebook(
+            new_points, new_maximums, new_late, new_dropped, new_groups, new_penalty
+        )
 
     def copy(self):
         return self._replace()
@@ -802,8 +817,8 @@ class Gradebook:
     def total(self, within: WithinSpecifier) -> Tuple[pd.Series, pd.Series]:
         """Computes the total points earned and available within one or more assignments.
 
-        Takes into account late assignments (treats them as zeros) and dropped
-        assignments (acts as if they were never assigned).
+        Takes into account penalties and dropped assignments (acts as if they
+        were never assigned).
 
         Parameters
         ----------
@@ -820,22 +835,23 @@ class Gradebook:
         """
         within = self._get_assignments(within)
 
-        points_with_lates_as_zeros = self._points_with_lates_replaced_by_zeros()[within]
+        points_after_penalty = self.points.copy()[within]
+        points_after_penalty *= (1 - self.penalty[within])
 
-        # create a full array of points available
-        points_available = self.points.copy()[within]
-        points_available.iloc[:, :] = self.maximums[within].values
+        # create a full array of points possible
+        points_possible = self.points.copy()[within]
+        points_possible.iloc[:, :] = self.maximums[within].values
 
-        effective_points = points_with_lates_as_zeros[~self.dropped].sum(axis=1)
-        effective_possible = points_available[~self.dropped].sum(axis=1)
+        effective_points = points_after_penalty[within][~self.dropped].sum(axis=1)
+        effective_possible = points_possible[~self.dropped].sum(axis=1)
 
         return effective_points, effective_possible
 
     def score(self, within: WithinSpecifier) -> pd.Series:
         """Computes the fraction of possible points earned across one or more assignments.
 
-        Takes into account late assignments (treats them as zeros) and dropped
-        assignments (acts as if they were never assigned).
+        Takes into account penalties and dropped assignments (acts as if they
+        were never assigned).
 
         Parameters
         ----------

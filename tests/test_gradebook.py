@@ -596,7 +596,10 @@ def test_score_works_when_given_group_name():
     assert np.allclose(actual.values, [121 / 152, 24 / 152], atol=1e-6)
 
 
-def test_score_counts_lates_as_zero():
+def test_score_does_not_count_lates_as_zero():
+    # counting lates as zeros was the previous behavior. now the penalties come from the 
+    # penalty attribute, which is more general
+
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -613,8 +616,30 @@ def test_score_counts_lates_as_zero():
     actual = gradebook.score(homeworks)
 
     # then
-    assert np.allclose(actual.values, [30 / 152, 9 / 152], atol=1e-6)
+    assert np.allclose(actual.values, [121 / 152, 24 / 152], atol=1e-6)
 
+
+def test_score_takes_penalty_into_account():
+    # counting lates as zeros was the previous behavior. now the penalties come from the 
+    # penalty attribute, which is more general
+
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+    gradebook.penalty.loc["A1", "hw01"] = 0.5
+    gradebook.penalty.loc["A1", "hw03"] = 1
+    gradebook.penalty.loc["A2", "hw03"] = 0.5
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    actual = gradebook.score(homeworks)
+
+    # then
+    assert np.allclose(actual.values, [30.5 / 152, 16.5 / 152], atol=1e-6)
 
 def test_score_ignores_dropped_assignments():
     # given
@@ -659,7 +684,10 @@ def test_total_on_simple_example():
     assert np.allclose(available.values, [152, 152], atol=1e-6)
 
 
-def test_total_counts_lates_as_zero():
+def test_total_does_not_count_lates_as_zero():
+    # counting lates as zeros was the old behavior. now, lates must be explicitly
+    # penalized in the .penalty attribute, which is more general.
+
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -676,9 +704,31 @@ def test_total_counts_lates_as_zero():
     earned, available = gradebook.total("homeworks")
 
     # then
-    assert np.allclose(earned.values, [31, 9], atol=1e-6)
+    assert np.allclose(earned.values, [121, 24], atol=1e-6)
     assert np.allclose(available.values, [152, 152], atol=1e-6)
 
+def test_total_includes_penalty():
+    # counting lates as zeros was the old behavior. now, lates must be explicitly
+    # penalized in the .penalty attribute, which is more general.
+
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
+    gradebook.penalty.loc["A1", "hw03"] = .5
+    gradebook.penalty.loc["A2", "hw03"] = 1
+
+    # when
+    earned, available = gradebook.total("homeworks")
+
+    # then
+    assert np.allclose(earned.values, [76, 9], atol=1e-6)
+    assert np.allclose(available.values, [152, 152], atol=1e-6)
 
 def test_total_ignores_dropped_assignments():
     # given

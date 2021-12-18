@@ -782,7 +782,7 @@ class Gradebook:
 
         return effective_points, effective_possible
 
-    def score(self, within: Collection[str]) -> pd.Series:
+    def score(self, within: WithinSpecifier) -> pd.Series:
         """Computes the fraction of possible points earned across one or more assignments.
 
         Takes into account late assignments (treats them as zeros) and dropped
@@ -790,7 +790,7 @@ class Gradebook:
 
         Parameters
         ----------
-        within : Collection[str]
+        within : WithinSpecifier
             The assignments whose overall score should be computed.
 
         Returns

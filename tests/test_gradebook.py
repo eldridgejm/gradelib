@@ -508,6 +508,20 @@ def test_score_on_simple_example():
     # then
     assert np.allclose(actual.values, [121 / 152, 24 / 152], atol=1e-6)
 
+def test_score_works_when_given_group_name():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
+
+    # when
+    actual = gradebook.score('homeworks')
+
+    # then
+    assert np.allclose(actual.values, [121 / 152, 24 / 152], atol=1e-6)
 
 def test_score_counts_lates_as_zero():
     # given

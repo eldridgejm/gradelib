@@ -720,12 +720,12 @@ class Gradebook:
     def copy(self):
         return self._replace()
 
-    def give_equal_weights(self, within: Collection[str]) -> "Gradebook":
+    def give_equal_weights(self, within: WithinSpecifier) -> "Gradebook":
         """Normalize maximum points so that all assignments are worth the same.
 
         Parameters
         ----------
-        within : Collection[str]
+        within : WithinSpecifier
             The assignments to reweight.
 
         Returns
@@ -733,6 +733,8 @@ class Gradebook:
         Gradebook
 
         """
+        within = self._get_assignments(within)
+
         extra = set(within) - set(self.assignments)
         if extra:
             raise ValueError(f"These assignments are not in the gradebook: {extra}.")

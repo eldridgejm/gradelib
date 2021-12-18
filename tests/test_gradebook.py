@@ -234,6 +234,28 @@ def test_combine_raises_if_indices_do_not_match():
             [CANVAS_WITHOUT_LAB_EXAMPLE, GRADESCOPE_EXAMPLE]
         )
 
+def test_combine_combines_groups():
+    # when
+    gb1 = GRADESCOPE_EXAMPLE.merge_groups(starting_with('homework'), 'homeworks')
+    combined = gradelib.Gradebook.combine(
+        [gb1, CANVAS_WITHOUT_LAB_EXAMPLE], keep_pids=ROSTER.index
+    )
+
+    # then
+    assert "homeworks" in combined.groups
+    assert "midterm exam" in combined.groups
+
+
+def test_combine_raises_if_duplicate_groups():
+    # when
+    gb1 = GRADESCOPE_EXAMPLE.merge_groups(starting_with('homework'), 'homeworks')
+    gb2 = CANVAS_WITHOUT_LAB_EXAMPLE.merge_groups(starting_with('midterm'), 'homeworks')
+
+    with pytest.raises(ValueError):
+        gradelib.Gradebook.combine(
+            [gb1, gb2], keep_pids=ROSTER.index
+        )
+
 
 # number_of_lates()
 # -----------------------------------------------------------------------------

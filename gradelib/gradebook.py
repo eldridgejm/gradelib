@@ -295,6 +295,9 @@ class Gradebook:
         before combining them. Similarly, it verifies that each gradebook has
         unique assignments, so that no conflicts occur when combining them.
 
+        Any groups defined in the combined gradebooks are carried over, but an
+        exception is raised if the same group name appears in bother gradebooks.
+
         Parameters
         ----------
         gradebooks : Collection[Gradebook]
@@ -329,14 +332,20 @@ class Gradebook:
             if gradebook.pids != reference_pids:
                 raise ValueError("Not all gradebooks have the same PIDs.")
 
-        # check that all gradebooks have different assignment names
-        number_of_assignments = sum(len(g.assignments) for g in gradebooks)
-        unique_assignments: Set[str] = set()
-        for gradebook in gradebooks:
-            unique_assignments.update(gradebook.assignments)
+        def _all_unique(attr):
+            total_number = sum(len(getattr(g, attr)) for g in gradebooks)
+            unique = set()
+            for gradebook in gradebooks:
+                unique.update(getattr(gradebook, attr))
 
-        if len(unique_assignments) != number_of_assignments:
+            return total_number == len(unique)
+
+        # check that all gradebooks have different assignment names
+        if not _all_unique('assignments'):
             raise ValueError("Gradebooks have duplicate assignments.")
+
+        if not _all_unique('groups'):
+            raise ValueError("Gradebooks have duplicate groups.")
 
         # create the combined notebook
         def concat_attr(a, axis=1):
@@ -349,7 +358,11 @@ class Gradebook:
         late = concat_attr("late")
         dropped = concat_attr("dropped")
 
-        return cls(points, maximums, late, dropped)
+        groups = {}
+        for gradebook in gradebooks:
+            groups |= gradebook.groups
+
+        return cls(points, maximums, late, dropped, groups)
 
     def merge_groups(
         self, group_names: Collection[str], name: str
@@ -451,7 +464,7 @@ class Gradebook:
         r_points = self.points.loc[students].copy()
         r_late = self.late.loc[students].copy()
         r_dropped = self.dropped.loc[students].copy()
-        return self.__class__(r_points, self.maximums, r_late, r_dropped)
+        return self.__class__(r_points, self.maximums, r_late, r_dropped, self.groups)
 
     def keep_assignments(self, assignments: Collection[str]) -> "Gradebook":
         """Restrict the gradebook to only the supplied assignments.

@@ -519,7 +519,14 @@ class Gradebook:
         r_maximums = self.maximums[assignments].copy()
         r_late = self.late.loc[:, assignments].copy()
         r_dropped = self.dropped.loc[:, assignments].copy()
-        return self.__class__(r_points, r_maximums, r_late, r_dropped)
+
+        r_groups = {}
+        for group, group_assignments in self.groups.items():
+            kept = [a for a in group_assignments if a in assignments]
+            if kept:
+                r_groups[group] = kept
+
+        return self.__class__(r_points, r_maximums, r_late, r_dropped, groups=r_groups)
 
     def remove_assignments(self, assignments: Collection[str]) -> "Gradebook":
         """Remove the assignments from the gradebook.

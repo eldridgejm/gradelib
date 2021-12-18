@@ -391,7 +391,7 @@ class Gradebook:
 
         return self._replace(groups=new_groups)
 
-    def group_containing(assignment: str) -> str:
+    def group_containing(self, assignment: str) -> str:
         """Find the group containing the assignment.
 
         Parameters
@@ -860,12 +860,18 @@ class Gradebook:
         new_max[new_name] = assignment_max
         new_late[new_name] = assignment_late
 
-        return Gradebook(new_points, new_max, late=new_late)
+        new_groups = self.groups.copy()
+        group_name = self.group_containing(parts[0])
+        for part in parts:
+            new_groups[group_name].remove(part)
+        new_groups[group_name].append(new_name)
+
+        return Gradebook(new_points, new_max, late=new_late, groups=new_groups)
 
     def unify_assignments(
         self,
         group_by: Callable[[str], str],
-        within: WithinSpecifier=None
+        within: str
     ) -> "Gradebook":
         """Unifies the assignment parts into one single assignment with the new name.
 
@@ -888,6 +894,9 @@ class Gradebook:
         group_by
             A callable which maps assignment names to new assignment by which
             they should be grouped.
+
+        within : str
+            Group within which to merge assignments.
 
         Returns
         -------
@@ -919,7 +928,7 @@ class Gradebook:
 
         """
         dct = {}
-        for assignment in self._get_assignments(within):
+        for assignment in self.groups[within]:
             key = group_by(assignment)
             if key not in dct:
                 dct[key] = []
@@ -928,6 +937,7 @@ class Gradebook:
         result = self
         for key, value in dct.items():
             result = result._unify_assignment(key, value)
+
         return result
 
     def add_assignment(

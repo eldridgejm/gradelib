@@ -673,13 +673,13 @@ def test_unify_assignments_simple_example():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
 
     def assignment_to_key(s):
         return s.split("-")[0].strip()
 
     # when
-    result = gradebook.unify_assignments(assignment_to_key)
+    result = gradebook.unify_assignments(assignment_to_key, within='homeworks')
 
     # then
     assert len(result.assignments) == 2
@@ -724,7 +724,7 @@ def test_unify_considers_new_assignment_late_if_any_part_late():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
 
     gradebook.late.loc["A1", "hw01"] = True
 
@@ -732,7 +732,7 @@ def test_unify_considers_new_assignment_late_if_any_part_late():
         return s.split("-")[0].strip()
 
     # when
-    result = gradebook.unify_assignments(assignment_to_key)
+    result = gradebook.unify_assignments(assignment_to_key, within='homeworks')
 
     # then
     assert result.late.loc["A1", "hw01"] == True
@@ -745,7 +745,7 @@ def test_unify_raises_if_any_part_is_dropped():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
 
     gradebook.dropped.loc["A1", "hw01"] = True
 
@@ -754,7 +754,7 @@ def test_unify_raises_if_any_part_is_dropped():
 
     # when
     with pytest.raises(ValueError):
-        gradebook.unify_assignments(assignment_to_key)
+        gradebook.unify_assignments(assignment_to_key, within='homeworks')
 
 
 def test_unify_assignments_restricts_to_within():
@@ -764,14 +764,13 @@ def test_unify_assignments_restricts_to_within():
     p2 = pd.Series(data=[2, 7, 15, 20, 30, 30], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20, 30, 30], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with('hw')
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
 
     def assignment_to_key(s):
         return s.split("-")[0].strip()
 
     # when
-    result = gradebook.unify_assignments(assignment_to_key, within=homeworks)
+    result = gradebook.unify_assignments(assignment_to_key, within='homeworks')
 
     # then
     assert 'hw01 - programming' not in result.assignments

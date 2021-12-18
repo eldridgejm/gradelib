@@ -37,6 +37,7 @@ def assert_gradebook_is_sound(gradebook):
 def starting_with(prefix):
     def predicate(s):
         return s.startswith(prefix)
+
     return predicate
 
 
@@ -123,9 +124,7 @@ def test_merge_assignment_with_predicate_function():
 
     gradebook = GRADESCOPE_EXAMPLE.merge_groups(is_lab, name="labs")
 
-    assert gradebook.groups["labs"] == [
-        f"lab 0{i}" for i in range(1, 10)
-    ]
+    assert gradebook.groups["labs"] == [f"lab 0{i}" for i in range(1, 10)]
     assert "lab 01" not in gradebook.groups
     assert "lab 02" not in gradebook.groups
     assert "lab 03" not in gradebook.groups
@@ -334,14 +333,15 @@ def test_drop_lowest_on_simple_example_1():
     )
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with("hw")
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
 
     # when
-    actual = gradebook.drop_lowest(1, within=homeworks)
+    actual = gradebook.drop_lowest(1, within="homeworks")
 
     # then
     assert actual.dropped.iloc[0, 1]
@@ -357,14 +357,15 @@ def test_drop_lowest_on_simple_example_2():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with("hw")
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
 
     # when
-    actual = gradebook.drop_lowest(2, within=homeworks)
+    actual = gradebook.drop_lowest(2, within="homeworks")
 
     # then
     assert not actual.dropped.iloc[0, 2]
@@ -380,14 +381,16 @@ def test_drop_lowest_counts_lates_as_zeros():
     p2 = pd.Series(data=[10, 10], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([10, 10], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
     gradebook.late.iloc[0, 0] = True
 
     # since A1's perfect homework is late, it should count as zero and be
     # dropped
 
     # when
-    actual = gradebook.drop_lowest(1)
+    actual = gradebook.drop_lowest(1, "homeworks")
 
     # then
     assert actual.dropped.iloc[0, 0]
@@ -402,7 +405,9 @@ def test_drop_lowest_ignores_assignments_alread_dropped():
     p2 = pd.Series(data=[10, 10, 10, 10], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([10, 10, 10, 10], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A1", "hw04"] = True
 
@@ -410,7 +415,7 @@ def test_drop_lowest_ignores_assignments_alread_dropped():
     # homework, too: this will be HW03
 
     # when
-    actual = gradebook.drop_lowest(1)
+    actual = gradebook.drop_lowest(1, "homeworks")
 
     # then
     assert actual.dropped.loc["A1", "hw04"]
@@ -753,6 +758,7 @@ def test_add_assignment_creates_singleton_group():
 
     # then
     assert "new" in result.groups
+
 
 def test_add_assignment_default_none_dropped_or_late():
     # given

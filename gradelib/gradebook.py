@@ -601,16 +601,15 @@ class Gradebook:
         replaced[self.late.values] = 0
         return replaced
 
-    def drop_lowest(self, n: int, within: Collection[str] = None) -> "Gradebook":
+    def drop_lowest(self, n: int, within: str) -> "Gradebook":
         """Drop the lowest n grades within a group of assignments.
 
         Parameters
         ----------
         n : int
             The number of grades to drop.
-        within : Collection[str]
-            A collection of assignments; the lowest among them will be dropped.
-            If None, all assignments will be used. Default: None
+        within : str
+            The name of the assignment group to drop within.
 
         Notes
         -----
@@ -646,29 +645,21 @@ class Gradebook:
         Raises
         ------
         ValueError
-            If `within` is empty, or if n is not a positive integer.
+            If `n` is not a positive integer.
 
         """
-        # number of kept assignments
-        if within is None:
-            within = self.assignments
-
-        if not within:
-            raise ValueError("Cannot pass an empty list of assignments.")
-
-        # convert to a list because Pandas likes lists, not Assignments objects
-        within = list(within)
+        assignments = self.groups[within]
 
         # the combinations of assignments to drop
-        combinations = list(itertools.combinations(within, n))
+        combinations = list(itertools.combinations(assignments, n))
 
         # count lates as zeros
-        points_with_lates_as_zeros = self._points_with_lates_replaced_by_zeros()[within]
+        points_with_lates_as_zeros = self._points_with_lates_replaced_by_zeros()[assignments]
 
         # a full table of maximum points available. this will allow us to have
         # different points available per person
-        points_available = self.points.copy()[within]
-        points_available.iloc[:, :] = self.maximums[within].values
+        points_available = self.points.copy()[assignments]
+        points_available.iloc[:, :] = self.maximums[assignments].values
 
         # we will try each combination and compute the resulting score for each student
         scores = []

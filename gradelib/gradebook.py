@@ -151,6 +151,12 @@ def _lateness_in_seconds(lateness: pd.Series) -> pd.Series:
     return 3600 * hours + 60 * minutes + seconds
 
 
+def _all_columns_equal(df):
+    for i in range(1, df.shape[1]):
+        if not (df.iloc[:,0] == df.iloc[:,i]).all():
+            return False
+    return True
+
 WithinSpecifier = Union[str, Sequence[str], Assignments, None]
 
 
@@ -875,13 +881,21 @@ class Gradebook:
         assignment_max = self.maximums[parts].sum()
         assignment_late = self.late[parts].any(axis=1)
 
+        if not _all_columns_equal(self.late_penalty[parts]):
+            raise ValueError("Some parts have different lateness penalties.")
+
+        assignment_late_penalty = self.late_penalty[parts]
+
         new_points = self.points.copy().drop(columns=parts)
         new_max = self.maximums.copy().drop(parts)
         new_late = self.late.copy().drop(columns=parts)
+        new_late_penalty = self.late_penalty.copy().drop(columns=parts)
 
         new_points[new_name] = assignment_points
         new_max[new_name] = assignment_max
         new_late[new_name] = assignment_late
+        # choose an arbitrary column, they're all the same
+        new_late_penalty[new_name] = assignment_late_penalty.iloc[:, 0]
 
         new_groups = self.groups.copy()
         group_name = self.group_containing(parts[0])
@@ -889,7 +903,7 @@ class Gradebook:
             new_groups[group_name].remove(part)
         new_groups[group_name].append(new_name)
 
-        return Gradebook(new_points, new_max, late=new_late, groups=new_groups)
+        return Gradebook(new_points, new_max, late=new_late, groups=new_groups, late_penalty=new_late_penalty)
 
     def unify_assignments(
         self, group_by: Callable[[str], str], within: str
@@ -928,8 +942,9 @@ class Gradebook:
         Raises
         ------
         ValueError
-            If any of the assignments to be unified is marked as dropped. See above for
-            rationale.
+            If any of the assignments to be unified is marked as dropped. See
+            above for rationale. Also, if the parts have different late
+            penalties, as then it is ambiguous was to which penalty to use.
 
         Example
         -------

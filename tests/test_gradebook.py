@@ -879,6 +879,52 @@ def test_unify_considers_new_assignment_late_if_any_part_late():
     # then
     assert result.late.loc["A1", "hw01"] == True
 
+def test_unify_carries_over_late_penalty():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
+    gradebook.late.loc["A1", "hw01"] = True
+    gradebook.late.loc["A1", "hw01 - programming"] = True
+    gradebook.late_penalty.loc["A1", "hw01"] = 0.5
+    gradebook.late_penalty.loc["A1", "hw01 - programming"] = 0.5
+
+    def assignment_to_key(s):
+        return s.split("-")[0].strip()
+
+    # when
+    result = gradebook.unify_assignments(assignment_to_key, within="homeworks")
+
+    # then
+    assert result.late_penalty.loc['A1', 'hw01'] == 0.5
+
+def test_unify_raises_if_parts_have_different_lateness_penalties():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
+
+    gradebook.late.loc["A1", "hw01"] = True
+    gradebook.late.loc["A1", "hw01 - programming"] = True
+    gradebook.late_penalty.loc["A1", "hw01"] = 0.5
+    gradebook.late_penalty.loc["A1", "hw01 - programming"] = 0.3
+
+    def assignment_to_key(s):
+        return s.split("-")[0].strip()
+
+    # when
+    with pytest.raises(ValueError):
+        gradebook.unify_assignments(assignment_to_key, within="homeworks")
 
 def test_unify_raises_if_any_part_is_dropped():
     # given

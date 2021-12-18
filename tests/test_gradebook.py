@@ -300,14 +300,15 @@ def test_combine_raises_if_duplicate_groups():
         gradelib.Gradebook.combine([gb1, gb2], keep_pids=ROSTER.index)
 
 
-# number_of_lates()
+# number_of_unforgiven_lates()
 # -----------------------------------------------------------------------------
 
 
-def test_number_of_lates():
+def test_number_of_unforgiven_lates():
     # when
     gradebook = GRADESCOPE_EXAMPLE.merge_groups(starting_with("lab"), "labs")
-    actual = gradebook.number_of_lates(within="labs")
+    gradebook.late_penalty.iloc[:,:] = 1
+    actual = gradebook.number_of_unforgiven_lates(within="labs")
 
     # then
     assert list(actual) == [1, 4, 2, 2]
@@ -323,7 +324,7 @@ def test_forgive_lates():
     actual = gradebook.forgive_lates(n=3, within="labs")
 
     # then
-    assert list(actual.number_of_lates(within="labs")) == [0, 1, 0, 0]
+    assert list(actual.number_of_unforgiven_lates(within="labs")) == [0, 1, 0, 0]
     assert_gradebook_is_sound(actual)
 
 
@@ -334,7 +335,7 @@ def test_forgive_lates_works_when_given_assignments_object():
     actual = gradebook.forgive_lates(n=3, within=labs)
 
     # then
-    assert list(actual.number_of_lates(within=labs)) == [0, 1, 0, 0]
+    assert list(actual.number_of_unforgiven_lates(within=labs)) == [0, 1, 0, 0]
     assert_gradebook_is_sound(actual)
 
 
@@ -348,8 +349,8 @@ def test_forgive_lates_forgives_the_first_n_lates():
     actual = GRADESCOPE_EXAMPLE.forgive_lates(n=2, within=assignments)
 
     # then
-    assert not actual.late.loc[gradelib.Student("Barack Obama", "A10000000"), "lab 02"]
-    assert not actual.late.loc[gradelib.Student("Barack Obama", "A10000000"), "lab 07"]
+    assert actual.late.loc[gradelib.Student("Barack Obama", "A10000000"), "lab 02"]
+    assert actual.late.loc[gradelib.Student("Barack Obama", "A10000000"), "lab 07"]
     assert actual.late.loc[gradelib.Student("Barack Obama", "A10000000"), "lab 01"]
     assert actual.late.loc[gradelib.Student("Barack Obama", "A10000000"), "lab 03"]
 
@@ -370,7 +371,7 @@ def test_forgive_lates_does_not_forgive_dropped():
     actual = example.forgive_lates(n=3, within=labs)
 
     # then
-    assert list(actual.number_of_lates(within=labs)) == [1, 4, 2, 2]
+    assert list(actual.number_of_unforgiven_lates(within=labs)) == [1, 4, 2, 2]
     assert_gradebook_is_sound(actual)
 
 
@@ -457,7 +458,33 @@ def test_drop_lowest_works_when_given_assignments_object():
     assert_gradebook_is_sound(actual)
 
 
-def test_drop_lowest_counts_lates_as_zeros():
+def test_drop_lowest_takes_late_penalty_into_account():
+    # given
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 5], index=columns, name="A1")
+    p2 = pd.Series(data=[10, 10], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([10, 10], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
+    gradebook.late_penalty.loc['A1', 'hw01'] = 1
+
+    # since A1's perfect homework is late, it should count as zero and be
+    # dropped
+
+    # when
+    actual = gradebook.drop_lowest(1, "homeworks")
+
+    # then
+    assert actual.dropped.iloc[0, 0]
+    assert list(actual.dropped.sum(axis=1)) == [1, 1]
+    assert_gradebook_is_sound(actual)
+
+def test_drop_lowest_does_not_count_lates_as_zeros():
+    # the old strategy was to count lates as zero; but now .drop() should look at
+    # the late_penalty attribute instead
+
     # given
     columns = ["hw01", "hw02"]
     p1 = pd.Series(data=[10, 5], index=columns, name="A1")
@@ -476,7 +503,7 @@ def test_drop_lowest_counts_lates_as_zeros():
     actual = gradebook.drop_lowest(1, "homeworks")
 
     # then
-    assert actual.dropped.iloc[0, 0]
+    assert actual.dropped.iloc[0, 1]
     assert list(actual.dropped.sum(axis=1)) == [1, 1]
     assert_gradebook_is_sound(actual)
 
@@ -596,7 +623,10 @@ def test_score_works_when_given_group_name():
     assert np.allclose(actual.values, [121 / 152, 24 / 152], atol=1e-6)
 
 
-def test_score_counts_lates_as_zero():
+def test_score_does_not_count_lates_as_zero():
+    # counting lates as zeros was the previous behavior. now the penalties come from the 
+    # late_penalty attribute, which is more general
+
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -613,8 +643,30 @@ def test_score_counts_lates_as_zero():
     actual = gradebook.score(homeworks)
 
     # then
-    assert np.allclose(actual.values, [30 / 152, 9 / 152], atol=1e-6)
+    assert np.allclose(actual.values, [121 / 152, 24 / 152], atol=1e-6)
 
+
+def test_score_takes_late_penalty_into_account():
+    # counting lates as zeros was the previous behavior. now the penalties come from the 
+    # late_penalty attribute, which is more general
+
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+    gradebook.late_penalty.loc["A1", "hw01"] = 0.5
+    gradebook.late_penalty.loc["A1", "hw03"] = 1
+    gradebook.late_penalty.loc["A2", "hw03"] = 0.5
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    actual = gradebook.score(homeworks)
+
+    # then
+    assert np.allclose(actual.values, [30.5 / 152, 16.5 / 152], atol=1e-6)
 
 def test_score_ignores_dropped_assignments():
     # given
@@ -659,7 +711,10 @@ def test_total_on_simple_example():
     assert np.allclose(available.values, [152, 152], atol=1e-6)
 
 
-def test_total_counts_lates_as_zero():
+def test_total_does_not_count_lates_as_zero():
+    # counting lates as zeros was the old behavior. now, lates must be explicitly
+    # penalized in the .late_penalty attribute, which is more general.
+
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -676,9 +731,31 @@ def test_total_counts_lates_as_zero():
     earned, available = gradebook.total("homeworks")
 
     # then
-    assert np.allclose(earned.values, [31, 9], atol=1e-6)
+    assert np.allclose(earned.values, [121, 24], atol=1e-6)
     assert np.allclose(available.values, [152, 152], atol=1e-6)
 
+def test_total_includes_late_penalty():
+    # counting lates as zeros was the old behavior. now, lates must be explicitly
+    # penalized in the .late_penalty attribute, which is more general.
+
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
+    gradebook.late_penalty.loc["A1", "hw03"] = .5
+    gradebook.late_penalty.loc["A2", "hw03"] = 1
+
+    # when
+    earned, available = gradebook.total("homeworks")
+
+    # then
+    assert np.allclose(earned.values, [76, 9], atol=1e-6)
+    assert np.allclose(available.values, [152, 152], atol=1e-6)
 
 def test_total_ignores_dropped_assignments():
     # given
@@ -802,6 +879,52 @@ def test_unify_considers_new_assignment_late_if_any_part_late():
     # then
     assert result.late.loc["A1", "hw01"] == True
 
+def test_unify_carries_over_late_penalty():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
+    gradebook.late.loc["A1", "hw01"] = True
+    gradebook.late.loc["A1", "hw01 - programming"] = True
+    gradebook.late_penalty.loc["A1", "hw01"] = 0.5
+    gradebook.late_penalty.loc["A1", "hw01 - programming"] = 0.5
+
+    def assignment_to_key(s):
+        return s.split("-")[0].strip()
+
+    # when
+    result = gradebook.unify_assignments(assignment_to_key, within="homeworks")
+
+    # then
+    assert result.late_penalty.loc['A1', 'hw01'] == 0.5
+
+def test_unify_raises_if_parts_have_different_lateness_penalties():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
+
+    gradebook.late.loc["A1", "hw01"] = True
+    gradebook.late.loc["A1", "hw01 - programming"] = True
+    gradebook.late_penalty.loc["A1", "hw01"] = 0.5
+    gradebook.late_penalty.loc["A1", "hw01 - programming"] = 0.3
+
+    def assignment_to_key(s):
+        return s.split("-")[0].strip()
+
+    # when
+    with pytest.raises(ValueError):
+        gradebook.unify_assignments(assignment_to_key, within="homeworks")
 
 def test_unify_raises_if_any_part_is_dropped():
     # given

@@ -457,7 +457,33 @@ def test_drop_lowest_works_when_given_assignments_object():
     assert_gradebook_is_sound(actual)
 
 
-def test_drop_lowest_counts_lates_as_zeros():
+def test_drop_lowest_takes_penalty_into_account():
+    # given
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 5], index=columns, name="A1")
+    p2 = pd.Series(data=[10, 10], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([10, 10], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
+    gradebook.penalty.loc['A1', 'hw01'] = 1
+
+    # since A1's perfect homework is late, it should count as zero and be
+    # dropped
+
+    # when
+    actual = gradebook.drop_lowest(1, "homeworks")
+
+    # then
+    assert actual.dropped.iloc[0, 0]
+    assert list(actual.dropped.sum(axis=1)) == [1, 1]
+    assert_gradebook_is_sound(actual)
+
+def test_drop_lowest_does_not_count_lates_as_zeros():
+    # the old strategy was to count lates as zero; but now .drop() should look at
+    # the penalty attribute instead
+
     # given
     columns = ["hw01", "hw02"]
     p1 = pd.Series(data=[10, 5], index=columns, name="A1")
@@ -476,7 +502,7 @@ def test_drop_lowest_counts_lates_as_zeros():
     actual = gradebook.drop_lowest(1, "homeworks")
 
     # then
-    assert actual.dropped.iloc[0, 0]
+    assert actual.dropped.iloc[0, 1]
     assert list(actual.dropped.sum(axis=1)) == [1, 1]
     assert_gradebook_is_sound(actual)
 

@@ -366,12 +366,13 @@ class Gradebook:
         maximums = concat_attr("maximums", axis=0)
         late = concat_attr("late")
         dropped = concat_attr("dropped")
+        penalty = concat_attr("penalty")
 
         groups = {}
         for gradebook in gradebooks:
             groups |= gradebook.groups
 
-        return cls(points, maximums, late, dropped, groups)
+        return cls(points, maximums, late, dropped, groups, penalty)
 
     def merge_groups(self, group_names: Collection[str], name: str) -> "Gradebook":
         """Merges the assignment groups to create a new assignment group."""
@@ -536,6 +537,7 @@ class Gradebook:
         r_maximums = self.maximums[assignments].copy()
         r_late = self.late.loc[:, assignments].copy()
         r_dropped = self.dropped.loc[:, assignments].copy()
+        r_penalty = self.penalty.loc[:, assignments].copy()
 
         r_groups = {}
         for group, group_assignments in self.groups.items():
@@ -543,7 +545,7 @@ class Gradebook:
             if kept:
                 r_groups[group] = kept
 
-        return self.__class__(r_points, r_maximums, r_late, r_dropped, groups=r_groups)
+        return self.__class__(r_points, r_maximums, r_late, r_dropped, groups=r_groups, penalty=r_penalty)
 
     def remove_assignments(self, assignments: Collection[str]) -> "Gradebook":
         """Remove the assignments from the gradebook.
@@ -663,11 +665,6 @@ class Gradebook:
 
         return self._replace(late=new_late)
 
-    def _points_with_lates_replaced_by_zeros(self) -> pd.DataFrame:
-        replaced = self.points.copy()
-        replaced[self.late.values] = 0
-        return replaced
-
     def drop_lowest(self, n: int, within: WithinSpecifier) -> "Gradebook":
         """Drop the lowest n grades within a group of assignments.
 
@@ -696,8 +693,8 @@ class Gradebook:
         problem sizes. For a better algorithm, see:
         http://cseweb.ucsd.edu/~dakane/droplowest.pdf
 
-        If an assignment is marked as late, it will be considered a zero for
-        the purposes of dropping. Therefore it is usually preferable to use
+        If an assignment is penalized, its penalty will be considered when
+        dropping. Therefore it is usually preferable to use
         :meth:`Gradebook.forgive_lates` before this method.
 
         If an assignment has already been marked as dropped, it won't be
@@ -721,14 +718,13 @@ class Gradebook:
         combinations = list(itertools.combinations(assignments, n))
 
         # count lates as zeros
-        points_with_lates_as_zeros = self._points_with_lates_replaced_by_zeros()[
-            assignments
-        ]
+        points_after_penalty = self.points.copy()[assignments]
+        points_after_penalty *= (1 - self.penalty[assignments])
 
         # a full table of maximum points available. this will allow us to have
         # different points available per person
-        points_available = self.points.copy()[assignments]
-        points_available.iloc[:, :] = self.maximums[assignments].values
+        points_possible = self.points.copy()[assignments]
+        points_possible.iloc[:, :] = self.maximums[assignments].values
 
         # we will try each combination and compute the resulting score for each student
         scores = []
@@ -736,10 +732,10 @@ class Gradebook:
             possibly_dropped_mask = self.dropped.copy()
             possibly_dropped_mask[list(possibly_dropped)] = True
 
-            earned = points_with_lates_as_zeros.copy()
+            earned = points_after_penalty.copy()
             earned[possibly_dropped_mask] = 0
 
-            out_of = points_available.copy()
+            out_of = points_possible.copy()
             out_of[possibly_dropped_mask] = 0
 
             score = earned.sum(axis=1) / out_of.sum(axis=1)

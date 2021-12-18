@@ -696,6 +696,27 @@ def test_unify_assignments_simple_example():
     assert result.points.shape[1] == 2
 
 
+def test_unify_assignments_updates_groups():
+    """test that points / maximums are added across unified assignments"""
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "hw02 - testing"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
+
+    def assignment_to_key(s):
+        return s.split("-")[0].strip()
+
+    # when
+    result = gradebook.unify_assignments(assignment_to_key, within='homeworks')
+
+    assert 'hw01' in gradebook.groups['homeworks']
+    assert 'hw02' in gradebook.groups['homeworks']
+    assert 'hw01 - programming' not in gradebook.groups['homeworks']
+    assert 'hw02 - testing' not in gradebook.groups['homeworks']
+
 def test_unify_considers_new_assignment_late_if_any_part_late():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]

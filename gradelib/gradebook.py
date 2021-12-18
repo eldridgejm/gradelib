@@ -391,6 +391,31 @@ class Gradebook:
 
         return self._replace(groups=new_groups)
 
+    def group_containing(assignment: str) -> str:
+        """Find the group containing the assignment.
+
+        Parameters
+        ----------
+        assignment : str
+            The assignment to search for.
+
+        Returns
+        -------
+        str
+            The name of the group containing the assignment.
+
+        Raises
+        ------
+        ValueError
+            If the assignment does not exist.
+
+        """
+        for group_name, assignments in self.groups.items():
+            if assignment in assignments:
+                return group_name
+        else:
+            raise ValueError('The assignment is not in the gradebook.')
+
     @property
     def assignments(self) -> Assignments:
         """All assignments in the gradebook.

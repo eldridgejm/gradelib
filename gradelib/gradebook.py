@@ -144,7 +144,7 @@ def _lateness_in_seconds(lateness: pd.Series) -> pd.Series:
     return 3600 * hours + 60 * minutes + seconds
 
 
-WithinSpecifier = Union[str, Sequence[str], Assignments]
+WithinSpecifier = Union[str, Sequence[str], Assignments, None]
 
 
 class Gradebook:
@@ -510,7 +510,9 @@ class Gradebook:
         return self.keep_assignments(set(self.assignments) - set(assignments))
 
     def _get_assignments(self, within_spec: WithinSpecifier):
-        if isinstance(within_spec, str):
+        if within_spec is None:
+            return list(self.assignments)
+        elif isinstance(within_spec, str):
             return self.groups[within_spec]
         elif isinstance(within_spec, Assignments):
             return list(within_spec)
@@ -824,7 +826,8 @@ class Gradebook:
 
     def unify_assignments(
         self,
-        dct_or_callable: Union[Mapping[str, Collection[str]], Callable[[str], str]],
+        group_by: Callable[[str], str],
+        within: WithinSpecifier=None
     ) -> "Gradebook":
         """Unifies the assignment parts into one single assignment with the new name.
 
@@ -844,11 +847,9 @@ class Gradebook:
 
         Parameters
         ----------
-        dct : Mapping[str, Collection[str]]
-            Either: 1) a mapping whose keys are new assignment names, and whose
-            values are collections of assignments that should be unified under
-            their common key; or 2) a callable which maps assignment names to
-            new assignment by which they should be grouped.
+        group_by
+            A callable which maps assignment names to new assignment by which
+            they should be grouped.
 
         Returns
         -------
@@ -879,17 +880,12 @@ class Gradebook:
                 })
 
         """
-        dct: Dict[str, List[str]] = {}
-        if not callable(dct_or_callable):
-            dct = {k: list(v) for (k, v) in dct_or_callable.items()}
-        else:
-            to_key = dct_or_callable
-            dct = {}
-            for assignment in self.assignments:
-                key = to_key(assignment)
-                if key not in dct:
-                    dct[key] = []
-                dct[key].append(assignment)
+        dct = {}
+        for assignment in self._get_assignments(within):
+            key = group_by(assignment)
+            if key not in dct:
+                dct[key] = []
+            dct[key].append(assignment)
 
         result = self
         for key, value in dct.items():

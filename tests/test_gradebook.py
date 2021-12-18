@@ -560,11 +560,10 @@ def test_total_on_simple_example():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with("hw")
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
 
     # when
-    earned, available = gradebook.total(homeworks)
+    earned, available = gradebook.total('homeworks')
 
     # then
     assert np.allclose(earned.values, [121, 24], atol=1e-6)
@@ -578,17 +577,15 @@ def test_total_counts_lates_as_zero():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    gradebook.late.loc["A1", "hw01"] = True
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
     gradebook.late.loc["A1", "hw03"] = True
     gradebook.late.loc["A2", "hw03"] = True
-    homeworks = gradebook.assignments.starting_with("hw")
 
     # when
-    earned, available = gradebook.total(homeworks)
+    earned, available = gradebook.total('homeworks')
 
     # then
-    assert np.allclose(earned.values, [30, 9], atol=1e-6)
+    assert np.allclose(earned.values, [31, 9], atol=1e-6)
     assert np.allclose(available.values, [152, 152], atol=1e-6)
 
 
@@ -599,18 +596,17 @@ def test_total_ignores_dropped_assignments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    gradebook.dropped.loc["A1", "hw01"] = True
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
     gradebook.dropped.loc["A1", "hw03"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
-    homeworks = gradebook.assignments.starting_with("hw")
 
     # when
-    earned, available = gradebook.total(homeworks)
+    earned, available = gradebook.total('homeworks')
 
     # then
-    assert np.allclose(earned.values, [30, 9], atol=1e-6)
-    assert np.allclose(available.values, [50, 52], atol=1e-6)
+    assert np.allclose(earned.values, [31, 9], atol=1e-6)
+    assert np.allclose(available.values, [52, 52], atol=1e-6)
+
 
 def test_total_works_when_given_assignments_object():
     # given

@@ -612,6 +612,22 @@ def test_total_ignores_dropped_assignments():
     assert np.allclose(earned.values, [30, 9], atol=1e-6)
     assert np.allclose(available.values, [50, 52], atol=1e-6)
 
+def test_total_works_when_given_assignments_object():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    earned, available = gradebook.total(homeworks)
+
+    # then
+    assert np.allclose(earned.values, [121, 24], atol=1e-6)
+    assert np.allclose(available.values, [152, 152], atol=1e-6)
 
 # unify_assignments()
 # -----------------------------------------------------------------------------

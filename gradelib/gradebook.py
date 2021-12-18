@@ -913,6 +913,8 @@ class Gradebook:
     ):
         """Adds a single assignment to the gradebook.
 
+        The assignment will be placed in its own group.
+
         Usually Gradebook do not need to have individual assignments added to them.
         Instead, Gradebooks are read from Canvas, Gradescope, etc. In some instances,
         though, it can be useful to manually add an assignment to a Gradebook -- this
@@ -973,5 +975,7 @@ class Gradebook:
         result.maximums[name] = maximums
         result.late[name] = late
         result.dropped[name] = dropped
+
+        result.groups[name] = [name]
 
         return result

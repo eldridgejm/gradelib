@@ -707,7 +707,7 @@ def test_unify_raises_if_any_part_is_dropped():
 # -----------------------------------------------------------------------------
 
 
-def test_add_assignment():
+def test_add_assignment_updates_underlying_dataframes():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -731,6 +731,28 @@ def test_add_assignment():
     assert result.points.loc["A1", "new"] == 10
     assert result.maximums.loc["new"] == 20
 
+
+def test_add_assignment_creates_singleton_group():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    assignment_points = pd.Series([10, 20], index=["A1", "A2"])
+    assignment_max = 20
+    assignment_late = pd.Series([True, False], index=["A1", "A2"])
+    assignment_dropped = pd.Series([False, True], index=["A1", "A2"])
+
+    # when
+    result = gradebook.add_assignment(
+        "new", assignment_points, 20, late=assignment_late, dropped=assignment_dropped
+    )
+
+    # then
+    assert "new" in result.groups
 
 def test_add_assignment_default_none_dropped_or_late():
     # given

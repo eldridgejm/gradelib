@@ -453,11 +453,10 @@ def test_give_equal_weights_on_example():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with("hw")
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
 
     # when
-    actual = gradebook.give_equal_weights(within=homeworks)
+    actual = gradebook.give_equal_weights(within='homeworks')
 
     # then
     assert actual.maximums.loc["hw01"] == 1

@@ -3,6 +3,7 @@
 import collections.abc
 import itertools
 import pathlib
+import dataclasses
 from typing import (
     Callable,
     Sequence,
@@ -143,6 +144,9 @@ def _lateness_in_seconds(lateness: pd.Series) -> pd.Series:
     return 3600 * hours + 60 * minutes + seconds
 
 
+WithinSpecifier = Union[str, Sequence[str], Assignments, None]
+
+
 class Gradebook:
     """Data structure which facilitates common grading policies.
 
@@ -174,11 +178,19 @@ class Gradebook:
 
     """
 
-    def __init__(self, points, maximums, late=None, dropped=None):
+    def __init__(self, points, maximums, late=None, dropped=None, groups=None):
         self.points = points
         self.maximums = maximums
         self.late = late if late is not None else _empty_mask_like(points)
         self.dropped = dropped if dropped is not None else _empty_mask_like(points)
+        self._groups = None
+
+        if groups is None:
+            self.groups = {}
+            for assignment in self.points.columns:
+                self.groups[assignment] = [assignment]
+        else:
+            self.groups = groups
 
     def __repr__(self):
         return (
@@ -281,6 +293,9 @@ class Gradebook:
         before combining them. Similarly, it verifies that each gradebook has
         unique assignments, so that no conflicts occur when combining them.
 
+        Any groups defined in the combined gradebooks are carried over, but an
+        exception is raised if the same group name appears in bother gradebooks.
+
         Parameters
         ----------
         gradebooks : Collection[Gradebook]
@@ -315,14 +330,20 @@ class Gradebook:
             if gradebook.pids != reference_pids:
                 raise ValueError("Not all gradebooks have the same PIDs.")
 
-        # check that all gradebooks have different assignment names
-        number_of_assignments = sum(len(g.assignments) for g in gradebooks)
-        unique_assignments: Set[str] = set()
-        for gradebook in gradebooks:
-            unique_assignments.update(gradebook.assignments)
+        def _all_unique(attr):
+            total_number = sum(len(getattr(g, attr)) for g in gradebooks)
+            unique = set()
+            for gradebook in gradebooks:
+                unique.update(getattr(gradebook, attr))
 
-        if len(unique_assignments) != number_of_assignments:
+            return total_number == len(unique)
+
+        # check that all gradebooks have different assignment names
+        if not _all_unique("assignments"):
             raise ValueError("Gradebooks have duplicate assignments.")
+
+        if not _all_unique("groups"):
+            raise ValueError("Gradebooks have duplicate groups.")
 
         # create the combined notebook
         def concat_attr(a, axis=1):
@@ -335,7 +356,71 @@ class Gradebook:
         late = concat_attr("late")
         dropped = concat_attr("dropped")
 
-        return cls(points, maximums, late, dropped)
+        groups = {}
+        for gradebook in gradebooks:
+            groups |= gradebook.groups
+
+        return cls(points, maximums, late, dropped, groups)
+
+    def merge_groups(self, group_names: Collection[str], name: str) -> "Gradebook":
+        """Merges the assignment groups to create a new assignment group."""
+        if callable(group_names):
+            group_names = list(filter(group_names, self.groups.keys()))
+
+        if not set(group_names).issubset(self.groups.keys()):
+            raise ValueError("Some group names are invalid.")
+
+        assignments = []
+        for group_name in group_names:
+            assignments.extend(self.groups[group_name])
+
+        new_group = assignments
+        new_groups = self.groups.copy()
+
+        # remove the old assignment groups that have been merged; do this
+        # before adding new group in case the `name` is one of the old group
+        # names, meaning that it is effectively replaced
+        for group_name in group_names:
+            del new_groups[group_name]
+
+        new_groups[name] = new_group
+
+        return self._replace(groups=new_groups)
+
+    def decimate_group(self, group_name: str) -> "Gradebook":
+        """Ungroup the group, making a singleton group out of every assignment."""
+        new_groups = self.groups.copy()
+        assignments = self.groups[group_name]
+        del new_groups[group_name]
+        for assignment in assignments:
+            new_groups[assignment] = [assignment]
+
+        return self._replace(groups=new_groups)
+
+    def group_containing(self, assignment: str) -> str:
+        """Find the group containing the assignment.
+
+        Parameters
+        ----------
+        assignment : str
+            The assignment to search for.
+
+        Returns
+        -------
+        str
+            The name of the group containing the assignment.
+
+        Raises
+        ------
+        ValueError
+            If the assignment does not exist.
+
+        """
+        for group_name, assignments in self.groups.items():
+            if assignment in assignments:
+                return group_name
+        else:
+            raise ValueError("The assignment is not in the gradebook.")
 
     @property
     def assignments(self) -> Assignments:
@@ -410,7 +495,7 @@ class Gradebook:
         r_points = self.points.loc[students].copy()
         r_late = self.late.loc[students].copy()
         r_dropped = self.dropped.loc[students].copy()
-        return self.__class__(r_points, self.maximums, r_late, r_dropped)
+        return self.__class__(r_points, self.maximums, r_late, r_dropped, self.groups)
 
     def keep_assignments(self, assignments: Collection[str]) -> "Gradebook":
         """Restrict the gradebook to only the supplied assignments.
@@ -440,7 +525,14 @@ class Gradebook:
         r_maximums = self.maximums[assignments].copy()
         r_late = self.late.loc[:, assignments].copy()
         r_dropped = self.dropped.loc[:, assignments].copy()
-        return self.__class__(r_points, r_maximums, r_late, r_dropped)
+
+        r_groups = {}
+        for group, group_assignments in self.groups.items():
+            kept = [a for a in group_assignments if a in assignments]
+            if kept:
+                r_groups[group] = kept
+
+        return self.__class__(r_points, r_maximums, r_late, r_dropped, groups=r_groups)
 
     def remove_assignments(self, assignments: Collection[str]) -> "Gradebook":
         """Remove the assignments from the gradebook.
@@ -468,14 +560,27 @@ class Gradebook:
 
         return self.keep_assignments(set(self.assignments) - set(assignments))
 
-    def number_of_lates(self, within: Collection[str] = None) -> pd.Series:
+    def _get_assignments(self, within_spec: WithinSpecifier):
+        if within_spec is None:
+            return list(self.assignments)
+        elif isinstance(within_spec, str):
+            return self.groups[within_spec]
+        elif isinstance(within_spec, Assignments):
+            return list(within_spec)
+        else:
+            # it must be a list of group names
+            assignments = []
+            for group in self.groups.values():
+                assignments.extend(group)
+            return assignments
+
+    def number_of_lates(self, within: WithinSpecifier) -> pd.Series:
         """Return the number of late assignments for each student as a Series.
 
         Parameters
         ----------
-        within : Collection[str]
-            A collection of assignment names that will be used to restrict the
-            gradebook. If None, all assignments will be used. Default: None
+        within : WithinSpecifier
+            The assignments to count lates within.
 
         Returns
         -------
@@ -488,26 +593,19 @@ class Gradebook:
             If `within` is empty.
 
         """
-        if within is None:
-            within = self.assignments
-        else:
-            within = list(within)
+        assignments = self._get_assignments(within)
+        return self.late.loc[:, assignments].sum(axis=1)
 
-        if not within:
-            raise ValueError("Cannot pass an empty list of assignments.")
-
-        return self.late.loc[:, within].sum(axis=1)
-
-    def forgive_lates(self, n: int, within: Collection[str] = None) -> "Gradebook":
+    def forgive_lates(self, n: int, within: WithinSpecifier) -> "Gradebook":
         """Forgive the first n lates within a group of assignments.
 
         Parameters
         ----------
         n : int
             The number of lates to forgive.
-        within : Sequence[str]
-            A collection of assignments within which lates will be forgiven.
-            If None, all assignments will be used. Default: None
+        within : WithinSpecifier
+            Assignments within which to forgive lates. Assignments are forgiven in the
+            order that they appear.
 
         Notes
         -----
@@ -537,16 +635,12 @@ class Gradebook:
         if n < 1:
             raise ValueError("Must forgive at least one late.")
 
-        if within is None:
-            within = self.assignments
-
-        if not within:
-            raise ValueError("Cannot pass an empty list of assignments.")
+        assignments = self._get_assignments(within)
 
         new_late = self.late.copy()
         for student in self.students:
             forgiveness_remaining = n
-            for assignment in within:
+            for assignment in assignments:
                 is_late = self.late.loc[student, assignment]
                 is_dropped = self.dropped.loc[student, assignment]
                 if is_late and not is_dropped:
@@ -563,16 +657,15 @@ class Gradebook:
         replaced[self.late.values] = 0
         return replaced
 
-    def drop_lowest(self, n: int, within: Collection[str] = None) -> "Gradebook":
+    def drop_lowest(self, n: int, within: WithinSpecifier) -> "Gradebook":
         """Drop the lowest n grades within a group of assignments.
 
         Parameters
         ----------
         n : int
             The number of grades to drop.
-        within : Collection[str]
-            A collection of assignments; the lowest among them will be dropped.
-            If None, all assignments will be used. Default: None
+        within : WithinSpecifier
+            The assignments to drop within.
 
         Notes
         -----
@@ -608,29 +701,23 @@ class Gradebook:
         Raises
         ------
         ValueError
-            If `within` is empty, or if n is not a positive integer.
+            If `n` is not a positive integer.
 
         """
-        # number of kept assignments
-        if within is None:
-            within = self.assignments
-
-        if not within:
-            raise ValueError("Cannot pass an empty list of assignments.")
-
-        # convert to a list because Pandas likes lists, not Assignments objects
-        within = list(within)
+        assignments = self._get_assignments(within)
 
         # the combinations of assignments to drop
-        combinations = list(itertools.combinations(within, n))
+        combinations = list(itertools.combinations(assignments, n))
 
         # count lates as zeros
-        points_with_lates_as_zeros = self._points_with_lates_replaced_by_zeros()[within]
+        points_with_lates_as_zeros = self._points_with_lates_replaced_by_zeros()[
+            assignments
+        ]
 
         # a full table of maximum points available. this will allow us to have
         # different points available per person
-        points_available = self.points.copy()[within]
-        points_available.iloc[:, :] = self.maximums[within].values
+        points_available = self.points.copy()[assignments]
+        points_available.iloc[:, :] = self.maximums[assignments].values
 
         # we will try each combination and compute the resulting score for each student
         scores = []
@@ -663,23 +750,31 @@ class Gradebook:
         return self._replace(dropped=new_dropped)
 
     def _replace(
-        self, points=None, maximums=None, late=None, dropped=None
+        self,
+        points=None,
+        maximums=None,
+        late=None,
+        dropped=None,
+        groups=None,
     ) -> "Gradebook":
+
         new_points = points if points is not None else self.points.copy()
         new_maximums = maximums if maximums is not None else self.maximums.copy()
         new_late = late if late is not None else self.late.copy()
         new_dropped = dropped if dropped is not None else self.dropped.copy()
-        return Gradebook(new_points, new_maximums, new_late, new_dropped)
+        new_groups = groups if groups is not None else self.groups.copy()
+
+        return Gradebook(new_points, new_maximums, new_late, new_dropped, new_groups)
 
     def copy(self):
         return self._replace()
 
-    def give_equal_weights(self, within: Collection[str]) -> "Gradebook":
+    def give_equal_weights(self, within: WithinSpecifier) -> "Gradebook":
         """Normalize maximum points so that all assignments are worth the same.
 
         Parameters
         ----------
-        within : Collection[str]
+        within : WithinSpecifier
             The assignments to reweight.
 
         Returns
@@ -687,6 +782,8 @@ class Gradebook:
         Gradebook
 
         """
+        within = self._get_assignments(within)
+
         extra = set(within) - set(self.assignments)
         if extra:
             raise ValueError(f"These assignments are not in the gradebook: {extra}.")
@@ -702,7 +799,7 @@ class Gradebook:
 
         return self._replace(points=new_points, maximums=new_maximums)
 
-    def total(self, within: Collection[str]) -> Tuple[pd.Series, pd.Series]:
+    def total(self, within: WithinSpecifier) -> Tuple[pd.Series, pd.Series]:
         """Computes the total points earned and available within one or more assignments.
 
         Takes into account late assignments (treats them as zeros) and dropped
@@ -710,7 +807,7 @@ class Gradebook:
 
         Parameters
         ----------
-        within : Collection[str]
+        within : WithinSpecifier
             The assignments whose total points will be calculated
 
         Returns
@@ -721,10 +818,7 @@ class Gradebook:
             The total points available for each student.
 
         """
-        if isinstance(within, str):
-            within = [within]
-        else:
-            within = list(within)
+        within = self._get_assignments(within)
 
         points_with_lates_as_zeros = self._points_with_lates_replaced_by_zeros()[within]
 
@@ -737,7 +831,7 @@ class Gradebook:
 
         return effective_points, effective_possible
 
-    def score(self, within: Collection[str]) -> pd.Series:
+    def score(self, within: WithinSpecifier) -> pd.Series:
         """Computes the fraction of possible points earned across one or more assignments.
 
         Takes into account late assignments (treats them as zeros) and dropped
@@ -745,7 +839,7 @@ class Gradebook:
 
         Parameters
         ----------
-        within : Collection[str]
+        within : WithinSpecifier
             The assignments whose overall score should be computed.
 
         Returns
@@ -775,11 +869,16 @@ class Gradebook:
         new_max[new_name] = assignment_max
         new_late[new_name] = assignment_late
 
-        return Gradebook(new_points, new_max, late=new_late)
+        new_groups = self.groups.copy()
+        group_name = self.group_containing(parts[0])
+        for part in parts:
+            new_groups[group_name].remove(part)
+        new_groups[group_name].append(new_name)
+
+        return Gradebook(new_points, new_max, late=new_late, groups=new_groups)
 
     def unify_assignments(
-        self,
-        dct_or_callable: Union[Mapping[str, Collection[str]], Callable[[str], str]],
+        self, group_by: Callable[[str], str], within: str
     ) -> "Gradebook":
         """Unifies the assignment parts into one single assignment with the new name.
 
@@ -799,11 +898,12 @@ class Gradebook:
 
         Parameters
         ----------
-        dct : Mapping[str, Collection[str]]
-            Either: 1) a mapping whose keys are new assignment names, and whose
-            values are collections of assignments that should be unified under
-            their common key; or 2) a callable which maps assignment names to
-            new assignment by which they should be grouped.
+        group_by
+            A callable which maps assignment names to new assignment by which
+            they should be grouped.
+
+        within : str
+            Group within which to merge assignments.
 
         Returns
         -------
@@ -834,21 +934,17 @@ class Gradebook:
                 })
 
         """
-        dct: Dict[str, List[str]] = {}
-        if not callable(dct_or_callable):
-            dct = {k: list(v) for (k, v) in dct_or_callable.items()}
-        else:
-            to_key = dct_or_callable
-            dct = {}
-            for assignment in self.assignments:
-                key = to_key(assignment)
-                if key not in dct:
-                    dct[key] = []
-                dct[key].append(assignment)
+        dct = {}
+        for assignment in self.groups[within]:
+            key = group_by(assignment)
+            if key not in dct:
+                dct[key] = []
+            dct[key].append(assignment)
 
         result = self
         for key, value in dct.items():
             result = result._unify_assignment(key, value)
+
         return result
 
     def add_assignment(
@@ -860,6 +956,8 @@ class Gradebook:
         dropped=None,
     ):
         """Adds a single assignment to the gradebook.
+
+        The assignment will be placed in its own group.
 
         Usually Gradebook do not need to have individual assignments added to them.
         Instead, Gradebooks are read from Canvas, Gradescope, etc. In some instances,
@@ -907,7 +1005,9 @@ class Gradebook:
             theirs = set(students)
             ours = set(self.students)
             if theirs - ours:
-                raise ValueError(f'Unknown students {theirs - ours} provided in "{where}".')
+                raise ValueError(
+                    f'Unknown students {theirs - ours} provided in "{where}".'
+                )
             if ours - theirs:
                 raise ValueError(f'"{where}" is missing students: {ours - theirs}')
 
@@ -919,5 +1019,7 @@ class Gradebook:
         result.maximums[name] = maximums
         result.late[name] = late
         result.dropped[name] = dropped
+
+        result.groups[name] = [name]
 
         return result

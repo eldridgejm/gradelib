@@ -178,9 +178,7 @@ class Gradebook:
 
     """
 
-    def __init__(
-        self, points, maximums, late=None, dropped=None, groups=None
-    ):
+    def __init__(self, points, maximums, late=None, dropped=None, groups=None):
         self.points = points
         self.maximums = maximums
         self.late = late if late is not None else _empty_mask_like(points)
@@ -341,10 +339,10 @@ class Gradebook:
             return total_number == len(unique)
 
         # check that all gradebooks have different assignment names
-        if not _all_unique('assignments'):
+        if not _all_unique("assignments"):
             raise ValueError("Gradebooks have duplicate assignments.")
 
-        if not _all_unique('groups'):
+        if not _all_unique("groups"):
             raise ValueError("Gradebooks have duplicate groups.")
 
         # create the combined notebook
@@ -364,9 +362,7 @@ class Gradebook:
 
         return cls(points, maximums, late, dropped, groups)
 
-    def merge_groups(
-        self, group_names: Collection[str], name: str
-    ) -> "Gradebook":
+    def merge_groups(self, group_names: Collection[str], name: str) -> "Gradebook":
         """Merges the assignment groups to create a new assignment group."""
         if callable(group_names):
             group_names = list(filter(group_names, self.groups.keys()))
@@ -388,6 +384,16 @@ class Gradebook:
             del new_groups[group_name]
 
         new_groups[name] = new_group
+
+        return self._replace(groups=new_groups)
+
+    def decimate_group(self, group_name: str) -> "Gradebook":
+        """Ungroup the group, making a singleton group out of every assignment."""
+        new_groups = self.groups.copy()
+        assignments = self.groups[group_name]
+        del new_groups[group_name]
+        for assignment in assignments:
+            new_groups[assignment] = [assignment]
 
         return self._replace(groups=new_groups)
 
@@ -414,7 +420,7 @@ class Gradebook:
             if assignment in assignments:
                 return group_name
         else:
-            raise ValueError('The assignment is not in the gradebook.')
+            raise ValueError("The assignment is not in the gradebook.")
 
     @property
     def assignments(self) -> Assignments:
@@ -704,7 +710,9 @@ class Gradebook:
         combinations = list(itertools.combinations(assignments, n))
 
         # count lates as zeros
-        points_with_lates_as_zeros = self._points_with_lates_replaced_by_zeros()[assignments]
+        points_with_lates_as_zeros = self._points_with_lates_replaced_by_zeros()[
+            assignments
+        ]
 
         # a full table of maximum points available. this will allow us to have
         # different points available per person
@@ -754,15 +762,9 @@ class Gradebook:
         new_maximums = maximums if maximums is not None else self.maximums.copy()
         new_late = late if late is not None else self.late.copy()
         new_dropped = dropped if dropped is not None else self.dropped.copy()
-        new_groups = (
-            groups
-            if groups is not None
-            else self.groups.copy()
-        )
+        new_groups = groups if groups is not None else self.groups.copy()
 
-        return Gradebook(
-            new_points, new_maximums, new_late, new_dropped, new_groups
-        )
+        return Gradebook(new_points, new_maximums, new_late, new_dropped, new_groups)
 
     def copy(self):
         return self._replace()
@@ -876,9 +878,7 @@ class Gradebook:
         return Gradebook(new_points, new_max, late=new_late, groups=new_groups)
 
     def unify_assignments(
-        self,
-        group_by: Callable[[str], str],
-        within: str
+        self, group_by: Callable[[str], str], within: str
     ) -> "Gradebook":
         """Unifies the assignment parts into one single assignment with the new name.
 

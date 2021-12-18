@@ -129,6 +129,21 @@ def test_merge_assignment_with_predicate_function():
     assert "lab 02" not in gradebook.groups
     assert "lab 03" not in gradebook.groups
 
+# decimate_group()
+# ----------------
+
+def test_decimate_group():
+    gradebook = GRADESCOPE_EXAMPLE.merge_groups(
+        ["lab 01", "lab 02", "lab 03"], name="labs"
+    )
+
+    assert 'lab 01' not in gradebook.groups
+
+    gradebook = gradebook.decimate_group("labs")
+
+    assert 'lab 01' in gradebook.groups
+    assert 'labs' not in gradebook.groups
+
 
 # keep_pids()
 # -----------------------------------------------------------------------------
@@ -173,19 +188,19 @@ def test_keep_assignments_raises_if_assignment_does_not_exist():
     with pytest.raises(KeyError):
         GRADESCOPE_EXAMPLE.keep_assignments(assignments)
 
+
 def test_keep_assignments_updates_groups():
     # when
-    gradebook = (
-            GRADESCOPE_EXAMPLE
-            .merge_groups(starting_with('home'), 'homeworks')
-            .merge_groups(starting_with('lab'), 'labs')
-    )
+    gradebook = GRADESCOPE_EXAMPLE.merge_groups(
+        starting_with("home"), "homeworks"
+    ).merge_groups(starting_with("lab"), "labs")
     gradebook = gradebook.keep_assignments(["homework 01", "homework 02"])
 
     # homeworks are filtered
-    assert len(gradebook.groups['homeworks']) == 2
+    assert len(gradebook.groups["homeworks"]) == 2
     # "labs" group is totally removed
-    assert 'labs' not in gradebook.groups
+    assert "labs" not in gradebook.groups
+
 
 def test_remove_assignments():
     # when
@@ -216,20 +231,22 @@ def test_remove_assignments_raises_if_assignment_does_not_exist():
     with pytest.raises(KeyError):
         GRADESCOPE_EXAMPLE.remove_assignments(assignments)
 
+
 def test_remove_assignments_updates_groups():
     # when
-    gradebook = (
-            GRADESCOPE_EXAMPLE
-            .merge_groups(starting_with('home'), 'homeworks')
-            .merge_groups(starting_with('lab'), 'labs')
+    gradebook = GRADESCOPE_EXAMPLE.merge_groups(
+        starting_with("home"), "homeworks"
+    ).merge_groups(starting_with("lab"), "labs")
+    removed = gradebook.assignments.starting_with("lab") + gradelib.Assignments(
+        [f"homework 0{i}" for i in range(3, 8)]
     )
-    removed = gradebook.assignments.starting_with('lab') + gradelib.Assignments([f'homework 0{i}' for i in range(3, 8)])
     gradebook = gradebook.remove_assignments(removed)
 
     # homeworks are filtered
-    assert len(gradebook.groups['homeworks'])
+    assert len(gradebook.groups["homeworks"])
     # "labs" group is totally removed
-    assert 'labs' not in gradebook.groups
+    assert "labs" not in gradebook.groups
+
 
 # combine()
 # -----------------------------------------------------------------------------
@@ -261,9 +278,10 @@ def test_combine_raises_if_indices_do_not_match():
             [CANVAS_WITHOUT_LAB_EXAMPLE, GRADESCOPE_EXAMPLE]
         )
 
+
 def test_combine_combines_groups():
     # when
-    gb1 = GRADESCOPE_EXAMPLE.merge_groups(starting_with('homework'), 'homeworks')
+    gb1 = GRADESCOPE_EXAMPLE.merge_groups(starting_with("homework"), "homeworks")
     combined = gradelib.Gradebook.combine(
         [gb1, CANVAS_WITHOUT_LAB_EXAMPLE], keep_pids=ROSTER.index
     )
@@ -275,13 +293,11 @@ def test_combine_combines_groups():
 
 def test_combine_raises_if_duplicate_groups():
     # when
-    gb1 = GRADESCOPE_EXAMPLE.merge_groups(starting_with('homework'), 'homeworks')
-    gb2 = CANVAS_WITHOUT_LAB_EXAMPLE.merge_groups(starting_with('midterm'), 'homeworks')
+    gb1 = GRADESCOPE_EXAMPLE.merge_groups(starting_with("homework"), "homeworks")
+    gb2 = CANVAS_WITHOUT_LAB_EXAMPLE.merge_groups(starting_with("midterm"), "homeworks")
 
     with pytest.raises(ValueError):
-        gradelib.Gradebook.combine(
-            [gb1, gb2], keep_pids=ROSTER.index
-        )
+        gradelib.Gradebook.combine([gb1, gb2], keep_pids=ROSTER.index)
 
 
 # number_of_lates()
@@ -290,8 +306,8 @@ def test_combine_raises_if_duplicate_groups():
 
 def test_number_of_lates():
     # when
-    gradebook = GRADESCOPE_EXAMPLE.merge_groups(starting_with("lab"), 'labs')
-    actual = gradebook.number_of_lates(within='labs')
+    gradebook = GRADESCOPE_EXAMPLE.merge_groups(starting_with("lab"), "labs")
+    actual = gradebook.number_of_lates(within="labs")
 
     # then
     assert list(actual) == [1, 4, 2, 2]
@@ -303,18 +319,18 @@ def test_number_of_lates():
 
 def test_forgive_lates():
     # when
-    gradebook = GRADESCOPE_EXAMPLE.merge_groups(starting_with('lab'), 'labs')
-    actual = gradebook.forgive_lates(n=3, within='labs')
+    gradebook = GRADESCOPE_EXAMPLE.merge_groups(starting_with("lab"), "labs")
+    actual = gradebook.forgive_lates(n=3, within="labs")
 
     # then
-    assert list(actual.number_of_lates(within='labs')) == [0, 1, 0, 0]
+    assert list(actual.number_of_lates(within="labs")) == [0, 1, 0, 0]
     assert_gradebook_is_sound(actual)
 
 
 def test_forgive_lates_works_when_given_assignments_object():
     # when
     gradebook = GRADESCOPE_EXAMPLE
-    labs = gradebook.assignments.starting_with('lab')
+    labs = gradebook.assignments.starting_with("lab")
     actual = gradebook.forgive_lates(n=3, within=labs)
 
     # then
@@ -360,6 +376,7 @@ def test_forgive_lates_does_not_forgive_dropped():
 
 # drop_lowest()
 # -----------------------------------------------------------------------------
+
 
 def test_drop_lowest_on_simple_example_1():
     # given
@@ -502,10 +519,12 @@ def test_give_equal_weights_on_example():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
 
     # when
-    actual = gradebook.give_equal_weights(within='homeworks')
+    actual = gradebook.give_equal_weights(within="homeworks")
 
     # then
     assert actual.maximums.loc["hw01"] == 1
@@ -537,6 +556,7 @@ def test_give_equal_weights_works_when_given_assignments_object():
     assert actual.points.loc["A1", "hw01"] == 1 / 2
     assert actual.points.loc["A1", "hw02"] == 30 / 50
 
+
 # score()
 # -----------------------------------------------------------------------------
 
@@ -557,6 +577,7 @@ def test_score_on_simple_example():
     # then
     assert np.allclose(actual.values, [121 / 152, 24 / 152], atol=1e-6)
 
+
 def test_score_works_when_given_group_name():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -564,13 +585,16 @@ def test_score_works_when_given_group_name():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
 
     # when
-    actual = gradebook.score('homeworks')
+    actual = gradebook.score("homeworks")
 
     # then
     assert np.allclose(actual.values, [121 / 152, 24 / 152], atol=1e-6)
+
 
 def test_score_counts_lates_as_zero():
     # given
@@ -623,10 +647,12 @@ def test_total_on_simple_example():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
 
     # when
-    earned, available = gradebook.total('homeworks')
+    earned, available = gradebook.total("homeworks")
 
     # then
     assert np.allclose(earned.values, [121, 24], atol=1e-6)
@@ -640,12 +666,14 @@ def test_total_counts_lates_as_zero():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
     gradebook.late.loc["A1", "hw03"] = True
     gradebook.late.loc["A2", "hw03"] = True
 
     # when
-    earned, available = gradebook.total('homeworks')
+    earned, available = gradebook.total("homeworks")
 
     # then
     assert np.allclose(earned.values, [31, 9], atol=1e-6)
@@ -659,12 +687,14 @@ def test_total_ignores_dropped_assignments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
     gradebook.dropped.loc["A1", "hw03"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
 
     # when
-    earned, available = gradebook.total('homeworks')
+    earned, available = gradebook.total("homeworks")
 
     # then
     assert np.allclose(earned.values, [31, 9], atol=1e-6)
@@ -688,6 +718,7 @@ def test_total_works_when_given_assignments_object():
     assert np.allclose(earned.values, [121, 24], atol=1e-6)
     assert np.allclose(available.values, [152, 152], atol=1e-6)
 
+
 # unify_assignments()
 # -----------------------------------------------------------------------------
 
@@ -700,13 +731,15 @@ def test_unify_assignments_simple_example():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
 
     def assignment_to_key(s):
         return s.split("-")[0].strip()
 
     # when
-    result = gradebook.unify_assignments(assignment_to_key, within='homeworks')
+    result = gradebook.unify_assignments(assignment_to_key, within="homeworks")
 
     # then
     assert len(result.assignments) == 2
@@ -731,18 +764,21 @@ def test_unify_assignments_updates_groups():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
 
     def assignment_to_key(s):
         return s.split("-")[0].strip()
 
     # when
-    result = gradebook.unify_assignments(assignment_to_key, within='homeworks')
+    result = gradebook.unify_assignments(assignment_to_key, within="homeworks")
 
-    assert 'hw01' in gradebook.groups['homeworks']
-    assert 'hw02' in gradebook.groups['homeworks']
-    assert 'hw01 - programming' not in gradebook.groups['homeworks']
-    assert 'hw02 - testing' not in gradebook.groups['homeworks']
+    assert "hw01" in gradebook.groups["homeworks"]
+    assert "hw02" in gradebook.groups["homeworks"]
+    assert "hw01 - programming" not in gradebook.groups["homeworks"]
+    assert "hw02 - testing" not in gradebook.groups["homeworks"]
+
 
 def test_unify_considers_new_assignment_late_if_any_part_late():
     # given
@@ -751,7 +787,9 @@ def test_unify_considers_new_assignment_late_if_any_part_late():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
 
     gradebook.late.loc["A1", "hw01"] = True
 
@@ -759,7 +797,7 @@ def test_unify_considers_new_assignment_late_if_any_part_late():
         return s.split("-")[0].strip()
 
     # when
-    result = gradebook.unify_assignments(assignment_to_key, within='homeworks')
+    result = gradebook.unify_assignments(assignment_to_key, within="homeworks")
 
     # then
     assert result.late.loc["A1", "hw01"] == True
@@ -772,7 +810,9 @@ def test_unify_raises_if_any_part_is_dropped():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
 
     gradebook.dropped.loc["A1", "hw01"] = True
 
@@ -781,29 +821,38 @@ def test_unify_raises_if_any_part_is_dropped():
 
     # when
     with pytest.raises(ValueError):
-        gradebook.unify_assignments(assignment_to_key, within='homeworks')
+        gradebook.unify_assignments(assignment_to_key, within="homeworks")
 
 
 def test_unify_assignments_restricts_to_within():
     # given
-    columns = ["hw01", "hw01 - programming", "hw02", "hw02 - testing", "lab01", "lab01 - part"]
+    columns = [
+        "hw01",
+        "hw01 - programming",
+        "hw02",
+        "hw02 - testing",
+        "lab01",
+        "lab01 - part",
+    ]
     p1 = pd.Series(data=[1, 30, 90, 20, 20, 30], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20, 30, 30], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20, 30, 30], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums).merge_groups(starting_with('hw'), 'homeworks')
+    gradebook = gradelib.Gradebook(points, maximums).merge_groups(
+        starting_with("hw"), "homeworks"
+    )
 
     def assignment_to_key(s):
         return s.split("-")[0].strip()
 
     # when
-    result = gradebook.unify_assignments(assignment_to_key, within='homeworks')
+    result = gradebook.unify_assignments(assignment_to_key, within="homeworks")
 
     # then
-    assert 'hw01 - programming' not in result.assignments
-    assert 'hw01' in result.assignments
-    assert 'lab01' in result.assignments
-    assert 'lab01 - part' in result.assignments
+    assert "hw01 - programming" not in result.assignments
+    assert "hw01" in result.assignments
+    assert "lab01" in result.assignments
+    assert "lab01 - part" in result.assignments
 
 
 # add_assignment()

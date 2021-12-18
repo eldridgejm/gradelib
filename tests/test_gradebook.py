@@ -223,7 +223,7 @@ def test_remove_assignments_updates_groups():
             .merge_groups(starting_with('home'), 'homeworks')
             .merge_groups(starting_with('lab'), 'labs')
     )
-    removed = gradebook.assignments.starting_with('lab') + [f'homework 0{i}' for i in range(3, 10)]
+    removed = gradebook.assignments.starting_with('lab') + gradelib.Assignments([f'homework 0{i}' for i in range(3, 8)])
     gradebook = gradebook.remove_assignments(removed)
 
     # homeworks are filtered

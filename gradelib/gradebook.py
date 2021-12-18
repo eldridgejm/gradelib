@@ -750,7 +750,7 @@ class Gradebook:
 
         return self._replace(points=new_points, maximums=new_maximums)
 
-    def total(self, within: Collection[str]) -> Tuple[pd.Series, pd.Series]:
+    def total(self, within: WithinSpecifier) -> Tuple[pd.Series, pd.Series]:
         """Computes the total points earned and available within one or more assignments.
 
         Takes into account late assignments (treats them as zeros) and dropped
@@ -758,7 +758,7 @@ class Gradebook:
 
         Parameters
         ----------
-        within : Collection[str]
+        within : WithinSpecifier
             The assignments whose total points will be calculated
 
         Returns
@@ -769,10 +769,7 @@ class Gradebook:
             The total points available for each student.
 
         """
-        if isinstance(within, str):
-            within = [within]
-        else:
-            within = list(within)
+        within = self._get_assignments(within)
 
         points_with_lates_as_zeros = self._points_with_lates_replaced_by_zeros()[within]
 

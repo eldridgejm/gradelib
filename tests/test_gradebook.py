@@ -183,7 +183,7 @@ def test_keep_assignments_updates_groups():
     gradebook = gradebook.keep_assignments(["homework 01", "homework 02"])
 
     # homeworks are filtered
-    assert len(gradebook.groups['homeworks'])
+    assert len(gradebook.groups['homeworks']) == 2
     # "labs" group is totally removed
     assert 'labs' not in gradebook.groups
 
@@ -216,6 +216,20 @@ def test_remove_assignments_raises_if_assignment_does_not_exist():
     with pytest.raises(KeyError):
         GRADESCOPE_EXAMPLE.remove_assignments(assignments)
 
+def test_remove_assignments_updates_groups():
+    # when
+    gradebook = (
+            GRADESCOPE_EXAMPLE
+            .merge_groups(starting_with('home'), 'homeworks')
+            .merge_groups(starting_with('lab'), 'labs')
+    )
+    removed = gradebook.assignments.starting_with('lab') + [f'homework 0{i}' for i in range(3, 10)]
+    gradebook = gradebook.remove_assignments(removed)
+
+    # homeworks are filtered
+    assert len(gradebook.groups['homeworks'])
+    # "labs" group is totally removed
+    assert 'labs' not in gradebook.groups
 
 # combine()
 # -----------------------------------------------------------------------------

@@ -77,7 +77,7 @@ def test_merge_groups_by_list_of_strings():
         ["lab 01", "lab 02", "lab 03"], name="labs"
     )
 
-    assert gradebook.groups["labs"].assignments == [
+    assert gradebook.groups["labs"] == [
         "lab 01",
         "lab 02",
         "lab 03",
@@ -93,7 +93,7 @@ def test_merge_groups_removes_old_groups():
         ["lab 01", "lab 02", "lab 03"], name="labs"
     )
 
-    assert gradebook.groups["labs"].assignments == [
+    assert gradebook.groups["labs"] == [
         "lab 01",
         "lab 02",
         "lab 03",
@@ -108,7 +108,7 @@ def test_merge_assignment_with_multiple_merges_and_replace():
         ["lab 01", "lab 02"], name="labs"
     ).merge_groups(["labs", "lab 03"], name="labs")
 
-    assert gradebook.groups["labs"].assignments == [
+    assert gradebook.groups["labs"] == [
         "lab 01",
         "lab 02",
         "lab 03",
@@ -123,7 +123,7 @@ def test_merge_assignment_with_predicate_function():
 
     gradebook = GRADESCOPE_EXAMPLE.merge_groups(is_lab, name="labs")
 
-    assert gradebook.groups["labs"].assignments == [
+    assert gradebook.groups["labs"] == [
         f"lab 0{i}" for i in range(1, 10)
     ]
     assert "lab 01" not in gradebook.groups

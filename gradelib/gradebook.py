@@ -144,11 +144,6 @@ def _lateness_in_seconds(lateness: pd.Series) -> pd.Series:
     return 3600 * hours + 60 * minutes + seconds
 
 
-@dataclasses.dataclass
-class AssignmentGroup:
-    assignments: List[str]
-
-
 class Gradebook:
     """Data structure which facilitates common grading policies.
 
@@ -192,9 +187,7 @@ class Gradebook:
         if groups is None:
             self.groups = {}
             for assignment in self.points.columns:
-                self.groups[assignment] = AssignmentGroup(
-                    assignments=[assignment]
-                )
+                self.groups[assignment] = [assignment]
         else:
             self.groups = groups
 
@@ -367,10 +360,9 @@ class Gradebook:
 
         assignments = []
         for group_name in group_names:
-            assignments.extend(self.groups[group_name].assignments)
+            assignments.extend(self.groups[group_name])
 
-        new_group = AssignmentGroup(assignments)
-
+        new_group = assignments
         new_groups = self.groups.copy()
 
         # remove the old assignment groups that have been merged; do this

@@ -3,11 +3,9 @@
 import collections.abc
 import itertools
 import pathlib
-import dataclasses
 from typing import (
     Callable,
     Sequence,
-    Mapping,
     Dict,
     List,
     Iterable,
@@ -129,26 +127,10 @@ class Assignments(collections.abc.Sequence):
         return self._names[index]
 
 
-def _empty_mask_like(table: pd.DataFrame) -> pd.DataFrame:
-    """Given a dataframe, create another just like it with every entry False."""
+def _empty_like(table: pd.DataFrame, fill) -> pd.DataFrame:
     empty = table.copy()
-    empty.iloc[:, :] = False
-    return empty.astype(bool)
-
-
-def _empty_zeros_like(table: pd.DataFrame) -> pd.DataFrame:
-    """Given a dataframe, create another just like it with every entry 0."""
-    empty = table.copy()
-    empty.iloc[:, :] = 0.0
-    return empty.astype(float)
-
-
-def _lateness_in_seconds(lateness: pd.Series) -> pd.Series:
-    """Converts a series of lateness strings in HH:MM:SS format to integer seconds"""
-    hours = lateness.str.split(":").str[0].astype(int)
-    minutes = lateness.str.split(":").str[1].astype(int)
-    seconds = lateness.str.split(":").str[2].astype(int)
-    return 3600 * hours + 60 * minutes + seconds
+    empty.iloc[:, :] = fill
+    return empty
 
 
 def _all_columns_equal(df):
@@ -156,6 +138,7 @@ def _all_columns_equal(df):
         if not (df.iloc[:,0] == df.iloc[:,i]).all():
             return False
     return True
+
 
 WithinSpecifier = Union[str, Sequence[str], Assignments, None]
 
@@ -174,16 +157,16 @@ class Gradebook:
         A series containing the maximum number of points possible for each
         assignment. The index of the series should match the columns of the
         `points` dataframe.
-    late : pandas.DataFrame
+    lateness : pandas.DataFrame
         A Boolean dataframe with the same columns/index as `points`. An entry
-        that is `True` indicates that the assignment was late. If `None` is
+        that is `True` indicates that the assignment was lateness. If `None` is
         passed, a dataframe of all `False`s is used by default.
     dropped : pandas.DataFrame
         A Boolean dataframe with the same columns/index as `points`. An entry
         that is `True` indicates that the assignment should be dropped. If
         `None` is passed, a dataframe of all `False`s is used by default.
     groups
-    late_penalty
+    lateness_penalty
 
     Notes
     -----
@@ -194,13 +177,13 @@ class Gradebook:
     """
 
     def __init__(
-        self, points, maximums, late=None, dropped=None, groups=None, late_penalty=None
+        self, points, maximums, lateness=None, dropped=None, groups=None, lateness_penalty=None
     ):
         self.points = points
         self.maximums = maximums
-        self.late = late if late is not None else _empty_mask_like(points)
-        self.late_penalty = late_penalty if late_penalty is not None else _empty_zeros_like(points)
-        self.dropped = dropped if dropped is not None else _empty_mask_like(points)
+        self.lateness = lateness if lateness is not None else _empty_like(points, pd.Timedelta(0))
+        self.lateness_penalty = lateness_penalty if lateness_penalty is not None else _empty_like(points, 0.0).astype(float)
+        self.dropped = dropped if dropped is not None else _empty_like(points, False).astype(bool)
 
         if groups is None:
             self.groups = {}
@@ -259,10 +242,11 @@ class Gradebook:
             standardize_pids=standardize_pids,
             standardize_assignments=standardize_assignments,
         )
+
+        lateness[lateness <= pd.Timedelta(seconds=lateness_fudge)] = pd.Timedelta(0)
+
         # lates are given as strings expressing lateness... booleanize them
-        late_seconds = lateness.apply(_lateness_in_seconds)
-        late = late_seconds > lateness_fudge
-        return cls(points, maximums, late)
+        return cls(points, maximums, lateness)
 
     @classmethod
     def from_canvas(
@@ -370,15 +354,15 @@ class Gradebook:
 
         points = concat_attr("points")
         maximums = concat_attr("maximums", axis=0)
-        late = concat_attr("late")
+        lateness = concat_attr("lateness")
         dropped = concat_attr("dropped")
-        late_penalty = concat_attr("late_penalty")
+        lateness_penalty = concat_attr("lateness_penalty")
 
         groups = {}
         for gradebook in gradebooks:
             groups |= gradebook.groups
 
-        return cls(points, maximums, late, dropped, groups, late_penalty)
+        return cls(points, maximums, lateness, dropped, groups, lateness_penalty)
 
     def merge_groups(self, group_names: Collection[str], name: str) -> "Gradebook":
         """Merges the assignment groups to create a new assignment group."""
@@ -439,6 +423,10 @@ class Gradebook:
                 return group_name
         else:
             raise ValueError("The assignment is not in the gradebook.")
+
+    @property
+    def late(self):
+        return self.lateness > pd.Timedelta(0)
 
     @property
     def assignments(self) -> Assignments:
@@ -511,9 +499,9 @@ class Gradebook:
         students = [s for s in self.students if s.pid in set(pids)]
 
         r_points = self.points.loc[students].copy()
-        r_late = self.late.loc[students].copy()
+        r_lateness = self.lateness.loc[students].copy()
         r_dropped = self.dropped.loc[students].copy()
-        return self.__class__(r_points, self.maximums, r_late, r_dropped, self.groups)
+        return self.__class__(r_points, self.maximums, r_lateness, r_dropped, self.groups)
 
     def keep_assignments(self, assignments: Collection[str]) -> "Gradebook":
         """Restrict the gradebook to only the supplied assignments.
@@ -541,9 +529,9 @@ class Gradebook:
 
         r_points = self.points.loc[:, assignments].copy()
         r_maximums = self.maximums[assignments].copy()
-        r_late = self.late.loc[:, assignments].copy()
+        r_lateness = self.lateness.loc[:, assignments].copy()
         r_dropped = self.dropped.loc[:, assignments].copy()
-        r_late_penalty = self.late_penalty.loc[:, assignments].copy()
+        r_lateness_penalty = self.lateness_penalty.loc[:, assignments].copy()
 
         r_groups = {}
         for group, group_assignments in self.groups.items():
@@ -551,7 +539,7 @@ class Gradebook:
             if kept:
                 r_groups[group] = kept
 
-        return self.__class__(r_points, r_maximums, r_late, r_dropped, groups=r_groups, late_penalty=r_late_penalty)
+        return self.__class__(r_points, r_maximums, r_lateness, r_dropped, groups=r_groups, lateness_penalty=r_lateness_penalty)
 
     def remove_assignments(self, assignments: Collection[str]) -> "Gradebook":
         """Remove the assignments from the gradebook.
@@ -594,7 +582,7 @@ class Gradebook:
             return assignments
 
     def number_of_unforgiven_lates(self, within: WithinSpecifier) -> pd.Series:
-        """Return the number of late assignments for each student as a Series.
+        """Return the number of lateness assignments for each student as a Series.
 
         Parameters
         ----------
@@ -604,7 +592,7 @@ class Gradebook:
         Returns
         -------
         pd.Series
-            A series mapping PID to number of late assignments.
+            A series mapping PID to number of lateness assignments.
 
         Raises
         ------
@@ -612,7 +600,7 @@ class Gradebook:
             If `within` is empty.
 
         """
-        unforgiven_lates = (self.late) & (self.late_penalty > 0)
+        unforgiven_lates = self.late & (self.lateness_penalty > 0)
         assignments = self._get_assignments(within)
         return unforgiven_lates.loc[:, assignments].sum(axis=1)
 
@@ -636,7 +624,7 @@ class Gradebook:
         to be the same as the order of the underlying column names in the `points`
         table.
 
-        If a late assignment is marked as dropped it will not be forgiven, as
+        If a lateness assignment is marked as dropped it will not be forgiven, as
         it is advantageous for the student to use the forgiveness elsewhere.
 
         Returns
@@ -653,25 +641,25 @@ class Gradebook:
 
         """
         if n < 1:
-            raise ValueError("Must forgive at least one late.")
+            raise ValueError("Must forgive at least one lateness.")
 
         assignments = self._get_assignments(within)
 
-        new_late_penalty = self.late.copy()
+        new_lateness_penalty = self.lateness_penalty.copy()
         for student in self.students:
             forgiveness_remaining = n
             for assignment in assignments:
                 is_late = self.late.loc[student, assignment]
-                is_forgiven = self.late_penalty.loc[student, assignment]
+                is_forgiven = self.lateness_penalty.loc[student, assignment] == 0
                 is_dropped = self.dropped.loc[student, assignment]
                 if is_late and not is_forgiven and not is_dropped:
-                    new_late_penalty.loc[student, assignment] = 0
+                    new_lateness_penalty.loc[student, assignment] = 0
                     forgiveness_remaining -= 1
 
                 if forgiveness_remaining == 0:
                     break
 
-        return self._replace(late_penalty=new_late_penalty)
+        return self._replace(lateness_penalty=new_lateness_penalty)
 
     def drop_lowest(self, n: int, within: WithinSpecifier) -> "Gradebook":
         """Drop the lowest n grades within a group of assignments.
@@ -701,7 +689,7 @@ class Gradebook:
         problem sizes. For a better algorithm, see:
         http://cseweb.ucsd.edu/~dakane/droplowest.pdf
 
-        If an assignment is penalized, its late_penalty will be considered when
+        If an assignment is penalized, its lateness_penalty will be considered when
         dropping. Therefore it is usually preferable to use
         :meth:`Gradebook.forgive_lates` before this method.
 
@@ -726,8 +714,8 @@ class Gradebook:
         combinations = list(itertools.combinations(assignments, n))
 
         # count lates as zeros
-        points_after_late_penalty = self.points.copy()[assignments]
-        points_after_late_penalty *= (1 - self.late_penalty[assignments])
+        points_after_lateness_penalty = self.points.copy()[assignments]
+        points_after_lateness_penalty *= (1 - self.lateness_penalty[assignments])
 
         # a full table of maximum points available. this will allow us to have
         # different points available per person
@@ -740,7 +728,7 @@ class Gradebook:
             possibly_dropped_mask = self.dropped.copy()
             possibly_dropped_mask[list(possibly_dropped)] = True
 
-            earned = points_after_late_penalty.copy()
+            earned = points_after_lateness_penalty.copy()
             earned[possibly_dropped_mask] = 0
 
             out_of = points_possible.copy()
@@ -768,21 +756,21 @@ class Gradebook:
         self,
         points=None,
         maximums=None,
-        late=None,
+        lateness=None,
         dropped=None,
         groups=None,
-        late_penalty=None,
+        lateness_penalty=None,
     ) -> "Gradebook":
 
         new_points = points if points is not None else self.points.copy()
         new_maximums = maximums if maximums is not None else self.maximums.copy()
-        new_late = late if late is not None else self.late.copy()
+        new_lateness = lateness if lateness is not None else self.lateness.copy()
         new_dropped = dropped if dropped is not None else self.dropped.copy()
         new_groups = groups if groups is not None else self.groups.copy()
-        new_late_penalty = late_penalty if late_penalty is not None else self.late_penalty.copy()
+        new_lateness_penalty = lateness_penalty if lateness_penalty is not None else self.lateness_penalty.copy()
 
         return Gradebook(
-            new_points, new_maximums, new_late, new_dropped, new_groups, new_late_penalty
+            new_points, new_maximums, new_lateness, new_dropped, new_groups, new_lateness_penalty
         )
 
     def copy(self):
@@ -839,14 +827,14 @@ class Gradebook:
         """
         within = self._get_assignments(within)
 
-        points_after_late_penalty = self.points.copy()[within]
-        points_after_late_penalty *= (1 - self.late_penalty[within])
+        points_after_lateness_penalty = self.points.copy()[within]
+        points_after_lateness_penalty *= (1 - self.lateness_penalty[within])
 
         # create a full array of points possible
         points_possible = self.points.copy()[within]
         points_possible.iloc[:, :] = self.maximums[within].values
 
-        effective_points = points_after_late_penalty[within][~self.dropped].sum(axis=1)
+        effective_points = points_after_lateness_penalty[within][~self.dropped].sum(axis=1)
         effective_possible = points_possible[~self.dropped].sum(axis=1)
 
         return effective_points, effective_possible
@@ -879,23 +867,23 @@ class Gradebook:
 
         assignment_points = self.points[parts].sum(axis=1)
         assignment_max = self.maximums[parts].sum()
-        assignment_late = self.late[parts].any(axis=1)
+        assignment_lateness = self.lateness[parts].max(axis=1)
 
-        if not _all_columns_equal(self.late_penalty[parts]):
+        if not _all_columns_equal(self.lateness_penalty[parts]):
             raise ValueError("Some parts have different lateness penalties.")
 
-        assignment_late_penalty = self.late_penalty[parts]
+        assignment_lateness_penalty = self.lateness_penalty[parts]
 
         new_points = self.points.copy().drop(columns=parts)
         new_max = self.maximums.copy().drop(parts)
-        new_late = self.late.copy().drop(columns=parts)
-        new_late_penalty = self.late_penalty.copy().drop(columns=parts)
+        new_lateness = self.lateness.copy().drop(columns=parts)
+        new_lateness_penalty = self.lateness_penalty.copy().drop(columns=parts)
 
         new_points[new_name] = assignment_points
         new_max[new_name] = assignment_max
-        new_late[new_name] = assignment_late
+        new_lateness[new_name] = assignment_lateness
         # choose an arbitrary column, they're all the same
-        new_late_penalty[new_name] = assignment_late_penalty.iloc[:, 0]
+        new_lateness_penalty[new_name] = assignment_lateness_penalty.iloc[:, 0]
 
         new_groups = self.groups.copy()
         group_name = self.group_containing(parts[0])
@@ -903,7 +891,7 @@ class Gradebook:
             new_groups[group_name].remove(part)
         new_groups[group_name].append(new_name)
 
-        return Gradebook(new_points, new_max, late=new_late, groups=new_groups, late_penalty=new_late_penalty)
+        return Gradebook(new_points, new_max, lateness=new_lateness, groups=new_groups, lateness_penalty=new_lateness_penalty)
 
     def unify_assignments(
         self, group_by: Callable[[str], str], within: str
@@ -916,8 +904,8 @@ class Gradebook:
         to unify these parts into a single assignment.
 
         The new point total and maximum possible points are calculated by
-        addition. The new assignment is considered late if either of the parts
-        are marked as late.
+        addition. The new assignment is considered lateness if either of the parts
+        are marked as lateness.
 
         It is unclear what the result should be if any of the assignments to be
         unified has been dropped, but other parts have not. For this reason,
@@ -943,7 +931,7 @@ class Gradebook:
         ------
         ValueError
             If any of the assignments to be unified is marked as dropped. See
-            above for rationale. Also, if the parts have different late
+            above for rationale. Also, if the parts have different lateness
             penalties, as then it is ambiguous was to which penalty to use.
 
         Example
@@ -981,7 +969,7 @@ class Gradebook:
         name: str,
         points: pd.Series,
         maximums: pd.Series,
-        late: pd.Series = None,
+        lateness: pd.Series = None,
         dropped=None,
     ):
         """Adds a single assignment to the gradebook.
@@ -1001,8 +989,8 @@ class Gradebook:
             A Series of points earned by each student.
         maximums : float
             The maximum number of points possible on the assignment.
-        late : Series[bool]
-            Whether each student turned in the assignment late. Default: all False.
+        lateness : Series[bool]
+            Whether each student turned in the assignment lateness. Default: all False.
         dropped : Series[bool]
             Whether the assignment should be dropped for any given student. Default:
             all False.
@@ -1022,8 +1010,8 @@ class Gradebook:
         if name in self.assignments:
             raise ValueError(f'An assignment with the name "{name}" already exists.')
 
-        if late is None:
-            late = pd.Series(False, index=self.students)
+        if lateness is None:
+            lateness = pd.Series(False, index=self.students)
 
         if dropped is None:
             dropped = pd.Series(False, index=self.students)
@@ -1041,12 +1029,12 @@ class Gradebook:
                 raise ValueError(f'"{where}" is missing students: {ours - theirs}')
 
         _match_students(points.index, "points")
-        _match_students(late.index, "late")
+        _match_students(lateness.index, "lateness")
         _match_students(dropped.index, "dropped")
 
         result.points[name] = points
         result.maximums[name] = maximums
-        result.late[name] = late
+        result.lateness[name] = lateness
         result.dropped[name] = dropped
 
         result.groups[name] = [name]

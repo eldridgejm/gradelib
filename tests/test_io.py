@@ -2,6 +2,8 @@ import pathlib
 
 import gradelib
 
+import pandas as pd
+
 
 EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent / "examples"
 
@@ -88,6 +90,16 @@ def test_read_gradescope_without_canvas_link_produces_correct_assignments():
     assert points.columns[0] == "demo midterm"
     assert points.columns[1] == "fake assignment"
     assert len(points.columns) == 2
+
+def test_read_gradescope_reads_latenesses_in_seconds():
+    # when
+    path = EXAMPLES_DIRECTORY / "gradescope-with-5m-late.csv"
+    points, _, lateness = gradelib.read_gradescope(path)
+
+    # then
+    assert lateness.loc[gradelib.Student('Barack Obama', 'A10000000'), 'lab 01'] == pd.Timedelta(minutes=5)
+    assert lateness.loc[gradelib.Student('Barack Obama', 'A10000000'), 'homework 01'] == pd.Timedelta(hours=153, minutes=7, seconds=57)
+
 
 
 # read_canvas

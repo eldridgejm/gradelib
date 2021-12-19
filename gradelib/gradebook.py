@@ -13,7 +13,7 @@ from typing import (
     Collection,
     Set,
     Tuple,
-    Mapping
+    Mapping,
 )
 
 import pandas as pd
@@ -155,15 +155,13 @@ WithinSpecifier = Union[str, Sequence[str], Assignments, None]
 
 
 class Group(Assignments):
-
     def __init__(self, assignments, weight=0):
         super().__init__(assignments)
         self.weight = weight
 
     def __add__(self, other):
         return self.__class__(
-                assignments=list(self) + list(other),
-                weight=self.weight + other.weight
+            assignments=list(self) + list(other), weight=self.weight + other.weight
         )
 
     def __eq__(self, other):
@@ -174,6 +172,7 @@ class Group(Assignments):
 
     def copy(self):
         return Group(list(self), self.weight)
+
 
 class Gradebook:
     """Data structure which facilitates common grading policies.
@@ -217,7 +216,7 @@ class Gradebook:
         dropped=None,
         groups=None,
         lateness_penalty=None,
-        scale=scales.DEFAULT_SCALE
+        scale=scales.DEFAULT_SCALE,
     ):
         self.points = points
         self.maximums = maximums
@@ -424,7 +423,7 @@ class Gradebook:
         dropped=None,
         groups=None,
         lateness_penalty=None,
-        scale=None
+        scale=None,
     ) -> "Gradebook":
 
         new_points = points if points is not None else self.points.copy()
@@ -446,12 +445,11 @@ class Gradebook:
             new_dropped,
             new_groups,
             new_lateness_penalty,
-            new_scale
+            new_scale,
         )
 
     def copy(self):
         return self.replace()
-
 
     def merge_groups(self, group_names: Collection[str], name: str) -> "Gradebook":
         """Merges the assignment groups to create a new assignment group."""
@@ -1130,6 +1128,20 @@ class Gradebook:
 
         return result
 
+    def with_group_weights(self, weights: Mapping[str, float]):
+        new_groups = self.groups.copy()
+
+        for group_name, group in self.groups.items():
+            new_group = group.copy()
+            if group_name not in weights:
+                new_group.weight = 0
+            else:
+                new_group.weight = weights[group_name]
+
+            new_groups[group_name] = new_group
+
+        return self.replace(groups=new_groups)
+
     def apply_redemption(
         self,
         original_assignments: str,
@@ -1188,24 +1200,9 @@ class Gradebook:
                 result.lateness[redemption_assignment],
             )
 
-
         result = result.merge_groups(
             [x + suffix for x in original_assignments],
             original_assignments_group_name + suffix,
         )
 
         return result
-
-    def with_group_weights(self, weights: Mapping[str, float]):
-        new_groups = self.groups.copy()
-
-        for group_name, group in self.groups.items():
-            new_group = group.copy()
-            if group_name not in weights:
-                new_group.weight = 0
-            else:
-                new_group.weight = weights[group_name]
-
-            new_groups[group_name] = new_group
-
-        return self.replace(groups=new_groups)

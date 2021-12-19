@@ -18,7 +18,7 @@ from typing import (
 import pandas as pd
 import numpy as np
 
-from . import io
+from . import io, scales
 from .types import Student
 
 
@@ -41,6 +41,12 @@ class Assignments(collections.abc.Sequence):
 
     def __iter__(self):
         return iter(self._names)
+
+    def remove(self, key):
+        self._names.remove(key)
+
+    def append(self, key):
+        self._names.append(key)
 
     def starting_with(self, prefix: str) -> "Assignments":
         """Return only assignments starting with the prefix.
@@ -119,7 +125,10 @@ class Assignments(collections.abc.Sequence):
         return {key: Assignments(value) for key, value in dct.items()}
 
     def __repr__(self):
-        return f"Assignments(names={sorted(self._names)})"
+        return f"{self.__class__.__name__}(names={sorted(self._names)})"
+
+    def __eq__(self, other):
+        return self._names == list(other)
 
     def __add__(self, other: "Assignments") -> "Assignments":
         return Assignments(set(self._names + other._names))
@@ -143,6 +152,24 @@ def _all_columns_equal(df):
 
 WithinSpecifier = Union[str, Sequence[str], Assignments, None]
 
+
+class Group(Assignments):
+
+    def __init__(self, assignments, weight=0):
+        super().__init__(assignments)
+        self.weight = weight
+
+    def __add__(self, other):
+        return self.__class__(
+                assignments=list(self) + list(other),
+                weight=self.weight + other.weight
+        )
+
+    def __eq__(self, other):
+        return super().__eq__(other) and (self.weight == other.weight)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(names={sorted(self)}, weight={self.weight})"
 
 class Gradebook:
     """Data structure which facilitates common grading policies.
@@ -168,6 +195,7 @@ class Gradebook:
         `None` is passed, a dataframe of all `False`s is used by default.
     groups
     lateness_penalty
+    scale
 
     Notes
     -----
@@ -185,6 +213,7 @@ class Gradebook:
         dropped=None,
         groups=None,
         lateness_penalty=None,
+        scale=scales.DEFAULT_SCALE
     ):
         self.points = points
         self.maximums = maximums
@@ -199,11 +228,15 @@ class Gradebook:
         self.dropped = (
             dropped if dropped is not None else _empty_like(points, False).astype(bool)
         )
+        self._init_groups(groups, assignments=self.points.columns, maximums=maximums)
+        self.scale = scale
 
+    def _init_groups(self, groups, assignments, maximums):
         if groups is None:
             self.groups = {}
-            for assignment in self.points.columns:
-                self.groups[assignment] = [assignment]
+            for assignment in assignments:
+                weight = maximums[assignment]
+                self.groups[assignment] = Group([assignment], weight=weight)
         else:
             self.groups = groups
 
@@ -379,8 +412,47 @@ class Gradebook:
 
         return cls(points, maximums, lateness, dropped, groups, lateness_penalty)
 
+    def replace(
+        self,
+        points=None,
+        maximums=None,
+        lateness=None,
+        dropped=None,
+        groups=None,
+        lateness_penalty=None,
+        scale=None
+    ) -> "Gradebook":
+
+        new_points = points if points is not None else self.points.copy()
+        new_maximums = maximums if maximums is not None else self.maximums.copy()
+        new_lateness = lateness if lateness is not None else self.lateness.copy()
+        new_dropped = dropped if dropped is not None else self.dropped.copy()
+        new_groups = groups if groups is not None else self.groups.copy()
+        new_lateness_penalty = (
+            lateness_penalty
+            if lateness_penalty is not None
+            else self.lateness_penalty.copy()
+        )
+        new_scale = scale if scale is not None else self.scale.copy()
+
+        return Gradebook(
+            new_points,
+            new_maximums,
+            new_lateness,
+            new_dropped,
+            new_groups,
+            new_lateness_penalty,
+            new_scale
+        )
+
+    def copy(self):
+        return self.replace()
+
+
     def merge_groups(self, group_names: Collection[str], name: str) -> "Gradebook":
         """Merges the assignment groups to create a new assignment group."""
+        new_group_name = name
+
         if callable(group_names):
             group_names = list(filter(group_names, self.groups.keys()))
 
@@ -391,18 +463,19 @@ class Gradebook:
         for group_name in group_names:
             assignments.extend(self.groups[group_name])
 
-        new_group = assignments
         new_groups = self.groups.copy()
+        new_group = Group([])
 
         # remove the old assignment groups that have been merged; do this
         # before adding new group in case the `name` is one of the old group
         # names, meaning that it is effectively replaced
         for group_name in group_names:
+            new_group += new_groups[group_name]
             del new_groups[group_name]
 
-        new_groups[name] = new_group
+        new_groups[new_group_name] = new_group
 
-        return self._replace(groups=new_groups)
+        return self.replace(groups=new_groups)
 
     def decimate_group(self, group_name: str) -> "Gradebook":
         """Ungroup the group, making a singleton group out of every assignment."""
@@ -412,7 +485,7 @@ class Gradebook:
         for assignment in assignments:
             new_groups[assignment] = [assignment]
 
-        return self._replace(groups=new_groups)
+        return self.replace(groups=new_groups)
 
     def group_containing(self, assignment: str) -> str:
         """Find the group containing the assignment.
@@ -513,12 +586,13 @@ class Gradebook:
 
         students = [s for s in self.students if s.pid in set(pids)]
 
-        r_points = self.points.loc[students].copy()
-        r_lateness = self.lateness.loc[students].copy()
-        r_dropped = self.dropped.loc[students].copy()
-        return self.__class__(
-            r_points, self.maximums, r_lateness, r_dropped, self.groups
-        )
+        result = self.copy()
+
+        result.points = result.points.loc[students]
+        result.lateness = result.lateness.loc[students]
+        result.dropped = result.dropped.loc[students]
+
+        return result
 
     def keep_assignments(self, assignments: Collection[str]) -> "Gradebook":
         """Restrict the gradebook to only the supplied assignments.
@@ -544,26 +618,21 @@ class Gradebook:
         if extras:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
 
-        r_points = self.points.loc[:, assignments].copy()
-        r_maximums = self.maximums[assignments].copy()
-        r_lateness = self.lateness.loc[:, assignments].copy()
-        r_dropped = self.dropped.loc[:, assignments].copy()
-        r_lateness_penalty = self.lateness_penalty.loc[:, assignments].copy()
+        result = self.copy()
 
-        r_groups = {}
+        result.points = self.points.loc[:, assignments]
+        result.maximums = self.maximums[assignments]
+        result.lateness = self.lateness.loc[:, assignments]
+        result.dropped = self.dropped.loc[:, assignments]
+        result.lateness_penalty = self.lateness_penalty.loc[:, assignments]
+
+        result.groups = {}
         for group, group_assignments in self.groups.items():
             kept = [a for a in group_assignments if a in assignments]
             if kept:
-                r_groups[group] = kept
+                result.groups[group] = kept
 
-        return self.__class__(
-            r_points,
-            r_maximums,
-            r_lateness,
-            r_dropped,
-            groups=r_groups,
-            lateness_penalty=r_lateness_penalty,
-        )
+        return result
 
     def remove_assignments(self, assignments: Collection[str]) -> "Gradebook":
         """Remove the assignments from the gradebook.
@@ -688,7 +757,7 @@ class Gradebook:
                 if forgiveness_remaining == 0:
                     break
 
-        return self._replace(lateness_penalty=new_lateness_penalty)
+        return self.replace(lateness_penalty=new_lateness_penalty)
 
     def forgive_all_lates(self, within: WithinSpecifier) -> "Gradebook":
         return self.forgive_lates(n=np.float64("inf"), within=within)
@@ -782,40 +851,7 @@ class Gradebook:
             tossed = list(combinations[best_combo_ix])
             new_dropped.loc[student, tossed] = True
 
-        return self._replace(dropped=new_dropped)
-
-    def _replace(
-        self,
-        points=None,
-        maximums=None,
-        lateness=None,
-        dropped=None,
-        groups=None,
-        lateness_penalty=None,
-    ) -> "Gradebook":
-
-        new_points = points if points is not None else self.points.copy()
-        new_maximums = maximums if maximums is not None else self.maximums.copy()
-        new_lateness = lateness if lateness is not None else self.lateness.copy()
-        new_dropped = dropped if dropped is not None else self.dropped.copy()
-        new_groups = groups if groups is not None else self.groups.copy()
-        new_lateness_penalty = (
-            lateness_penalty
-            if lateness_penalty is not None
-            else self.lateness_penalty.copy()
-        )
-
-        return Gradebook(
-            new_points,
-            new_maximums,
-            new_lateness,
-            new_dropped,
-            new_groups,
-            new_lateness_penalty,
-        )
-
-    def copy(self):
-        return self._replace()
+        return self.replace(dropped=new_dropped)
 
     def give_equal_weights(self, within: WithinSpecifier) -> "Gradebook":
         """Normalize maximum points so that all assignments are worth the same.
@@ -845,7 +881,7 @@ class Gradebook:
         new_points = self.points.copy()
         new_points.loc[:, within] = scores
 
-        return self._replace(points=new_points, maximums=new_maximums)
+        return self.replace(points=new_points, maximums=new_maximums)
 
     def total(self, within: WithinSpecifier) -> Tuple[pd.Series, pd.Series]:
         """Computes the total points earned and available within one or more assignments.
@@ -1086,7 +1122,7 @@ class Gradebook:
         result.lateness[name] = lateness
         result.dropped[name] = dropped
 
-        result.groups[name] = [name]
+        result.groups[name] = Group([name])
 
         return result
 
@@ -1150,7 +1186,7 @@ class Gradebook:
 
 
         result = result.merge_groups(
-            Assignments([x + suffix for x in original_assignments]),
+            [x + suffix for x in original_assignments],
             original_assignments_group_name + suffix,
         )
 

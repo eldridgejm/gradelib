@@ -7,7 +7,7 @@ from .io import (
     write_canvas_grades,
     write_egrades,
 )
-from .gradebook import Gradebook, Assignments
+from .gradebook import Gradebook, Assignments, Group
 from .types import Student
 from .scales import (
     DEFAULT_SCALE,

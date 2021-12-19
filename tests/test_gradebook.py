@@ -78,11 +78,11 @@ def test_merge_groups_by_list_of_strings():
         ["lab 01", "lab 02", "lab 03"], name="labs"
     )
 
-    assert gradebook.groups["labs"] == [
+    assert gradebook.groups["labs"] == gradelib.Group([
         "lab 01",
         "lab 02",
         "lab 03",
-    ]
+    ], weight=65)
 
 
 def test_merge_groups_removes_old_groups():
@@ -94,14 +94,32 @@ def test_merge_groups_removes_old_groups():
         ["lab 01", "lab 02", "lab 03"], name="labs"
     )
 
-    assert gradebook.groups["labs"] == [
+    assert gradebook.groups["labs"] == gradelib.Group([
         "lab 01",
         "lab 02",
         "lab 03",
-    ]
+    ], weight=65)
+
     assert "lab 01" not in gradebook.groups
     assert "lab 02" not in gradebook.groups
     assert "lab 03" not in gradebook.groups
+
+def test_merge_groups_sum_weights_of_old_groups():
+    # fmt: off
+    expected_weight = (
+            GRADESCOPE_EXAMPLE.groups['lab 01'].weight
+            +
+            GRADESCOPE_EXAMPLE.groups['lab 02'].weight
+            +
+            GRADESCOPE_EXAMPLE.groups['lab 03'].weight
+    )
+    # fmt: on
+
+    gradebook = GRADESCOPE_EXAMPLE.merge_groups(
+        ["lab 01", "lab 02", "lab 03"], name="labs"
+    )
+
+    assert gradebook.groups['labs'].weight == expected_weight
 
 
 def test_merge_assignment_with_multiple_merges_and_replace():
@@ -109,11 +127,11 @@ def test_merge_assignment_with_multiple_merges_and_replace():
         ["lab 01", "lab 02"], name="labs"
     ).merge_groups(["labs", "lab 03"], name="labs")
 
-    assert gradebook.groups["labs"] == [
+    assert gradebook.groups["labs"] == gradelib.Group([
         "lab 01",
         "lab 02",
         "lab 03",
-    ]
+    ], weight=65)
     assert "lab 01" not in gradebook.groups
     assert "lab 02" not in gradebook.groups
     assert "lab 03" not in gradebook.groups
@@ -124,7 +142,7 @@ def test_merge_assignment_with_predicate_function():
 
     gradebook = GRADESCOPE_EXAMPLE.merge_groups(is_lab, name="labs")
 
-    assert gradebook.groups["labs"] == [f"lab 0{i}" for i in range(1, 10)]
+    assert gradebook.groups["labs"] == gradelib.Group([f"lab 0{i}" for i in range(1, 10)], weight=151)
     assert "lab 01" not in gradebook.groups
     assert "lab 02" not in gradebook.groups
     assert "lab 03" not in gradebook.groups
@@ -1206,10 +1224,10 @@ def test_apply_redemption_works_with_same_sized_groups():
         == pd.Series([75, 85], index=["A1", "A2"])
     ).all()
     assert "labs (with redemption)" in result.groups
-    assert result.groups["labs (with redemption)"] == [
+    assert result.groups["labs (with redemption)"] == gradelib.Group([
         "lab 01 (with redemption)",
         "lab 02 (with redemption)",
-    ]
+    ])
 
 
 def test_apply_redemption_raises_if_groups_not_the_same_size():

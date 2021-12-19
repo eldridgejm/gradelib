@@ -502,7 +502,7 @@ def test_drop_lowest_does_not_count_lates_as_zeros():
     gradebook = gradelib.Gradebook(points, maximums).merge_groups(
         starting_with("hw"), "homeworks"
     )
-    gradebook.lateness.iloc[0, 0] = True
+    gradebook.lateness.iloc[0, 0] = pd.Timedelta(minutes=10)
 
     # since A1's perfect homework is lateness, it should count as zero and be
     # dropped
@@ -642,9 +642,9 @@ def test_score_does_not_count_lates_as_zero():
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    gradebook.lateness.loc["A1", "hw01"] = True
-    gradebook.lateness.loc["A1", "hw03"] = True
-    gradebook.lateness.loc["A2", "hw03"] = True
+    gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(minutes=10)
+    gradebook.lateness.loc["A1", "hw03"] = pd.Timedelta(minutes=10)
+    gradebook.lateness.loc["A2", "hw03"] = pd.Timedelta(minutes=10)
     homeworks = gradebook.assignments.starting_with("hw")
 
     # when
@@ -732,8 +732,8 @@ def test_total_does_not_count_lates_as_zero():
     gradebook = gradelib.Gradebook(points, maximums).merge_groups(
         starting_with("hw"), "homeworks"
     )
-    gradebook.lateness.loc["A1", "hw03"] = True
-    gradebook.lateness.loc["A2", "hw03"] = True
+    gradebook.lateness.loc["A1", "hw03"] = pd.Timedelta(minutes=10)
+    gradebook.lateness.loc["A2", "hw03"] = pd.Timedelta(minutes=10)
 
     # when
     earned, available = gradebook.total("homeworks")
@@ -898,8 +898,8 @@ def test_unify_carries_over_lateness_penalty():
     gradebook = gradelib.Gradebook(points, maximums).merge_groups(
         starting_with("hw"), "homeworks"
     )
-    gradebook.lateness.loc["A1", "hw01"] = True
-    gradebook.lateness.loc["A1", "hw01 - programming"] = True
+    gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(minutes=10)
+    gradebook.lateness.loc["A1", "hw01 - programming"] = pd.Timedelta(minutes=10)
     gradebook.lateness_penalty.loc["A1", "hw01"] = 0.5
     gradebook.lateness_penalty.loc["A1", "hw01 - programming"] = 0.5
 
@@ -923,8 +923,8 @@ def test_unify_raises_if_parts_have_different_lateness_penalties():
         starting_with("hw"), "homeworks"
     )
 
-    gradebook.lateness.loc["A1", "hw01"] = True
-    gradebook.lateness.loc["A1", "hw01 - programming"] = True
+    gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(minutes=10)
+    gradebook.lateness.loc["A1", "hw01 - programming"] = pd.Timedelta(minutes=10)
     gradebook.lateness_penalty.loc["A1", "hw01"] = 0.5
     gradebook.lateness_penalty.loc["A1", "hw01 - programming"] = 0.3
 

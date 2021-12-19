@@ -1355,3 +1355,29 @@ def test_apply_redemption_rescale_point_total():
     ).all()
 
     assert (result.maximums["midterm (with redemption)"] == 100).all()
+
+# with_group_weights()
+# --------------------
+
+def test_with_group_weights_sets_weights_of_non_listed_groups_to_zero():
+    # given
+    columns = ["lab 01", "lab 01 - redemption", "lab 02", "lab 02 - redemption"]
+    p1 = pd.Series(data=[80, 90, 75, 50], index=columns, name="A1")
+    p2 = pd.Series(data=[95, 75, 80, 85], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([100, 100, 100, 100], index=columns)
+    gradebook = (
+        gradelib.Gradebook(points, maximums)
+        .merge_groups(gradelib.Assignments(["lab 01", "lab 02"]), "labs")
+        .merge_groups(
+            gradelib.Assignments(["lab 01 - redemption", "lab 02 - redemption"]),
+            "lab redemptions",
+        )
+    )
+
+    actual = gradebook.with_group_weights({
+        "labs": 0.5
+    })
+
+    assert actual.groups['labs'].weight == 0.5
+    assert actual.groups['lab redemptions'].weight == 0

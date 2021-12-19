@@ -13,6 +13,7 @@ from typing import (
     Collection,
     Set,
     Tuple,
+    Mapping
 )
 
 import pandas as pd
@@ -170,6 +171,9 @@ class Group(Assignments):
 
     def __repr__(self):
         return f"{self.__class__.__name__}(names={sorted(self)}, weight={self.weight})"
+
+    def copy(self):
+        return Group(list(self), self.weight)
 
 class Gradebook:
     """Data structure which facilitates common grading policies.
@@ -1191,3 +1195,17 @@ class Gradebook:
         )
 
         return result
+
+    def with_group_weights(self, weights: Mapping[str, float]):
+        new_groups = self.groups.copy()
+
+        for group_name, group in self.groups.items():
+            new_group = group.copy()
+            if group_name not in weights:
+                new_group.weight = 0
+            else:
+                new_group.weight = weights[group_name]
+
+            new_groups[group_name] = new_group
+
+        return self.replace(groups=new_groups)

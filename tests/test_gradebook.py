@@ -865,7 +865,7 @@ def test_unify_assignments_updates_groups():
     assert "hw02 - testing" not in gradebook.groups["homeworks"]
 
 
-def test_unify_considers_new_assignment_late_if_any_part_lateness():
+def test_unify_uses_latest_part_for_lateness():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -876,7 +876,8 @@ def test_unify_considers_new_assignment_late_if_any_part_lateness():
         starting_with("hw"), "homeworks"
     )
 
-    gradebook.lateness.loc["A1", "hw01"] = True
+    gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(minutes=100)
+    gradebook.lateness.loc["A1", "hw01 - programming"] = pd.Timedelta(minutes=50)
 
     def assignment_to_key(s):
         return s.split("-")[0].strip()
@@ -885,7 +886,7 @@ def test_unify_considers_new_assignment_late_if_any_part_lateness():
     result = gradebook.unify_assignments(assignment_to_key, within="homeworks")
 
     # then
-    assert result.lateness.loc["A1", "hw01"] == True
+    assert result.lateness.loc["A1", "hw01"] == pd.Timedelta(minutes=100)
 
 def test_unify_carries_over_lateness_penalty():
     # given

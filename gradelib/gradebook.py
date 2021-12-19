@@ -867,7 +867,7 @@ class Gradebook:
 
         assignment_points = self.points[parts].sum(axis=1)
         assignment_max = self.maximums[parts].sum()
-        assignment_lateness = self.lateness[parts].any(axis=1)
+        assignment_lateness = self.lateness[parts].max(axis=1)
 
         if not _all_columns_equal(self.lateness_penalty[parts]):
             raise ValueError("Some parts have different lateness penalties.")

@@ -628,7 +628,7 @@ class Gradebook:
         assignments = self._get_assignments(within)
         return unforgiven_lates.loc[:, assignments].sum(axis=1)
 
-    def forgive_lates(self, n: int, within: WithinSpecifier) -> "Gradebook":
+    def forgive_lates(self, n: Union[int, str], within: WithinSpecifier) -> "Gradebook":
         """Forgive the first n lates within a group of assignments.
 
         Parameters
@@ -664,6 +664,11 @@ class Gradebook:
             If `within` is not an ordered sequence.
 
         """
+        if n == "all":
+            n = np.float("inf")
+        elif isinstance(n, str):
+            raise ValueError("Unknown string for number of lates to forgive.")
+
         if n < 1:
             raise ValueError("Must forgive at least one lateness.")
 
@@ -684,6 +689,9 @@ class Gradebook:
                     break
 
         return self._replace(lateness_penalty=new_lateness_penalty)
+
+    def forgive_all_lates(self, within: WithinSpecifier) -> "Gradebook":
+        return self.forgive_lates(n=np.float64("inf"), within=within)
 
     def drop_lowest(self, n: int, within: WithinSpecifier) -> "Gradebook":
         """Drop the lowest n grades within a group of assignments.

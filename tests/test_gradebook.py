@@ -385,6 +385,17 @@ def test_forgive_lates_does_not_forgive_dropped():
     assert_gradebook_is_sound(actual)
 
 
+def test_forgive_all_lates():
+    # when
+    gradebook = GRADESCOPE_EXAMPLE.merge_groups(starting_with("lab"), "labs")
+    gradebook.lateness_penalty[gradebook.late] = 1
+    actual = gradebook.forgive_all_lates(within="labs")
+
+    # then
+    assert list(actual.number_of_unforgiven_lates(within="labs")) == [0, 0, 0, 0]
+    assert_gradebook_is_sound(actual)
+
+
 # drop_lowest()
 # -----------------------------------------------------------------------------
 
@@ -1293,6 +1304,7 @@ def test_apply_redemption_uses_maximum_lateness():
         minutes=20
     )
 
+
 def test_apply_redemption_raises_by_default_if_maximums_not_equal():
     # given
     columns = ["midterm", "midterm - redemption"]
@@ -1305,6 +1317,7 @@ def test_apply_redemption_raises_by_default_if_maximums_not_equal():
     with pytest.raises(ValueError):
         result = gradebook.apply_redemption("midterm", "midterm - redemption")
 
+
 def test_apply_redemption_rescale_point_total():
     # given
     columns = ["midterm", "midterm - redemption"]
@@ -1314,14 +1327,13 @@ def test_apply_redemption_rescale_point_total():
     maximums = pd.Series([100, 50], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
 
-    result = gradebook.apply_redemption("midterm", "midterm - redemption", rescale_points_to_original=True)
+    result = gradebook.apply_redemption(
+        "midterm", "midterm - redemption", rescale_points_to_original=True
+    )
 
     assert (
         result.points["midterm (with redemption)"]
         == pd.Series([100, 95], index=["A1", "A2"])
     ).all()
 
-    assert (
-        result.maximums["midterm (with redemption)"]
-        == 100
-    ).all()
+    assert (result.maximums["midterm (with redemption)"] == 100).all()

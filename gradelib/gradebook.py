@@ -16,6 +16,7 @@ from typing import (
 )
 
 import pandas as pd
+import numpy as np
 
 from . import io
 from .types import Student
@@ -135,7 +136,7 @@ def _empty_like(table: pd.DataFrame, fill) -> pd.DataFrame:
 
 def _all_columns_equal(df):
     for i in range(1, df.shape[1]):
-        if not (df.iloc[:,0] == df.iloc[:,i]).all():
+        if not (df.iloc[:, 0] == df.iloc[:, i]).all():
             return False
     return True
 
@@ -177,13 +178,27 @@ class Gradebook:
     """
 
     def __init__(
-        self, points, maximums, lateness=None, dropped=None, groups=None, lateness_penalty=None
+        self,
+        points,
+        maximums,
+        lateness=None,
+        dropped=None,
+        groups=None,
+        lateness_penalty=None,
     ):
         self.points = points
         self.maximums = maximums
-        self.lateness = lateness if lateness is not None else _empty_like(points, pd.Timedelta(0))
-        self.lateness_penalty = lateness_penalty if lateness_penalty is not None else _empty_like(points, 0.0).astype(float)
-        self.dropped = dropped if dropped is not None else _empty_like(points, False).astype(bool)
+        self.lateness = (
+            lateness if lateness is not None else _empty_like(points, pd.Timedelta(0))
+        )
+        self.lateness_penalty = (
+            lateness_penalty
+            if lateness_penalty is not None
+            else _empty_like(points, 0.0).astype(float)
+        )
+        self.dropped = (
+            dropped if dropped is not None else _empty_like(points, False).astype(bool)
+        )
 
         if groups is None:
             self.groups = {}
@@ -501,7 +516,9 @@ class Gradebook:
         r_points = self.points.loc[students].copy()
         r_lateness = self.lateness.loc[students].copy()
         r_dropped = self.dropped.loc[students].copy()
-        return self.__class__(r_points, self.maximums, r_lateness, r_dropped, self.groups)
+        return self.__class__(
+            r_points, self.maximums, r_lateness, r_dropped, self.groups
+        )
 
     def keep_assignments(self, assignments: Collection[str]) -> "Gradebook":
         """Restrict the gradebook to only the supplied assignments.
@@ -539,7 +556,14 @@ class Gradebook:
             if kept:
                 r_groups[group] = kept
 
-        return self.__class__(r_points, r_maximums, r_lateness, r_dropped, groups=r_groups, lateness_penalty=r_lateness_penalty)
+        return self.__class__(
+            r_points,
+            r_maximums,
+            r_lateness,
+            r_dropped,
+            groups=r_groups,
+            lateness_penalty=r_lateness_penalty,
+        )
 
     def remove_assignments(self, assignments: Collection[str]) -> "Gradebook":
         """Remove the assignments from the gradebook.
@@ -715,7 +739,7 @@ class Gradebook:
 
         # count lates as zeros
         points_after_lateness_penalty = self.points.copy()[assignments]
-        points_after_lateness_penalty *= (1 - self.lateness_penalty[assignments])
+        points_after_lateness_penalty *= 1 - self.lateness_penalty[assignments]
 
         # a full table of maximum points available. this will allow us to have
         # different points available per person
@@ -767,10 +791,19 @@ class Gradebook:
         new_lateness = lateness if lateness is not None else self.lateness.copy()
         new_dropped = dropped if dropped is not None else self.dropped.copy()
         new_groups = groups if groups is not None else self.groups.copy()
-        new_lateness_penalty = lateness_penalty if lateness_penalty is not None else self.lateness_penalty.copy()
+        new_lateness_penalty = (
+            lateness_penalty
+            if lateness_penalty is not None
+            else self.lateness_penalty.copy()
+        )
 
         return Gradebook(
-            new_points, new_maximums, new_lateness, new_dropped, new_groups, new_lateness_penalty
+            new_points,
+            new_maximums,
+            new_lateness,
+            new_dropped,
+            new_groups,
+            new_lateness_penalty,
         )
 
     def copy(self):
@@ -828,13 +861,15 @@ class Gradebook:
         within = self._get_assignments(within)
 
         points_after_lateness_penalty = self.points.copy()[within]
-        points_after_lateness_penalty *= (1 - self.lateness_penalty[within])
+        points_after_lateness_penalty *= 1 - self.lateness_penalty[within]
 
         # create a full array of points possible
         points_possible = self.points.copy()[within]
         points_possible.iloc[:, :] = self.maximums[within].values
 
-        effective_points = points_after_lateness_penalty[within][~self.dropped].sum(axis=1)
+        effective_points = points_after_lateness_penalty[within][~self.dropped].sum(
+            axis=1
+        )
         effective_possible = points_possible[~self.dropped].sum(axis=1)
 
         return effective_points, effective_possible
@@ -891,7 +926,13 @@ class Gradebook:
             new_groups[group_name].remove(part)
         new_groups[group_name].append(new_name)
 
-        return Gradebook(new_points, new_max, lateness=new_lateness, groups=new_groups, lateness_penalty=new_lateness_penalty)
+        return Gradebook(
+            new_points,
+            new_max,
+            lateness=new_lateness,
+            groups=new_groups,
+            lateness_penalty=new_lateness_penalty,
+        )
 
     def unify_assignments(
         self, group_by: Callable[[str], str], within: str
@@ -1038,5 +1079,71 @@ class Gradebook:
         result.dropped[name] = dropped
 
         result.groups[name] = [name]
+
+        return result
+
+    def apply_redemption(
+        self,
+        original_assignments: str,
+        redemption_assignments: str,
+        suffix=" (with redemption)",
+        rescale_points_to_original=False,
+    ):
+        original_assignments_group_name = original_assignments
+
+        original_assignments = self._get_assignments(original_assignments)
+        redemption_assignments = self._get_assignments(redemption_assignments)
+
+        if len(original_assignments) != len(redemption_assignments):
+            raise ValueError("Groups must be the same size.")
+
+        same_point_totals = (
+            self.maximums[original_assignments].values
+            == self.maximums[redemption_assignments].values
+        ).all()
+
+        if not same_point_totals and not rescale_points_to_original:
+            raise ValueError("Assignments have different maximum point totals.")
+
+        # fmt: on
+        any_dropped = self.dropped[original_assignments].any(axis=None) or self.dropped[
+            redemption_assignments
+        ].any(axis=None)
+        # fmt: off
+
+        if any_dropped:
+            raise ValueError(
+                "Assignments cannot be dropped when applying redemption, as the result is undefined."
+            )
+
+        result = self.copy()
+
+        pairs = zip(original_assignments, redemption_assignments)
+        for original_assignment, redemption_assignment in pairs:
+            name = original_assignment + suffix
+            original_points = result.points[original_assignment]
+            redemption_points = result.points[redemption_assignment]
+
+            if rescale_points_to_original:
+                factor = result.maximums[original_assignment] / result.maximums[redemption_assignment]
+                redemption_points = redemption_points * factor
+
+            points = np.maximum(original_points, redemption_points)
+
+            result = result.add_assignment(
+                name=name,
+                points=points,
+                maximums=result.maximums[original_assignment],
+            )
+            result.lateness[name] = np.maximum(
+                result.lateness[original_assignment],
+                result.lateness[redemption_assignment],
+            )
+
+
+        result = result.merge_groups(
+            Assignments([x + suffix for x in original_assignments]),
+            original_assignments_group_name + suffix,
+        )
 
         return result

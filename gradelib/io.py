@@ -44,8 +44,9 @@ def _find_index_of_first_assignment_column(columns):
 
 def _read_lateness(lateness: pd.Series) -> pd.Series:
     def _convert(lateness_str: str) -> pd.Timedelta:
-        hours, minutes, seconds = [int(x) for x in lateness_str.split(':')]
+        hours, minutes, seconds = [int(x) for x in lateness_str.split(":")]
         return pd.Timedelta(hours=hours, minutes=minutes, seconds=seconds)
+
     return lateness.apply(_convert)
 
 

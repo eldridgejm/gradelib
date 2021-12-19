@@ -129,20 +129,22 @@ def test_merge_assignment_with_predicate_function():
     assert "lab 02" not in gradebook.groups
     assert "lab 03" not in gradebook.groups
 
+
 # decimate_group()
 # ----------------
+
 
 def test_decimate_group():
     gradebook = GRADESCOPE_EXAMPLE.merge_groups(
         ["lab 01", "lab 02", "lab 03"], name="labs"
     )
 
-    assert 'lab 01' not in gradebook.groups
+    assert "lab 01" not in gradebook.groups
 
     gradebook = gradebook.decimate_group("labs")
 
-    assert 'lab 01' in gradebook.groups
-    assert 'labs' not in gradebook.groups
+    assert "lab 01" in gradebook.groups
+    assert "labs" not in gradebook.groups
 
 
 # keep_pids()
@@ -307,7 +309,7 @@ def test_combine_raises_if_duplicate_groups():
 def test_number_of_unforgiven_lates():
     # when
     gradebook = GRADESCOPE_EXAMPLE.merge_groups(starting_with("lab"), "labs")
-    gradebook.lateness_penalty.iloc[:,:] = 1
+    gradebook.lateness_penalty.iloc[:, :] = 1
     actual = gradebook.number_of_unforgiven_lates(within="labs")
 
     # then
@@ -372,7 +374,7 @@ def test_forgive_lates_does_not_forgive_dropped():
         maximums=gradebook.maximums,
         lateness=gradebook.lateness,
         dropped=dropped,
-        lateness_penalty=gradebook.lateness_penalty
+        lateness_penalty=gradebook.lateness_penalty,
     )
 
     # when
@@ -476,7 +478,7 @@ def test_drop_lowest_takes_lateness_penalty_into_account():
     gradebook = gradelib.Gradebook(points, maximums).merge_groups(
         starting_with("hw"), "homeworks"
     )
-    gradebook.lateness_penalty.loc['A1', 'hw01'] = 1
+    gradebook.lateness_penalty.loc["A1", "hw01"] = 1
 
     # since A1's perfect homework is lateness, it should count as zero and be
     # dropped
@@ -488,6 +490,7 @@ def test_drop_lowest_takes_lateness_penalty_into_account():
     assert actual.dropped.iloc[0, 0]
     assert list(actual.dropped.sum(axis=1)) == [1, 1]
     assert_gradebook_is_sound(actual)
+
 
 def test_drop_lowest_does_not_count_lates_as_zeros():
     # the old strategy was to count lates as zero; but now .drop() should look at
@@ -632,7 +635,7 @@ def test_score_works_when_given_group_name():
 
 
 def test_score_does_not_count_lates_as_zero():
-    # counting lates as zeros was the previous behavior. now the penalties come from the 
+    # counting lates as zeros was the previous behavior. now the penalties come from the
     # lateness_penalty attribute, which is more general
 
     # given
@@ -655,7 +658,7 @@ def test_score_does_not_count_lates_as_zero():
 
 
 def test_score_takes_lateness_penalty_into_account():
-    # counting lates as zeros was the previous behavior. now the penalties come from the 
+    # counting lates as zeros was the previous behavior. now the penalties come from the
     # lateness_penalty attribute, which is more general
 
     # given
@@ -675,6 +678,7 @@ def test_score_takes_lateness_penalty_into_account():
 
     # then
     assert np.allclose(actual.values, [30.5 / 152, 16.5 / 152], atol=1e-6)
+
 
 def test_score_ignores_dropped_assignments():
     # given
@@ -742,6 +746,7 @@ def test_total_does_not_count_lates_as_zero():
     assert np.allclose(earned.values, [121, 24], atol=1e-6)
     assert np.allclose(available.values, [152, 152], atol=1e-6)
 
+
 def test_total_includes_lateness_penalty():
     # counting lates as zeros was the old behavior. now, lates must be explicitly
     # penalized in the .lateness_penalty attribute, which is more general.
@@ -755,7 +760,7 @@ def test_total_includes_lateness_penalty():
     gradebook = gradelib.Gradebook(points, maximums).merge_groups(
         starting_with("hw"), "homeworks"
     )
-    gradebook.lateness_penalty.loc["A1", "hw03"] = .5
+    gradebook.lateness_penalty.loc["A1", "hw03"] = 0.5
     gradebook.lateness_penalty.loc["A2", "hw03"] = 1
 
     # when
@@ -764,6 +769,7 @@ def test_total_includes_lateness_penalty():
     # then
     assert np.allclose(earned.values, [76, 9], atol=1e-6)
     assert np.allclose(available.values, [152, 152], atol=1e-6)
+
 
 def test_total_ignores_dropped_assignments():
     # given
@@ -888,6 +894,7 @@ def test_unify_uses_latest_part_for_lateness():
     # then
     assert result.lateness.loc["A1", "hw01"] == pd.Timedelta(minutes=100)
 
+
 def test_unify_carries_over_lateness_penalty():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
@@ -910,7 +917,8 @@ def test_unify_carries_over_lateness_penalty():
     result = gradebook.unify_assignments(assignment_to_key, within="homeworks")
 
     # then
-    assert result.lateness_penalty.loc['A1', 'hw01'] == 0.5
+    assert result.lateness_penalty.loc["A1", "hw01"] == 0.5
+
 
 def test_unify_raises_if_parts_have_different_lateness_penalties():
     # given
@@ -934,6 +942,7 @@ def test_unify_raises_if_parts_have_different_lateness_penalties():
     # when
     with pytest.raises(ValueError):
         gradebook.unify_assignments(assignment_to_key, within="homeworks")
+
 
 def test_unify_raises_if_any_part_is_dropped():
     # given
@@ -1007,7 +1016,11 @@ def test_add_assignment_updates_underlying_dataframes():
 
     # when
     result = gradebook.add_assignment(
-        "new", assignment_points, 20, lateness=assignment_lateness, dropped=assignment_dropped
+        "new",
+        assignment_points,
+        20,
+        lateness=assignment_lateness,
+        dropped=assignment_dropped,
     )
 
     # then
@@ -1032,7 +1045,11 @@ def test_add_assignment_creates_singleton_group():
 
     # when
     result = gradebook.add_assignment(
-        "new", assignment_points, 20, lateness=assignment_lateness, dropped=assignment_dropped
+        "new",
+        assignment_points,
+        20,
+        lateness=assignment_lateness,
+        dropped=assignment_dropped,
     )
 
     # then
@@ -1126,3 +1143,185 @@ def test_add_assignment_raises_if_duplicate_name():
             assignment_points,
             20,
         )
+
+
+# apply_redemption()
+
+
+def test_apply_redemption_works_with_singleton_groups():
+    # given
+    columns = ["midterm", "midterm - redemption"]
+    p1 = pd.Series(data=[80, 90], index=columns, name="A1")
+    p2 = pd.Series(data=[95, 75], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([100, 100], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    result = gradebook.apply_redemption("midterm", "midterm - redemption")
+
+    assert (
+        result.points["midterm (with redemption)"]
+        == pd.Series([90, 95], index=["A1", "A2"])
+    ).all()
+    assert "midterm" in result.assignments
+    assert "midterm - redemption" in result.assignments
+    assert "midterm (with redemption)" in result.groups
+
+
+def test_apply_redemption_works_with_same_sized_groups():
+    # given
+    columns = ["lab 01", "lab 01 - redemption", "lab 02", "lab 02 - redemption"]
+    p1 = pd.Series(data=[80, 90, 75, 50], index=columns, name="A1")
+    p2 = pd.Series(data=[95, 75, 80, 85], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([100, 100, 100, 100], index=columns)
+    gradebook = (
+        gradelib.Gradebook(points, maximums)
+        .merge_groups(gradelib.Assignments(["lab 01", "lab 02"]), "labs")
+        .merge_groups(
+            gradelib.Assignments(["lab 01 - redemption", "lab 02 - redemption"]),
+            "lab redemptions",
+        )
+    )
+
+    result = gradebook.apply_redemption("labs", "lab redemptions")
+
+    assert (
+        result.points["lab 01 (with redemption)"]
+        == pd.Series([90, 95], index=["A1", "A2"])
+    ).all()
+    assert (
+        result.points["lab 02 (with redemption)"]
+        == pd.Series([75, 85], index=["A1", "A2"])
+    ).all()
+    assert "labs (with redemption)" in result.groups
+    assert result.groups["labs (with redemption)"] == [
+        "lab 01 (with redemption)",
+        "lab 02 (with redemption)",
+    ]
+
+
+def test_apply_redemption_raises_if_groups_not_the_same_size():
+    # given
+    columns = ["lab 01", "lab 01 - redemption", "lab 02"]
+    p1 = pd.Series(
+        data=[
+            80,
+            90,
+            75,
+        ],
+        index=columns,
+        name="A1",
+    )
+    p2 = pd.Series(
+        data=[
+            95,
+            75,
+            80,
+        ],
+        index=columns,
+        name="A2",
+    )
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series(
+        [
+            100,
+            100,
+            100,
+        ],
+        index=columns,
+    )
+    gradebook = (
+        gradelib.Gradebook(points, maximums)
+        .merge_groups(gradelib.Assignments(["lab 01", "lab 02"]), "labs")
+        .merge_groups(
+            gradelib.Assignments(
+                [
+                    "lab 01 - redemption",
+                ]
+            ),
+            "lab redemptions",
+        )
+    )
+
+    with pytest.raises(ValueError):
+        result = gradebook.apply_redemption("labs", "lab redemptions")
+
+
+def test_apply_redemption_raises_if_any_assignments_are_dropped():
+    # given
+    columns = ["lab 01", "lab 01 - redemption", "lab 02", "lab 02 - redemption"]
+    p1 = pd.Series(data=[80, 90, 75, 50], index=columns, name="A1")
+    p2 = pd.Series(data=[95, 75, 80, 85], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([100, 100, 100, 100], index=columns)
+    gradebook = (
+        gradelib.Gradebook(points, maximums)
+        .merge_groups(gradelib.Assignments(["lab 01", "lab 02"]), "labs")
+        .merge_groups(
+            gradelib.Assignments(["lab 01 - redemption", "lab 02 - redemption"]),
+            "lab redemptions",
+        )
+    )
+    gradebook.dropped.loc["A1", "lab 01"] = True
+
+    with pytest.raises(ValueError):
+        result = gradebook.apply_redemption("labs", "lab redemptions")
+
+
+def test_apply_redemption_uses_maximum_lateness():
+    # given
+    columns = ["lab 01", "lab 01 - redemption", "lab 02", "lab 02 - redemption"]
+    p1 = pd.Series(data=[80, 90, 75, 50], index=columns, name="A1")
+    p2 = pd.Series(data=[95, 75, 80, 85], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([100, 100, 100, 100], index=columns)
+    gradebook = (
+        gradelib.Gradebook(points, maximums)
+        .merge_groups(gradelib.Assignments(["lab 01", "lab 02"]), "labs")
+        .merge_groups(
+            gradelib.Assignments(["lab 01 - redemption", "lab 02 - redemption"]),
+            "lab redemptions",
+        )
+    )
+    gradebook.lateness.loc["A1", "lab 01"] = pd.Timedelta(minutes=10)
+    gradebook.lateness.loc["A1", "lab 01 - redemption"] = pd.Timedelta(minutes=20)
+
+    result = gradebook.apply_redemption("labs", "lab redemptions")
+
+    assert result.lateness.loc["A1", "lab 01 (with redemption)"] == pd.Timedelta(
+        minutes=20
+    )
+
+def test_apply_redemption_raises_by_default_if_maximums_not_equal():
+    # given
+    columns = ["midterm", "midterm - redemption"]
+    p1 = pd.Series(data=[80, 90], index=columns, name="A1")
+    p2 = pd.Series(data=[95, 75], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([100, 90], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    with pytest.raises(ValueError):
+        result = gradebook.apply_redemption("midterm", "midterm - redemption")
+
+def test_apply_redemption_rescale_point_total():
+    # given
+    columns = ["midterm", "midterm - redemption"]
+    p1 = pd.Series(data=[80, 50], index=columns, name="A1")
+    p2 = pd.Series(data=[95, 45], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([100, 50], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    result = gradebook.apply_redemption("midterm", "midterm - redemption", rescale_points_to_original=True)
+
+    assert (
+        result.points["midterm (with redemption)"]
+        == pd.Series([100, 95], index=["A1", "A2"])
+    ).all()
+
+    assert (
+        result.maximums["midterm (with redemption)"]
+        == 100
+    ).all()

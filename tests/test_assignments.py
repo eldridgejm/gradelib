@@ -1,27 +1,17 @@
 import gradelib
 
 
-def test_starting_with():
+def test_getitem_with_predicate():
     # given
     assignments = gradelib.Assignments(
         ["homework 01", "homework 02", "homework 03", "lab 01", "lab 02"]
     )
 
-    # when
-    actual = assignments.starting_with("homework")
-
-    # then
-    assert set(actual) == {"homework 01", "homework 02", "homework 03"}
-
-
-def test_containing():
-    # given
-    assignments = gradelib.Assignments(
-        ["homework 01", "homework 02", "homework 03", "lab 01", "lab 02"]
-    )
+    def predicate(s):
+        return s.startswith('home')
 
     # when
-    actual = assignments.containing("work")
+    actual = assignments[predicate]
 
     # then
     assert set(actual) == {"homework 01", "homework 02", "homework 03"}

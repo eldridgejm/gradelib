@@ -23,7 +23,7 @@ from . import io, scales
 from .types import Student
 
 
-class Assignments(collections.abc.Sequence):
+class Assignments:
     """A sequence of assignments.
 
     Behaves essentially like a standard Python list, but has some additional
@@ -49,37 +49,17 @@ class Assignments(collections.abc.Sequence):
     def append(self, key):
         self._names.append(key)
 
-    def starting_with(self, prefix: str) -> "Assignments":
-        """Return only assignments starting with the prefix.
+    def __repr__(self):
+        return f"{self.__class__.__name__}(names={sorted(self._names)})"
 
-        Parameters
-        ----------
-        prefix : str
-            The prefix to search for.
+    def __eq__(self, other):
+        return self._names == list(other)
 
-        Returns
-        -------
-        Assignments
-            Only those assignments starting with the prefix.
+    def __add__(self, other: "Assignments") -> "Assignments":
+        return Assignments(set(self._names + other._names))
 
-        """
-        return self.__class__(x for x in self._names if x.startswith(prefix))
-
-    def containing(self, substring: str) -> "Assignments":
-        """Return only assignments containing the substring.
-
-        Parameters
-        ----------
-        substring : str
-            The substring to search for.
-
-        Returns
-        -------
-        Assignments
-            Only those assignments containing the substring.
-
-        """
-        return self.__class__(x for x in self._names if substring in x)
+    def __getitem__(self, predicate):
+        return self.__class__([a for a in self if predicate(a)])
 
     def group_by(self, to_key: Callable[[str], str]) -> Dict[str, "Assignments"]:
         """Group the assignments according to a key function.
@@ -124,18 +104,6 @@ class Assignments(collections.abc.Sequence):
             dct[key].append(assignment)
 
         return {key: Assignments(value) for key, value in dct.items()}
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(names={sorted(self._names)})"
-
-    def __eq__(self, other):
-        return self._names == list(other)
-
-    def __add__(self, other: "Assignments") -> "Assignments":
-        return Assignments(set(self._names + other._names))
-
-    def __getitem__(self, index):
-        return self._names[index]
 
 
 def _empty_like(table: pd.DataFrame, fill) -> pd.DataFrame:

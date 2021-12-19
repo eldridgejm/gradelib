@@ -225,7 +225,7 @@ def test_keep_assignments_updates_groups():
 def test_remove_assignments():
     # when
     actual = GRADESCOPE_EXAMPLE.remove_assignments(
-        GRADESCOPE_EXAMPLE.assignments.starting_with("lab")
+        GRADESCOPE_EXAMPLE.assignments[starting_with("lab")]
     )
 
     # then
@@ -257,7 +257,7 @@ def test_remove_assignments_updates_groups():
     gradebook = GRADESCOPE_EXAMPLE.merge_groups(
         starting_with("home"), "homeworks"
     ).merge_groups(starting_with("lab"), "labs")
-    removed = gradebook.assignments.starting_with("lab") + gradelib.Assignments(
+    removed = gradebook.assignments[starting_with("lab")] + gradelib.Assignments(
         [f"homework 0{i}" for i in range(3, 8)]
     )
     gradebook = gradebook.remove_assignments(removed)
@@ -353,7 +353,7 @@ def test_forgive_lates_works_when_given_assignments_object():
     # when
     gradebook = GRADESCOPE_EXAMPLE
     gradebook.lateness_penalty[gradebook.late] = 1
-    labs = gradebook.assignments.starting_with("lab")
+    labs = gradebook.assignments[starting_with("lab")]
     actual = gradebook.forgive_lates(n=3, within=labs)
 
     # then
@@ -384,7 +384,7 @@ def test_forgive_lates_does_not_forgive_dropped():
     gradebook = GRADESCOPE_EXAMPLE
     gradebook.lateness_penalty[gradebook.late] = 1
 
-    labs = gradebook.assignments.starting_with("lab")
+    labs = gradebook.assignments[starting_with("lab")]
     dropped = gradebook.dropped.copy()
     dropped.iloc[:, :] = True
     example = gradelib.Gradebook(
@@ -610,7 +610,7 @@ def test_give_equal_weights_works_when_given_assignments_object():
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with("hw")
+    homeworks = gradebook.assignments[starting_with("hw")]
 
     # when
     actual = gradebook.give_equal_weights(within=homeworks)
@@ -636,7 +636,7 @@ def test_score_on_simple_example():
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with("hw")
+    homeworks = gradebook.assignments[starting_with("hw")]
 
     # when
     actual = gradebook.score(homeworks)
@@ -677,7 +677,7 @@ def test_score_does_not_count_lates_as_zero():
     gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(minutes=10)
     gradebook.lateness.loc["A1", "hw03"] = pd.Timedelta(minutes=10)
     gradebook.lateness.loc["A2", "hw03"] = pd.Timedelta(minutes=10)
-    homeworks = gradebook.assignments.starting_with("hw")
+    homeworks = gradebook.assignments[starting_with("hw")]
 
     # when
     actual = gradebook.score(homeworks)
@@ -700,7 +700,7 @@ def test_score_takes_lateness_penalty_into_account():
     gradebook.lateness_penalty.loc["A1", "hw01"] = 0.5
     gradebook.lateness_penalty.loc["A1", "hw03"] = 1
     gradebook.lateness_penalty.loc["A2", "hw03"] = 0.5
-    homeworks = gradebook.assignments.starting_with("hw")
+    homeworks = gradebook.assignments[starting_with("hw")]
 
     # when
     actual = gradebook.score(homeworks)
@@ -720,7 +720,7 @@ def test_score_ignores_dropped_assignments():
     gradebook.dropped.loc["A1", "hw01"] = True
     gradebook.dropped.loc["A1", "hw03"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
-    homeworks = gradebook.assignments.starting_with("hw")
+    homeworks = gradebook.assignments[starting_with("hw")]
 
     # when
     actual = gradebook.score(homeworks)
@@ -829,7 +829,7 @@ def test_total_works_when_given_assignments_object():
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with("hw")
+    homeworks = gradebook.assignments[starting_with("hw")]
 
     # when
     earned, available = gradebook.total(homeworks)

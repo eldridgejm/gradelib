@@ -14,6 +14,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -74,13 +75,13 @@
            <div itemprop="articleBody">
              
   <section id="gradelib">
-<h1>gradelib<a class="headerlink" href="#gradelib" title="Permalink to this headline"></a></h1>
+<h1>gradelib<a class="headerlink" href="#gradelib" title="Permalink to this heading"></a></h1>
 <p>gradelib is a python library that streamlines end-of-quarter grading.
 It is designed to work with the common tools used at UC San Diego, including
 gradescope, canvas, and eGrades.</p>
 </section>
 <section id="workflow">
-<h1>Workflow<a class="headerlink" href="#workflow" title="Permalink to this headline"></a></h1>
+<h1>Workflow<a class="headerlink" href="#workflow" title="Permalink to this heading"></a></h1>
 <p>The following example shows the complete workflow for calculating final grades
 in a typical scenario. In this case, some grades were kept on Canvas, while
 others were kept on Gradescope. The grading policy allowed for 4 late
@@ -152,9 +153,9 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 </div>
 </section>
 <section id="api">
-<h1>API<a class="headerlink" href="#api" title="Permalink to this headline"></a></h1>
+<h1>API<a class="headerlink" href="#api" title="Permalink to this heading"></a></h1>
 <p><strong>Gradebooks</strong></p>
-<table class="longtable docutils align-default">
+<table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
@@ -214,7 +215,7 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 </tbody>
 </table>
 <p><strong>Assignments</strong></p>
-<table class="longtable docutils align-default">
+<table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
@@ -235,7 +236,7 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 </tbody>
 </table>
 <p><strong>Grading Scales</strong></p>
-<table class="longtable docutils align-default">
+<table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
@@ -265,7 +266,7 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 </tbody>
 </table>
 <p><strong>I/O</strong></p>
-<table class="longtable docutils align-default">
+<table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
@@ -289,7 +290,7 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 </tbody>
 </table>
 <section id="gradebooks">
-<h2>Gradebooks<a class="headerlink" href="#gradebooks" title="Permalink to this headline"></a></h2>
+<h2>Gradebooks<a class="headerlink" href="#gradebooks" title="Permalink to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="gradelib.Gradebook">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">Gradebook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximums</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">late</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropped</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Gradebook" title="Permalink to this definition"></a></dt>
@@ -354,11 +355,8 @@ all False.</p></li>
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">assignments</span></span><a class="headerlink" href="#gradelib.Gradebook.assignments" title="Permalink to this definition"></a></dt>
 <dd><p>All assignments in the gradebook.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p></p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference internal" href="#gradelib.Assignments" title="gradelib.Assignments">Assignments</a></p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Assignments" title="gradelib.Assignments">Assignments</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -539,11 +537,8 @@ factor accounts for this.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>within</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – The assignments to reweight.</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -614,11 +609,8 @@ gradebook. If None, all assignments will be used. Default: None</p>
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pids</span></span><a class="headerlink" href="#gradelib.Gradebook.pids" title="Permalink to this definition"></a></dt>
 <dd><p>All student PIDs.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p></p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>set</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>set</p>
 </dd>
 </dl>
 </dd></dl>
@@ -736,7 +728,7 @@ assignments into <cite>homework 01</cite>, <cite>homework 02</cite>, etc:</p>
 
 </section>
 <section id="assignments">
-<h2>Assignments<a class="headerlink" href="#assignments" title="Permalink to this headline"></a></h2>
+<h2>Assignments<a class="headerlink" href="#assignments" title="Permalink to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="gradelib.Assignments">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">Assignments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.Assignments" title="Permalink to this definition"></a></dt>
@@ -818,7 +810,7 @@ be used as the assignment’s key in the resulting dictionary.</p>
 
 </section>
 <section id="grading-scales">
-<h2>Grading Scales<a class="headerlink" href="#grading-scales" title="Permalink to this headline"></a></h2>
+<h2>Grading Scales<a class="headerlink" href="#grading-scales" title="Permalink to this heading"></a></h2>
 <dl class="py data">
 <dt class="sig sig-object py" id="gradelib.DEFAULT_SCALE">
 <span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_SCALE</span></span><a class="headerlink" href="#gradelib.DEFAULT_SCALE" title="Permalink to this definition"></a></dt>
@@ -951,7 +943,7 @@ the threshold.</p></li>
 </div>
 </section>
 <section id="i-o">
-<h2>I/O<a class="headerlink" href="#i-o" title="Permalink to this headline"></a></h2>
+<h2>I/O<a class="headerlink" href="#i-o" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="gradelib.read_gradescope">
 <span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">read_gradescope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_pids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_assignments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.read_gradescope" title="Permalink to this definition"></a></dt>
@@ -1072,7 +1064,7 @@ automatically have their letter grade converted to P or NP, as appropriate.</p>
 </section>
 </section>
 <section id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline"></a></h1>
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading"></a></h1>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>

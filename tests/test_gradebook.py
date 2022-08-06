@@ -5,6 +5,8 @@ import pandas as pd
 import numpy as np
 
 import gradelib
+import gradelib.io.ucsd
+import gradelib.io.gradescope
 
 
 EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent / "examples"
@@ -22,7 +24,7 @@ CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.Gradebook(
 )
 
 # given
-ROSTER = gradelib.read_egrades_roster(EXAMPLES_DIRECTORY / "egrades.csv")
+ROSTER = gradelib.io.ucsd.read_egrades_roster(EXAMPLES_DIRECTORY / "egrades.csv")
 
 
 def assert_gradebook_is_sound(gradebook):

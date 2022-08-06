@@ -5,7 +5,8 @@ import itertools
 
 import pandas as pd
 
-from . import io
+from .io import gradescope as io_gradescope
+from .io import canvas as io_canvas
 
 
 class Assignments(collections.abc.Sequence):
@@ -211,7 +212,7 @@ class Gradebook:
         factor accounts for this.
 
         """
-        points, maximums, lateness = io.read_gradescope(
+        points, maximums, lateness = io_gradescope.read(
             path,
             standardize_pids=standardize_pids,
             standardize_assignments=standardize_assignments,
@@ -247,7 +248,7 @@ class Gradebook:
             assignment name.  Default: True.
 
         """
-        points, maximums = io.read_canvas(
+        points, maximums = io_canvas.read(
             path,
             standardize_pids=standardize_pids,
             standardize_assignments=standardize_assignments,

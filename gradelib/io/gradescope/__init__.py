@@ -26,7 +26,7 @@ def _lateness_in_seconds(lateness):
     hours = lateness.str.split(":").str[0].astype(int)
     minutes = lateness.str.split(":").str[1].astype(int)
     seconds = lateness.str.split(":").str[2].astype(int)
-    return 3600 * hours + 60 * minutes + seconds
+    return pd.to_timedelta(3600 * hours + 60 * minutes + seconds, unit='s')
 
 
 def read(path, standardize_pids=True, standardize_assignments=True, lateness_fudge=60 * 5):
@@ -126,6 +126,5 @@ def read(path, standardize_pids=True, standardize_assignments=True, lateness_fud
     lateness = table.iloc[:, starting_index + 3 :: stride]
     lateness.columns = points.columns
     lateness = lateness.apply(_lateness_in_seconds) # convert strings to seconds
-    late = lateness > lateness_fudge
 
-    return Gradebook(points, max_points, late)
+    return Gradebook(points, max_points, lateness)

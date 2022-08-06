@@ -142,12 +142,18 @@ def _empty_mask_like(table):
     return empty.astype(bool)
 
 
-def _lateness_in_seconds(lateness):
-    """Converts a series of lateness strings in HH:MM:SS format to integer seconds"""
-    hours = lateness.str.split(":").str[0].astype(int)
-    minutes = lateness.str.split(":").str[1].astype(int)
-    seconds = lateness.str.split(":").str[2].astype(int)
-    return 3600 * hours + 60 * minutes + seconds
+def _empty_lateness_like(table):
+    """Given a dataframe, create another just like it with every entry a timedelta of 0."""
+    empty = table.copy()
+    empty.iloc[:, :] = 0
+    for column in empty.columns:
+        empty[column] = pd.to_timedelta(empty[column], unit='s')
+    return empty
+
+
+DEFAULT_OPTS = {
+    "lateness_fudge": 5 * 60
+}
 
 
 class Gradebook:
@@ -181,11 +187,12 @@ class Gradebook:
 
     """
 
-    def __init__(self, points, maximums, late=None, dropped=None):
+    def __init__(self, points, maximums, lateness=None, dropped=None, opts=None):
         self.points = points
         self.maximums = maximums
-        self.late = late if late is not None else _empty_mask_like(points)
+        self.lateness = lateness if lateness is not None else _empty_lateness_like(points)
         self.dropped = dropped if dropped is not None else _empty_mask_like(points)
+        self.opts = opts if opts is not None else DEFAULT_OPTS
 
     def __repr__(self):
         return (
@@ -193,6 +200,11 @@ class Gradebook:
             f"{len(self.assignments)} assignments "
             f"and {len(self.pids)} students>"
         )
+
+    @property
+    def late(self):
+        fudge = self.opts['lateness_fudge']
+        return self.lateness > pd.Timedelta(fudge, unit='s')
 
     @classmethod
     def combine(cls, gradebooks, keep_pids=None):
@@ -255,10 +267,10 @@ class Gradebook:
 
         points = concat_attr("points")
         maximums = concat_attr("maximums", axis=0)
-        late = concat_attr("late")
+        lateness = concat_attr("lateness")
         dropped = concat_attr("dropped")
 
-        return cls(points, maximums, late, dropped)
+        return cls(points, maximums, lateness, dropped)
 
     @property
     def assignments(self):
@@ -307,9 +319,9 @@ class Gradebook:
             raise KeyError(f"These PIDs were not in the gradebook: {extras}.")
 
         r_points = self.points.loc[pids].copy()
-        r_late = self.late.loc[pids].copy()
+        r_lateness = self.lateness.loc[pids].copy()
         r_dropped = self.dropped.loc[pids].copy()
-        return self.__class__(r_points, self.maximums, r_late, r_dropped)
+        return self.__class__(r_points, self.maximums, r_lateness, r_dropped)
 
     def keep_assignments(self, assignments):
         """Restrict the gradebook to only the supplied assignments.
@@ -337,9 +349,9 @@ class Gradebook:
 
         r_points = self.points.loc[:, assignments].copy()
         r_maximums = self.maximums[assignments].copy()
-        r_late = self.late.loc[:, assignments].copy()
+        r_lateness = self.lateness.loc[:, assignments].copy()
         r_dropped = self.dropped.loc[:, assignments].copy()
-        return self.__class__(r_points, r_maximums, r_late, r_dropped)
+        return self.__class__(r_points, r_maximums, r_lateness, r_dropped)
 
     def remove_assignments(self, assignments):
         """Remove the assignments from the gradebook.
@@ -562,12 +574,12 @@ class Gradebook:
 
         return self._replace(dropped=new_dropped)
 
-    def _replace(self, points=None, maximums=None, late=None, dropped=None):
+    def _replace(self, points=None, maximums=None, lateness=None, dropped=None):
         new_points = points if points is not None else self.points.copy()
         new_maximums = maximums if maximums is not None else self.maximums.copy()
-        new_late = late if late is not None else self.late.copy()
+        new_lateness = lateness if lateness is not None else self.lateness.copy()
         new_dropped = dropped if dropped is not None else self.dropped.copy()
-        return Gradebook(new_points, new_maximums, new_late, new_dropped)
+        return Gradebook(new_points, new_maximums, new_lateness, new_dropped)
 
     def copy(self):
         return self._replace()
@@ -663,17 +675,17 @@ class Gradebook:
 
         assignment_points = self.points[parts].sum(axis=1)
         assignment_max = self.maximums[parts].sum()
-        assignment_late = self.late[parts].any(axis=1)
+        assignment_lateness = self.lateness[parts].max(axis=1)
 
         new_points = self.points.copy().drop(columns=parts)
         new_max = self.maximums.copy().drop(parts)
-        new_late = self.late.copy().drop(columns=parts)
+        new_lateness = self.lateness.copy().drop(columns=parts)
 
         new_points[new_name] = assignment_points
         new_max[new_name] = assignment_max
-        new_late[new_name] = assignment_late
+        new_lateness[new_name] = assignment_lateness
 
-        return Gradebook(new_points, new_max, late=new_late)
+        return Gradebook(new_points, new_max, lateness=new_lateness)
 
     def unify_assignments(self, dct_or_callable):
         """Unifies the assignment parts into one single assignment with the new name.
@@ -745,7 +757,7 @@ class Gradebook:
             result = result._unify_assignment(key, value)
         return result
 
-    def add_assignment(self, name, points, maximums, late=None, dropped=None):
+    def add_assignment(self, name, points, maximums, lateness=None, dropped=None):
         """Adds a single assignment to the gradebook.
 
         Usually Gradebook do not need to have individual assignments added to them.
@@ -782,8 +794,8 @@ class Gradebook:
         if name in self.assignments:
             raise ValueError(f'An assignment with the name "{name}" already exists.')
 
-        if late is None:
-            late = pd.Series(False, index=self.pids)
+        if lateness is None:
+            lateness = pd.to_timedelta(pd.Series(0, index=self.pids), unit='s')
 
         if dropped is None:
             dropped = pd.Series(False, index=self.pids)
@@ -799,12 +811,12 @@ class Gradebook:
                 raise ValueError(f'"{where}" is missing PIDs: {ours - theirs}')
 
         _match_pids(points.index, "points")
-        _match_pids(late.index, "late")
+        _match_pids(lateness.index, "late")
         _match_pids(dropped.index, "dropped")
 
         result.points[name] = points
         result.maximums[name] = maximums
-        result.late[name] = late
+        result.lateness[name] = lateness
         result.dropped[name] = dropped
 
         return result

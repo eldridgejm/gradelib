@@ -20,7 +20,7 @@ CANVAS_EXAMPLE = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.Gradebook(
     points=CANVAS_EXAMPLE.points.drop(columns="lab 01"),
     maximums=CANVAS_EXAMPLE.maximums.drop(index="lab 01"),
-    late=CANVAS_EXAMPLE.late.drop(columns="lab 01"),
+    lateness=CANVAS_EXAMPLE.lateness.drop(columns="lab 01"),
     dropped=CANVAS_EXAMPLE.dropped.drop(columns="lab 01"),
 )
 
@@ -29,11 +29,11 @@ ROSTER = gradelib.io.ucsd.read_egrades_roster(EXAMPLES_DIRECTORY / "egrades.csv"
 
 
 def assert_gradebook_is_sound(gradebook):
-    assert gradebook.points.shape == gradebook.dropped.shape == gradebook.late.shape
+    assert gradebook.points.shape == gradebook.dropped.shape == gradebook.lateness.shape
     assert (gradebook.points.columns == gradebook.dropped.columns).all()
-    assert (gradebook.points.columns == gradebook.late.columns).all()
+    assert (gradebook.points.columns == gradebook.lateness.columns).all()
     assert (gradebook.points.index == gradebook.dropped.index).all()
-    assert (gradebook.points.index == gradebook.late.index).all()
+    assert (gradebook.points.index == gradebook.lateness.index).all()
     assert (gradebook.points.columns == gradebook.maximums.index).all()
 
 
@@ -180,159 +180,6 @@ def test_number_of_lates_with_no_assignment_list_uses_all_assignments():
     assert list(actual) == [1, 5, 2, 2]
 
 
-# forgive_lates()
-# -----------------------------------------------------------------------------
-
-
-def test_forgive_lates():
-    # when
-    labs = GRADESCOPE_EXAMPLE.assignments.starting_with("lab")
-    actual = GRADESCOPE_EXAMPLE.forgive_lates(n=3, within=labs)
-
-    # then
-    assert list(actual.number_of_lates(within=labs)) == [0, 1, 0, 0]
-    assert_gradebook_is_sound(actual)
-
-
-def test_forgive_lates_with_empty_assignment_list_raises():
-    # when
-    with pytest.raises(ValueError):
-        actual = GRADESCOPE_EXAMPLE.forgive_lates(n=3, within=[])
-
-
-def test_forgive_lates_forgives_the_first_n_lates():
-    # by "first", we mean in the order specified by the `within` argument
-    # student A10000000 had late lab 01, 02, 03, and 07
-
-    assignments = ["lab 02", "lab 07", "lab 01", "lab 03"]
-
-    # when
-    actual = GRADESCOPE_EXAMPLE.forgive_lates(n=2, within=assignments)
-
-    # then
-    assert not actual.late.loc["A10000000", "lab 02"]
-    assert not actual.late.loc["A10000000", "lab 07"]
-    assert actual.late.loc["A10000000", "lab 01"]
-    assert actual.late.loc["A10000000", "lab 03"]
-
-
-def test_forgive_lates_does_not_forgive_dropped():
-    # given
-    labs = GRADESCOPE_EXAMPLE.assignments.starting_with("lab")
-    dropped = GRADESCOPE_EXAMPLE.dropped.copy()
-    dropped.iloc[:, :] = True
-    example = gradelib.Gradebook(
-        points=GRADESCOPE_EXAMPLE.points,
-        maximums=GRADESCOPE_EXAMPLE.maximums,
-        late=GRADESCOPE_EXAMPLE.late,
-        dropped=dropped,
-    )
-
-    # when
-    actual = example.forgive_lates(n=3, within=labs)
-
-    # then
-    assert list(actual.number_of_lates(within=labs)) == [1, 4, 2, 2]
-    assert_gradebook_is_sound(actual)
-
-
-# drop_lowest()
-# -----------------------------------------------------------------------------
-
-
-def test_drop_lowest_on_simple_example_1():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with("hw")
-
-    # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
-    # for A1 and to drop the 100 point homework for A2
-
-    # when
-    actual = gradebook.drop_lowest(1, within=homeworks)
-
-    # then
-    assert actual.dropped.iloc[0, 1]
-    assert actual.dropped.iloc[1, 2]
-    assert list(actual.dropped.sum(axis=1)) == [1, 1]
-    assert_gradebook_is_sound(actual)
-
-
-def test_drop_lowest_on_simple_example_2():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with("hw")
-
-    # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
-    # for A1 and to drop the 100 point homework for A2
-
-    # when
-    actual = gradebook.drop_lowest(2, within=homeworks)
-
-    # then
-    assert not actual.dropped.iloc[0, 2]
-    assert not actual.dropped.iloc[1, 0]
-    assert list(actual.dropped.sum(axis=1)) == [2, 2]
-    assert_gradebook_is_sound(actual)
-
-
-def test_drop_lowest_counts_lates_as_zeros():
-    # given
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[10, 5], index=columns, name="A1")
-    p2 = pd.Series(data=[10, 10], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([10, 10], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    gradebook.late.iloc[0, 0] = True
-
-    # since A1's perfect homework is late, it should count as zero and be
-    # dropped
-
-    # when
-    actual = gradebook.drop_lowest(1)
-
-    # then
-    assert actual.dropped.iloc[0, 0]
-    assert list(actual.dropped.sum(axis=1)) == [1, 1]
-    assert_gradebook_is_sound(actual)
-
-
-def test_drop_lowest_ignores_assignments_alread_dropped():
-    # given
-    columns = ["hw01", "hw02", "hw03", "hw04"]
-    p1 = pd.Series(data=[9, 0, 7, 0], index=columns, name="A1")
-    p2 = pd.Series(data=[10, 10, 10, 10], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([10, 10, 10, 10], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    gradebook.dropped.loc["A1", "hw02"] = True
-    gradebook.dropped.loc["A1", "hw04"] = True
-
-    # since A1's perfect homeworks are already dropped, we should drop a third
-    # homework, too: this will be HW03
-
-    # when
-    actual = gradebook.drop_lowest(1)
-
-    # then
-    assert actual.dropped.loc["A1", "hw04"]
-    assert actual.dropped.loc["A1", "hw02"]
-    assert actual.dropped.loc["A1", "hw03"]
-    assert list(actual.dropped.sum(axis=1)) == [3, 1]
-    assert_gradebook_is_sound(actual)
-
-
 # give_equal_weights()
 # -----------------------------------------------------------------------------
 
@@ -380,26 +227,6 @@ def test_score_on_simple_example():
     assert np.allclose(actual.values, [121 / 152, 24 / 152], atol=1e-6)
 
 
-def test_score_counts_lates_as_zero():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    gradebook.late.loc["A1", "hw01"] = True
-    gradebook.late.loc["A1", "hw03"] = True
-    gradebook.late.loc["A2", "hw03"] = True
-    homeworks = gradebook.assignments.starting_with("hw")
-
-    # when
-    actual = gradebook.score(homeworks)
-
-    # then
-    assert np.allclose(actual.values, [30 / 152, 9 / 152], atol=1e-6)
-
-
 def test_score_ignores_dropped_assignments():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -439,27 +266,6 @@ def test_total_on_simple_example():
 
     # then
     assert np.allclose(earned.values, [121, 24], atol=1e-6)
-    assert np.allclose(available.values, [152, 152], atol=1e-6)
-
-
-def test_total_counts_lates_as_zero():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    gradebook.late.loc["A1", "hw01"] = True
-    gradebook.late.loc["A1", "hw03"] = True
-    gradebook.late.loc["A2", "hw03"] = True
-    homeworks = gradebook.assignments.starting_with("hw")
-
-    # when
-    earned, available = gradebook.total(homeworks)
-
-    # then
-    assert np.allclose(earned.values, [30, 9], atol=1e-6)
     assert np.allclose(available.values, [152, 152], atol=1e-6)
 
 
@@ -581,7 +387,7 @@ def test_unify_assignments_with_callable():
     assert result.points.shape[1] == 2
 
 
-def test_unify_considers_new_assignment_late_if_any_part_late():
+def test_unify_uses_max_lateness_for_assignment_pieces():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -590,14 +396,15 @@ def test_unify_considers_new_assignment_late_if_any_part_late():
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
 
-    gradebook.late.loc["A1", "hw01"] = True
+    gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(days=3)
+    gradebook.lateness.loc["A1", "hw01 - programming"] = pd.Timedelta(days=5)
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
     # when
     result = gradebook.unify_assignments({"hw01": HOMEWORK_01_PARTS})
 
     # then
-    assert result.late.loc["A1", "hw01"] == True
+    assert result.lateness.loc["A1", "hw01"] == pd.Timedelta(days=5)
 
 
 def test_unify_raises_if_any_part_is_dropped():
@@ -631,12 +438,12 @@ def test_add_assignment():
 
     assignment_points = pd.Series([10, 20], index=["A1", "A2"])
     assignment_max = 20
-    assignment_late = pd.Series([True, False], index=["A1", "A2"])
+    assignment_late = pd.Series([pd.Timedelta(days=2), pd.Timedelta(days=0)], index=["A1", "A2"])
     assignment_dropped = pd.Series([False, True], index=["A1", "A2"])
 
     # when
     result = gradebook.add_assignment(
-        "new", assignment_points, 20, late=assignment_late, dropped=assignment_dropped
+        "new", assignment_points, 20, lateness=assignment_late, dropped=assignment_dropped
     )
 
     # then
@@ -722,3 +529,28 @@ def test_add_assignment_raises_if_duplicate_name():
         gradebook.add_assignment(
             "hw01", assignment_points, 20,
         )
+
+
+def test_lateness_fudge_defaults_to_5_minutes():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[1, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7], index=columns, name="A2")
+    l1 = pd.Series(
+        data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=0)], 
+        index=columns,
+        name='A1'
+        )
+    l2 = pd.Series(
+        data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=60 * 5 + 1)],
+        index=columns,
+        name='A2'
+        )
+
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([2, 50], index=columns)
+    lateness = pd.DataFrame([l1, l2])
+
+    gradebook = gradelib.Gradebook(points, maximums, lateness)
+
+    assert gradebook.late.loc['A1', 'hw01'] == False
+    assert gradebook.late.loc['A2', 'hw02'] == True

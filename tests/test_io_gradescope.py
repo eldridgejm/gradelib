@@ -1,5 +1,7 @@
 import pathlib
 
+import pandas as pd
+
 import gradelib.io.gradescope
 
 EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent / "examples"
@@ -70,14 +72,9 @@ def test_read_gradescope_without_canvas_link_produces_correct_assignments():
     assert len(gb.points.columns) == 2
 
 
-def test_read_gradescope_lateness_fudge_defaults_to_5_minutes():
-    # in the example, student A10000000 submitted Lab 01 1m 05 s late.
-    gradebook = gradelib.io.gradescope.read(
+def test_read_gradescope_keeps_lateness_as_timedelta():
+    gb = gradelib.io.gradescope.read(
         EXAMPLES_DIRECTORY / "gradescope-with-5m-late.csv"
     )
-    assert gradebook.late.loc["A10000000"].sum() == 4
-
-    gradebook = gradelib.io.gradescope.read(
-        EXAMPLES_DIRECTORY / "gradescope-with-5m-late.csv", lateness_fudge=5*60 - 1
-    )
-    assert gradebook.late.loc["A10000000"].sum() == 5
+    # 22 hours, 37 minutes, 22 seconds
+    assert gb.lateness.iloc[0]['lab 07'] == pd.Timedelta(hours=22, minutes=37, seconds=22)

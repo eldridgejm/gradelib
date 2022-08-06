@@ -1,6 +1,9 @@
 import re
 
 import pandas as pd
+import numpy as np
+
+from gradelib import Gradebook, Student
 
 
 def _remove_assignment_id(s):
@@ -48,6 +51,21 @@ def read(
     """
     table = pd.read_csv(path).set_index("SIS User ID")
 
+    if standardize_pids:
+        table.index = table.index.str.upper()
+
+    # read the names
+    student_names = table['Student']
+
+    def _student(pid, name):
+        # some of the pids are nan; we will preserve these
+        if pd.isna(pid):
+            return np.nan
+        else:
+            return Student(pid, name)
+
+    table.index = [_student(pid, name) for (pid, name) in zip(table.index, student_names)]
+
     # the structure of the table can change quite a bit from quarter to quarter
     # the best approach to extracting the assignments might be to match them using
     # a regex. an assignment is of the form `assignment name (xxxxxx)`, where
@@ -81,9 +99,6 @@ def read(
     if standardize_assignments:
         points.columns = points.columns.str.lower()
 
-    if standardize_pids:
-        points.index = points.index.str.upper()
-
     if remove_assignment_ids:
         points.columns = [_remove_assignment_id(c) for c in points.columns]
 
@@ -91,7 +106,7 @@ def read(
     # changes to max_points
     max_points.index = points.columns
 
-    return points, max_points
+    return Gradebook(points, max_points)
 
 
 def write_canvas_grades(existing, output, grades):

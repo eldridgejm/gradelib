@@ -5,9 +5,29 @@ import itertools
 
 import pandas as pd
 
-from .io import gradescope as io_gradescope
-from .io import canvas as io_canvas
 
+class Student:
+
+    def __init__(self, pid, name=None):
+        self.pid = pid
+        self.name = name
+
+    def __repr__(self):
+        if self.name is not None:
+            s = self.name
+        else:
+            s = self.pid
+
+        return f'<{s}>'
+
+    def __hash__(self):
+        return hash(self.pid)
+
+    def __eq__(self, other):
+        if isinstance(other, Student):
+            return other.pid == self.pid
+        else:
+            return self.pid == other
 
 class Assignments(collections.abc.Sequence):
     """A sequence of assignments.
@@ -173,88 +193,6 @@ class Gradebook:
             f"{len(self.assignments)} assignments "
             f"and {len(self.pids)} students>"
         )
-
-    @classmethod
-    def from_gradescope(
-        cls,
-        path,
-        *,
-        standardize_pids=True,
-        standardize_assignments=True,
-        lateness_fudge=5 * 60,
-    ):
-        """Read a gradescope CSV into a gradebook.
-
-        Parameters
-        ----------
-        path : str or pathlib.Path
-            Path to the CSV file that will be read.
-        standardize_pids : bool
-            Whether to standardize PIDs so that they are all uppercased. This can be
-            useful when students who manually join gradescope enter their own PID
-            without uppercasing it. Default: True.
-        standardize_assignments : bool
-            Whether to standardize assignment names so that they are all lowercased.
-            Default: True.
-        lateness_fudge : int
-            An integer number of seconds. If the lateness of an assignment (in seconds)
-            is less than or equal to this number, it will be counted as on-time. The
-            default is 300 seconds (5 minutes). See note.
-
-        Note
-        ----
-        The default `lateness_fudge` is 300 seconds. This default is
-        recommended because Gradescope appears to exhibit some latency around
-        deadlines. There have been cases where the CSV exported by gradescope
-        will show a time of submission that is up to a minute later than what
-        is displayed on the web interface. As a result, students see that their
-        submission is on-time, but the exported CSV shows it as late. The fudge
-        factor accounts for this.
-
-        """
-        points, maximums, lateness = io_gradescope.read(
-            path,
-            standardize_pids=standardize_pids,
-            standardize_assignments=standardize_assignments,
-        )
-        # lates are given as strings expressing lateness... booleanize them
-        late_seconds = lateness.apply(_lateness_in_seconds)
-        late = late_seconds > lateness_fudge
-        return cls(points, maximums, late)
-
-    @classmethod
-    def from_canvas(
-        cls,
-        path,
-        *,
-        standardize_pids=True,
-        standardize_assignments=True,
-        remove_assignment_ids=True,
-    ):
-        """Read a CSV exported from Canvas.
-
-        Parameters
-        ----------
-        path : str or pathlib.Path
-            Path to the CSV file that will be read.
-        standardize_pids : bool
-            Whether to standardize PIDs so that they are all uppercased. Default:
-            True.
-        standardize_assignments : bool
-            Whether to standardize assignment names so that they are all lowercased.
-            Default: True
-        remove_assignment_ids : bool
-            Whether to remove the unique ID code that Canvas appends to each
-            assignment name.  Default: True.
-
-        """
-        points, maximums = io_canvas.read(
-            path,
-            standardize_pids=standardize_pids,
-            standardize_assignments=standardize_assignments,
-            remove_assignment_ids=remove_assignment_ids,
-        )
-        return cls(points, maximums)
 
     @classmethod
     def combine(cls, gradebooks, keep_pids=None):

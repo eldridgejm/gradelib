@@ -7,13 +7,14 @@ import numpy as np
 import gradelib
 import gradelib.io.ucsd
 import gradelib.io.gradescope
+import gradelib.io.canvas
 
 
 EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent / "examples"
-GRADESCOPE_EXAMPLE = gradelib.Gradebook.from_gradescope(
+GRADESCOPE_EXAMPLE = gradelib.io.gradescope.read(
     EXAMPLES_DIRECTORY / "gradescope.csv"
 )
-CANVAS_EXAMPLE = gradelib.Gradebook.from_canvas(EXAMPLES_DIRECTORY / "canvas.csv")
+CANVAS_EXAMPLE = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 
 # the canvas example has Lab 01, which is also in Gradescope. Let's remove it
 CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.Gradebook(
@@ -35,22 +36,6 @@ def assert_gradebook_is_sound(gradebook):
     assert (gradebook.points.index == gradebook.late.index).all()
     assert (gradebook.points.columns == gradebook.maximums.index).all()
 
-
-# from_gradescope()
-# -----------------------------------------------------------------------------
-
-
-def test_lateness_fudge_defaults_to_5_minutes():
-    # in the example, student A10000000 submitted Lab 01 1m 05 s late.
-    gradebook = gradelib.Gradebook.from_gradescope(
-        EXAMPLES_DIRECTORY / "gradescope-with-5m-late.csv"
-    )
-    assert gradebook.late.loc["A10000000"].sum() == 4
-
-    gradebook = gradelib.Gradebook.from_gradescope(
-        EXAMPLES_DIRECTORY / "gradescope-with-5m-late.csv", lateness_fudge=5*60 - 1
-    )
-    assert gradebook.late.loc["A10000000"].sum() == 5
 
 
 # assignments property

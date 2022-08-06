@@ -1,7 +1,7 @@
 {
   description = "Python package for streamlining end-of-quarter grading.";
 
-  inputs.nixpkgs.url = github:NixOS/nixpkgs/20.03;
+  inputs.nixpkgs.url = github:NixOS/nixpkgs/nixpkgs-unstable;
 
   outputs = { self, nixpkgs }: 
     let
@@ -10,12 +10,12 @@
     in
       {
         gradelib = forAllSystems (system:
-          with import nixpkgs { system = "${system}"; };
-            python3Packages.buildPythonPackage rec {
+          with import nixpkgs { system = "${system}"; allowBroken = true; };
+            python310Packages.buildPythonPackage rec {
               name = "gradelib";
               src = ./.;
-              propagatedBuildInputs = with python3Packages; [ pandas matplotlib numpy ];
-              nativeBuildInputs = with python3Packages; [ black pytest ipython sphinx sphinx_rtd_theme ];
+              propagatedBuildInputs = with python310Packages; [ pandas matplotlib numpy ];
+              nativeBuildInputs = with python310Packages; [ pytest ipython sphinx sphinx_rtd_theme ];
             }
           );
 

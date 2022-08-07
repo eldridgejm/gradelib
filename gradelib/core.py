@@ -560,9 +560,9 @@ class Gradebook:
         have a written part and a programming part. This method makes it easy
         to combine these parts into a single assignment.
 
-        The new point total and maximum possible points are calculated by
-        addition. The new assignment is considered late if either of the parts
-        are marked as late.
+        The new marked points and possible points are calculated by addition.
+        The lateness of the new assignment is the *maximum* lateness of any of
+        its parts.
 
         It is unclear what the result should be if any of the assignments to be
         unified has been dropped, but other parts have not. For this reason,
@@ -625,6 +625,41 @@ class Gradebook:
             result = result._combine_assignment(key, value)
         return result
 
+    def restrict_to_pids(self, to):
+        """Restrict the gradebook to only the supplied PIDS.
+
+        Parameters
+        ----------
+        to : Collection[str]
+            A collection of PIDs. For instance, from the final course roster.
+
+        Returns
+        -------
+        Gradebook
+            A Gradebook with only these PIDs.
+
+        Raises
+        ------
+        KeyError
+            If a PID was specified that is not in the gradebook.
+
+        """
+        pids = list(to)
+        extras = set(pids) - set(self.pids)
+        if extras:
+            raise KeyError(f"These PIDs were not in the gradebook: {extras}.")
+
+        r_points = self.points_marked.loc[pids].copy()
+        r_lateness = self.lateness.loc[pids].copy()
+        r_dropped = self.dropped.loc[pids].copy()
+        # TODO this is not copying over all attributes
+        return self.__class__(r_points, self.points_possible, r_lateness, r_dropped)
+
+    
+
+    
+
+
     # methods: summaries
     # ------------------
 
@@ -659,7 +694,7 @@ class Gradebook:
         return self.late.loc[:, within].sum(axis=1)
 
     @classmethod
-    def combine(cls, gradebooks, keep_pids=None):
+    def combine(cls, gradebooks, restrict_to_pids=None):
         """Create a gradebook by safely combining several existing gradebooks.
 
         It is crucial that the combined gradebooks have exactly the same
@@ -673,10 +708,10 @@ class Gradebook:
         gradebooks : Collection[Gradebook]
             The gradebooks to combine. Must have matching indices and unique
             column names.
-        keep_pids : Collection[str] or None
+        restrict_to_pids : Collection[str] or None
             If provided, each input gradebook will be restricted to the PIDs
             given before attempting to combine them. This is a convenience
-            option, and it simply calls :meth:`Gradebook.keep_pids` on
+            option, and it simply calls :meth:`Gradebook.restrict_to_pids` on
             each of the inputs.  Default: None
 
         Returns
@@ -693,8 +728,8 @@ class Gradebook:
         """
         gradebooks = list(gradebooks)
 
-        if keep_pids is not None:
-            gradebooks = [g.keep_pids(keep_pids) for g in gradebooks]
+        if restrict_to_pids is not None:
+            gradebooks = [g.restrict_to_pids(restrict_to_pids) for g in gradebooks]
 
         # check that all gradebooks have the same PIDs
         reference_pids = gradebooks[0].pids
@@ -723,40 +758,6 @@ class Gradebook:
         dropped = concat_attr("dropped")
 
         return cls(points, maximums, lateness, dropped)
-
-    def keep_pids(self, to):
-        """Restrict the gradebook to only the supplied PIDS.
-
-        Parameters
-        ----------
-        to : Collection[str]
-            A collection of PIDs. For instance, from the final course roster.
-
-        Returns
-        -------
-        Gradebook
-            A Gradebook with only these PIDs.
-
-        Raises
-        ------
-        KeyError
-            If a PID was specified that is not in the gradebook.
-
-        """
-        pids = list(to)
-        extras = set(pids) - set(self.pids)
-        if extras:
-            raise KeyError(f"These PIDs were not in the gradebook: {extras}.")
-
-        r_points = self.points_marked.loc[pids].copy()
-        r_lateness = self.lateness.loc[pids].copy()
-        r_dropped = self.dropped.loc[pids].copy()
-        # TODO this is not copying over all attributes
-        return self.__class__(r_points, self.points_possible, r_lateness, r_dropped)
-
-    
-
-    
 
     def _replace(self, **kwargs):
         kwarg_names = [

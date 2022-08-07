@@ -42,7 +42,7 @@ algorithm which finds "robust" thresholds for every letter grade.
     # checking that all enrolled students are accounted for
     gradebook = gradelib.Gradebook.combine(
         [gradescope_grades, canvas_grades],
-        keep_pids=roster.index
+        restrict_to_pids=roster.index
     )
 
     # define assignment groups
@@ -111,7 +111,7 @@ API
     Gradebook.number_of_lates
     Gradebook.restrict_to_assignments
     Gradebook.remove_assignments
-    Gradebook.keep_pids
+    Gradebook.restrict_to_pids
     Gradebook.score
     Gradebook.total
 

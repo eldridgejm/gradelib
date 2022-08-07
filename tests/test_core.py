@@ -50,26 +50,26 @@ def test_assignments_are_produced_in_order():
     )
 
 
-# keep_pids()
+# restrict_to_pids()
 # -----------------------------------------------------------------------------
 
 
-def test_keep_pids():
+def test_restrict_to_pids():
     # when
-    actual = GRADESCOPE_EXAMPLE.keep_pids(ROSTER.index)
+    actual = GRADESCOPE_EXAMPLE.restrict_to_pids(ROSTER.index)
 
     # then
     assert len(actual.pids) == 3
     assert_gradebook_is_sound(actual)
 
 
-def test_keep_pids_raises_if_pid_does_not_exist():
+def test_restrict_to_pids_raises_if_pid_does_not_exist():
     # given
     pids = ["A12345678", "ADNEDNE00"]
 
     # when
     with pytest.raises(KeyError):
-        actual = GRADESCOPE_EXAMPLE.keep_pids(pids)
+        actual = GRADESCOPE_EXAMPLE.restrict_to_pids(pids)
 
 
 # restrict_to_assignments() and remove_assignments()
@@ -128,10 +128,10 @@ def test_remove_assignments_raises_if_assignment_does_not_exist():
 # -----------------------------------------------------------------------------
 
 
-def test_combine_with_keep_pids():
+def test_combine_with_restrict_to_pids():
     # when
     combined = gradelib.Gradebook.combine(
-        [GRADESCOPE_EXAMPLE, CANVAS_WITHOUT_LAB_EXAMPLE], keep_pids=ROSTER.index
+        [GRADESCOPE_EXAMPLE, CANVAS_WITHOUT_LAB_EXAMPLE], restrict_to_pids=ROSTER.index
     )
 
     # then

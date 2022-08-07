@@ -26,7 +26,7 @@ def test_read_gradescope_same_shapes_and_columns_in_all_tables():
     # then
     assert (gb.points_marked.columns == gb.late.columns).all()
     assert gb.points_marked.shape == gb.late.shape
-    assert (gb.points_marked.columns == gb.points_available.index).all()
+    assert (gb.points_marked.columns == gb.points_possible.index).all()
 
 
 def test_read_gradescope_standardizes_pids_by_default():

@@ -19,7 +19,7 @@ def test_read_canvas_same_shapes_and_columns_in_all_tables():
     gb = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 
     # then
-    assert (gb.points_marked.columns == gb.points_available.index).all()
+    assert (gb.points_marked.columns == gb.points_possible.index).all()
 
 
 def test_read_canvas_standardizes_pids_by_default():

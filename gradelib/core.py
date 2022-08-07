@@ -211,7 +211,7 @@ class Gradebook:
         Each entry should be the number of points earned by the student on the
         given assignment. The index of the dataframe should consist of student
         PIDs.
-    points_available : pandas.Series
+    points_possible : pandas.Series
         A series containing the maximum number of points possible for each
         assignment. The index of the series should match the columns of the
         `points` dataframe.
@@ -235,14 +235,14 @@ class Gradebook:
     def __init__(
         self,
         points_marked,
-        points_available,
+        points_possible,
         lateness=None,
         dropped=None,
         deductions=None,
         opts=None,
     ):
         self.points_marked = points_marked
-        self.points_available = points_available
+        self.points_possible = points_possible
         self.lateness = (
             lateness if lateness is not None else _empty_lateness_like(points_marked)
         )
@@ -324,7 +324,7 @@ class Gradebook:
             return pd.concat(all_tables, axis=axis)
 
         points = concat_attr("points_marked")
-        maximums = concat_attr("points_available", axis=0)
+        maximums = concat_attr("points_possible", axis=0)
         lateness = concat_attr("lateness")
         dropped = concat_attr("dropped")
 
@@ -400,7 +400,7 @@ class Gradebook:
         r_points = self.points_marked.loc[pids].copy()
         r_lateness = self.lateness.loc[pids].copy()
         r_dropped = self.dropped.loc[pids].copy()
-        return self.__class__(r_points, self.points_available, r_lateness, r_dropped)
+        return self.__class__(r_points, self.points_possible, r_lateness, r_dropped)
 
     def keep_assignments(self, assignments):
         """Restrict the gradebook to only the supplied assignments.
@@ -427,7 +427,7 @@ class Gradebook:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
 
         r_points = self.points_marked.loc[:, assignments].copy()
-        r_maximums = self.points_available[assignments].copy()
+        r_maximums = self.points_possible[assignments].copy()
         r_lateness = self.lateness.loc[:, assignments].copy()
         r_dropped = self.dropped.loc[:, assignments].copy()
         return self.__class__(r_points, r_maximums, r_lateness, r_dropped)
@@ -491,7 +491,7 @@ class Gradebook:
     def _replace(self, **kwargs):
         kwarg_names = [
             "points_marked",
-            "points_available",
+            "points_possible",
             "lateness",
             "dropped",
             "deductions",
@@ -538,15 +538,15 @@ class Gradebook:
 
         within = list(within)
 
-        scores = self.points_marked[within] / self.points_available[within]
+        scores = self.points_marked[within] / self.points_possible[within]
 
-        new_points_available = self.points_available.copy()
-        new_points_available[within] = 1
+        new_points_possible = self.points_possible.copy()
+        new_points_possible[within] = 1
         new_points_marked = self.points_marked.copy()
         new_points_marked.loc[:, within] = scores
 
         return self._replace(
-            points_marked=new_points_marked, points_available=new_points_available
+            points_marked=new_points_marked, points_possible=new_points_possible
         )
 
     def total(self, within):
@@ -578,11 +578,11 @@ class Gradebook:
         points_with_lates_as_zeros = points_with_lates_as_zeros[within]
 
         # create a full array of points available
-        points_available = self.points_marked.copy()[within]
-        points_available.iloc[:, :] = self.points_available[within].values
+        points_possible = self.points_marked.copy()[within]
+        points_possible.iloc[:, :] = self.points_possible[within].values
 
         effective_points = points_with_lates_as_zeros[~self.dropped].sum(axis=1)
-        effective_possible = points_available[~self.dropped].sum(axis=1)
+        effective_possible = points_possible[~self.dropped].sum(axis=1)
 
         return effective_points, effective_possible
 
@@ -613,11 +613,11 @@ class Gradebook:
             raise ValueError("Cannot unify assignments with drops.")
 
         assignment_points = self.points_marked[parts].sum(axis=1)
-        assignment_max = self.points_available[parts].sum()
+        assignment_max = self.points_possible[parts].sum()
         assignment_lateness = self.lateness[parts].max(axis=1)
 
         new_points = self.points_marked.copy().drop(columns=parts)
-        new_max = self.points_available.copy().drop(parts)
+        new_max = self.points_possible.copy().drop(parts)
         new_lateness = self.lateness.copy().drop(columns=parts)
 
         new_points[new_name] = assignment_points
@@ -757,7 +757,7 @@ class Gradebook:
         _match_pids(dropped.index, "dropped")
 
         result.points_marked[name] = points
-        result.points_available[name] = maximums
+        result.points_possible[name] = maximums
         result.lateness[name] = lateness
         result.dropped[name] = dropped
 

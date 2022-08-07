@@ -129,8 +129,8 @@ def drop_lowest(self, n, within=None):
 
     # a full table of maximum points available. this will allow us to have
     # different points available per person
-    points_available = self.points_marked.copy()[within]
-    points_available.iloc[:, :] = self.points_available[within].values
+    points_possible = self.points_marked.copy()[within]
+    points_possible.iloc[:, :] = self.points_possible[within].values
 
     # we will try each combination and compute the resulting score for each student
     scores = []
@@ -142,7 +142,7 @@ def drop_lowest(self, n, within=None):
         earned = points_with_lates_as_zeros.copy()
         earned[possibly_dropped_mask] = 0
 
-        out_of = points_available.copy()
+        out_of = points_possible.copy()
         out_of[possibly_dropped_mask] = 0
 
         score = earned.sum(axis=1) / out_of.sum(axis=1)

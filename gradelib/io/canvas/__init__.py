@@ -85,14 +85,14 @@ def read(
     # the maximum points are stored in a row with student name "Points Possible",
     # and SIS User ID == NaN. For some reason, though, "Points Possible" has a
     # bunch of whitespace at the front... thanks Canvas
-    points_available = table[
+    points_possible = table[
         pd.isna(table.index) & table["Student"].str.contains("Points Possible")
     ]
 
     # the result of the above was a dataframe. turn it into a series and get
     # rid of the student index; we don't need it
-    points_available = points_available.iloc[0].drop(index="Student").astype(float)
-    points_available.name = "Max Points"
+    points_possible = points_possible.iloc[0].drop(index="Student").astype(float)
+    points_possible.name = "Max Points"
 
     # clean up the table. get rid of the student column, and drop all rows with
     # NaN indices
@@ -108,9 +108,9 @@ def read(
 
     # we've possibly changed column names in points table; propagate these
     # changes to max_points
-    points_available.index = points_marked.columns
+    points_possible.index = points_marked.columns
 
-    return Gradebook(points_marked, points_available)
+    return Gradebook(points_marked, points_possible)
 
 
 def write_canvas_grades(existing, output, grades):

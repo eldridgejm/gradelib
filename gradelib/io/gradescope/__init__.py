@@ -105,13 +105,13 @@ def read(path, standardize_pids=True, standardize_assignments=True):
         points_marked.columns = [x.lower() for x in points_marked.columns]
 
     # the max_points are replicated on every row; we'll just use the first row
-    points_available = table.iloc[0, starting_index + 1 :: stride].astype(float)
-    points_available.index = points_marked.columns
-    points_available.name = "Max Points"
+    points_possible = table.iloc[0, starting_index + 1 :: stride].astype(float)
+    points_possible.index = points_marked.columns
+    points_possible.name = "Max Points"
 
     # the csv contains time since late deadline
     lateness = table.iloc[:, starting_index + 3 :: stride]
     lateness.columns = points_marked.columns
     lateness = lateness.apply(_lateness_in_seconds)  # convert strings to seconds
 
-    return Gradebook(points_marked, points_available, lateness)
+    return Gradebook(points_marked, points_possible, lateness)

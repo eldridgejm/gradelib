@@ -111,6 +111,23 @@ def test_restrict_to_assignments_raises_if_assignment_does_not_exist():
     with pytest.raises(KeyError):
         GRADESCOPE_EXAMPLE.restrict_to_assignments(assignments)
 
+def test_restrict_to_assignments_copies_all_attributes():
+    # when
+    original = GRADESCOPE_EXAMPLE.copy()
+    original.notes = {
+            "A100": {"drop": ["testing this"]}
+    }
+    original.scale = {"A": 100}
+    original.deductions = {
+            "A100": {"hw01": []}
+    }
+
+    actual = original.restrict_to_assignments(["homework 01", "homework 02"])
+
+    # then
+    assert actual.notes == original.notes
+    assert actual.scale == original.scale
+    assert actual.deductions == original.deductions
 
 def test_remove_assignments():
     # when

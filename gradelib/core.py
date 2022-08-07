@@ -541,6 +541,7 @@ class Gradebook:
 
         points_with_lates_as_zeros = self.points_marked.copy()
         points_with_lates_as_zeros[self.late.values] = 0
+        points_with_lates_as_zeros = points_with_lates_as_zeros[within]
 
         # create a full array of points available
         points_available = self.points_marked.copy()[within]

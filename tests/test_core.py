@@ -466,7 +466,7 @@ def test_add_assignment():
     result = gradebook.add_assignment(
         "new",
         assignment_points_marked,
-        20,
+        points_possible=20,
         lateness=assignment_late,
         dropped=assignment_dropped,
     )
@@ -475,6 +475,8 @@ def test_add_assignment():
     assert len(result.assignments) == 5
     assert result.points_marked.loc["A1", "new"] == 10
     assert result.points_possible.loc["new"] == 20
+    assert isinstance(result.lateness.index[0], gradelib.Student)
+    assert isinstance(result.dropped.index[0], gradelib.Student)
 
 
 def test_add_assignment_default_none_dropped_or_late():

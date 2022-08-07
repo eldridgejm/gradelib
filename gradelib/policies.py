@@ -58,10 +58,12 @@ def forgive_lates(self, n, within=None):
 
     return self._replace(late=new_late)
 
+
 def _points_with_lates_replaced_by_zeros(self):
     replaced = self.points_marked.copy()
     replaced[self.late.values] = 0
     return replaced
+
 
 def drop_lowest(self, n, within=None):
     """Drop the lowest n grades within a group of assignments.
@@ -162,5 +164,3 @@ def drop_lowest(self, n, within=None):
         new_dropped.loc[pid, tossed] = True
 
     return self._replace(dropped=new_dropped)
-
-

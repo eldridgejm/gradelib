@@ -5,10 +5,13 @@ import copy
 import dataclasses
 import typing
 
+from .scales import DEFAULT_SCALE
+
 import pandas as pd
 
 # Student
 # ======================================================================================
+
 
 class Student:
     """Represents a student.
@@ -49,8 +52,10 @@ class Student:
         else:
             return self.pid == other
 
+
 # Assignments
 # ======================================================================================
+
 
 class Assignments(collections.abc.Sequence):
     """A sequence of assignments.
@@ -161,6 +166,7 @@ class Assignments(collections.abc.Sequence):
 # Deductions
 # ======================================================================================
 
+
 class PointsDeduction:
     def __init__(self, points, note):
         self.points = points
@@ -175,6 +181,7 @@ class PercentageDeduction:
 
 # Gradebook
 # ======================================================================================
+
 
 def _empty_mask_like(table):
     """Given a dataframe, create another just like it with every entry False."""
@@ -204,9 +211,20 @@ class GradebookOptions:
 
 @dataclasses.dataclass
 class Group:
-    name : str
-    assignments : Assignments
-    normalize_weights : bool = False
+    name: str
+    assignments: Assignments
+    normalize_weights: bool = False
+
+
+def _cast_index(df):
+    """Ensure that the dataframe index contains Student objects."""
+    def _cast(x):
+        if isinstance(x, Student):
+            return x
+        else:
+            return Student(x)
+    df.index = [_cast(x) for x in df.index]
+    return df
 
 
 class Gradebook:
@@ -260,7 +278,7 @@ class Gradebook:
     -----
     Typically a Gradebook is not created manually, but is instead produced
     by reading grades exported from Gradescope or Canvas, using
-    :func:`read_gradescope_gradebook` or :func:`read_canvas_gradebook`.
+    :func:`gradelib.io.gradescope.read` or :func:`gradelib.io.canvas.read`.
 
     """
 
@@ -271,18 +289,24 @@ class Gradebook:
         lateness=None,
         dropped=None,
         deductions=None,
+        notes=None,
+        groups=None,
+        scale=None,
         opts=None,
     ):
-        self.points_marked = points_marked
-        self.points_possible = points_possible
+        self.points_marked = _cast_index(points_marked)
+        self.points_possible = _cast_index(points_possible)
         self.lateness = (
             lateness if lateness is not None else _empty_lateness_like(points_marked)
         )
         self.dropped = (
             dropped if dropped is not None else _empty_mask_like(points_marked)
         )
-        self.opts = opts if opts is not None else DEFAULT_OPTS
         self.deductions = {} if deductions is None else deductions
+        self.notes = {} if notes is None else notes
+        self.groups = groups
+        self.scale = DEFAULT_SCALE if scale is None else scale
+        self.opts = opts if opts is not None else DEFAULT_OPTS
 
     def __repr__(self):
         return (
@@ -291,10 +315,196 @@ class Gradebook:
             f"and {len(self.pids)} students>"
         )
 
+    # properties
+    # ----------
+
+    @property
+    def assignments(self):
+        """All assignments in the gradebook.
+
+        Returns
+        -------
+        Assignments
+
+        """
+        return Assignments(self.points_marked.columns)
+
+    @property
+    def pids(self):
+        """All student PIDs.
+
+        Returns
+        -------
+        set
+
+        """
+        return set(self.points_marked.index)
+
+    @property
+    def students(self):
+        """All students as Student objects.
+
+        Returned in the order they appear in the indices of the `points_marked`
+        attribute.
+
+        Returns
+        -------
+        List[Student]
+
+        """
+        return [s for s in self.points_marked.index]
+
     @property
     def late(self):
+        """A boolean dataframe telling which assignments were turned in late.
+
+        Will have the same index and columns as the `points_marked` attribute.
+
+        This is computed from the `.lateness` using the `.opts.lateness_fudge`
+        option. If the lateness is less than the lateness fudge, the assignment
+        is considered on-time; otherwise, it is considered late. This can be
+        useful to work around grade sources whose reported lateness is not
+        always reliable, such as Gradescope.
+
+        """
         fudge = self.opts["lateness_fudge"]
         return self.lateness > pd.Timedelta(fudge, unit="s")
+
+    @property
+    def points_after_deductions(self):
+        """A dataframe of points earned after taking deductions into account.
+
+        Will have the same index and columns as the `points_marked` attribute.
+
+        Deductions are applied in the order they appear in the `deductions` attribute.
+        A percentage deduction is calculated *after* applying earlier deductions. For
+        example, if 100 points are marked and two percentage deductions of 30% and 10%
+        are applied, the result is 100 points * 70% * 90% = 63 points.
+
+        This does not take drops into account.
+
+        """
+        points = self.points_marked.copy()
+
+        def _apply_deduction(pid, assignment, deduction):
+            p = points.loc[pid, assignment]
+
+            if isinstance(deduction, PointsDeduction):
+                d = deduction.points
+            else:
+                d = deduction.percentage * p
+
+            points.loc[pid, assignment] = max(p - d, 0)
+
+        for pid, assignments_dct in self.deductions.items():
+            for assignment, deductions in assignments_dct.items():
+                for deduction in deductions:
+                    _apply_deduction(pid, assignment, deduction)
+
+        return points
+
+    # methods: adding/removing assignments/students
+    # ---------------------------------------------
+
+    def add_assignment(
+        self, name, points_marked, points_possible, lateness=None, dropped=None
+    ):
+        """Adds a single assignment to the gradebook.
+
+        Usually Gradebook do not need to have individual assignments added to them.
+        Instead, Gradebooks are read from Canvas, Gradescope, etc. In some instances,
+        though, it can be useful to manually add an assignment to a Gradebook -- this
+        method makes it easy to do so.
+
+        Parameters
+        ----------
+        name : str
+            The name of the new assignment. Must be unique.
+        points_marked : Series[float]
+            A Series of points earned by each student.
+        points_possible : float
+            The maximum number of points possible on the assignment.
+        lateness : Series[pd.Timedelta]
+            How late each student turned in the assignment late. Default: all
+            zero seconds.
+        dropped : Series[bool]
+            Whether the assignment should be dropped for any given student.
+            Default: all False.
+
+        Returns
+        -------
+        Gradebook
+            A new Gradebook object with the new assignment in place.
+
+        Raises
+        ------
+        ValueError
+            If an assignment with the given name already exists, or if grades for a student
+            are missing / grades for an unknown student are provided.
+
+        """
+        if name in self.assignments:
+            raise ValueError(f'An assignment with the name "{name}" already exists.')
+
+        if lateness is None:
+            lateness = pd.to_timedelta(pd.Series(0, index=self.students), unit="s")
+
+        if dropped is None:
+            dropped = pd.Series(False, index=self.students)
+
+        result = self.copy()
+
+        def _match_pids(pids, where):
+            theirs = set(pids)
+            ours = set(self.pids)
+            if theirs - ours:
+                raise ValueError(f'Unknown pids {theirs - ours} provided in "{where}".')
+            if ours - theirs:
+                raise ValueError(f'"{where}" is missing PIDs: {ours - theirs}')
+
+        _match_pids(points_marked.index, "points")
+        _match_pids(lateness.index, "late")
+        _match_pids(dropped.index, "dropped")
+
+        result.points_marked[name] = points_marked
+        result.points_possible[name] = points_possible
+        result.lateness[name] = lateness
+        result.dropped[name] = dropped
+
+        return result
+
+    # methods: summaries
+    # ------------------
+
+    def number_of_lates(self, within=None):
+        """Return the number of late assignments for each student as a Series.
+
+        Parameters
+        ----------
+        within : Collection[str]
+            A collection of assignment names that will be used to restrict the
+            gradebook. If None, all assignments will be used. Default: None
+
+        Returns
+        -------
+        pd.Series
+            A series mapping PID to number of late assignments.
+
+        Raises
+        ------
+        ValueError
+            If `within` is empty.
+
+        """
+        if within is None:
+            within = self.assignments
+        else:
+            within = list(within)
+
+        if not within:
+            raise ValueError("Cannot pass an empty list of assignments.")
+
+        return self.late.loc[:, within].sum(axis=1)
 
     @classmethod
     def combine(cls, gradebooks, keep_pids=None):
@@ -361,49 +571,6 @@ class Gradebook:
         dropped = concat_attr("dropped")
 
         return cls(points, maximums, lateness, dropped)
-
-    @property
-    def assignments(self):
-        """All assignments in the gradebook.
-
-        Returns
-        -------
-        Assignments
-
-        """
-        return Assignments(self.points_marked.columns)
-
-    @property
-    def pids(self):
-        """All student PIDs.
-
-        Returns
-        -------
-        set
-
-        """
-        return set(self.points_marked.index)
-
-    @property
-    def points_after_deductions(self):
-        points = self.points_marked.copy()
-
-        def _apply_deduction(pid, assignment, deduction):
-            p = points.loc[pid, assignment]
-
-            if isinstance(deduction, PointsDeduction):
-                d = deduction.points
-            else:
-                d = deduction.percentage * p
-
-            points.loc[pid, assignment] = max(p - d, 0)
-
-        for pid, assignments_dct in self.deductions.items():
-            for assignment, deductions in assignments_dct.items():
-                for deduction in deductions:
-                    _apply_deduction(pid, assignment, deduction)
-
-        return points
 
     def keep_pids(self, to):
         """Restrict the gradebook to only the supplied PIDS.
@@ -489,36 +656,6 @@ class Gradebook:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
 
         return self.keep_assignments(set(self.assignments) - set(assignments))
-
-    def number_of_lates(self, within=None):
-        """Return the number of late assignments for each student as a Series.
-
-        Parameters
-        ----------
-        within : Collection[str]
-            A collection of assignment names that will be used to restrict the
-            gradebook. If None, all assignments will be used. Default: None
-
-        Returns
-        -------
-        pd.Series
-            A series mapping PID to number of late assignments.
-
-        Raises
-        ------
-        ValueError
-            If `within` is empty.
-
-        """
-        if within is None:
-            within = self.assignments
-        else:
-            within = list(within)
-
-        if not within:
-            raise ValueError("Cannot pass an empty list of assignments.")
-
-        return self.late.loc[:, within].sum(axis=1)
 
     def _replace(self, **kwargs):
         kwarg_names = [
@@ -729,68 +866,4 @@ class Gradebook:
         result = self
         for key, value in dct.items():
             result = result._unify_assignment(key, value)
-        return result
-
-    def add_assignment(self, name, points, maximums, lateness=None, dropped=None):
-        """Adds a single assignment to the gradebook.
-
-        Usually Gradebook do not need to have individual assignments added to them.
-        Instead, Gradebooks are read from Canvas, Gradescope, etc. In some instances,
-        though, it can be useful to manually add an assignment to a Gradebook -- this
-        method makes it easy to do so.
-
-        Parameters
-        ----------
-        name : str
-            The name of the new assignment. Must be unique.
-        points : Series[float]
-            A Series of points earned by each student.
-        maximums : float
-            The maximum number of points possible on the assignment.
-        late : Series[bool]
-            Whether each student turned in the assignment late. Default: all False.
-        dropped : Series[bool]
-            Whether the assignment should be dropped for any given student. Default:
-            all False.
-
-        Returns
-        -------
-        Gradebook
-            A new Gradebook object with the new assignment in place.
-
-        Raises
-        ------
-        ValueError
-            If an assignment with the given name already exists, or if grades for a student
-            are missing / grades for an unknown student are provided.
-
-        """
-        if name in self.assignments:
-            raise ValueError(f'An assignment with the name "{name}" already exists.')
-
-        if lateness is None:
-            lateness = pd.to_timedelta(pd.Series(0, index=self.pids), unit="s")
-
-        if dropped is None:
-            dropped = pd.Series(False, index=self.pids)
-
-        result = self.copy()
-
-        def _match_pids(pids, where):
-            theirs = set(pids)
-            ours = set(self.pids)
-            if theirs - ours:
-                raise ValueError(f'Unknown pids {theirs - ours} provided in "{where}".')
-            if ours - theirs:
-                raise ValueError(f'"{where}" is missing PIDs: {ours - theirs}')
-
-        _match_pids(points.index, "points")
-        _match_pids(lateness.index, "late")
-        _match_pids(dropped.index, "dropped")
-
-        result.points_marked[name] = points
-        result.points_possible[name] = maximums
-        result.lateness[name] = lateness
-        result.dropped[name] = dropped
-
         return result

@@ -109,7 +109,7 @@ API
     Gradebook.forgive_lates
     Gradebook.give_equal_weights
     Gradebook.number_of_lates
-    Gradebook.keep_assignments
+    Gradebook.restrict_to_assignments
     Gradebook.remove_assignments
     Gradebook.keep_pids
     Gradebook.score

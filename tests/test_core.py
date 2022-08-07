@@ -72,26 +72,26 @@ def test_keep_pids_raises_if_pid_does_not_exist():
         actual = GRADESCOPE_EXAMPLE.keep_pids(pids)
 
 
-# keep_assignments() and remove_assignments()
+# restrict_to_assignments() and remove_assignments()
 # -----------------------------------------------------------------------------
 
 
-def test_keep_assignments():
+def test_restrict_to_assignments():
     # when
-    actual = GRADESCOPE_EXAMPLE.keep_assignments(["homework 01", "homework 02"])
+    actual = GRADESCOPE_EXAMPLE.restrict_to_assignments(["homework 01", "homework 02"])
 
     # then
     assert set(actual.assignments) == {"homework 01", "homework 02"}
     assert_gradebook_is_sound(actual)
 
 
-def test_keep_assignments_raises_if_assignment_does_not_exist():
+def test_restrict_to_assignments_raises_if_assignment_does_not_exist():
     # given
     assignments = ["homework 01", "this aint an assignment"]
 
     # then
     with pytest.raises(KeyError):
-        GRADESCOPE_EXAMPLE.keep_assignments(assignments)
+        GRADESCOPE_EXAMPLE.restrict_to_assignments(assignments)
 
 
 def test_remove_assignments():

@@ -473,6 +473,65 @@ class Gradebook:
 
         return result
 
+    def restrict_to_assignments(self, assignments):
+        """Restrict the gradebook to only the supplied assignments.
+
+        Parameters
+        ----------
+        assignments : Collection[str]
+            A collection of assignment names.
+
+        Returns
+        -------
+        Gradebook
+            A Gradebook with only these assignments.
+
+        Raises
+        ------
+        KeyError
+            If an assignment was specified that was not in the gradebook.
+
+        """
+        # TODO what about .groups? .deductions?
+        assignments = list(assignments)
+        extras = set(assignments) - set(self.assignments)
+        if extras:
+            raise KeyError(f"These assignments were not in the gradebook: {extras}.")
+
+        r_points = self.points_marked.loc[:, assignments].copy()
+        r_maximums = self.points_possible[assignments].copy()
+        r_lateness = self.lateness.loc[:, assignments].copy()
+        r_dropped = self.dropped.loc[:, assignments].copy()
+
+        # TODO this is not copying over all attributes
+        return self.__class__(r_points, r_maximums, r_lateness, r_dropped)
+
+    def remove_assignments(self, assignments):
+        """Returns a new gradebook instance without the given assignments.
+
+        Parameters
+        ----------
+        assignments : Collection[str]
+            A collection of assignment names.
+
+        Returns
+        -------
+        Gradebook
+            A Gradebook without these assignments.
+
+        Raises
+        ------
+        KeyError
+            If an assignment was specified that was not in the gradebook.
+
+        """
+        assignments = list(assignments)
+        extras = set(assignments) - set(self.assignments)
+        if extras:
+            raise KeyError(f"These assignments were not in the gradebook: {extras}.")
+
+        return self.restrict_to_assignments(set(self.assignments) - set(assignments))
+
     # methods: summaries
     # ------------------
 
@@ -599,63 +658,12 @@ class Gradebook:
         r_points = self.points_marked.loc[pids].copy()
         r_lateness = self.lateness.loc[pids].copy()
         r_dropped = self.dropped.loc[pids].copy()
+        # TODO this is not copying over all attributes
         return self.__class__(r_points, self.points_possible, r_lateness, r_dropped)
 
-    def keep_assignments(self, assignments):
-        """Restrict the gradebook to only the supplied assignments.
+    
 
-        Parameters
-        ----------
-        assignments : Collection[str]
-            A collection of assignment names.
-
-        Returns
-        -------
-        Gradebook
-            A Gradebook with only these assignments.
-
-        Raises
-        ------
-        KeyError
-            If an assignment was specified that was not in the gradebook.
-
-        """
-        assignments = list(assignments)
-        extras = set(assignments) - set(self.assignments)
-        if extras:
-            raise KeyError(f"These assignments were not in the gradebook: {extras}.")
-
-        r_points = self.points_marked.loc[:, assignments].copy()
-        r_maximums = self.points_possible[assignments].copy()
-        r_lateness = self.lateness.loc[:, assignments].copy()
-        r_dropped = self.dropped.loc[:, assignments].copy()
-        return self.__class__(r_points, r_maximums, r_lateness, r_dropped)
-
-    def remove_assignments(self, assignments):
-        """Remove the assignments from the gradebook.
-
-        Parameters
-        ----------
-        assignments : Collection[str]
-            A collection of assignment names.
-
-        Returns
-        -------
-        Gradebook
-            A Gradebook without these assignments.
-
-        Raises
-        ------
-        KeyError
-            If an assignment was specified that was not in the gradebook.
-
-        """
-        assignments = list(assignments)
-        extras = set(assignments) - set(self.assignments)
-        if extras:
-            raise KeyError(f"These assignments were not in the gradebook: {extras}.")
-
-        return self.keep_assignments(set(self.assignments) - set(assignments))
+    
 
     def _replace(self, **kwargs):
         kwarg_names = [

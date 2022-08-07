@@ -425,6 +425,23 @@ def test_unify_raises_if_any_part_is_dropped():
         result = gradebook.unify_assignments({"hw01": HOMEWORK_01_PARTS})
 
 
+def test_unify_raises_if_deductions_defined():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
+
+    gradebook.deductions["A1"] = {"hw01": [4]}
+
+    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
+
+    with pytest.raises(NotImplementedError):
+        result = gradebook.unify_assignments({"hw01": HOMEWORK_01_PARTS})
+
+
 # add_assignment()
 # -----------------------------------------------------------------------------
 
@@ -581,6 +598,7 @@ def test_lateness_fudge_defaults_to_5_minutes():
 # points_after_deductions
 # -----------------------------------------------------------------------------
 
+
 def test_points_after_deductions_takes_deductions_into_account():
     columns = ["hw01", "hw02"]
     p1 = pd.Series(data=[10, 30], index=columns, name="A1")
@@ -599,13 +617,14 @@ def test_points_after_deductions_takes_deductions_into_account():
         },
         "A2": {
             "hw02": [
-                gradelib.PercentageDeduction(.3, "No Name"),
+                gradelib.PercentageDeduction(0.3, "No Name"),
             ]
         },
     }
 
-    assert gb.points_after_deductions.loc['A1', 'hw01'] == 5
-    assert gb.points_after_deductions.loc['A2', 'hw02'] == 40 * .7
+    assert gb.points_after_deductions.loc["A1", "hw01"] == 5
+    assert gb.points_after_deductions.loc["A2", "hw02"] == 40 * 0.7
+
 
 def test_points_after_deductions_takes_multiple_deductions_into_account():
     columns = ["hw01", "hw02"]
@@ -626,14 +645,15 @@ def test_points_after_deductions_takes_multiple_deductions_into_account():
         },
         "A2": {
             "hw02": [
-                gradelib.PercentageDeduction(.3, "Late"),
-                gradelib.PercentageDeduction(.2, "No Name"),
+                gradelib.PercentageDeduction(0.3, "Late"),
+                gradelib.PercentageDeduction(0.2, "No Name"),
             ]
         },
     }
 
-    assert gb.points_after_deductions.loc['A1', 'hw01'] == 2
-    assert np.isclose(gb.points_after_deductions.loc['A2', 'hw02'], (40 * .7) * .8)
+    assert gb.points_after_deductions.loc["A1", "hw01"] == 2
+    assert np.isclose(gb.points_after_deductions.loc["A2", "hw02"], (40 * 0.7) * 0.8)
+
 
 def test_points_after_deductions_sets_floor_at_zero():
     columns = ["hw01", "hw02"]
@@ -653,4 +673,4 @@ def test_points_after_deductions_sets_floor_at_zero():
         },
     }
 
-    assert gb.points_after_deductions.loc['A1', 'hw01'] == 0
+    assert gb.points_after_deductions.loc["A1", "hw01"] == 0

@@ -141,7 +141,7 @@ class Assignments(collections.abc.Sequence):
 
         See Also
         --------
-        :meth:`Gradebook.unify_assignments`
+        :meth:`Gradebook.combine_assignments`
 
         """
         dct = {}
@@ -532,6 +532,99 @@ class Gradebook:
 
         return self.restrict_to_assignments(set(self.assignments) - set(assignments))
 
+    def _combine_assignment(self, new_name, parts):
+        """A helper function to combine assignments under the new name."""
+        parts = list(parts)
+        if self.dropped[parts].any(axis=None):
+            raise ValueError("Cannot combine assignments with drops.")
+
+        assignment_points = self.points_marked[parts].sum(axis=1)
+        assignment_max = self.points_possible[parts].sum()
+        assignment_lateness = self.lateness[parts].max(axis=1)
+
+        new_points = self.points_marked.copy().drop(columns=parts)
+        new_max = self.points_possible.copy().drop(parts)
+        new_lateness = self.lateness.copy().drop(columns=parts)
+
+        new_points[new_name] = assignment_points
+        new_max[new_name] = assignment_max
+        new_lateness[new_name] = assignment_lateness
+
+        return Gradebook(new_points, new_max, lateness=new_lateness)
+
+    def combine_assignments(self, dct_or_callable):
+        """Unifies the assignment parts into one single assignment with the new name.
+
+        Sometimes assignments may have several parts which are recorded separately
+        in the grading software. For instance, a homework might
+        have a written part and a programming part. This method makes it easy
+        to combine these parts into a single assignment.
+
+        The new point total and maximum possible points are calculated by
+        addition. The new assignment is considered late if either of the parts
+        are marked as late.
+
+        It is unclear what the result should be if any of the assignments to be
+        unified has been dropped, but other parts have not. For this reason,
+        this method will raise a `ValueError` if *any* of the parts have been
+        dropped.
+
+        Parameters
+        ----------
+        dct : Mapping[str, Collection[str]]
+            Either: 1) a mapping whose keys are new assignment names, and whose
+            values are collections of assignments that should be unified under
+            their common key; or 2) a callable which maps assignment names to
+            new assignment by which they should be grouped.
+
+        Returns
+        -------
+        Gradebook
+            The gradebook with the assignments unified to one assignment. Other
+            assignments are left untouched.
+
+        Raises
+        ------
+        ValueError
+            If any of the assignments to be unified is marked as dropped. See above for
+            rationale.
+
+        Example
+        -------
+
+        Assuming the gradebook has assignments named `homework 01`, `homework 01 - programming`,
+        `homework 02`, `homework 02 - programming`, etc., the following will "combine" the
+        assignments into `homework 01`, `homework 02`, etc:
+
+            >>> gradebook.combine_assignments(lambda s: s.split('-')[0].strip())
+
+        Alternatively, you could write:
+
+            >>> gradebook.combine_assignments({
+                'homework 01': {'homework 01', 'homework 01 - programming'},
+                'homework 02': {'homework 02', 'homework 02 - programming'}
+                })
+
+        """
+        if self.deductions:
+            raise NotImplementedError("Cannot combine if deductions have been defined.")
+
+        if not callable(dct_or_callable):
+            dct = dct_or_callable
+        else:
+            to_key = dct_or_callable
+            dct = {}
+            for assignment in self.assignments:
+                key = to_key(assignment)
+                if key not in dct:
+                    dct[key] = []
+                dct[key].append(assignment)
+
+        result = self
+        for key, value in dct.items():
+            result = result._combine_assignment(key, value)
+        return result
+
     # methods: summaries
     # ------------------
 
@@ -783,95 +876,3 @@ class Gradebook:
         earned, available = self.total(within)
         return earned / available
 
-    def _unify_assignment(self, new_name, parts):
-        """A helper function to unify assignments under the new name."""
-        parts = list(parts)
-        if self.dropped[parts].any(axis=None):
-            raise ValueError("Cannot unify assignments with drops.")
-
-        assignment_points = self.points_marked[parts].sum(axis=1)
-        assignment_max = self.points_possible[parts].sum()
-        assignment_lateness = self.lateness[parts].max(axis=1)
-
-        new_points = self.points_marked.copy().drop(columns=parts)
-        new_max = self.points_possible.copy().drop(parts)
-        new_lateness = self.lateness.copy().drop(columns=parts)
-
-        new_points[new_name] = assignment_points
-        new_max[new_name] = assignment_max
-        new_lateness[new_name] = assignment_lateness
-
-        return Gradebook(new_points, new_max, lateness=new_lateness)
-
-    def unify_assignments(self, dct_or_callable):
-        """Unifies the assignment parts into one single assignment with the new name.
-
-        Sometimes assignments may have several parts which are recorded separately
-        in the grading software. For instance, a homework might
-        have a written part and a programming part. This method makes it easy
-        to unify these parts into a single assignment.
-
-        The new point total and maximum possible points are calculated by
-        addition. The new assignment is considered late if either of the parts
-        are marked as late.
-
-        It is unclear what the result should be if any of the assignments to be
-        unified has been dropped, but other parts have not. For this reason,
-        this method will raise a `ValueError` if *any* of the parts have been
-        dropped.
-
-        Parameters
-        ----------
-        dct : Mapping[str, Collection[str]]
-            Either: 1) a mapping whose keys are new assignment names, and whose
-            values are collections of assignments that should be unified under
-            their common key; or 2) a callable which maps assignment names to
-            new assignment by which they should be grouped.
-
-        Returns
-        -------
-        Gradebook
-            The gradebook with the assignments unified to one assignment. Other
-            assignments are left untouched.
-
-        Raises
-        ------
-        ValueError
-            If any of the assignments to be unified is marked as dropped. See above for
-            rationale.
-
-        Example
-        -------
-
-        Assuming the gradebook has assignments named `homework 01`, `homework 01 - programming`,
-        `homework 02`, `homework 02 - programming`, etc., the following will "unify" the
-        assignments into `homework 01`, `homework 02`, etc:
-
-            >>> gradebook.unify_assignments(lambda s: s.split('-')[0].strip())
-
-        Alternatively, you could write:
-
-            >>> gradebook.unify_assignments({
-                'homework 01': {'homework 01', 'homework 01 - programming'},
-                'homework 02': {'homework 02', 'homework 02 - programming'}
-                })
-
-        """
-        if self.deductions:
-            raise NotImplementedError("Cannot unify if deductions have been defined.")
-
-        if not callable(dct_or_callable):
-            dct = dct_or_callable
-        else:
-            to_key = dct_or_callable
-            dct = {}
-            for assignment in self.assignments:
-                key = to_key(assignment)
-                if key not in dct:
-                    dct[key] = []
-                dct[key].append(assignment)
-
-        result = self
-        for key, value in dct.items():
-            result = result._unify_assignment(key, value)
-        return result

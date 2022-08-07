@@ -292,11 +292,11 @@ def test_total_ignores_dropped_assignments():
     assert np.allclose(available.values, [50, 52], atol=1e-6)
 
 
-# unify_assignments()
+# combine_assignments()
 # -----------------------------------------------------------------------------
 
 
-def test_unify_assignments():
+def test_combine_assignments():
     """test that points_marked / points_possible are added across unified assignments"""
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
@@ -309,7 +309,7 @@ def test_unify_assignments():
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
     # when
-    result = gradebook.unify_assignments({"hw01": HOMEWORK_01_PARTS})
+    result = gradebook.combine_assignments({"hw01": HOMEWORK_01_PARTS})
 
     # then
     assert len(result.assignments) == 3
@@ -322,7 +322,7 @@ def test_unify_assignments():
     assert result.points_marked.shape[1] == 3
 
 
-def test_unify_assignments_with_multiple_in_dictionary():
+def test_combine_assignments_with_multiple_in_dictionary():
     """test that points_marked / points_possible are added across unified assignments"""
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "hw02 - testing"]
@@ -336,7 +336,7 @@ def test_unify_assignments_with_multiple_in_dictionary():
     HOMEWORK_02_PARTS = gradebook.assignments.starting_with("hw02")
 
     # when
-    result = gradebook.unify_assignments(
+    result = gradebook.combine_assignments(
         {"hw01": HOMEWORK_01_PARTS, "hw02": HOMEWORK_02_PARTS}
     )
 
@@ -355,7 +355,7 @@ def test_unify_assignments_with_multiple_in_dictionary():
     assert result.points_marked.shape[1] == 2
 
 
-def test_unify_assignments_with_callable():
+def test_combine_assignments_with_callable():
     """test that points_marked / points_possible are added across unified assignments"""
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "hw02 - testing"]
@@ -372,7 +372,7 @@ def test_unify_assignments_with_callable():
         return s.split("-")[0].strip()
 
     # when
-    result = gradebook.unify_assignments(assignment_to_key)
+    result = gradebook.combine_assignments(assignment_to_key)
 
     # then
     assert len(result.assignments) == 2
@@ -403,7 +403,7 @@ def test_unify_uses_max_lateness_for_assignment_pieces():
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
     # when
-    result = gradebook.unify_assignments({"hw01": HOMEWORK_01_PARTS})
+    result = gradebook.combine_assignments({"hw01": HOMEWORK_01_PARTS})
 
     # then
     assert result.lateness.loc["A1", "hw01"] == pd.Timedelta(days=5)
@@ -422,7 +422,7 @@ def test_unify_raises_if_any_part_is_dropped():
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
     with pytest.raises(ValueError):
-        result = gradebook.unify_assignments({"hw01": HOMEWORK_01_PARTS})
+        result = gradebook.combine_assignments({"hw01": HOMEWORK_01_PARTS})
 
 
 def test_unify_raises_if_deductions_defined():
@@ -439,7 +439,7 @@ def test_unify_raises_if_deductions_defined():
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
     with pytest.raises(NotImplementedError):
-        result = gradebook.unify_assignments({"hw01": HOMEWORK_01_PARTS})
+        result = gradebook.combine_assignments({"hw01": HOMEWORK_01_PARTS})
 
 
 # add_assignment()

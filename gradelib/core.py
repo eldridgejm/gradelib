@@ -199,6 +199,18 @@ def _empty_lateness_like(table):
     return empty
 
 
+def _cast_index(df):
+    """Ensure that the dataframe index contains Student objects."""
+    def _cast(x):
+        if isinstance(x, Student):
+            return x
+        else:
+            return Student(x)
+    df.index = [_cast(x) for x in df.index]
+    return df
+
+
+# TODO move to GradebookOptions
 DEFAULT_OPTS = {"lateness_fudge": 5 * 60}
 
 
@@ -214,17 +226,6 @@ class Group:
     name: str
     assignments: Assignments
     normalize_weights: bool = False
-
-
-def _cast_index(df):
-    """Ensure that the dataframe index contains Student objects."""
-    def _cast(x):
-        if isinstance(x, Student):
-            return x
-        else:
-            return Student(x)
-    df.index = [_cast(x) for x in df.index]
-    return df
 
 
 class Gradebook:
@@ -315,6 +316,76 @@ class Gradebook:
             f"and {len(self.pids)} students>"
         )
 
+    # class methods
+    # -------------
+
+    @classmethod
+    def from_gradebooks(cls, gradebooks, restrict_to_pids=None):
+        """Create a gradebook by safely combining several existing gradebooks.
+
+        It is crucial that the combined gradebooks have exactly the same
+        students -- we don't want students to have missing grades. This
+        function checks to make sure that the gradebooks have the same students
+        before combining them. Similarly, it verifies that each gradebook has
+        unique assignments, so that no conflicts occur when combining them.
+
+        Parameters
+        ----------
+        gradebooks : Collection[Gradebook]
+            The gradebooks to combine. Must have matching indices and unique
+            column names.
+        restrict_to_pids : Collection[str] or None
+            If provided, each input gradebook will be restricted to the PIDs
+            given before attempting to combine them. This is a convenience
+            option, and it simply calls :meth:`Gradebook.restrict_to_pids` on
+            each of the inputs.  Default: None
+
+        Returns
+        -------
+        Gradebook
+            A gradebook combining all of the input gradebooks.
+
+        Raises
+        ------
+        ValueError
+            If the PID indices of gradebooks do not match, or if there is a
+            duplicate assignment name.
+
+        """
+        gradebooks = list(gradebooks)
+
+        if restrict_to_pids is not None:
+            gradebooks = [g.restrict_to_pids(restrict_to_pids) for g in gradebooks]
+
+        # check that all gradebooks have the same PIDs
+        reference_pids = gradebooks[0].pids
+        for gradebook in gradebooks[1:]:
+            if gradebook.pids != reference_pids:
+                raise ValueError("Not all gradebooks have the same PIDs.")
+
+        # check that all gradebooks have different assignment names
+        number_of_assignments = sum(len(g.assignments) for g in gradebooks)
+        unique_assignments = set()
+        for gradebook in gradebooks:
+            unique_assignments.update(gradebook.assignments)
+
+        if len(unique_assignments) != number_of_assignments:
+            raise ValueError("Gradebooks have duplicate assignments.")
+
+        # create the combined notebook
+        def concat_attr(a, axis=1):
+            """Create a DF/Series by combining the same attribute across gradebooks."""
+            all_tables = [getattr(g, a) for g in gradebooks]
+            return pd.concat(all_tables, axis=axis)
+
+        points = concat_attr("points_marked")
+        maximums = concat_attr("points_possible", axis=0)
+        lateness = concat_attr("lateness")
+        dropped = concat_attr("dropped")
+
+        return cls(points, maximums, lateness, dropped)
+
+
     # properties
     # ----------
 
@@ -402,6 +473,44 @@ class Gradebook:
                     _apply_deduction(pid, assignment, deduction)
 
         return points
+
+    # copying / replacing
+    # -------------------
+
+    def _replace(self, **kwargs):
+        kwarg_names = [
+            "points_marked",
+            "points_possible",
+            "lateness",
+            "dropped",
+            "deductions",
+            "notes",
+            "groups",
+            "scale",
+            "opts",
+        ]
+
+        extra = set(kwargs.keys()) - set(kwarg_names)
+        assert not extra, f"Invalid kwargs provided: {extra}"
+
+        def _copy(obj):
+            if hasattr(obj, "copy"):
+                return obj.copy()
+            else:
+                return copy.deepcopy(obj)
+
+        new_kwargs = {}
+        for kwarg_name in kwarg_names:
+            if kwarg_name in kwargs:
+                new_kwargs[kwarg_name] = kwargs[kwarg_name]
+            else:
+                new_kwargs[kwarg_name] = _copy(getattr(self, kwarg_name))
+
+        return Gradebook(**new_kwargs)
+
+    def copy(self):
+        return self._replace()
+
 
     # methods: adding/removing assignments/students
     # ---------------------------------------------
@@ -655,13 +764,9 @@ class Gradebook:
         # TODO this is not copying over all attributes
         return self.__class__(r_points, self.points_possible, r_lateness, r_dropped)
 
-    
 
-    
-
-
-    # methods: summaries
-    # ------------------
+    # methods: summaries and scoring
+    # ------------------------------
 
     def number_of_lates(self, within=None):
         """Return the number of late assignments for each student as a Series.
@@ -692,103 +797,6 @@ class Gradebook:
             raise ValueError("Cannot pass an empty list of assignments.")
 
         return self.late.loc[:, within].sum(axis=1)
-
-    @classmethod
-    def combine(cls, gradebooks, restrict_to_pids=None):
-        """Create a gradebook by safely combining several existing gradebooks.
-
-        It is crucial that the combined gradebooks have exactly the same
-        students -- we don't want students to have missing grades. This
-        function checks to make sure that the gradebooks have the same students
-        before combining them. Similarly, it verifies that each gradebook has
-        unique assignments, so that no conflicts occur when combining them.
-
-        Parameters
-        ----------
-        gradebooks : Collection[Gradebook]
-            The gradebooks to combine. Must have matching indices and unique
-            column names.
-        restrict_to_pids : Collection[str] or None
-            If provided, each input gradebook will be restricted to the PIDs
-            given before attempting to combine them. This is a convenience
-            option, and it simply calls :meth:`Gradebook.restrict_to_pids` on
-            each of the inputs.  Default: None
-
-        Returns
-        -------
-        Gradebook
-            A gradebook combining all of the input gradebooks.
-
-        Raises
-        ------
-        ValueError
-            If the PID indices of gradebooks do not match, or if there is a
-            duplicate assignment name.
-
-        """
-        gradebooks = list(gradebooks)
-
-        if restrict_to_pids is not None:
-            gradebooks = [g.restrict_to_pids(restrict_to_pids) for g in gradebooks]
-
-        # check that all gradebooks have the same PIDs
-        reference_pids = gradebooks[0].pids
-        for gradebook in gradebooks[1:]:
-            if gradebook.pids != reference_pids:
-                raise ValueError("Not all gradebooks have the same PIDs.")
-
-        # check that all gradebooks have different assignment names
-        number_of_assignments = sum(len(g.assignments) for g in gradebooks)
-        unique_assignments = set()
-        for gradebook in gradebooks:
-            unique_assignments.update(gradebook.assignments)
-
-        if len(unique_assignments) != number_of_assignments:
-            raise ValueError("Gradebooks have duplicate assignments.")
-
-        # create the combined notebook
-        def concat_attr(a, axis=1):
-            """Create a DF/Series by combining the same attribute across gradebooks."""
-            all_tables = [getattr(g, a) for g in gradebooks]
-            return pd.concat(all_tables, axis=axis)
-
-        points = concat_attr("points_marked")
-        maximums = concat_attr("points_possible", axis=0)
-        lateness = concat_attr("lateness")
-        dropped = concat_attr("dropped")
-
-        return cls(points, maximums, lateness, dropped)
-
-    def _replace(self, **kwargs):
-        kwarg_names = [
-            "points_marked",
-            "points_possible",
-            "lateness",
-            "dropped",
-            "deductions",
-            "opts",
-        ]
-
-        extra = set(kwargs.keys()) - set(kwarg_names)
-        assert not extra, f"Invalid kwargs provided: {extra}"
-
-        def _copy(obj):
-            if hasattr(obj, "copy"):
-                return obj.copy()
-            else:
-                return copy.deepcopy(obj)
-
-        new_kwargs = {}
-        for kwarg_name in kwarg_names:
-            if kwarg_name in kwargs:
-                new_kwargs[kwarg_name] = kwargs[kwarg_name]
-            else:
-                new_kwargs[kwarg_name] = _copy(getattr(self, kwarg_name))
-
-        return Gradebook(**new_kwargs)
-
-    def copy(self):
-        return self._replace()
 
     def give_equal_weights(self, within):
         """Normalize maximum points so that all assignments are worth the same.

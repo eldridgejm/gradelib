@@ -124,13 +124,13 @@ def test_remove_assignments_raises_if_assignment_does_not_exist():
         GRADESCOPE_EXAMPLE.remove_assignments(assignments)
 
 
-# combine()
+# from_gradebooks()
 # -----------------------------------------------------------------------------
 
 
-def test_combine_with_restrict_to_pids():
+def test_from_gradebooks_with_restrict_to_pids():
     # when
-    combined = gradelib.Gradebook.combine(
+    combined = gradelib.Gradebook.from_gradebooks(
         [GRADESCOPE_EXAMPLE, CANVAS_WITHOUT_LAB_EXAMPLE], restrict_to_pids=ROSTER.index
     )
 
@@ -140,17 +140,17 @@ def test_combine_with_restrict_to_pids():
     assert_gradebook_is_sound(combined)
 
 
-def test_combine_raises_if_duplicate_assignments():
+def test_from_gradebooks_raises_if_duplicate_assignments():
     # the canvas example and the gradescope example both have lab 01.
     # when
     with pytest.raises(ValueError):
-        combined = gradelib.Gradebook.combine([GRADESCOPE_EXAMPLE, CANVAS_EXAMPLE])
+        combined = gradelib.Gradebook.from_gradebooks([GRADESCOPE_EXAMPLE, CANVAS_EXAMPLE])
 
 
-def test_combine_raises_if_indices_do_not_match():
+def test_from_gradebooks_raises_if_indices_do_not_match():
     # when
     with pytest.raises(ValueError):
-        combined = gradelib.Gradebook.combine(
+        combined = gradelib.Gradebook.from_gradebooks(
             [CANVAS_WITHOUT_LAB_EXAMPLE, GRADESCOPE_EXAMPLE]
         )
 

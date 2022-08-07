@@ -1,6 +1,6 @@
 """A package for computing overall grades in courses @ UCSD."""
 
-from .gradebook import Gradebook, Assignments, Student
+from .core import Gradebook, Assignments, Student
 from .scales import (
     DEFAULT_SCALE,
     ROUNDED_DEFAULT_SCALE,

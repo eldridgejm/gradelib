@@ -83,30 +83,30 @@ def read(
     # the maximum points are stored in a row with student name "Points Possible",
     # and SIS User ID == NaN. For some reason, though, "Points Possible" has a
     # bunch of whitespace at the front... thanks Canvas
-    max_points = table[
+    points_available = table[
         pd.isna(table.index) & table["Student"].str.contains("Points Possible")
     ]
 
     # the result of the above was a dataframe. turn it into a series and get
     # rid of the student index; we don't need it
-    max_points = max_points.iloc[0].drop(index="Student").astype(float)
-    max_points.name = "Max Points"
+    points_available = points_available.iloc[0].drop(index="Student").astype(float)
+    points_available.name = "Max Points"
 
     # clean up the table. get rid of the student column, and drop all rows with
     # NaN indices
-    points = table[~pd.isna(table.index)].drop(columns=["Student"]).astype(float)
+    points_marked = table[~pd.isna(table.index)].drop(columns=["Student"]).astype(float)
 
     if standardize_assignments:
-        points.columns = points.columns.str.lower()
+        points_marked.columns = points_marked.columns.str.lower()
 
     if remove_assignment_ids:
-        points.columns = [_remove_assignment_id(c) for c in points.columns]
+        points_marked.columns = [_remove_assignment_id(c) for c in points_marked.columns]
 
     # we've possibly changed column names in points table; propagate these
     # changes to max_points
-    max_points.index = points.columns
+    points_available.index = points_marked.columns
 
-    return Gradebook(points, max_points)
+    return Gradebook(points_marked, points_available)
 
 
 def write_canvas_grades(existing, output, grades):

@@ -29,7 +29,7 @@ def _lateness_in_seconds(lateness):
     return pd.to_timedelta(3600 * hours + 60 * minutes + seconds, unit='s')
 
 
-def read(path, standardize_pids=True, standardize_assignments=True, lateness_fudge=60 * 5):
+def read(path, standardize_pids=True, standardize_assignments=True):
     """Read a CSV exported from Gradescope.
 
     Warning
@@ -73,21 +73,6 @@ def read(path, standardize_pids=True, standardize_assignments=True, lateness_fud
         standardize_assignments : bool
             Whether to standardize assignment names so that they are all lowercased.
             Default: True.
-        lateness_fudge : int
-            An integer number of seconds. If the lateness of an assignment (in seconds)
-            is less than or equal to this number, it will be counted as on-time. The
-            default is 300 seconds (5 minutes). See note.
-
-        Note
-        ----
-        The default `lateness_fudge` is 300 seconds. This default is
-        recommended because Gradescope appears to exhibit some latency around
-        deadlines. There have been cases where the CSV exported by gradescope
-        will show a time of submission that is up to a minute later than what
-        is displayed on the web interface. As a result, students see that their
-        submission is on-time, but the exported CSV shows it as late. The fudge
-        factor accounts for this.
-
 
     """
     table = pd.read_csv(path, dtype={"SID": str}).set_index("SID")
@@ -111,20 +96,20 @@ def read(path, standardize_pids=True, standardize_assignments=True, lateness_fud
     starting_index = _find_index_of_first_assignment_column(table.columns)
 
     # extract the points
-    points = table.iloc[:, starting_index::stride].astype(float)
-    points.index = table.index
+    points_marked = table.iloc[:, starting_index::stride].astype(float)
+    points_marked.index = table.index
 
     if standardize_assignments:
-        points.columns = [x.lower() for x in points.columns]
+        points_marked.columns = [x.lower() for x in points_marked.columns]
 
     # the max_points are replicated on every row; we'll just use the first row
-    max_points = table.iloc[0, starting_index + 1 :: stride].astype(float)
-    max_points.index = points.columns
-    max_points.name = "Max Points"
+    points_available = table.iloc[0, starting_index + 1 :: stride].astype(float)
+    points_available.index = points_marked.columns
+    points_available.name = "Max Points"
 
     # the csv contains time since late deadline
     lateness = table.iloc[:, starting_index + 3 :: stride]
-    lateness.columns = points.columns
+    lateness.columns = points_marked.columns
     lateness = lateness.apply(_lateness_in_seconds) # convert strings to seconds
 
-    return Gradebook(points, max_points, lateness)
+    return Gradebook(points_marked, points_available, lateness)

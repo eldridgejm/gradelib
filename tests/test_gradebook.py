@@ -18,8 +18,8 @@ CANVAS_EXAMPLE = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 
 # the canvas example has Lab 01, which is also in Gradescope. Let's remove it
 CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.Gradebook(
-    points=CANVAS_EXAMPLE.points.drop(columns="lab 01"),
-    maximums=CANVAS_EXAMPLE.maximums.drop(index="lab 01"),
+    points_marked=CANVAS_EXAMPLE.points_marked.drop(columns="lab 01"),
+    points_available=CANVAS_EXAMPLE.points_available.drop(index="lab 01"),
     lateness=CANVAS_EXAMPLE.lateness.drop(columns="lab 01"),
     dropped=CANVAS_EXAMPLE.dropped.drop(columns="lab 01"),
 )
@@ -29,12 +29,12 @@ ROSTER = gradelib.io.ucsd.read_egrades_roster(EXAMPLES_DIRECTORY / "egrades.csv"
 
 
 def assert_gradebook_is_sound(gradebook):
-    assert gradebook.points.shape == gradebook.dropped.shape == gradebook.lateness.shape
-    assert (gradebook.points.columns == gradebook.dropped.columns).all()
-    assert (gradebook.points.columns == gradebook.lateness.columns).all()
-    assert (gradebook.points.index == gradebook.dropped.index).all()
-    assert (gradebook.points.index == gradebook.lateness.index).all()
-    assert (gradebook.points.columns == gradebook.maximums.index).all()
+    assert gradebook.points_marked.shape == gradebook.dropped.shape == gradebook.lateness.shape
+    assert (gradebook.points_marked.columns == gradebook.dropped.columns).all()
+    assert (gradebook.points_marked.columns == gradebook.lateness.columns).all()
+    assert (gradebook.points_marked.index == gradebook.dropped.index).all()
+    assert (gradebook.points_marked.index == gradebook.lateness.index).all()
+    assert (gradebook.points_marked.columns == gradebook.points_available.index).all()
 
 
 
@@ -44,7 +44,7 @@ def assert_gradebook_is_sound(gradebook):
 
 def test_assignments_are_produced_in_order():
     assert list(GRADESCOPE_EXAMPLE.assignments) == list(
-        GRADESCOPE_EXAMPLE.points.columns
+        GRADESCOPE_EXAMPLE.points_marked.columns
     )
 
 
@@ -189,21 +189,21 @@ def test_give_equal_weights_on_example():
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
     homeworks = gradebook.assignments.starting_with("hw")
 
     # when
     actual = gradebook.give_equal_weights(within=homeworks)
 
     # then
-    assert actual.maximums.loc["hw01"] == 1
-    assert actual.maximums.loc["hw02"] == 1
-    assert actual.maximums.loc["hw03"] == 1
-    assert actual.maximums.loc["lab01"] == 20
-    assert actual.points.loc["A1", "hw01"] == 1 / 2
-    assert actual.points.loc["A1", "hw02"] == 30 / 50
+    assert actual.points_available.loc["hw01"] == 1
+    assert actual.points_available.loc["hw02"] == 1
+    assert actual.points_available.loc["hw03"] == 1
+    assert actual.points_available.loc["lab01"] == 20
+    assert actual.points_marked.loc["A1", "hw01"] == 1 / 2
+    assert actual.points_marked.loc["A1", "hw02"] == 30 / 50
 
 
 # score()
@@ -215,9 +215,9 @@ def test_score_on_simple_example():
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
     homeworks = gradebook.assignments.starting_with("hw")
 
     # when
@@ -232,9 +232,9 @@ def test_score_ignores_dropped_assignments():
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
     gradebook.dropped.loc["A1", "hw01"] = True
     gradebook.dropped.loc["A1", "hw03"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
@@ -256,9 +256,9 @@ def test_total_on_simple_example():
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
     homeworks = gradebook.assignments.starting_with("hw")
 
     # when
@@ -274,9 +274,9 @@ def test_total_ignores_dropped_assignments():
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
     gradebook.dropped.loc["A1", "hw01"] = True
     gradebook.dropped.loc["A1", "hw03"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
@@ -295,14 +295,14 @@ def test_total_ignores_dropped_assignments():
 
 
 def test_unify_assignments():
-    """test that points / maximums are added across unified assignments"""
+    """test that points_marked / points_available are added across unified assignments"""
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
@@ -311,24 +311,24 @@ def test_unify_assignments():
 
     # then
     assert len(result.assignments) == 3
-    assert result.maximums["hw01"] == 52
-    assert result.points.loc["A1", "hw01"] == 31
+    assert result.points_available["hw01"] == 52
+    assert result.points_marked.loc["A1", "hw01"] == 31
 
-    assert result.maximums.shape[0] == 3
+    assert result.points_available.shape[0] == 3
     assert result.late.shape[1] == 3
     assert result.dropped.shape[1] == 3
-    assert result.points.shape[1] == 3
+    assert result.points_marked.shape[1] == 3
 
 
 def test_unify_assignments_with_multiple_in_dictionary():
-    """test that points / maximums are added across unified assignments"""
+    """test that points_marked / points_available are added across unified assignments"""
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "hw02 - testing"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
     HOMEWORK_02_PARTS = gradebook.assignments.starting_with("hw02")
@@ -341,27 +341,27 @@ def test_unify_assignments_with_multiple_in_dictionary():
     # then
     assert len(result.assignments) == 2
 
-    assert result.maximums["hw01"] == 52
-    assert result.points.loc["A1", "hw01"] == 31
+    assert result.points_available["hw01"] == 52
+    assert result.points_marked.loc["A1", "hw01"] == 31
 
-    assert result.maximums["hw02"] == 120
-    assert result.points.loc["A1", "hw02"] == 110
+    assert result.points_available["hw02"] == 120
+    assert result.points_marked.loc["A1", "hw02"] == 110
 
-    assert result.maximums.shape[0] == 2
+    assert result.points_available.shape[0] == 2
     assert result.late.shape[1] == 2
     assert result.dropped.shape[1] == 2
-    assert result.points.shape[1] == 2
+    assert result.points_marked.shape[1] == 2
 
 
 def test_unify_assignments_with_callable():
-    """test that points / maximums are added across unified assignments"""
+    """test that points_marked / points_available are added across unified assignments"""
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "hw02 - testing"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
     HOMEWORK_02_PARTS = gradebook.assignments.starting_with("hw02")
@@ -375,16 +375,16 @@ def test_unify_assignments_with_callable():
     # then
     assert len(result.assignments) == 2
 
-    assert result.maximums["hw01"] == 52
-    assert result.points.loc["A1", "hw01"] == 31
+    assert result.points_available["hw01"] == 52
+    assert result.points_marked.loc["A1", "hw01"] == 31
 
-    assert result.maximums["hw02"] == 120
-    assert result.points.loc["A1", "hw02"] == 110
+    assert result.points_available["hw02"] == 120
+    assert result.points_marked.loc["A1", "hw02"] == 110
 
-    assert result.maximums.shape[0] == 2
+    assert result.points_available.shape[0] == 2
     assert result.late.shape[1] == 2
     assert result.dropped.shape[1] == 2
-    assert result.points.shape[1] == 2
+    assert result.points_marked.shape[1] == 2
 
 
 def test_unify_uses_max_lateness_for_assignment_pieces():
@@ -392,9 +392,9 @@ def test_unify_uses_max_lateness_for_assignment_pieces():
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
 
     gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(days=3)
     gradebook.lateness.loc["A1", "hw01 - programming"] = pd.Timedelta(days=5)
@@ -412,9 +412,9 @@ def test_unify_raises_if_any_part_is_dropped():
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
 
     gradebook.dropped.loc["A1", "hw01"] = True
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
@@ -432,24 +432,24 @@ def test_add_assignment():
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
 
-    assignment_points = pd.Series([10, 20], index=["A1", "A2"])
+    assignment_points_marked = pd.Series([10, 20], index=["A1", "A2"])
     assignment_max = 20
     assignment_late = pd.Series([pd.Timedelta(days=2), pd.Timedelta(days=0)], index=["A1", "A2"])
     assignment_dropped = pd.Series([False, True], index=["A1", "A2"])
 
     # when
     result = gradebook.add_assignment(
-        "new", assignment_points, 20, lateness=assignment_late, dropped=assignment_dropped
+        "new", assignment_points_marked, 20, lateness=assignment_late, dropped=assignment_dropped
     )
 
     # then
     assert len(result.assignments) == 5
-    assert result.points.loc["A1", "new"] == 10
-    assert result.maximums.loc["new"] == 20
+    assert result.points_marked.loc["A1", "new"] == 10
+    assert result.points_available.loc["new"] == 20
 
 
 def test_add_assignment_default_none_dropped_or_late():
@@ -457,15 +457,15 @@ def test_add_assignment_default_none_dropped_or_late():
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
 
-    assignment_points = pd.Series([10, 20], index=["A1", "A2"])
+    assignment_points_marked = pd.Series([10, 20], index=["A1", "A2"])
     assignment_max = 20
 
     # when
-    result = gradebook.add_assignment("new", assignment_points, 20,)
+    result = gradebook.add_assignment("new", assignment_points_marked, 20,)
 
     # then
     assert result.late.loc["A1", "new"] == False
@@ -477,18 +477,18 @@ def test_add_assignment_raises_on_missing_student():
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
 
     # A2 is missing
-    assignment_points = pd.Series([10], index=["A1"])
+    assignment_points_marked = pd.Series([10], index=["A1"])
     assignment_max = 20
 
     # when
     with pytest.raises(ValueError):
         gradebook.add_assignment(
-            "new", assignment_points, 20,
+            "new", assignment_points_marked, 20,
         )
 
 
@@ -497,18 +497,18 @@ def test_add_assignment_raises_on_unknown_student():
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
 
     # foo is unknown
-    assignment_points = pd.Series([10, 20, 30], index=["A1", "A2", "A3"])
+    assignment_points_marked = pd.Series([10, 20, 30], index=["A1", "A2", "A3"])
     assignment_max = 20
 
     # when
     with pytest.raises(ValueError):
         gradebook.add_assignment(
-            "new", assignment_points, 20,
+            "new", assignment_points_marked, 20,
         )
 
 
@@ -517,17 +517,17 @@ def test_add_assignment_raises_if_duplicate_name():
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_available)
 
-    assignment_points = pd.Series([10, 20], index=["A1", "A2"])
+    assignment_points_marked = pd.Series([10, 20], index=["A1", "A2"])
     assignment_max = 20
 
     # when
     with pytest.raises(ValueError):
         gradebook.add_assignment(
-            "hw01", assignment_points, 20,
+            "hw01", assignment_points_marked, 20,
         )
 
 
@@ -546,11 +546,11 @@ def test_lateness_fudge_defaults_to_5_minutes():
         name='A2'
         )
 
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([2, 50], index=columns)
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([2, 50], index=columns)
     lateness = pd.DataFrame([l1, l2])
 
-    gradebook = gradelib.Gradebook(points, maximums, lateness)
+    gradebook = gradelib.Gradebook(points_marked, points_available, lateness)
 
     assert gradebook.late.loc['A1', 'hw01'] == False
     assert gradebook.late.loc['A2', 'hw02'] == True

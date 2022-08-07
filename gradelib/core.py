@@ -3,6 +3,7 @@
 import collections.abc
 import copy
 import dataclasses
+import typing
 
 import pandas as pd
 
@@ -201,6 +202,13 @@ class GradebookOptions:
     lateness_fudge: int = 5 * 60
 
 
+@dataclasses.dataclass
+class Group:
+    name : str
+    assignments : Assignments
+    normalize_weights : bool = False
+
+
 class Gradebook:
     """Data structure which facilitates common grading operations.
 
@@ -208,21 +216,45 @@ class Gradebook:
     ----------
     points_marked : pandas.DataFrame
         A dataframe with one row per student, and one column for each assignment.
-        Each entry should be the number of points earned by the student on the
-        given assignment. The index of the dataframe should consist of student
-        PIDs.
+        Each entry should be the raw number of points earned by the student on the
+        given assignment without any deductions, e.g., for lateness. The index
+        of the dataframe should consist of Student objects.
     points_possible : pandas.Series
         A series containing the maximum number of points possible for each
         assignment. The index of the series should match the columns of the
-        `points` dataframe.
-    lateness : pandas.DataFrame
-        A Boolean dataframe with the same columns/index as `points`. An entry
-        that is `True` indicates that the assignment was late. If `None` is
-        passed, a dataframe of all `False`s is used by default.
-    dropped : pandas.DataFrame
-        A Boolean dataframe with the same columns/index as `points`. An entry
-        that is `True` indicates that the assignment should be dropped. If
-        `None` is passed, a dataframe of all `False`s is used by default.
+        `points_marked` dataframe.
+    lateness : Optional[pandas.DataFrame]
+        A dataframe of pd.Timedelta objects with the same columns/index as
+        `points_marked`. An entry in the dataframe tells how late a student
+        turned in the assignment. If `None` is passed, a dataframe of zero
+        second timedeltas is used by default.
+    dropped : Optional[pandas.DataFrame]
+        A Boolean dataframe with the same columns/index as `points_marked`. An
+        entry that is `True` indicates that the assignment should be dropped.
+        If `None` is passed, a dataframe of all `False`s is used by default.
+    deductions : Optional[dict]
+        A nested dictionary of deductions. The keys of the outer dictionary
+        should be student PIDs, and the values should be dictionaries. The keys
+        of these inner dictionaries should be assignment names, and the values
+        should be iterables of deduction objects (either PointsDeduction
+        objects or PercentageDeduction objects). If `None` is passed, an empty
+        dictionary is used by default.
+    notes : Optional[dict]
+        A nested dictionary of notes, possibly used by report generating code.
+        The keys of the outer dictionary should be student PIDs, and the values
+        should be dictionaries. The keys of the inner dictionary should specify
+        a note "channel", and can be either "late", "drop", or "misc"; these
+        are signals to reporting code that help determine where to display
+        notes. The values of the inner dictionary should be iterables of
+        strings, each one a message.
+    groups : Optional[List[Group]]
+        A list of Group objects defining the grading groups (e.g., homeworks).
+        If `None` is passed, each assignment is its own group.
+    scale : Optional[dict]
+        A dictionary mapping letter grade strings ("A+", "A", "A-", etc.) to
+        their lower thresholds as integers. for example, "A+" may be 95, "A"
+        93, and so forth. If not provided, the default letter grade scale in
+        `gradelib.scales.DEFAULT_SCALE` is used.
 
     Notes
     -----

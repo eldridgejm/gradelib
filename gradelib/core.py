@@ -798,36 +798,6 @@ class Gradebook:
 
         return self.late.loc[:, within].sum(axis=1)
 
-    def give_equal_weights(self, within):
-        """Normalize maximum points so that all assignments are worth the same.
-
-        Parameters
-        ----------
-        within : Collection[str]
-            The assignments to reweight.
-
-        Returns
-        -------
-        Gradebook
-
-        """
-        extra = set(within) - set(self.assignments)
-        if extra:
-            raise ValueError(f"These assignments are not in the gradebook: {extra}.")
-
-        within = list(within)
-
-        scores = self.points_marked[within] / self.points_possible[within]
-
-        new_points_possible = self.points_possible.copy()
-        new_points_possible[within] = 1
-        new_points_marked = self.points_marked.copy()
-        new_points_marked.loc[:, within] = scores
-
-        return self._replace(
-            points_marked=new_points_marked, points_possible=new_points_possible
-        )
-
     def total(self, within):
         """Computes the total points earned and available within one or more assignments.
 
@@ -885,3 +855,34 @@ class Gradebook:
         earned, available = self.total(within)
         return earned / available
 
+    # misc
+
+    def give_equal_weights(self, within):
+        """Normalize maximum points so that all assignments are worth the same.
+
+        Parameters
+        ----------
+        within : Collection[str]
+            The assignments to reweight.
+
+        Returns
+        -------
+        Gradebook
+
+        """
+        extra = set(within) - set(self.assignments)
+        if extra:
+            raise ValueError(f"These assignments are not in the gradebook: {extra}.")
+
+        within = list(within)
+
+        scores = self.points_marked[within] / self.points_possible[within]
+
+        new_points_possible = self.points_possible.copy()
+        new_points_possible[within] = 1
+        new_points_marked = self.points_marked.copy()
+        new_points_marked.loc[:, within] = scores
+
+        return self._replace(
+            points_marked=new_points_marked, points_possible=new_points_possible
+        )

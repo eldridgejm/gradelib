@@ -1,13 +1,32 @@
 """Data structure for managing grades."""
 
 import collections.abc
-import itertools
 import copy
+import dataclasses
 
 import pandas as pd
 
+# Student
+# ======================================================================================
 
 class Student:
+    """Represents a student.
+
+    Contains both a `pid` (identification string) and (optionally) a `name`
+    attribute. The repr is such that the name is printed if available,
+    otherwise the pid is printed. However, equality checks always use the pid.
+
+    Used in the indices of tables in the Gradebook class. This allows code like:
+
+    .. code::
+
+        gradebook.points_marked.loc['A1000234', 'homework 03']
+
+    which looks up the the number points marked for Homework 01 by student 'A1000234'.
+    But when the table is printed, the student's name will appear instead of their pid.
+
+    """
+
     def __init__(self, pid, name=None):
         self.pid = pid
         self.name = name
@@ -29,6 +48,8 @@ class Student:
         else:
             return self.pid == other
 
+# Assignments
+# ======================================================================================
 
 class Assignments(collections.abc.Sequence):
     """A sequence of assignments.
@@ -136,6 +157,9 @@ class Assignments(collections.abc.Sequence):
         return self._names[index]
 
 
+# Deductions
+# ======================================================================================
+
 class PointsDeduction:
     def __init__(self, points, note):
         self.points = points
@@ -147,6 +171,9 @@ class PercentageDeduction:
         self.percentage = percentage
         self.note = note
 
+
+# Gradebook
+# ======================================================================================
 
 def _empty_mask_like(table):
     """Given a dataframe, create another just like it with every entry False."""
@@ -167,21 +194,28 @@ def _empty_lateness_like(table):
 DEFAULT_OPTS = {"lateness_fudge": 5 * 60}
 
 
+@dataclasses.dataclass
+class GradebookOptions:
+
+    # number of seconds within which a late assignment is not considered late
+    lateness_fudge: int = 5 * 60
+
+
 class Gradebook:
-    """Data structure which facilitates common grading policies.
+    """Data structure which facilitates common grading operations.
 
     Parameters
     ----------
-    points : pandas.DataFrame
+    points_marked : pandas.DataFrame
         A dataframe with one row per student, and one column for each assignment.
         Each entry should be the number of points earned by the student on the
         given assignment. The index of the dataframe should consist of student
         PIDs.
-    maximums : pandas.Series
+    points_available : pandas.Series
         A series containing the maximum number of points possible for each
         assignment. The index of the series should match the columns of the
         `points` dataframe.
-    late : pandas.DataFrame
+    lateness : pandas.DataFrame
         A Boolean dataframe with the same columns/index as `points`. An entry
         that is `True` indicates that the assignment was late. If `None` is
         passed, a dataframe of all `False`s is used by default.

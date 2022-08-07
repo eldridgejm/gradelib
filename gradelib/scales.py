@@ -88,14 +88,14 @@ def average_gpa(letter_grades, include_failing=False):
     letter_grades
         A Series containing the letter grades.
     include_failing : Bool
-        Whether or not to include failing grades in the calculation. 
+        Whether or not to include failing grades in the calculation.
         Default: False.
 
     Returns
     -------
     float
         The average GPA.
-    
+
     """
     if not include_failing:
         letter_grades = letter_grades[letter_grades != "F"]
@@ -127,7 +127,7 @@ def letter_grade_distribution(letters):
     ----------
     letters : pd.Series
         The letter grades.
-    
+
     Returns
     -------
     pd.Series
@@ -140,7 +140,11 @@ def letter_grade_distribution(letters):
 
 
 def plot_grade_distribution(
-    scores, scale=None, x_min=0.6, x_max=1.02, bins="auto",
+    scores,
+    scale=None,
+    x_min=0.6,
+    x_max=1.02,
+    bins="auto",
 ):
     """Visualize the grade distribution with respect to a scale.
 
@@ -155,7 +159,7 @@ def plot_grade_distribution(
         A series of scores between 0 and 1, with one score per student.
     scale : OrderedDict
         An ordered dictionary specifying the cutoffs for each letter grade.
-        Optional. If `None` is passed, :attr:`DEFAULT_SCALE` is used. If 
+        Optional. If `None` is passed, :attr:`DEFAULT_SCALE` is used. If
         `False` is passed, no scale will be displayed. Default: `None`.
     x_min : float
         The smallest extent of the axis containing scores. Default: 0.6
@@ -194,14 +198,14 @@ def plot_grade_distribution(
 
 def find_robust_scale(scores, scale=None, grade_gap=0.005, threshold_gap=0.01):
     """Find a robust grading scale.
-    
+
     Given an initial grading scale, finds the largest value of each threshold
     which is at least `grade_gap` larger than the highest grade below the
     threshold.
 
     In other words, lowers the threshold for each letter grade until no student
     is agonizingly close to a higher letter grade.
-    
+
     Parameters
     ----------
     scores : pd.Series
@@ -219,7 +223,7 @@ def find_robust_scale(scores, scale=None, grade_gap=0.005, threshold_gap=0.01):
     -------
     OrderedDict
         The robust grading scale.
-    
+
     """
     if scale is None:
         scale = DEFAULT_SCALE

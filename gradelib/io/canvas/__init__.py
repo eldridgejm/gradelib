@@ -23,7 +23,7 @@ def read(
     Warning
     -------
 
-    This is a low-level function which returns a pandas DataFrame. A 
+    This is a low-level function which returns a pandas DataFrame. A
     higher-level convenience function for reading a canvas CSV directly into
     a :class:`Gradebook` is provided by :meth:`Gradebook.from_canvas`.
 
@@ -55,7 +55,7 @@ def read(
         table.index = table.index.str.upper()
 
     # read the names
-    student_names = table['Student']
+    student_names = table["Student"]
 
     def _student(pid, name):
         # some of the pids are nan; we will preserve these
@@ -64,7 +64,9 @@ def read(
         else:
             return Student(pid, name)
 
-    table.index = [_student(pid, name) for (pid, name) in zip(table.index, student_names)]
+    table.index = [
+        _student(pid, name) for (pid, name) in zip(table.index, student_names)
+    ]
 
     # the structure of the table can change quite a bit from quarter to quarter
     # the best approach to extracting the assignments might be to match them using
@@ -100,7 +102,9 @@ def read(
         points_marked.columns = points_marked.columns.str.lower()
 
     if remove_assignment_ids:
-        points_marked.columns = [_remove_assignment_id(c) for c in points_marked.columns]
+        points_marked.columns = [
+            _remove_assignment_id(c) for c in points_marked.columns
+        ]
 
     # we've possibly changed column names in points table; propagate these
     # changes to max_points

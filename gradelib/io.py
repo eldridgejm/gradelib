@@ -20,10 +20,6 @@ def read_egrades_roster(path):
     return pd.read_csv(path, delimiter="\t").set_index("Student ID")
 
 
-
-
-
-
 def _remove_assignment_id(s):
     """Remove the trailing (xxxxx) from a Canvas assignment name."""
     return re.sub(r" +\(\d+\)$", "", s)
@@ -41,7 +37,7 @@ def read_canvas(
     Warning
     -------
 
-    This is a low-level function which returns a pandas DataFrame. A 
+    This is a low-level function which returns a pandas DataFrame. A
     higher-level convenience function for reading a canvas CSV directly into
     a :class:`Gradebook` is provided by :meth:`Gradebook.from_canvas`.
 

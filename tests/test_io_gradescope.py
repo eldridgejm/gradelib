@@ -21,9 +21,7 @@ def test_read_gradescope_produces_assignments_in_order():
 
 def test_read_gradescope_same_shapes_and_columns_in_all_tables():
     # when
-    gb = gradelib.io.gradescope.read(
-        EXAMPLES_DIRECTORY / "gradescope.csv"
-    )
+    gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 
     # then
     assert (gb.points_marked.columns == gb.late.columns).all()
@@ -50,16 +48,22 @@ def test_read_gradescope_standardizes_assignments_by_default():
     assert "homework 01" in gb.points_marked.columns
     assert "homework 02" in gb.points_marked.columns
 
+
 def test_read_gradescope_creates_index_of_student_objects_with_names():
     # when
     gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 
     # then
     assert gb.points_marked.index[0].pid == "A16000000"
-    assert gb.points_marked.index[0].name == "Fitzgerald Zelda" # I got the order wrong in the example CSV
+    assert (
+        gb.points_marked.index[0].name == "Fitzgerald Zelda"
+    )  # I got the order wrong in the example CSV
 
     assert gb.late.index[0].pid == "A16000000"
-    assert gb.late.index[0].name == "Fitzgerald Zelda" # I got the order wrong in the example CSV
+    assert (
+        gb.late.index[0].name == "Fitzgerald Zelda"
+    )  # I got the order wrong in the example CSV
+
 
 def test_read_gradescope_without_canvas_link_produces_correct_assignments():
     # when
@@ -73,8 +77,8 @@ def test_read_gradescope_without_canvas_link_produces_correct_assignments():
 
 
 def test_read_gradescope_keeps_lateness_as_timedelta():
-    gb = gradelib.io.gradescope.read(
-        EXAMPLES_DIRECTORY / "gradescope-with-5m-late.csv"
-    )
+    gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope-with-5m-late.csv")
     # 22 hours, 37 minutes, 22 seconds
-    assert gb.lateness.iloc[0]['lab 07'] == pd.Timedelta(hours=22, minutes=37, seconds=22)
+    assert gb.lateness.iloc[0]["lab 07"] == pd.Timedelta(
+        hours=22, minutes=37, seconds=22
+    )

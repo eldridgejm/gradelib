@@ -11,9 +11,7 @@ import gradelib.io.canvas
 
 
 EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent / "examples"
-GRADESCOPE_EXAMPLE = gradelib.io.gradescope.read(
-    EXAMPLES_DIRECTORY / "gradescope.csv"
-)
+GRADESCOPE_EXAMPLE = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 CANVAS_EXAMPLE = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 
 # the canvas example has Lab 01, which is also in Gradescope. Let's remove it
@@ -29,13 +27,17 @@ ROSTER = gradelib.io.ucsd.read_egrades_roster(EXAMPLES_DIRECTORY / "egrades.csv"
 
 
 def assert_gradebook_is_sound(gradebook):
-    assert gradebook.points_marked.shape == gradebook.dropped.shape == gradebook.lateness.shape
+    assert (
+        gradebook.points_marked.shape
+        == gradebook.dropped.shape
+        == gradebook.lateness.shape
+    )
     assert (gradebook.points_marked.columns == gradebook.dropped.columns).all()
     assert (gradebook.points_marked.columns == gradebook.lateness.columns).all()
     assert (gradebook.points_marked.index == gradebook.dropped.index).all()
     assert (gradebook.points_marked.index == gradebook.lateness.index).all()
     assert (gradebook.points_marked.columns == gradebook.points_available.index).all()
-
+    assert isinstance(gradebook.deductions, dict)
 
 
 # assignments property
@@ -438,12 +440,18 @@ def test_add_assignment():
 
     assignment_points_marked = pd.Series([10, 20], index=["A1", "A2"])
     assignment_max = 20
-    assignment_late = pd.Series([pd.Timedelta(days=2), pd.Timedelta(days=0)], index=["A1", "A2"])
+    assignment_late = pd.Series(
+        [pd.Timedelta(days=2), pd.Timedelta(days=0)], index=["A1", "A2"]
+    )
     assignment_dropped = pd.Series([False, True], index=["A1", "A2"])
 
     # when
     result = gradebook.add_assignment(
-        "new", assignment_points_marked, 20, lateness=assignment_late, dropped=assignment_dropped
+        "new",
+        assignment_points_marked,
+        20,
+        lateness=assignment_late,
+        dropped=assignment_dropped,
     )
 
     # then
@@ -465,7 +473,11 @@ def test_add_assignment_default_none_dropped_or_late():
     assignment_max = 20
 
     # when
-    result = gradebook.add_assignment("new", assignment_points_marked, 20,)
+    result = gradebook.add_assignment(
+        "new",
+        assignment_points_marked,
+        20,
+    )
 
     # then
     assert result.late.loc["A1", "new"] == False
@@ -488,7 +500,9 @@ def test_add_assignment_raises_on_missing_student():
     # when
     with pytest.raises(ValueError):
         gradebook.add_assignment(
-            "new", assignment_points_marked, 20,
+            "new",
+            assignment_points_marked,
+            20,
         )
 
 
@@ -508,7 +522,9 @@ def test_add_assignment_raises_on_unknown_student():
     # when
     with pytest.raises(ValueError):
         gradebook.add_assignment(
-            "new", assignment_points_marked, 20,
+            "new",
+            assignment_points_marked,
+            20,
         )
 
 
@@ -527,8 +543,14 @@ def test_add_assignment_raises_if_duplicate_name():
     # when
     with pytest.raises(ValueError):
         gradebook.add_assignment(
-            "hw01", assignment_points_marked, 20,
+            "hw01",
+            assignment_points_marked,
+            20,
         )
+
+
+# lateness fudge
+# -----------------------------------------------------------------------------
 
 
 def test_lateness_fudge_defaults_to_5_minutes():
@@ -536,15 +558,15 @@ def test_lateness_fudge_defaults_to_5_minutes():
     p1 = pd.Series(data=[1, 30], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7], index=columns, name="A2")
     l1 = pd.Series(
-        data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=0)], 
+        data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=0)],
         index=columns,
-        name='A1'
-        )
+        name="A1",
+    )
     l2 = pd.Series(
         data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=60 * 5 + 1)],
         index=columns,
-        name='A2'
-        )
+        name="A2",
+    )
 
     points_marked = pd.DataFrame([p1, p2])
     points_available = pd.Series([2, 50], index=columns)
@@ -552,5 +574,83 @@ def test_lateness_fudge_defaults_to_5_minutes():
 
     gradebook = gradelib.Gradebook(points_marked, points_available, lateness)
 
-    assert gradebook.late.loc['A1', 'hw01'] == False
-    assert gradebook.late.loc['A2', 'hw02'] == True
+    assert gradebook.late.loc["A1", "hw01"] == False
+    assert gradebook.late.loc["A2", "hw02"] == True
+
+
+# points_after_deductions
+# -----------------------------------------------------------------------------
+
+def test_points_after_deductions_takes_deductions_into_account():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([20, 50], index=columns)
+
+    gb = gradelib.Gradebook(points_marked, points_available)
+
+    gb.deductions = {
+        "A1": {
+            "hw01": [
+                gradelib.PointsDeduction(5, "Late"),
+            ]
+        },
+        "A2": {
+            "hw02": [
+                gradelib.PercentageDeduction(.3, "No Name"),
+            ]
+        },
+    }
+
+    assert gb.points_after_deductions.loc['A1', 'hw01'] == 5
+    assert gb.points_after_deductions.loc['A2', 'hw02'] == 40 * .7
+
+def test_points_after_deductions_takes_multiple_deductions_into_account():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([20, 50], index=columns)
+
+    gb = gradelib.Gradebook(points_marked, points_available)
+
+    gb.deductions = {
+        "A1": {
+            "hw01": [
+                gradelib.PointsDeduction(5, "Late"),
+                gradelib.PointsDeduction(3, "No name"),
+            ]
+        },
+        "A2": {
+            "hw02": [
+                gradelib.PercentageDeduction(.3, "Late"),
+                gradelib.PercentageDeduction(.2, "No Name"),
+            ]
+        },
+    }
+
+    assert gb.points_after_deductions.loc['A1', 'hw01'] == 2
+    assert np.isclose(gb.points_after_deductions.loc['A2', 'hw02'], (40 * .7) * .8)
+
+def test_points_after_deductions_sets_floor_at_zero():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+
+    points_marked = pd.DataFrame([p1, p2])
+    points_available = pd.Series([20, 50], index=columns)
+
+    gb = gradelib.Gradebook(points_marked, points_available)
+
+    gb.deductions = {
+        "A1": {
+            "hw01": [
+                gradelib.PointsDeduction(50, "Late"),
+            ]
+        },
+    }
+
+    assert gb.points_after_deductions.loc['A1', 'hw01'] == 0

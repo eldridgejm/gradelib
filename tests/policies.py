@@ -1,4 +1,3 @@
-
 # forgive_lates()
 # -----------------------------------------------------------------------------
 
@@ -150,5 +149,3 @@ def test_drop_lowest_ignores_assignments_alread_dropped():
     assert actual.dropped.loc["A1", "hw03"]
     assert list(actual.dropped.sum(axis=1)) == [3, 1]
     assert_gradebook_is_sound(actual)
-
-

@@ -26,7 +26,7 @@ def _lateness_in_seconds(lateness):
     hours = lateness.str.split(":").str[0].astype(int)
     minutes = lateness.str.split(":").str[1].astype(int)
     seconds = lateness.str.split(":").str[2].astype(int)
-    return pd.to_timedelta(3600 * hours + 60 * minutes + seconds, unit='s')
+    return pd.to_timedelta(3600 * hours + 60 * minutes + seconds, unit="s")
 
 
 def read(path, standardize_pids=True, standardize_assignments=True):
@@ -35,7 +35,7 @@ def read(path, standardize_pids=True, standardize_assignments=True):
     Warning
     -------
 
-    This is a low-level function which returns a pandas DataFrame. A 
+    This is a low-level function which returns a pandas DataFrame. A
     higher-level convenience function for reading a gradescope CSV directly into
     a :class:`Gradebook` is provided by :meth:`Gradebook.from_gradescope`.
 
@@ -81,8 +81,10 @@ def read(path, standardize_pids=True, standardize_assignments=True):
         table.index = table.index.str.upper()
 
     # read the names
-    student_names = table['First Name'] + ' ' + table['Last Name']
-    table.index = [Student(pid, name) for (pid, name) in zip(table.index, student_names)]
+    student_names = table["First Name"] + " " + table["Last Name"]
+    table.index = [
+        Student(pid, name) for (pid, name) in zip(table.index, student_names)
+    ]
 
     # drop the total lateness column; it just gets in the way
     table = table.drop(columns="Total Lateness (H:M:S)")
@@ -110,6 +112,6 @@ def read(path, standardize_pids=True, standardize_assignments=True):
     # the csv contains time since late deadline
     lateness = table.iloc[:, starting_index + 3 :: stride]
     lateness.columns = points_marked.columns
-    lateness = lateness.apply(_lateness_in_seconds) # convert strings to seconds
+    lateness = lateness.apply(_lateness_in_seconds)  # convert strings to seconds
 
     return Gradebook(points_marked, points_available, lateness)

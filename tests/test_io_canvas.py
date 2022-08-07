@@ -48,7 +48,9 @@ def test_read_canvas_creates_index_of_student_objects_with_names():
 
     # then
     assert gb.points_marked.index[0].pid == "A16000000"
-    assert gb.points_marked.index[0].name == "Zelda Fitzgerald" # I got the order wrong in the example CSV
+    assert (
+        gb.points_marked.index[0].name == "Zelda Fitzgerald"
+    )  # I got the order wrong in the example CSV
 
     assert gb.late.index[0].pid == "A16000000"
     assert gb.late.index[0].name == "Zelda Fitzgerald"

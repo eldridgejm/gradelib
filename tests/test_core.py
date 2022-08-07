@@ -71,6 +71,24 @@ def test_restrict_to_pids_raises_if_pid_does_not_exist():
     with pytest.raises(KeyError):
         actual = GRADESCOPE_EXAMPLE.restrict_to_pids(pids)
 
+def test_restrict_to_pids_copies_all_attributes():
+    # when
+    original = GRADESCOPE_EXAMPLE.copy()
+    original.notes = {
+            "A100": {"drop": ["testing this"]}
+    }
+    original.scale = {"A": 100}
+    original.deductions = {
+            "A100": {"hw01": []}
+    }
+
+    actual = original.restrict_to_pids(ROSTER.index)
+
+    # then
+    assert actual.notes == original.notes
+    assert actual.scale == original.scale
+    assert actual.deductions == original.deductions
+
 
 # restrict_to_assignments() and remove_assignments()
 # -----------------------------------------------------------------------------
@@ -596,6 +614,34 @@ def test_lateness_fudge_defaults_to_5_minutes():
     assert gradebook.late.loc["A1", "hw01"] == False
     assert gradebook.late.loc["A2", "hw02"] == True
 
+def test_lateness_fudge_can_be_changed():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[1, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7], index=columns, name="A2")
+    l1 = pd.Series(
+        data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=0)],
+        index=columns,
+        name="A1",
+    )
+    l2 = pd.Series(
+        data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=60 * 5 + 1)],
+        index=columns,
+        name="A2",
+    )
+
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50], index=columns)
+    lateness = pd.DataFrame([l1, l2])
+
+    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness)
+
+    assert gradebook.late.loc["A1", "hw01"] == False
+    assert gradebook.late.loc["A2", "hw02"] == True
+
+    gradebook.opts.lateness_fudge = 10
+
+    assert gradebook.late.loc["A1", "hw01"] == True
+    assert gradebook.late.loc["A2", "hw02"] == True
 
 # points_after_deductions
 # -----------------------------------------------------------------------------

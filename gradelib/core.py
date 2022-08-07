@@ -210,10 +210,6 @@ def _cast_index(df):
     return df
 
 
-# TODO move to GradebookOptions
-DEFAULT_OPTS = {"lateness_fudge": 5 * 60}
-
-
 @dataclasses.dataclass
 class GradebookOptions:
 
@@ -307,7 +303,7 @@ class Gradebook:
         self.notes = {} if notes is None else notes
         self.groups = groups
         self.scale = DEFAULT_SCALE if scale is None else scale
-        self.opts = opts if opts is not None else DEFAULT_OPTS
+        self.opts = opts if opts is not None else GradebookOptions()
 
     def __repr__(self):
         return (
@@ -438,7 +434,7 @@ class Gradebook:
         always reliable, such as Gradescope.
 
         """
-        fudge = self.opts["lateness_fudge"]
+        fudge = self.opts.lateness_fudge
         return self.lateness > pd.Timedelta(fudge, unit="s")
 
     @property
@@ -761,8 +757,8 @@ class Gradebook:
         r_points = self.points_marked.loc[pids].copy()
         r_lateness = self.lateness.loc[pids].copy()
         r_dropped = self.dropped.loc[pids].copy()
-        # TODO this is not copying over all attributes
-        return self.__class__(r_points, self.points_possible, r_lateness, r_dropped)
+
+        return self._replace(points_marked=r_points, lateness=r_lateness, dropped=r_dropped)
 
 
     # methods: summaries and scoring

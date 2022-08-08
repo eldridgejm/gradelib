@@ -464,6 +464,37 @@ class Gradebook:
 # MutableGradebook
 # ======================================================================================
 
+
+def _concatenate_deductions(gradebooks):
+    """Concatenates the deductions from a sequence of gradebooks."""
+    deductions = {}
+    for gradebook in gradebooks:
+        for pid, assignments_dct in gradebook.deductions.items():
+            if pid not in deductions:
+                deductions[pid] = {}
+
+            for assignment in assignments_dct:
+                deductions[pid][assignment] = assignments_dct[assignment]
+
+    return deductions
+
+def _concatenate_notes(gradebooks):
+    """Concatenates the notes from a sequence of gradebooks."""
+    notes = {}
+    for gradebook in gradebooks:
+        for pid, channels_dct in gradebook.notes.items():
+            if pid not in notes:
+                notes[pid] = {}
+
+            for channel, messages in channels_dct.items():
+                if channel not in notes[pid]:
+                    notes[pid][channel] = []
+
+                notes[pid][channel].extend(messages)
+
+    return notes
+
+
 class MutableGradebook(Gradebook):
     """A gradebook with methods for changing assignments and grades."""
 
@@ -538,28 +569,6 @@ class MutableGradebook(Gradebook):
         lateness = concat_attr("lateness")
         dropped = concat_attr("dropped")
 
-        # concatenate deductions
-        deductions = {}
-        for gradebook in gradebooks:
-            for pid, assignments_dct in gradebook.deductions.items():
-                if pid not in deductions:
-                    deductions[pid] = {}
-
-                for assignment in assignments_dct:
-                    deductions[pid][assignment] = assignments_dct[assignment]
-
-        # concatenate notes
-        notes = {}
-        for gradebook in gradebooks:
-            for pid, channels_dct in gradebook.notes.items():
-                if pid not in notes:
-                    notes[pid] = {}
-
-                for channel, messages in channels_dct.items():
-                    if channel not in notes[pid]:
-                        notes[pid][channel] = []
-
-                    notes[pid][channel].extend(messages)
 
         return cls(
             points, maximums, lateness, dropped, deductions=deductions, notes=notes

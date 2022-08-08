@@ -235,6 +235,7 @@ def test_give_equal_weights_on_example():
 # find_student()
 # -----------------------------------------------------------------------------
 
+
 def test_find_student_is_case_insensitive():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -254,6 +255,7 @@ def test_find_student_is_case_insensitive():
     # then
     assert s == points_marked.index[0]
 
+
 def test_find_student_raises_on_multiple_matches():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -271,6 +273,7 @@ def test_find_student_raises_on_multiple_matches():
     with pytest.raises(ValueError):
         gradebook.find_student("justin")
 
+
 def test_find_student_raises_on_no_match():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -287,6 +290,7 @@ def test_find_student_raises_on_no_match():
     # when
     with pytest.raises(ValueError):
         gradebook.find_student("steve")
+
 
 # MutableGradebook
 # =============================================================================
@@ -353,13 +357,24 @@ def test_restrict_to_assignments_copies_all_attributes():
     # when
     original = GRADESCOPE_EXAMPLE.copy()
     original.notes = {"A100": {"drop": ["testing this"]}}
-    original.deductions = {"A100": {"hw01": []}}
+    original.deductions = {"A100": {"homework 01": []}}
 
     actual = original.restrict_to_assignments(["homework 01", "homework 02"])
 
     # then
     assert actual.notes == original.notes
     assert actual.deductions == original.deductions
+
+
+def test_restrict_to_assignments_removes_deductions_not_in_assignments():
+    # when
+    original = GRADESCOPE_EXAMPLE.copy()
+    original.deductions = {"A100": {"homework 01": [1], "homework 03": [3]}}
+
+    actual = original.restrict_to_assignments(["homework 01", "homework 02"])
+
+    # then
+    assert actual.deductions == {"A100": {"homework 01": [1]}}
 
 
 def test_remove_assignments():
@@ -423,6 +438,56 @@ def test_from_gradebooks_raises_if_indices_do_not_match():
         combined = gradelib.MutableGradebook.from_gradebooks(
             [CANVAS_WITHOUT_LAB_EXAMPLE, GRADESCOPE_EXAMPLE]
         )
+
+
+def test_from_gradebooks_concatenates_deductions():
+    # when
+    example_1 = GRADESCOPE_EXAMPLE.copy()
+    example_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
+
+    example_1.deductions = {"A1": {"hw01": [1, 2, 3]}, "A2": {"hw02": [4]}}
+
+    example_2.deductions = {
+        "A1": {"lab01": [5]},
+        "A2": {"lab02": [6]},
+        "A3": {"lab01": [7]},
+    }
+
+    combined = gradelib.MutableGradebook.from_gradebooks(
+        [example_1, example_2], restrict_to_pids=ROSTER.index
+    )
+
+    # then
+    assert combined.deductions == {
+        "A1": {"hw01": [1, 2, 3], "lab01": [5]},
+        "A2": {"hw02": [4], "lab02": [6]},
+        "A3": {"lab01": [7]},
+    }
+
+
+def test_from_gradebooks_concatenates_notes():
+    # when
+    example_1 = GRADESCOPE_EXAMPLE.copy()
+    example_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
+
+    example_1.notes = {"A1": {"drop": ["foo", "bar"]}, "A2": {"misc": ["baz"]}}
+
+    example_2.notes = {
+        "A1": {"drop": ["baz", "quux"]},
+        "A2": {"late": ["ok"]},
+        "A3": {"late": ["message"]},
+    }
+
+    combined = gradelib.MutableGradebook.from_gradebooks(
+        [example_1, example_2], restrict_to_pids=ROSTER.index
+    )
+
+    # then
+    assert combined.notes == {
+        "A1": {"drop": ["foo", "bar", "baz", "quux"]},
+        "A2": {"misc": ["baz"], "late": ["ok"]},
+        "A3": {"late": ["message"]},
+    }
 
 
 # combine_assignments()

@@ -429,6 +429,22 @@ class Gradebook:
     # misc
 
     def find_student(self, name_query):
+        """Finds a student from a fragment of their name.
+
+        The search is case-insensitive.
+
+        Returns
+        -------
+        Student
+            The matching student.
+
+        Raises
+        ------
+        ValueError
+            If no student matches, or if more than one student matches.
+
+        """
+
         def is_match(student):
             if student.name is None:
                 return False
@@ -484,8 +500,9 @@ class MutableGradebook(Gradebook):
         before combining them. Similarly, it verifies that each gradebook has
         unique assignments, so that no conflicts occur when combining them.
 
-        The new gradebook will have its groups, notes, deductions, and options, reset
-        to the defaults.
+        The new gradebook's deductions are a union of the deductions in the
+        existing gradebooks, as are the notes. The options are reset to their
+        defaults.
 
         Parameters
         ----------
@@ -510,8 +527,6 @@ class MutableGradebook(Gradebook):
             duplicate assignment name.
 
         """
-        # TODO we can merge notes and deductions
-
         gradebooks = list(gradebooks)
 
         if restrict_to_pids is not None:
@@ -543,7 +558,32 @@ class MutableGradebook(Gradebook):
         lateness = concat_attr("lateness")
         dropped = concat_attr("dropped")
 
-        return cls(points, maximums, lateness, dropped)
+        # concatenate deductions
+        deductions = {}
+        for gradebook in gradebooks:
+            for pid, assignments_dct in gradebook.deductions.items():
+                if pid not in deductions:
+                    deductions[pid] = {}
+
+                for assignment in assignments_dct:
+                    deductions[pid][assignment] = assignments_dct[assignment]
+
+        # concatenate notes
+        notes = {}
+        for gradebook in gradebooks:
+            for pid, channels_dct in gradebook.notes.items():
+                if pid not in notes:
+                    notes[pid] = {}
+
+                for channel, messages in channels_dct.items():
+                    if channel not in notes[pid]:
+                        notes[pid][channel] = []
+
+                    notes[pid][channel].extend(messages)
+
+        return cls(
+            points, maximums, lateness, dropped, deductions=deductions, notes=notes
+        )
 
     # methods: adding/removing assignments/students
     # ---------------------------------------------
@@ -553,9 +593,9 @@ class MutableGradebook(Gradebook):
     ):
         """Adds a single assignment to the gradebook.
 
-        Usually Gradebooks do not need to have individual assignments added to them.
-        Instead, Gradebooks are read from Canvas, Gradescope, etc. In some instances,
-        though, it can be useful to manually add an assignment to a Gradebook -- this
+        Usually gradebooks do not need to have individual assignments added to them.
+        Instead, gradebooks are read from Canvas, Gradescope, etc. In some instances,
+        though, it can be useful to manually add an assignment to a gradebook -- this
         method makes it easy to do so.
 
         Parameters
@@ -618,6 +658,8 @@ class MutableGradebook(Gradebook):
     def restrict_to_assignments(self, assignments):
         """Restrict the gradebook to only the supplied assignments.
 
+        Any deductions that reference a removed assignment are also removed.
+
         Parameters
         ----------
         assignments : Collection[str]
@@ -634,7 +676,6 @@ class MutableGradebook(Gradebook):
             If an assignment was specified that was not in the gradebook.
 
         """
-        # TODO what about .groups? .deductions?
         assignments = list(assignments)
         extras = set(assignments) - set(self.assignments)
         if extras:
@@ -645,11 +686,21 @@ class MutableGradebook(Gradebook):
         r_lateness = self.lateness.loc[:, assignments].copy()
         r_dropped = self.dropped.loc[:, assignments].copy()
 
+        # remove deductions on assignments that are not in the kept assignments
+        r_deductions = copy.deepcopy(self.deductions)
+        for student, assignments_dct in r_deductions.items():
+            assignments_dct = {
+                k: v for k, v in assignments_dct.items()
+                if k in assignments
+            }
+            r_deductions[student] = assignments_dct
+
         return self._replace(
             points_marked=r_points,
             points_possible=r_maximums,
             lateness=r_lateness,
             dropped=r_dropped,
+            deductions=r_deductions
         )
 
     def remove_assignments(self, assignments):
@@ -873,4 +924,3 @@ class FinalizedGradebook(Gradebook):
         """
         earned, available = self.total(within)
         return earned / available
-

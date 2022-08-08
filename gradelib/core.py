@@ -389,7 +389,7 @@ class Gradebook:
             if isinstance(deduction, PointsDeduction):
                 d = deduction.points
             else:
-                d = deduction.percentage * p
+                d = deduction.percentage * self.points_possible.loc[assignment]
 
             points.loc[pid, assignment] = max(p - d, 0)
 

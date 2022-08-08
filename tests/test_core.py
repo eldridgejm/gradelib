@@ -153,7 +153,7 @@ def test_points_after_deductions_takes_deductions_into_account():
     }
 
     assert gb.points_after_deductions.loc["A1", "hw01"] == 5
-    assert gb.points_after_deductions.loc["A2", "hw02"] == 40 * 0.7
+    assert gb.points_after_deductions.loc["A2", "hw02"] == 40 - 15
 
 
 def test_points_after_deductions_takes_multiple_deductions_into_account():
@@ -182,7 +182,7 @@ def test_points_after_deductions_takes_multiple_deductions_into_account():
     }
 
     assert gb.points_after_deductions.loc["A1", "hw01"] == 2
-    assert np.isclose(gb.points_after_deductions.loc["A2", "hw02"], (40 * 0.7) * 0.8)
+    assert np.isclose(gb.points_after_deductions.loc["A2", "hw02"], 40 - 25)
 
 
 def test_points_after_deductions_sets_floor_at_zero():

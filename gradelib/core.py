@@ -940,16 +940,25 @@ class MutableGradebook(Gradebook):
     def apply(self, transformations):
         """Apply transformation(s) to the gradebook.
 
+        A transformation is a callable that takes in a gradebook object and
+        returns a gradebook object. No assumption is made as to whether the
+        transformation mutates the input or produces a copy (it could return
+        the instance given as input, for example).
+
         If a sequence of transformations is provided, the output of a
         transformation is used as the input to the next transformation in the
         sequence.
+
+        The gradebook is copied before handing to the first transformation, so
+        self is guaranteed to be unmodified. This allows transformations which
+        mutate for performance reasons while still guaranteeing that the overall
+        application does not mutate this gradebook.
 
         Parameters
         ----------
         transformations : Sequence[Callable] or Callable
             Either a single gradebook transformation or a sequence of
-            transformations. A transformation is a callable that takes in a
-            gradebook object and returns a gradebook object.
+            transformations.
 
         Returns
         -------
@@ -968,7 +977,7 @@ class MutableGradebook(Gradebook):
 
         return result
 
-    def finalize(self):
+    def finalize(self, groups=None, scale=None):
         """Return a FinalizedGradebook from this MutableGradebook."""
         return FinalizedGradebook(
             points_marked=self.points_marked,
@@ -978,7 +987,12 @@ class MutableGradebook(Gradebook):
             deductions=self.deductions,
             notes=self.notes,
             opts=self.opts,
+            groups=groups,
+            scale=scale,
         )
+
+    def grade(self, steps, groups=None, scale=None):
+        self.apply(steps).finalize(groups, scale)
 
     def give_equal_weights(self, within):
         """Normalize maximum points so that all assignments are worth the same.

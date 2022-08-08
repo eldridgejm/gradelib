@@ -426,96 +426,6 @@ class Gradebook:
     def copy(self):
         return self._replace()
 
-    # methods: summaries and scoring
-    # ------------------------------
-
-    def number_of_lates(self, within=None):
-        """Return the number of late assignments for each student as a Series.
-
-        Parameters
-        ----------
-        within : Collection[str]
-            A collection of assignment names that will be used to restrict the
-            gradebook. If None, all assignments will be used. Default: None
-
-        Returns
-        -------
-        pd.Series
-            A series mapping PID to number of late assignments.
-
-        Raises
-        ------
-        ValueError
-            If `within` is empty.
-
-        """
-        if within is None:
-            within = self.assignments
-        else:
-            within = list(within)
-
-        if not within:
-            raise ValueError("Cannot pass an empty list of assignments.")
-
-        return self.late.loc[:, within].sum(axis=1)
-
-    def total(self, within):
-        """Computes the total points earned and available within one or more assignments.
-
-        Takes into account late assignments (treats them as zeros) and dropped
-        assignments (acts as if they were never assigned).
-
-        Parameters
-        ----------
-        within : Collection[str]
-            The assignments whose total points will be calculated
-
-        Returns
-        -------
-        pd.Series
-            The total points earned by each student.
-        pd.Series
-            The total points available for each student.
-
-        """
-        if isinstance(within, str):
-            within = [within]
-        else:
-            within = list(within)
-
-        points_with_lates_as_zeros = self.points_marked.copy()
-        points_with_lates_as_zeros[self.late.values] = 0
-        points_with_lates_as_zeros = points_with_lates_as_zeros[within]
-
-        # create a full array of points available
-        points_possible = self.points_marked.copy()[within]
-        points_possible.iloc[:, :] = self.points_possible[within].values
-
-        effective_points = points_with_lates_as_zeros[~self.dropped].sum(axis=1)
-        effective_possible = points_possible[~self.dropped].sum(axis=1)
-
-        return effective_points, effective_possible
-
-    def score(self, within):
-        """Computes the fraction of possible points earned across one or more assignments.
-
-        Takes into account late assignments (treats them as zeros) and dropped
-        assignments (acts as if they were never assigned).
-
-        Parameters
-        ----------
-        within : Collection[str]
-            The assignments whose overall score should be computed.
-
-        Returns
-        -------
-        pd.Series
-            The score for each student as a number between 0 and 1.
-
-        """
-        earned, available = self.total(within)
-        return earned / available
-
     # misc
 
     def give_equal_weights(self, within):
@@ -893,5 +803,65 @@ class MutableGradebook(Gradebook):
         pass
 
 
-class FinalizedGradebook:
-    pass
+class FinalizedGradebook(Gradebook):
+
+    # methods: summaries and scoring
+    # ------------------------------
+
+    def total(self, within):
+        """Computes the total points earned and available within one or more assignments.
+
+        Takes into account late assignments (treats them as zeros) and dropped
+        assignments (acts as if they were never assigned).
+
+        Parameters
+        ----------
+        within : Collection[str]
+            The assignments whose total points will be calculated
+
+        Returns
+        -------
+        pd.Series
+            The total points earned by each student.
+        pd.Series
+            The total points available for each student.
+
+        """
+        if isinstance(within, str):
+            within = [within]
+        else:
+            within = list(within)
+
+        points_with_lates_as_zeros = self.points_marked.copy()
+        points_with_lates_as_zeros[self.late.values] = 0
+        points_with_lates_as_zeros = points_with_lates_as_zeros[within]
+
+        # create a full array of points available
+        points_possible = self.points_marked.copy()[within]
+        points_possible.iloc[:, :] = self.points_possible[within].values
+
+        effective_points = points_with_lates_as_zeros[~self.dropped].sum(axis=1)
+        effective_possible = points_possible[~self.dropped].sum(axis=1)
+
+        return effective_points, effective_possible
+
+    def score(self, within):
+        """Computes the fraction of possible points earned across one or more assignments.
+
+        Takes into account late assignments (treats them as zeros) and dropped
+        assignments (acts as if they were never assigned).
+
+        Parameters
+        ----------
+        within : Collection[str]
+            The assignments whose overall score should be computed.
+
+        Returns
+        -------
+        pd.Series
+            The score for each student as a number between 0 and 1.
+
+        """
+        earned, available = self.total(within)
+        return earned / available
+

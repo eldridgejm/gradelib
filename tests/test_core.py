@@ -66,36 +66,6 @@ def test_assignments_are_produced_in_order():
 # Gradebook
 # =============================================================================
 
-# number_of_lates()
-# -----------------------------------------------------------------------------
-
-
-def test_number_of_lates():
-    # when
-    example = as_gradebook_type(GRADESCOPE_EXAMPLE, gradelib.Gradebook)
-    labs = example.assignments.starting_with("lab")
-    actual = example.number_of_lates(within=labs)
-
-    # then
-    assert list(actual) == [1, 4, 2, 2]
-
-
-def test_number_of_lates_with_empty_assignment_list_raises():
-    # when
-    example = as_gradebook_type(GRADESCOPE_EXAMPLE, gradelib.Gradebook)
-    with pytest.raises(ValueError):
-        actual = example.number_of_lates(within=[])
-
-
-def test_number_of_lates_with_no_assignment_list_uses_all_assignments():
-    # when
-    example = as_gradebook_type(GRADESCOPE_EXAMPLE, gradelib.Gradebook)
-    actual = example.number_of_lates()
-
-    # then
-    assert list(actual) == [1, 5, 2, 2]
-
-
 # lateness fudge
 # -----------------------------------------------------------------------------
 
@@ -273,7 +243,7 @@ def test_score_on_simple_example():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
     homeworks = gradebook.assignments.starting_with("hw")
 
     # when
@@ -290,7 +260,7 @@ def test_score_ignores_dropped_assignments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "hw01"] = True
     gradebook.dropped.loc["A1", "hw03"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
@@ -314,7 +284,7 @@ def test_total_on_simple_example():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
     homeworks = gradebook.assignments.starting_with("hw")
 
     # when
@@ -332,7 +302,7 @@ def test_total_ignores_dropped_assignments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "hw01"] = True
     gradebook.dropped.loc["A1", "hw03"] = True
     gradebook.dropped.loc["A2", "hw03"] = True

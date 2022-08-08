@@ -769,9 +769,7 @@ class MutableGradebook(Gradebook):
 
             combined_deductions = []
             for assignment, deductions_lst in assignments_dct.items():
-
                 deductions_lst = [_convert_deduction(assignment, d) for d in deductions_lst]
-
                 if assignment in parts:
                     combined_deductions.extend(deductions_lst)
                 else:

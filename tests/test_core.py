@@ -670,6 +670,23 @@ def test_combine_assignments_converted_percentage_deductions_to_points():
         }
     }
 
+def test_combine_assignments_copies_attributes():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook.notes = {"A1": ["ok"]}
+
+    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
+
+    result = gradebook.combine_assignments({"hw01": HOMEWORK_01_PARTS})
+
+    assert result.notes == {"A1": ["ok"]}
+
+
 # add_assignment()
 # -----------------------------------------------------------------------------
 

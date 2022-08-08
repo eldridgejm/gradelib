@@ -777,7 +777,12 @@ class MutableGradebook(Gradebook):
 
             new_deductions[student][new_name] = combined_deductions
 
-        return self.__class__(new_points, new_max, lateness=new_lateness, deductions=new_deductions)
+        # we're assuming that dropped was not set; we need to provide an empy
+        # mask here, else ._replace will use the existing larger dropped table
+        # of self, which contains all parts
+        new_dropped = _empty_mask_like(new_points)
+
+        return self._replace(points_marked=new_points, points_possible=new_max, dropped=new_dropped, lateness=new_lateness, deductions=new_deductions)
 
     def combine_assignments(self, dct_or_callable):
         """Combine the assignment parts into one single assignment with the new name.

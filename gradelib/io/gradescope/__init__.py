@@ -1,6 +1,6 @@
 import pandas as pd
 
-from gradelib import Gradebook, Student
+from gradelib import MutableGradebook, Student
 
 
 def _find_index_of_first_assignment_column(columns):

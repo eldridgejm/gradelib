@@ -10,6 +10,7 @@ from .core import (
     Points,
     Percentage,
 )
+
 from .scales import (
     DEFAULT_SCALE,
     ROUNDED_DEFAULT_SCALE,
@@ -19,3 +20,5 @@ from .scales import (
     plot_grade_distribution,
     find_robust_scale,
 )
+
+from . import steps

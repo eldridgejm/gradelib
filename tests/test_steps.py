@@ -319,12 +319,14 @@ def test_penalize_lates_respects_lateness_fudge():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
+    gradebook.opts.lateness_fudge = 60 * 5
+
     result = gradebook.apply(
         gradelib.steps.PenalizeLates()
     )
 
     assert result.deductions == {
-            "A2": {"hw01": [Points(3)]},
+            "A2": {"hw01": [Percentage(1)]},
     }
 
 def test_penalize_lates_within_assignments():

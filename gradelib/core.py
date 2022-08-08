@@ -395,6 +395,7 @@ class Gradebook:
             if isinstance(deduction, PointsDeduction):
                 d = deduction.points
             else:
+                # calculate percentage deduction based on points possible
                 d = deduction.percentage * self.points_possible.loc[assignment]
 
             points.loc[pid, assignment] = max(p - d, 0)
@@ -459,36 +460,9 @@ class Gradebook:
         [match] = [s for s in self.students if is_match(s)]
         return match
 
-    def give_equal_weights(self, within):
-        """Normalize maximum points so that all assignments are worth the same.
 
-        Parameters
-        ----------
-        within : Collection[str]
-            The assignments to reweight.
-
-        Returns
-        -------
-        Gradebook
-
-        """
-        extra = set(within) - set(self.assignments)
-        if extra:
-            raise ValueError(f"These assignments are not in the gradebook: {extra}.")
-
-        within = list(within)
-
-        scores = self.points_marked[within] / self.points_possible[within]
-
-        new_points_possible = self.points_possible.copy()
-        new_points_possible[within] = 1
-        new_points_marked = self.points_marked.copy()
-        new_points_marked.loc[:, within] = scores
-
-        return self._replace(
-            points_marked=new_points_marked, points_possible=new_points_possible
-        )
-
+# MutableGradebook
+# ======================================================================================
 
 class MutableGradebook(Gradebook):
     """A gradebook with methods for changing assignments and grades."""
@@ -593,6 +567,36 @@ class MutableGradebook(Gradebook):
 
     # methods: adding/removing assignments/students
     # ---------------------------------------------
+
+    def give_equal_weights(self, within):
+        """Normalize maximum points so that all assignments are worth the same.
+
+        Parameters
+        ----------
+        within : Collection[str]
+            The assignments to reweight.
+
+        Returns
+        -------
+        Gradebook
+
+        """
+        extra = set(within) - set(self.assignments)
+        if extra:
+            raise ValueError(f"These assignments are not in the gradebook: {extra}.")
+
+        within = list(within)
+
+        scores = self.points_marked[within] / self.points_possible[within]
+
+        new_points_possible = self.points_possible.copy()
+        new_points_possible[within] = 1
+        new_points_marked = self.points_marked.copy()
+        new_points_marked.loc[:, within] = scores
+
+        return self._replace(
+            points_marked=new_points_marked, points_possible=new_points_possible
+        )
 
     def add_assignment(
         self, name, points_marked, points_possible, lateness=None, dropped=None
@@ -899,6 +903,9 @@ class MutableGradebook(Gradebook):
     def finalize(self, groups=None):
         pass
 
+
+# FinalizedGradebook
+# ======================================================================================
 
 class FinalizedGradebook(Gradebook):
 

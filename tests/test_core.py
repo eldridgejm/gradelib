@@ -217,7 +217,7 @@ def test_give_equal_weights_on_example():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
     homeworks = gradebook.assignments.starting_with("hw")
 
     # when

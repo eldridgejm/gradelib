@@ -173,6 +173,12 @@ class PointsDeduction:
         self.note = note
 
 
+class PercentageDeduction:
+    def __init__(self, percentage, note):
+        self.percentage = percentage
+        self.note = note
+
+
 # Gradebook
 # ======================================================================================
 
@@ -247,8 +253,9 @@ class Gradebook:
         A nested dictionary of deductions. The keys of the outer dictionary
         should be student PIDs, and the values should be dictionaries. The keys
         of these inner dictionaries should be assignment names, and the values
-        should be iterables of PointsDeduction objects. If `None` is passed, an
-        empty dictionary is used by default.
+        should be iterables of deduction objects (either PointsDeduction
+        objects or PercentageDeduction objects). If `None` is passed, an empty
+        dictionary is used by default.
     notes : Optional[dict]
         A nested dictionary of notes, possibly used by report generating code.
         The keys of the outer dictionary should be student PIDs, and the values
@@ -754,7 +761,14 @@ class MutableGradebook(Gradebook):
 
         The new marked points and possible points are calculated by addition.
         The lateness of the new assignment is the *maximum* lateness of any of
-        its parts. Deductions are concanated.
+        its parts.
+
+        Deductions are concatenated. PointsDeductions are propagated unchanged,
+        but PercentageDeduction objects are converted to PointsDeductions according
+        to the ratio of the part's value to the total points possible. For example,
+        if the first part is worth 70 points, and the second part is worth 30 points,
+        and a 25% PercentageDeduction is applied to the second part, it is converted
+        to a 25% * 30 = 7.5 point PointsDeduction.
 
         It is unclear what the result should be if any of the assignments to be
         unified has been dropped, but other parts have not. For this reason,

@@ -7,6 +7,7 @@ from .core import (
     Assignments,
     Student,
     PointsDeduction,
+    PercentageDeduction,
 )
 from .scales import (
     DEFAULT_SCALE,

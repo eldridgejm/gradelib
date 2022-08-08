@@ -337,7 +337,9 @@ def test_restricted_to_pids_copies_all_attributes():
 
 def test_restricted_to_assignments():
     # when
-    actual = GRADESCOPE_EXAMPLE.restricted_to_assignments(["homework 01", "homework 02"])
+    actual = GRADESCOPE_EXAMPLE.restricted_to_assignments(
+        ["homework 01", "homework 02"]
+    )
 
     # then
     assert set(actual.assignments) == {"homework 01", "homework 02"}
@@ -414,7 +416,8 @@ def test_without_assignments_raises_if_assignment_does_not_exist():
 def test_combine_gradebooks_with_restricted_to_pids():
     # when
     combined = gradelib.combine_gradebooks(
-        [GRADESCOPE_EXAMPLE, CANVAS_WITHOUT_LAB_EXAMPLE], restricted_to_pids=ROSTER.index
+        [GRADESCOPE_EXAMPLE, CANVAS_WITHOUT_LAB_EXAMPLE],
+        restricted_to_pids=ROSTER.index,
     )
 
     # then
@@ -427,9 +430,7 @@ def test_combine_gradebooks_raises_if_duplicate_assignments():
     # the canvas example and the gradescope example both have lab 01.
     # when
     with pytest.raises(ValueError):
-        combined = gradelib.combine_gradebooks(
-            [GRADESCOPE_EXAMPLE, CANVAS_EXAMPLE]
-        )
+        combined = gradelib.combine_gradebooks([GRADESCOPE_EXAMPLE, CANVAS_EXAMPLE])
 
 
 def test_combine_gradebooks_raises_if_indices_do_not_match():

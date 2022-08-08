@@ -898,3 +898,8 @@ class Gradebook:
             points_marked=new_points_marked, points_possible=new_points_possible
         )
 
+class MutableGradebook(Gradebook):
+    pass
+
+class FinalizedGradebook:
+    pass

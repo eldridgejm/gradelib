@@ -40,6 +40,19 @@ def assert_gradebook_is_sound(gradebook):
     assert isinstance(gradebook.deductions, dict)
 
 
+def as_gradebook_type(gb, gradebook_cls):
+    """Creates a Gradebook object from a MutableGradebook or FinalizedGradebook."""
+    return gradebook_cls(
+            points_marked=gb.points_marked,
+            points_possible=gb.points_possible,
+            lateness=gb.lateness,
+            dropped=gb.dropped,
+            deductions=gb.deductions,
+            notes=gb.notes,
+            scale=gb.scale,
+            opts=gb.opts,
+    )
+
 # assignments property
 # -----------------------------------------------------------------------------
 
@@ -48,6 +61,291 @@ def test_assignments_are_produced_in_order():
     assert list(GRADESCOPE_EXAMPLE.assignments) == list(
         GRADESCOPE_EXAMPLE.points_marked.columns
     )
+
+# Gradebook
+# =============================================================================
+
+# number_of_lates()
+# -----------------------------------------------------------------------------
+
+def test_number_of_lates():
+    # when
+    example = as_gradebook_type(GRADESCOPE_EXAMPLE, gradelib.Gradebook)
+    labs = example.assignments.starting_with("lab")
+    actual = example.number_of_lates(within=labs)
+
+    # then
+    assert list(actual) == [1, 4, 2, 2]
+
+
+def test_number_of_lates_with_empty_assignment_list_raises():
+    # when
+    example = as_gradebook_type(GRADESCOPE_EXAMPLE, gradelib.Gradebook)
+    with pytest.raises(ValueError):
+        actual = example.number_of_lates(within=[])
+
+
+def test_number_of_lates_with_no_assignment_list_uses_all_assignments():
+    # when
+    example = as_gradebook_type(GRADESCOPE_EXAMPLE, gradelib.Gradebook)
+    actual = example.number_of_lates()
+
+    # then
+    assert list(actual) == [1, 5, 2, 2]
+
+
+
+# lateness fudge
+# -----------------------------------------------------------------------------
+
+
+def test_lateness_fudge_defaults_to_5_minutes():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[1, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7], index=columns, name="A2")
+    l1 = pd.Series(
+        data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=0)],
+        index=columns,
+        name="A1",
+    )
+    l2 = pd.Series(
+        data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=60 * 5 + 1)],
+        index=columns,
+        name="A2",
+    )
+
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50], index=columns)
+    lateness = pd.DataFrame([l1, l2])
+
+    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness)
+
+    assert gradebook.late.loc["A1", "hw01"] == False
+    assert gradebook.late.loc["A2", "hw02"] == True
+
+def test_lateness_fudge_can_be_changed():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[1, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7], index=columns, name="A2")
+    l1 = pd.Series(
+        data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=0)],
+        index=columns,
+        name="A1",
+    )
+    l2 = pd.Series(
+        data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=60 * 5 + 1)],
+        index=columns,
+        name="A2",
+    )
+
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50], index=columns)
+    lateness = pd.DataFrame([l1, l2])
+
+    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness)
+
+    assert gradebook.late.loc["A1", "hw01"] == False
+    assert gradebook.late.loc["A2", "hw02"] == True
+
+    gradebook.opts.lateness_fudge = 10
+
+    assert gradebook.late.loc["A1", "hw01"] == True
+    assert gradebook.late.loc["A2", "hw02"] == True
+
+# points_after_deductions
+# -----------------------------------------------------------------------------
+
+
+def test_points_after_deductions_takes_deductions_into_account():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50], index=columns)
+
+    gb = gradelib.Gradebook(points_marked, points_possible)
+
+    gb.deductions = {
+        "A1": {
+            "hw01": [
+                gradelib.PointsDeduction(5, "Late"),
+            ]
+        },
+        "A2": {
+            "hw02": [
+                gradelib.PercentageDeduction(0.3, "No Name"),
+            ]
+        },
+    }
+
+    assert gb.points_after_deductions.loc["A1", "hw01"] == 5
+    assert gb.points_after_deductions.loc["A2", "hw02"] == 40 * 0.7
+
+
+def test_points_after_deductions_takes_multiple_deductions_into_account():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50], index=columns)
+
+    gb = gradelib.Gradebook(points_marked, points_possible)
+
+    gb.deductions = {
+        "A1": {
+            "hw01": [
+                gradelib.PointsDeduction(5, "Late"),
+                gradelib.PointsDeduction(3, "No name"),
+            ]
+        },
+        "A2": {
+            "hw02": [
+                gradelib.PercentageDeduction(0.3, "Late"),
+                gradelib.PercentageDeduction(0.2, "No Name"),
+            ]
+        },
+    }
+
+    assert gb.points_after_deductions.loc["A1", "hw01"] == 2
+    assert np.isclose(gb.points_after_deductions.loc["A2", "hw02"], (40 * 0.7) * 0.8)
+
+
+def test_points_after_deductions_sets_floor_at_zero():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50], index=columns)
+
+    gb = gradelib.Gradebook(points_marked, points_possible)
+
+    gb.deductions = {
+        "A1": {
+            "hw01": [
+                gradelib.PointsDeduction(50, "Late"),
+            ]
+        },
+    }
+
+    assert gb.points_after_deductions.loc["A1", "hw01"] == 0
+
+
+# give_equal_weights()
+# -----------------------------------------------------------------------------
+
+
+def test_give_equal_weights_on_example():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    actual = gradebook.give_equal_weights(within=homeworks)
+
+    # then
+    assert actual.points_possible.loc["hw01"] == 1
+    assert actual.points_possible.loc["hw02"] == 1
+    assert actual.points_possible.loc["hw03"] == 1
+    assert actual.points_possible.loc["lab01"] == 20
+    assert actual.points_marked.loc["A1", "hw01"] == 1 / 2
+    assert actual.points_marked.loc["A1", "hw02"] == 30 / 50
+
+
+# score()
+# -----------------------------------------------------------------------------
+
+
+def test_score_on_simple_example():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    actual = gradebook.score(homeworks)
+
+    # then
+    assert np.allclose(actual.values, [121 / 152, 24 / 152], atol=1e-6)
+
+
+def test_score_ignores_dropped_assignments():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook.dropped.loc["A1", "hw01"] = True
+    gradebook.dropped.loc["A1", "hw03"] = True
+    gradebook.dropped.loc["A2", "hw03"] = True
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    actual = gradebook.score(homeworks)
+
+    # then
+    assert np.allclose(actual.values, [30 / 50, 9 / 52], atol=1e-6)
+
+
+# total()
+# -----------------------------------------------------------------------------
+
+
+def test_total_on_simple_example():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    earned, available = gradebook.total(homeworks)
+
+    # then
+    assert np.allclose(earned.values, [121, 24], atol=1e-6)
+    assert np.allclose(available.values, [152, 152], atol=1e-6)
+
+
+def test_total_ignores_dropped_assignments():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook.dropped.loc["A1", "hw01"] = True
+    gradebook.dropped.loc["A1", "hw03"] = True
+    gradebook.dropped.loc["A2", "hw03"] = True
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    earned, available = gradebook.total(homeworks)
+
+    # then
+    assert np.allclose(earned.values, [30, 9], atol=1e-6)
+    assert np.allclose(available.values, [50, 52], atol=1e-6)
+
+
+
+# MutableGradebook
+# =============================================================================
 
 
 # restrict_to_pids()
@@ -188,143 +486,6 @@ def test_from_gradebooks_raises_if_indices_do_not_match():
         combined = gradelib.Gradebook.from_gradebooks(
             [CANVAS_WITHOUT_LAB_EXAMPLE, GRADESCOPE_EXAMPLE]
         )
-
-
-# number_of_lates()
-# -----------------------------------------------------------------------------
-
-
-def test_number_of_lates():
-    # when
-    labs = GRADESCOPE_EXAMPLE.assignments.starting_with("lab")
-    actual = GRADESCOPE_EXAMPLE.number_of_lates(within=labs)
-
-    # then
-    assert list(actual) == [1, 4, 2, 2]
-
-
-def test_number_of_lates_with_empty_assignment_list_raises():
-    # when
-    with pytest.raises(ValueError):
-        actual = GRADESCOPE_EXAMPLE.number_of_lates(within=[])
-
-
-def test_number_of_lates_with_no_assignment_list_uses_all_assignments():
-    # when
-    actual = GRADESCOPE_EXAMPLE.number_of_lates()
-
-    # then
-    assert list(actual) == [1, 5, 2, 2]
-
-
-# give_equal_weights()
-# -----------------------------------------------------------------------------
-
-
-def test_give_equal_weights_on_example():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-    homeworks = gradebook.assignments.starting_with("hw")
-
-    # when
-    actual = gradebook.give_equal_weights(within=homeworks)
-
-    # then
-    assert actual.points_possible.loc["hw01"] == 1
-    assert actual.points_possible.loc["hw02"] == 1
-    assert actual.points_possible.loc["hw03"] == 1
-    assert actual.points_possible.loc["lab01"] == 20
-    assert actual.points_marked.loc["A1", "hw01"] == 1 / 2
-    assert actual.points_marked.loc["A1", "hw02"] == 30 / 50
-
-
-# score()
-# -----------------------------------------------------------------------------
-
-
-def test_score_on_simple_example():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-    homeworks = gradebook.assignments.starting_with("hw")
-
-    # when
-    actual = gradebook.score(homeworks)
-
-    # then
-    assert np.allclose(actual.values, [121 / 152, 24 / 152], atol=1e-6)
-
-
-def test_score_ignores_dropped_assignments():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-    gradebook.dropped.loc["A1", "hw01"] = True
-    gradebook.dropped.loc["A1", "hw03"] = True
-    gradebook.dropped.loc["A2", "hw03"] = True
-    homeworks = gradebook.assignments.starting_with("hw")
-
-    # when
-    actual = gradebook.score(homeworks)
-
-    # then
-    assert np.allclose(actual.values, [30 / 50, 9 / 52], atol=1e-6)
-
-
-# total()
-# -----------------------------------------------------------------------------
-
-
-def test_total_on_simple_example():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-    homeworks = gradebook.assignments.starting_with("hw")
-
-    # when
-    earned, available = gradebook.total(homeworks)
-
-    # then
-    assert np.allclose(earned.values, [121, 24], atol=1e-6)
-    assert np.allclose(available.values, [152, 152], atol=1e-6)
-
-
-def test_total_ignores_dropped_assignments():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-    gradebook.dropped.loc["A1", "hw01"] = True
-    gradebook.dropped.loc["A1", "hw03"] = True
-    gradebook.dropped.loc["A2", "hw03"] = True
-    homeworks = gradebook.assignments.starting_with("hw")
-
-    # when
-    earned, available = gradebook.total(homeworks)
-
-    # then
-    assert np.allclose(earned.values, [30, 9], atol=1e-6)
-    assert np.allclose(available.values, [50, 52], atol=1e-6)
 
 
 # combine_assignments()
@@ -602,140 +763,3 @@ def test_add_assignment_raises_if_duplicate_name():
             20,
         )
 
-
-# lateness fudge
-# -----------------------------------------------------------------------------
-
-
-def test_lateness_fudge_defaults_to_5_minutes():
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[1, 30], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7], index=columns, name="A2")
-    l1 = pd.Series(
-        data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=0)],
-        index=columns,
-        name="A1",
-    )
-    l2 = pd.Series(
-        data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=60 * 5 + 1)],
-        index=columns,
-        name="A2",
-    )
-
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50], index=columns)
-    lateness = pd.DataFrame([l1, l2])
-
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness)
-
-    assert gradebook.late.loc["A1", "hw01"] == False
-    assert gradebook.late.loc["A2", "hw02"] == True
-
-def test_lateness_fudge_can_be_changed():
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[1, 30], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7], index=columns, name="A2")
-    l1 = pd.Series(
-        data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=0)],
-        index=columns,
-        name="A1",
-    )
-    l2 = pd.Series(
-        data=[pd.Timedelta(seconds=30), pd.Timedelta(seconds=60 * 5 + 1)],
-        index=columns,
-        name="A2",
-    )
-
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50], index=columns)
-    lateness = pd.DataFrame([l1, l2])
-
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness)
-
-    assert gradebook.late.loc["A1", "hw01"] == False
-    assert gradebook.late.loc["A2", "hw02"] == True
-
-    gradebook.opts.lateness_fudge = 10
-
-    assert gradebook.late.loc["A1", "hw01"] == True
-    assert gradebook.late.loc["A2", "hw02"] == True
-
-# points_after_deductions
-# -----------------------------------------------------------------------------
-
-
-def test_points_after_deductions_takes_deductions_into_account():
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
-    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
-
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([20, 50], index=columns)
-
-    gb = gradelib.Gradebook(points_marked, points_possible)
-
-    gb.deductions = {
-        "A1": {
-            "hw01": [
-                gradelib.PointsDeduction(5, "Late"),
-            ]
-        },
-        "A2": {
-            "hw02": [
-                gradelib.PercentageDeduction(0.3, "No Name"),
-            ]
-        },
-    }
-
-    assert gb.points_after_deductions.loc["A1", "hw01"] == 5
-    assert gb.points_after_deductions.loc["A2", "hw02"] == 40 * 0.7
-
-
-def test_points_after_deductions_takes_multiple_deductions_into_account():
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
-    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
-
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([20, 50], index=columns)
-
-    gb = gradelib.Gradebook(points_marked, points_possible)
-
-    gb.deductions = {
-        "A1": {
-            "hw01": [
-                gradelib.PointsDeduction(5, "Late"),
-                gradelib.PointsDeduction(3, "No name"),
-            ]
-        },
-        "A2": {
-            "hw02": [
-                gradelib.PercentageDeduction(0.3, "Late"),
-                gradelib.PercentageDeduction(0.2, "No Name"),
-            ]
-        },
-    }
-
-    assert gb.points_after_deductions.loc["A1", "hw01"] == 2
-    assert np.isclose(gb.points_after_deductions.loc["A2", "hw02"], (40 * 0.7) * 0.8)
-
-
-def test_points_after_deductions_sets_floor_at_zero():
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
-    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
-
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([20, 50], index=columns)
-
-    gb = gradelib.Gradebook(points_marked, points_possible)
-
-    gb.deductions = {
-        "A1": {
-            "hw01": [
-                gradelib.PointsDeduction(50, "Late"),
-            ]
-        },
-    }
-
-    assert gb.points_after_deductions.loc["A1", "hw01"] == 0

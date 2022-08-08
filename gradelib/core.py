@@ -495,6 +495,39 @@ def _concatenate_notes(gradebooks):
     return notes
 
 
+def _combine_and_convert_deductions(parts, new_name, deductions, points_possible):
+    """Concatenates all deductions from the given parts.
+
+    Converts percentage deductions to points deductions along the way.
+
+    Used in .combine_assignments
+
+    """
+
+    # combine and convert deductions
+    def _convert_deduction(assignment, deduction):
+        if isinstance(deduction, PercentageDeduction):
+            possible = points_possible.loc[assignment]
+            return PointsDeduction(possible * deduction.percentage, deduction.note)
+        else:
+            return deduction
+
+    new_deductions = {}
+    for student, assignments_dct in deductions.items():
+        new_deductions[student] = {}
+
+        combined_deductions = []
+        for assignment, deductions_lst in assignments_dct.items():
+            deductions_lst = [_convert_deduction(assignment, d) for d in deductions_lst]
+            if assignment in parts:
+                combined_deductions.extend(deductions_lst)
+            else:
+                new_deductions[student][assignment] = deductions_lst
+
+        new_deductions[student][new_name] = combined_deductions
+
+    return new_deductions
+
 class MutableGradebook(Gradebook):
     """A gradebook with methods for changing assignments and grades."""
 
@@ -569,6 +602,8 @@ class MutableGradebook(Gradebook):
         lateness = concat_attr("lateness")
         dropped = concat_attr("dropped")
 
+        deductions = _concatenate_deductions(gradebooks)
+        notes = _concatenate_notes(gradebooks)
 
         return cls(
             points, maximums, lateness, dropped, deductions=deductions, notes=notes
@@ -576,36 +611,6 @@ class MutableGradebook(Gradebook):
 
     # methods: adding/removing assignments/students
     # ---------------------------------------------
-
-    def give_equal_weights(self, within):
-        """Normalize maximum points so that all assignments are worth the same.
-
-        Parameters
-        ----------
-        within : Collection[str]
-            The assignments to reweight.
-
-        Returns
-        -------
-        Gradebook
-
-        """
-        extra = set(within) - set(self.assignments)
-        if extra:
-            raise ValueError(f"These assignments are not in the gradebook: {extra}.")
-
-        within = list(within)
-
-        scores = self.points_marked[within] / self.points_possible[within]
-
-        new_points_possible = self.points_possible.copy()
-        new_points_possible[within] = 1
-        new_points_marked = self.points_marked.copy()
-        new_points_marked.loc[:, within] = scores
-
-        return self._replace(
-            points_marked=new_points_marked, points_possible=new_points_possible
-        )
 
     def add_assignment(
         self, name, points_marked, points_possible, lateness=None, dropped=None
@@ -656,6 +661,7 @@ class MutableGradebook(Gradebook):
         result = self.copy()
 
         def _match_pids(pids, where):
+            """Ensure that pids match."""
             theirs = set(pids)
             ours = set(self.pids)
             if theirs - ours:
@@ -768,27 +774,9 @@ class MutableGradebook(Gradebook):
         new_max[new_name] = assignment_max
         new_lateness[new_name] = assignment_lateness
 
-        # combine and convert deductions
-        def _convert_deduction(assignment, deduction):
-            if isinstance(deduction, PercentageDeduction):
-                possible = self.points_possible.loc[assignment]
-                return PointsDeduction(possible * deduction.percentage, deduction.note)
-            else:
-                return deduction
-
-        new_deductions = {}
-        for student, assignments_dct in self.deductions.items():
-            new_deductions[student] = {}
-
-            combined_deductions = []
-            for assignment, deductions_lst in assignments_dct.items():
-                deductions_lst = [_convert_deduction(assignment, d) for d in deductions_lst]
-                if assignment in parts:
-                    combined_deductions.extend(deductions_lst)
-                else:
-                    new_deductions[student][assignment] = deductions_lst
-
-            new_deductions[student][new_name] = combined_deductions
+        # combines deductions from all of the parts, converting PercentageDeductions
+        # to PointsDeductions along the way.
+        new_deductions = _combine_and_convert_deductions(parts, new_name, self.deductions, self.points_possible)
 
         # we're assuming that dropped was not set; we need to provide an empy
         # mask here, else ._replace will use the existing larger dropped table
@@ -912,6 +900,37 @@ class MutableGradebook(Gradebook):
     def finalize(self, groups=None):
         pass
 
+    def give_equal_weights(self, within):
+        """Normalize maximum points so that all assignments are worth the same.
+
+        Parameters
+        ----------
+        within : Collection[str]
+            The assignments to reweight.
+
+        Returns
+        -------
+        Gradebook
+
+        """
+        # TODO: probably will remove this, move functionality to FinalizedGradebook when
+        # we compute group scores
+        extra = set(within) - set(self.assignments)
+        if extra:
+            raise ValueError(f"These assignments are not in the gradebook: {extra}.")
+
+        within = list(within)
+
+        scores = self.points_marked[within] / self.points_possible[within]
+
+        new_points_possible = self.points_possible.copy()
+        new_points_possible[within] = 1
+        new_points_marked = self.points_marked.copy()
+        new_points_marked.loc[:, within] = scores
+
+        return self._replace(
+            points_marked=new_points_marked, points_possible=new_points_possible
+        )
 
 # FinalizedGradebook
 # ======================================================================================

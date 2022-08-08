@@ -10,6 +10,19 @@ def _empty_mask_like(table):
     return empty.astype(bool)
 
 
+def _resolve_within(gradebook, within):
+    if within is None:
+        within = gradebook.assignments
+
+    if callable(within):
+        within = within(gradebook.assignments)
+
+    if not within:
+        raise ValueError("Cannot use an empty list of assignments.")
+
+    return within
+
+
 # preprocessing
 # ======================================================================================
 
@@ -220,16 +233,7 @@ class PenalizeLates:
         if self.forgive < 0:
             raise ValueError("Must forgive a non-negative number of lates.")
 
-        if self.within is None:
-            within = gradebook.assignments
-        else:
-            within = self.within
-
-        if callable(within):
-            within = within(gradebook.assignments)
-
-        if not within:
-            raise ValueError("Cannot use an empty list of assignments.")
+        within = _resolve_within(gradebook, self.within)
 
         def _penalize_lates_for(pid):
             forgiveness_left = self.forgive

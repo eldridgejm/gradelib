@@ -8,6 +8,7 @@ from .scales import DEFAULT_SCALE
 
 import pandas as pd
 
+
 # Student
 # ======================================================================================
 
@@ -272,6 +273,16 @@ class Gradebook:
 
     """
 
+    _kwarg_names = [
+        "points_marked",
+        "points_possible",
+        "lateness",
+        "dropped",
+        "deductions",
+        "notes",
+        "opts",
+    ]
+
     def __init__(
         self,
         points_marked,
@@ -393,17 +404,8 @@ class Gradebook:
     # -------------------
 
     def _replace(self, **kwargs):
-        kwarg_names = [
-            "points_marked",
-            "points_possible",
-            "lateness",
-            "dropped",
-            "deductions",
-            "notes",
-            "opts",
-        ]
 
-        extra = set(kwargs.keys()) - set(kwarg_names)
+        extra = set(kwargs.keys()) - set(self._kwarg_names)
         assert not extra, f"Invalid kwargs provided: {extra}"
 
         def _copy(obj):
@@ -413,7 +415,7 @@ class Gradebook:
                 return copy.deepcopy(obj)
 
         new_kwargs = {}
-        for kwarg_name in kwarg_names:
+        for kwarg_name in self._kwarg_names:
             if kwarg_name in kwargs:
                 new_kwargs[kwarg_name] = kwargs[kwarg_name]
             else:
@@ -886,6 +888,9 @@ class MutableGradebook(Gradebook):
         return self._replace(
             points_marked=r_points, lateness=r_lateness, dropped=r_dropped
         )
+
+    def finalize(self, groups=None):
+        pass
 
 
 class FinalizedGradebook:

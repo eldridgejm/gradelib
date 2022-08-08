@@ -173,12 +173,6 @@ class PointsDeduction:
         self.note = note
 
 
-class PercentageDeduction:
-    def __init__(self, percentage, note):
-        self.percentage = percentage
-        self.note = note
-
-
 # Gradebook
 # ======================================================================================
 
@@ -253,9 +247,8 @@ class Gradebook:
         A nested dictionary of deductions. The keys of the outer dictionary
         should be student PIDs, and the values should be dictionaries. The keys
         of these inner dictionaries should be assignment names, and the values
-        should be iterables of deduction objects (either PointsDeduction
-        objects or PercentageDeduction objects). If `None` is passed, an empty
-        dictionary is used by default.
+        should be iterables of PointsDeduction objects. If `None` is passed, an
+        empty dictionary is used by default.
     notes : Optional[dict]
         A nested dictionary of notes, possibly used by report generating code.
         The keys of the outer dictionary should be student PIDs, and the values
@@ -706,6 +699,8 @@ class MutableGradebook(Gradebook):
     def remove_assignments(self, assignments):
         """Returns a new gradebook instance without the given assignments.
 
+        Any deductions that reference a removed assignment are also removed.
+
         Parameters
         ----------
         assignments : Collection[str]
@@ -722,7 +717,6 @@ class MutableGradebook(Gradebook):
             If an assignment was specified that was not in the gradebook.
 
         """
-        # TODO what about .groups? .deductions?
         assignments = list(assignments)
         extras = set(assignments) - set(self.assignments)
         if extras:
@@ -751,7 +745,7 @@ class MutableGradebook(Gradebook):
         return self.__class__(new_points, new_max, lateness=new_lateness)
 
     def combine_assignments(self, dct_or_callable):
-        """Unifies the assignment parts into one single assignment with the new name.
+        """Combine the assignment parts into one single assignment with the new name.
 
         Sometimes assignments may have several parts which are recorded separately
         in the grading software. For instance, a homework might
@@ -760,7 +754,7 @@ class MutableGradebook(Gradebook):
 
         The new marked points and possible points are calculated by addition.
         The lateness of the new assignment is the *maximum* lateness of any of
-        its parts.
+        its parts. Deductions are concanated.
 
         It is unclear what the result should be if any of the assignments to be
         unified has been dropped, but other parts have not. For this reason,
@@ -804,9 +798,6 @@ class MutableGradebook(Gradebook):
                 })
 
         """
-        # TODO what about .groups? .deductions?
-        # deductions: we can add them together
-        # groups:
         if self.deductions:
             raise NotImplementedError("Cannot combine if deductions have been defined.")
 

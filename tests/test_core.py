@@ -147,13 +147,13 @@ def test_points_after_deductions_takes_deductions_into_account():
         },
         "A2": {
             "hw02": [
-                gradelib.PercentageDeduction(0.3, "No Name"),
+                gradelib.PointsDeduction(3, "No Name"),
             ]
         },
     }
 
     assert gb.points_after_deductions.loc["A1", "hw01"] == 5
-    assert gb.points_after_deductions.loc["A2", "hw02"] == 40 * 0.7
+    assert gb.points_after_deductions.loc["A2", "hw02"] == 37
 
 
 def test_points_after_deductions_takes_multiple_deductions_into_account():
@@ -173,16 +173,9 @@ def test_points_after_deductions_takes_multiple_deductions_into_account():
                 gradelib.PointsDeduction(3, "No name"),
             ]
         },
-        "A2": {
-            "hw02": [
-                gradelib.PercentageDeduction(0.3, "Late"),
-                gradelib.PercentageDeduction(0.2, "No Name"),
-            ]
-        },
     }
 
     assert gb.points_after_deductions.loc["A1", "hw01"] == 2
-    assert np.isclose(gb.points_after_deductions.loc["A2", "hw02"], (40 * 0.7) * 0.8)
 
 
 def test_points_after_deductions_sets_floor_at_zero():

@@ -496,6 +496,82 @@ def _concatenate_notes(gradebooks):
     return notes
 
 
+def combine_gradebooks(gradebooks, restrict_to_pids=None):
+    """Create a gradebook by safely combining several existing gradebooks.
+
+    It is crucial that the combined gradebooks have exactly the same
+    students -- we don't want students to have missing grades. This
+    function checks to make sure that the gradebooks have the same students
+    before combining them. Similarly, it verifies that each gradebook has
+    unique assignments, so that no conflicts occur when combining them.
+
+    The new gradebook's deductions are a union of the deductions in the
+    existing gradebooks, as are the notes. The options are reset to their
+    defaults.
+
+    Parameters
+    ----------
+    gradebooks : Collection[Gradebook]
+        The gradebooks to combine. Must have matching indices and unique
+        column names.
+    restrict_to_pids : Collection[str] or None
+        If provided, each input gradebook will be restricted to the PIDs
+        given before attempting to combine them. This is a convenience
+        option, and it simply calls :meth:`Gradebook.restrict_to_pids` on
+        each of the inputs.  Default: None
+
+    Returns
+    -------
+    MutableGradebook
+        A gradebook combining all of the input gradebooks.
+
+    Raises
+    ------
+    ValueError
+        If the PID indices of gradebooks do not match, or if there is a
+        duplicate assignment name.
+
+    """
+    gradebooks = list(gradebooks)
+
+    if restrict_to_pids is not None:
+        gradebooks = [g.restrict_to_pids(restrict_to_pids) for g in gradebooks]
+
+    # check that all gradebooks have the same PIDs
+    reference_pids = gradebooks[0].pids
+    for gradebook in gradebooks[1:]:
+        if gradebook.pids != reference_pids:
+            raise ValueError("Not all gradebooks have the same PIDs.")
+
+    # check that all gradebooks have different assignment names
+    number_of_assignments = sum(len(g.assignments) for g in gradebooks)
+    unique_assignments = set()
+    for gradebook in gradebooks:
+        unique_assignments.update(gradebook.assignments)
+
+    if len(unique_assignments) != number_of_assignments:
+        raise ValueError("Gradebooks have duplicate assignments.")
+
+    # create the combined notebook
+    def concat_attr(a, axis=1):
+        """Create a DF/Series by combining the same attribute across gradebooks."""
+        all_tables = [getattr(g, a) for g in gradebooks]
+        return pd.concat(all_tables, axis=axis)
+
+    points = concat_attr("points_marked")
+    maximums = concat_attr("points_possible", axis=0)
+    lateness = concat_attr("lateness")
+    dropped = concat_attr("dropped")
+
+    deductions = _concatenate_deductions(gradebooks)
+    notes = _concatenate_notes(gradebooks)
+
+    return MutableGradebook(
+        points, maximums, lateness, dropped, deductions=deductions, notes=notes
+    )
+
+
+
 def _combine_and_convert_deductions(parts, new_name, deductions, points_possible):
     """Concatenates all deductions from the given parts.
 
@@ -535,81 +611,6 @@ class MutableGradebook(Gradebook):
 
     # class methods
     # -------------
-
-    @classmethod
-    def from_gradebooks(cls, gradebooks, restrict_to_pids=None):
-        """Create a gradebook by safely combining several existing gradebooks.
-
-        It is crucial that the combined gradebooks have exactly the same
-        students -- we don't want students to have missing grades. This
-        function checks to make sure that the gradebooks have the same students
-        before combining them. Similarly, it verifies that each gradebook has
-        unique assignments, so that no conflicts occur when combining them.
-
-        The new gradebook's deductions are a union of the deductions in the
-        existing gradebooks, as are the notes. The options are reset to their
-        defaults.
-
-        Parameters
-        ----------
-        gradebooks : Collection[Gradebook]
-            The gradebooks to combine. Must have matching indices and unique
-            column names.
-        restrict_to_pids : Collection[str] or None
-            If provided, each input gradebook will be restricted to the PIDs
-            given before attempting to combine them. This is a convenience
-            option, and it simply calls :meth:`Gradebook.restrict_to_pids` on
-            each of the inputs.  Default: None
-
-        Returns
-        -------
-        MutableGradebook
-            A gradebook combining all of the input gradebooks.
-
-        Raises
-        ------
-        ValueError
-            If the PID indices of gradebooks do not match, or if there is a
-            duplicate assignment name.
-
-        """
-        gradebooks = list(gradebooks)
-
-        if restrict_to_pids is not None:
-            gradebooks = [g.restrict_to_pids(restrict_to_pids) for g in gradebooks]
-
-        # check that all gradebooks have the same PIDs
-        reference_pids = gradebooks[0].pids
-        for gradebook in gradebooks[1:]:
-            if gradebook.pids != reference_pids:
-                raise ValueError("Not all gradebooks have the same PIDs.")
-
-        # check that all gradebooks have different assignment names
-        number_of_assignments = sum(len(g.assignments) for g in gradebooks)
-        unique_assignments = set()
-        for gradebook in gradebooks:
-            unique_assignments.update(gradebook.assignments)
-
-        if len(unique_assignments) != number_of_assignments:
-            raise ValueError("Gradebooks have duplicate assignments.")
-
-        # create the combined notebook
-        def concat_attr(a, axis=1):
-            """Create a DF/Series by combining the same attribute across gradebooks."""
-            all_tables = [getattr(g, a) for g in gradebooks]
-            return pd.concat(all_tables, axis=axis)
-
-        points = concat_attr("points_marked")
-        maximums = concat_attr("points_possible", axis=0)
-        lateness = concat_attr("lateness")
-        dropped = concat_attr("dropped")
-
-        deductions = _concatenate_deductions(gradebooks)
-        notes = _concatenate_notes(gradebooks)
-
-        return cls(
-            points, maximums, lateness, dropped, deductions=deductions, notes=notes
-        )
 
     # methods: adding/removing assignments/students
     # ---------------------------------------------

@@ -407,13 +407,13 @@ def test_remove_assignments_raises_if_assignment_does_not_exist():
         GRADESCOPE_EXAMPLE.remove_assignments(assignments)
 
 
-# from_gradebooks()
+# combine_gradebooks()
 # -----------------------------------------------------------------------------
 
 
-def test_from_gradebooks_with_restrict_to_pids():
+def test_combine_gradebooks_with_restrict_to_pids():
     # when
-    combined = gradelib.MutableGradebook.from_gradebooks(
+    combined = gradelib.combine_gradebooks(
         [GRADESCOPE_EXAMPLE, CANVAS_WITHOUT_LAB_EXAMPLE], restrict_to_pids=ROSTER.index
     )
 
@@ -423,24 +423,24 @@ def test_from_gradebooks_with_restrict_to_pids():
     assert_gradebook_is_sound(combined)
 
 
-def test_from_gradebooks_raises_if_duplicate_assignments():
+def test_combine_gradebooks_raises_if_duplicate_assignments():
     # the canvas example and the gradescope example both have lab 01.
     # when
     with pytest.raises(ValueError):
-        combined = gradelib.MutableGradebook.from_gradebooks(
+        combined = gradelib.combine_gradebooks(
             [GRADESCOPE_EXAMPLE, CANVAS_EXAMPLE]
         )
 
 
-def test_from_gradebooks_raises_if_indices_do_not_match():
+def test_combine_gradebooks_raises_if_indices_do_not_match():
     # when
     with pytest.raises(ValueError):
-        combined = gradelib.MutableGradebook.from_gradebooks(
+        combined = gradelib.combine_gradebooks(
             [CANVAS_WITHOUT_LAB_EXAMPLE, GRADESCOPE_EXAMPLE]
         )
 
 
-def test_from_gradebooks_concatenates_deductions():
+def test_combine_gradebooks_concatenates_deductions():
     # when
     example_1 = GRADESCOPE_EXAMPLE.copy()
     example_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
@@ -453,7 +453,7 @@ def test_from_gradebooks_concatenates_deductions():
         "A3": {"lab01": [7]},
     }
 
-    combined = gradelib.MutableGradebook.from_gradebooks(
+    combined = gradelib.combine_gradebooks(
         [example_1, example_2], restrict_to_pids=ROSTER.index
     )
 
@@ -465,7 +465,7 @@ def test_from_gradebooks_concatenates_deductions():
     }
 
 
-def test_from_gradebooks_concatenates_notes():
+def test_combine_gradebooks_concatenates_notes():
     # when
     example_1 = GRADESCOPE_EXAMPLE.copy()
     example_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
@@ -478,7 +478,7 @@ def test_from_gradebooks_concatenates_notes():
         "A3": {"late": ["message"]},
     }
 
-    combined = gradelib.MutableGradebook.from_gradebooks(
+    combined = gradelib.combine_gradebooks(
         [example_1, example_2], restrict_to_pids=ROSTER.index
     )
 

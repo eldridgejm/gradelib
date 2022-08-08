@@ -1,6 +1,7 @@
 """A package for computing overall grades in courses @ UCSD."""
 
 from .core import (
+    combine_gradebooks,
     Gradebook,
     MutableGradebook,
     FinalizedGradebook,

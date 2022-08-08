@@ -686,7 +686,7 @@ class MutableGradebook(Gradebook):
         r_lateness = self.lateness.loc[:, assignments].copy()
         r_dropped = self.dropped.loc[:, assignments].copy()
 
-        # remove deductions on assignments that are not in the kept assignments
+        # keep only the deductions which are for assignments in `assignments`
         r_deductions = copy.deepcopy(self.deductions)
         for student, assignments_dct in r_deductions.items():
             assignments_dct = {

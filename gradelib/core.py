@@ -201,11 +201,13 @@ def _empty_lateness_like(table):
 
 def _cast_index(df):
     """Ensure that the dataframe index contains Student objects."""
+
     def _cast(x):
         if isinstance(x, Student):
             return x
         else:
             return Student(x)
+
     df.index = [_cast(x) for x in df.index]
     return df
 
@@ -325,6 +327,9 @@ class Gradebook:
         before combining them. Similarly, it verifies that each gradebook has
         unique assignments, so that no conflicts occur when combining them.
 
+        The new gradebook will have its groups, notes, deductions, and options, reset
+        to the defaults.
+
         Parameters
         ----------
         gradebooks : Collection[Gradebook]
@@ -348,6 +353,8 @@ class Gradebook:
             duplicate assignment name.
 
         """
+        # TODO we can merge notes and deductions
+
         gradebooks = list(gradebooks)
 
         if restrict_to_pids is not None:
@@ -380,7 +387,6 @@ class Gradebook:
         dropped = concat_attr("dropped")
 
         return cls(points, maximums, lateness, dropped)
-
 
     # properties
     # ----------
@@ -507,7 +513,6 @@ class Gradebook:
     def copy(self):
         return self._replace()
 
-
     # methods: adding/removing assignments/students
     # ---------------------------------------------
 
@@ -516,7 +521,7 @@ class Gradebook:
     ):
         """Adds a single assignment to the gradebook.
 
-        Usually Gradebook do not need to have individual assignments added to them.
+        Usually Gradebooks do not need to have individual assignments added to them.
         Instead, Gradebooks are read from Canvas, Gradescope, etc. In some instances,
         though, it can be useful to manually add an assignment to a Gradebook -- this
         method makes it easy to do so.
@@ -608,8 +613,12 @@ class Gradebook:
         r_lateness = self.lateness.loc[:, assignments].copy()
         r_dropped = self.dropped.loc[:, assignments].copy()
 
-        # TODO this is not copying over all attributes
-        return self.__class__(r_points, r_maximums, r_lateness, r_dropped)
+        return self._replace(
+            points_marked=r_points,
+            points_possible=r_maximums,
+            lateness=r_lateness,
+            dropped=r_dropped,
+        )
 
     def remove_assignments(self, assignments):
         """Returns a new gradebook instance without the given assignments.
@@ -630,6 +639,7 @@ class Gradebook:
             If an assignment was specified that was not in the gradebook.
 
         """
+        # TODO what about .groups? .deductions?
         assignments = list(assignments)
         extras = set(assignments) - set(self.assignments)
         if extras:
@@ -711,6 +721,9 @@ class Gradebook:
                 })
 
         """
+        # TODO what about .groups? .deductions?
+        # deductions: we can add them together
+        # groups: 
         if self.deductions:
             raise NotImplementedError("Cannot combine if deductions have been defined.")
 
@@ -725,6 +738,7 @@ class Gradebook:
                     dct[key] = []
                 dct[key].append(assignment)
 
+        # TODO not sure this copies all attributes
         result = self
         for key, value in dct.items():
             result = result._combine_assignment(key, value)
@@ -758,8 +772,9 @@ class Gradebook:
         r_lateness = self.lateness.loc[pids].copy()
         r_dropped = self.dropped.loc[pids].copy()
 
-        return self._replace(points_marked=r_points, lateness=r_lateness, dropped=r_dropped)
-
+        return self._replace(
+            points_marked=r_points, lateness=r_lateness, dropped=r_dropped
+        )
 
     # methods: summaries and scoring
     # ------------------------------
@@ -882,3 +897,4 @@ class Gradebook:
         return self._replace(
             points_marked=new_points_marked, points_possible=new_points_possible
         )
+

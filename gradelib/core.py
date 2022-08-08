@@ -428,6 +428,15 @@ class Gradebook:
 
     # misc
 
+    def find_student(self, name_query):
+        def is_match(student):
+            if student.name is None:
+                return False
+            return name_query in student.name.lower()
+
+        [match] = [s for s in self.students if is_match(s)]
+        return match
+
     def give_equal_weights(self, within):
         """Normalize maximum points so that all assignments are worth the same.
 

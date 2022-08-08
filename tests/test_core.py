@@ -232,89 +232,61 @@ def test_give_equal_weights_on_example():
     assert actual.points_marked.loc["A1", "hw02"] == 30 / 50
 
 
-# score()
+# find_student()
 # -----------------------------------------------------------------------------
 
-
-def test_score_on_simple_example():
+def test_find_student_is_case_insensitive():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
-    homeworks = gradebook.assignments.starting_with("hw")
+    points_marked.index = [
+        gradelib.Student("A1", "Justin Eldridge"),
+        gradelib.Student("A2", "Barack Obama"),
+    ]
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     # when
-    actual = gradebook.score(homeworks)
+    s = gradebook.find_student("justin")
 
     # then
-    assert np.allclose(actual.values, [121 / 152, 24 / 152], atol=1e-6)
+    assert s == points_marked.index[0]
 
-
-def test_score_ignores_dropped_assignments():
+def test_find_student_raises_on_multiple_matches():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
-    gradebook.dropped.loc["A1", "hw01"] = True
-    gradebook.dropped.loc["A1", "hw03"] = True
-    gradebook.dropped.loc["A2", "hw03"] = True
-    homeworks = gradebook.assignments.starting_with("hw")
+    points_marked.index = [
+        gradelib.Student("A1", "Justin Eldridge"),
+        gradelib.Student("A2", "Justin Other"),
+    ]
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     # when
-    actual = gradebook.score(homeworks)
+    with pytest.raises(ValueError):
+        gradebook.find_student("justin")
 
-    # then
-    assert np.allclose(actual.values, [30 / 50, 9 / 52], atol=1e-6)
-
-
-# total()
-# -----------------------------------------------------------------------------
-
-
-def test_total_on_simple_example():
+def test_find_student_raises_on_no_match():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
-    homeworks = gradebook.assignments.starting_with("hw")
+    points_marked.index = [
+        gradelib.Student("A1", "Justin Eldridge"),
+        gradelib.Student("A2", "Justin Other"),
+    ]
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     # when
-    earned, available = gradebook.total(homeworks)
-
-    # then
-    assert np.allclose(earned.values, [121, 24], atol=1e-6)
-    assert np.allclose(available.values, [152, 152], atol=1e-6)
-
-
-def test_total_ignores_dropped_assignments():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
-    gradebook.dropped.loc["A1", "hw01"] = True
-    gradebook.dropped.loc["A1", "hw03"] = True
-    gradebook.dropped.loc["A2", "hw03"] = True
-    homeworks = gradebook.assignments.starting_with("hw")
-
-    # when
-    earned, available = gradebook.total(homeworks)
-
-    # then
-    assert np.allclose(earned.values, [30, 9], atol=1e-6)
-    assert np.allclose(available.values, [50, 52], atol=1e-6)
-
+    with pytest.raises(ValueError):
+        gradebook.find_student("steve")
 
 # MutableGradebook
 # =============================================================================
@@ -730,3 +702,87 @@ def test_add_assignment_raises_if_duplicate_name():
 
 # FinalizedGradebook
 # ==================
+
+
+# score()
+# -----------------------------------------------------------------------------
+
+
+def test_score_on_simple_example():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    actual = gradebook.score(homeworks)
+
+    # then
+    assert np.allclose(actual.values, [121 / 152, 24 / 152], atol=1e-6)
+
+
+def test_score_ignores_dropped_assignments():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook.dropped.loc["A1", "hw01"] = True
+    gradebook.dropped.loc["A1", "hw03"] = True
+    gradebook.dropped.loc["A2", "hw03"] = True
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    actual = gradebook.score(homeworks)
+
+    # then
+    assert np.allclose(actual.values, [30 / 50, 9 / 52], atol=1e-6)
+
+
+# total()
+# -----------------------------------------------------------------------------
+
+
+def test_total_on_simple_example():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    earned, available = gradebook.total(homeworks)
+
+    # then
+    assert np.allclose(earned.values, [121, 24], atol=1e-6)
+    assert np.allclose(available.values, [152, 152], atol=1e-6)
+
+
+def test_total_ignores_dropped_assignments():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook.dropped.loc["A1", "hw01"] = True
+    gradebook.dropped.loc["A1", "hw03"] = True
+    gradebook.dropped.loc["A2", "hw03"] = True
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    # when
+    earned, available = gradebook.total(homeworks)
+
+    # then
+    assert np.allclose(earned.values, [30, 9], atol=1e-6)
+    assert np.allclose(available.values, [50, 52], atol=1e-6)

@@ -43,15 +43,15 @@ def assert_gradebook_is_sound(gradebook):
 def as_gradebook_type(gb, gradebook_cls):
     """Creates a Gradebook object from a MutableGradebook or FinalizedGradebook."""
     return gradebook_cls(
-            points_marked=gb.points_marked,
-            points_possible=gb.points_possible,
-            lateness=gb.lateness,
-            dropped=gb.dropped,
-            deductions=gb.deductions,
-            notes=gb.notes,
-            scale=gb.scale,
-            opts=gb.opts,
+        points_marked=gb.points_marked,
+        points_possible=gb.points_possible,
+        lateness=gb.lateness,
+        dropped=gb.dropped,
+        deductions=gb.deductions,
+        notes=gb.notes,
+        opts=gb.opts,
     )
+
 
 # assignments property
 # -----------------------------------------------------------------------------
@@ -62,11 +62,13 @@ def test_assignments_are_produced_in_order():
         GRADESCOPE_EXAMPLE.points_marked.columns
     )
 
+
 # Gradebook
 # =============================================================================
 
 # number_of_lates()
 # -----------------------------------------------------------------------------
+
 
 def test_number_of_lates():
     # when
@@ -92,7 +94,6 @@ def test_number_of_lates_with_no_assignment_list_uses_all_assignments():
 
     # then
     assert list(actual) == [1, 5, 2, 2]
-
 
 
 # lateness fudge
@@ -123,6 +124,7 @@ def test_lateness_fudge_defaults_to_5_minutes():
     assert gradebook.late.loc["A1", "hw01"] == False
     assert gradebook.late.loc["A2", "hw02"] == True
 
+
 def test_lateness_fudge_can_be_changed():
     columns = ["hw01", "hw02"]
     p1 = pd.Series(data=[1, 30], index=columns, name="A1")
@@ -151,6 +153,7 @@ def test_lateness_fudge_can_be_changed():
 
     assert gradebook.late.loc["A1", "hw01"] == True
     assert gradebook.late.loc["A2", "hw02"] == True
+
 
 # points_after_deductions
 # -----------------------------------------------------------------------------
@@ -343,7 +346,6 @@ def test_total_ignores_dropped_assignments():
     assert np.allclose(available.values, [50, 52], atol=1e-6)
 
 
-
 # MutableGradebook
 # =============================================================================
 
@@ -369,22 +371,17 @@ def test_restrict_to_pids_raises_if_pid_does_not_exist():
     with pytest.raises(KeyError):
         actual = GRADESCOPE_EXAMPLE.restrict_to_pids(pids)
 
+
 def test_restrict_to_pids_copies_all_attributes():
     # when
     original = GRADESCOPE_EXAMPLE.copy()
-    original.notes = {
-            "A100": {"drop": ["testing this"]}
-    }
-    original.scale = {"A": 100}
-    original.deductions = {
-            "A100": {"hw01": []}
-    }
+    original.notes = {"A100": {"drop": ["testing this"]}}
+    original.deductions = {"A100": {"hw01": []}}
 
     actual = original.restrict_to_pids(ROSTER.index)
 
     # then
     assert actual.notes == original.notes
-    assert actual.scale == original.scale
     assert actual.deductions == original.deductions
 
 
@@ -409,23 +406,19 @@ def test_restrict_to_assignments_raises_if_assignment_does_not_exist():
     with pytest.raises(KeyError):
         GRADESCOPE_EXAMPLE.restrict_to_assignments(assignments)
 
+
 def test_restrict_to_assignments_copies_all_attributes():
     # when
     original = GRADESCOPE_EXAMPLE.copy()
-    original.notes = {
-            "A100": {"drop": ["testing this"]}
-    }
-    original.scale = {"A": 100}
-    original.deductions = {
-            "A100": {"hw01": []}
-    }
+    original.notes = {"A100": {"drop": ["testing this"]}}
+    original.deductions = {"A100": {"hw01": []}}
 
     actual = original.restrict_to_assignments(["homework 01", "homework 02"])
 
     # then
     assert actual.notes == original.notes
-    assert actual.scale == original.scale
     assert actual.deductions == original.deductions
+
 
 def test_remove_assignments():
     # when
@@ -477,7 +470,9 @@ def test_from_gradebooks_raises_if_duplicate_assignments():
     # the canvas example and the gradescope example both have lab 01.
     # when
     with pytest.raises(ValueError):
-        combined = gradelib.MutableGradebook.from_gradebooks([GRADESCOPE_EXAMPLE, CANVAS_EXAMPLE])
+        combined = gradelib.MutableGradebook.from_gradebooks(
+            [GRADESCOPE_EXAMPLE, CANVAS_EXAMPLE]
+        )
 
 
 def test_from_gradebooks_raises_if_indices_do_not_match():
@@ -753,7 +748,6 @@ def test_add_assignment_raises_if_duplicate_name():
     gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
     assignment_points_marked = pd.Series([10, 20], index=["A1", "A2"])
-    assignment_max = 20
 
     # when
     with pytest.raises(ValueError):
@@ -763,3 +757,6 @@ def test_add_assignment_raises_if_duplicate_name():
             20,
         )
 
+
+# FinalizedGradebook
+# ==================

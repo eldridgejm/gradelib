@@ -1,9 +1,8 @@
-"""Data structure for managing grades."""
+"""Core data types for managing grades."""
 
 import collections.abc
 import copy
 import dataclasses
-import typing
 
 from .scales import DEFAULT_SCALE
 
@@ -264,14 +263,6 @@ class Gradebook:
         are signals to reporting code that help determine where to display
         notes. The values of the inner dictionary should be iterables of
         strings, each one a message.
-    groups : Optional[List[Group]]
-        A list of Group objects defining the grading groups (e.g., homeworks).
-        If `None` is passed, each assignment is its own group.
-    scale : Optional[dict]
-        A dictionary mapping letter grade strings ("A+", "A", "A-", etc.) to
-        their lower thresholds as integers. for example, "A+" may be 95, "A"
-        93, and so forth. If not provided, the default letter grade scale in
-        `gradelib.scales.DEFAULT_SCALE` is used.
 
     Notes
     -----
@@ -289,8 +280,6 @@ class Gradebook:
         dropped=None,
         deductions=None,
         notes=None,
-        groups=None,
-        scale=None,
         opts=None,
     ):
         self.points_marked = _cast_index(points_marked)
@@ -303,8 +292,6 @@ class Gradebook:
         )
         self.deductions = {} if deductions is None else deductions
         self.notes = {} if notes is None else notes
-        self.groups = groups
-        self.scale = DEFAULT_SCALE if scale is None else scale
         self.opts = opts if opts is not None else GradebookOptions()
 
     def __repr__(self):
@@ -413,8 +400,6 @@ class Gradebook:
             "dropped",
             "deductions",
             "notes",
-            "groups",
-            "scale",
             "opts",
         ]
 
@@ -561,7 +546,9 @@ class Gradebook:
             points_marked=new_points_marked, points_possible=new_points_possible
         )
 
+
 class MutableGradebook(Gradebook):
+    """A gradebook with methods for changing assignments and grades."""
 
     # class methods
     # -------------
@@ -592,7 +579,7 @@ class MutableGradebook(Gradebook):
 
         Returns
         -------
-        Gradebook
+        MutableGradebook
             A gradebook combining all of the input gradebooks.
 
         Raises
@@ -847,7 +834,7 @@ class MutableGradebook(Gradebook):
         """
         # TODO what about .groups? .deductions?
         # deductions: we can add them together
-        # groups: 
+        # groups:
         if self.deductions:
             raise NotImplementedError("Cannot combine if deductions have been defined.")
 

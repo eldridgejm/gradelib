@@ -203,6 +203,11 @@ class PenalizeLates:
         A sequence of assignments within which lates will be forgiven, or a
         callable producing such a sequence of assignments. If None, all
         assignments will be used. Default: None
+    deduction : Optional[Union[Points, Percentage, Callable]]
+        The amount that should be deducted. If a callable, it is called with
+        the 1) lateness of the current assignment; 2) the points possible, and
+        3) the number of late assignments, including the current one. It should
+        return a Points or Percentage object. If None, 100% is deducted.
 
     Notes
     -----

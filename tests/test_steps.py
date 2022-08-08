@@ -280,7 +280,7 @@ def test_penalize_lates_without_forgiveness_or_within_penalizes_all_lates():
             "A2": {"hw01": [Percentage(1)]},
     }
 
-def test_penalize_lates_with_custom_penalty():
+def test_penalize_lates_with_custom_flat_deduction():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -303,6 +303,32 @@ def test_penalize_lates_with_custom_penalty():
             "A1": {"lab01": [Points(3)]},
             "A2": {"hw01": [Points(3)]},
     }
+
+def test_penalize_lates_with_callable_deduction():
+    # given
+    columns = ["hw01", "hw02", "lab01"]
+    p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([50, 100, 20], index=columns)
+    lateness = pd.DataFrame([
+            pd.to_timedelta([0, 0, 50], 's'),
+            pd.to_timedelta([6000, 0, 0], 's')
+        ], columns=columns, index=points_marked.index)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible, lateness=lateness)
+
+    HOMEWORK = gradebook.assignments.starting_with("hw")
+
+    gradebook.opts.lateness_fudge = 60 * 5
+
+    result = gradebook.apply(
+        gradelib.steps.PenalizeLates()
+    )
+
+    assert result.deductions == {
+            "A2": {"hw01": [Percentage(1)]},
+    }
+
 
 def test_penalize_lates_respects_lateness_fudge():
     # given

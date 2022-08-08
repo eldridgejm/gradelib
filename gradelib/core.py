@@ -859,7 +859,6 @@ class MutableGradebook(Gradebook):
                     dct[key] = []
                 dct[key].append(assignment)
 
-        # TODO not sure this copies all attributes
         result = self
         for key, value in dct.items():
             result = result._combine_assignment(key, value)

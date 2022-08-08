@@ -3,7 +3,7 @@ import re
 import pandas as pd
 import numpy as np
 
-from gradelib import Gradebook, Student
+from gradelib import MutableGradebook, Student
 
 
 def _remove_assignment_id(s):
@@ -110,7 +110,7 @@ def read(
     # changes to max_points
     points_possible.index = points_marked.columns
 
-    return Gradebook(points_marked, points_possible)
+    return MutableGradebook(points_marked, points_possible)
 
 
 def write_canvas_grades(existing, output, grades):

@@ -37,7 +37,7 @@ def read(path, standardize_pids=True, standardize_assignments=True):
 
     This is a low-level function which returns a pandas DataFrame. A
     higher-level convenience function for reading a gradescope CSV directly into
-    a :class:`Gradebook` is provided by :meth:`Gradebook.from_gradescope`.
+    a :class:`MutableGradebook` is provided by :meth:`Gradebook.from_gradescope`.
 
     Parameters
     ----------
@@ -114,4 +114,4 @@ def read(path, standardize_pids=True, standardize_assignments=True):
     lateness.columns = points_marked.columns
     lateness = lateness.apply(_lateness_in_seconds)  # convert strings to seconds
 
-    return Gradebook(points_marked, points_possible, lateness)
+    return MutableGradebook(points_marked, points_possible, lateness)

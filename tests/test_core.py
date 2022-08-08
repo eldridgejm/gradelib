@@ -15,7 +15,7 @@ GRADESCOPE_EXAMPLE = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescop
 CANVAS_EXAMPLE = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 
 # the canvas example has Lab 01, which is also in Gradescope. Let's remove it
-CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.Gradebook(
+CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.MutableGradebook(
     points_marked=CANVAS_EXAMPLE.points_marked.drop(columns="lab 01"),
     points_possible=CANVAS_EXAMPLE.points_possible.drop(index="lab 01"),
     lateness=CANVAS_EXAMPLE.lateness.drop(columns="lab 01"),
@@ -463,7 +463,7 @@ def test_remove_assignments_raises_if_assignment_does_not_exist():
 
 def test_from_gradebooks_with_restrict_to_pids():
     # when
-    combined = gradelib.Gradebook.from_gradebooks(
+    combined = gradelib.MutableGradebook.from_gradebooks(
         [GRADESCOPE_EXAMPLE, CANVAS_WITHOUT_LAB_EXAMPLE], restrict_to_pids=ROSTER.index
     )
 
@@ -477,13 +477,13 @@ def test_from_gradebooks_raises_if_duplicate_assignments():
     # the canvas example and the gradescope example both have lab 01.
     # when
     with pytest.raises(ValueError):
-        combined = gradelib.Gradebook.from_gradebooks([GRADESCOPE_EXAMPLE, CANVAS_EXAMPLE])
+        combined = gradelib.MutableGradebook.from_gradebooks([GRADESCOPE_EXAMPLE, CANVAS_EXAMPLE])
 
 
 def test_from_gradebooks_raises_if_indices_do_not_match():
     # when
     with pytest.raises(ValueError):
-        combined = gradelib.Gradebook.from_gradebooks(
+        combined = gradelib.MutableGradebook.from_gradebooks(
             [CANVAS_WITHOUT_LAB_EXAMPLE, GRADESCOPE_EXAMPLE]
         )
 
@@ -500,7 +500,7 @@ def test_combine_assignments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
@@ -526,7 +526,7 @@ def test_combine_assignments_with_multiple_in_dictionary():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
     HOMEWORK_02_PARTS = gradebook.assignments.starting_with("hw02")
@@ -559,7 +559,7 @@ def test_combine_assignments_with_callable():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
     HOMEWORK_02_PARTS = gradebook.assignments.starting_with("hw02")
@@ -592,7 +592,7 @@ def test_unify_uses_max_lateness_for_assignment_pieces():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
     gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(days=3)
     gradebook.lateness.loc["A1", "hw01 - programming"] = pd.Timedelta(days=5)
@@ -612,7 +612,7 @@ def test_unify_raises_if_any_part_is_dropped():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
     gradebook.dropped.loc["A1", "hw01"] = True
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
@@ -628,7 +628,7 @@ def test_unify_raises_if_deductions_defined():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
     gradebook.deductions["A1"] = {"hw01": [4]}
 
@@ -649,7 +649,7 @@ def test_add_assignment():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
     assignment_points_marked = pd.Series([10, 20], index=["A1", "A2"])
     assignment_max = 20
@@ -682,7 +682,7 @@ def test_add_assignment_default_none_dropped_or_late():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
     assignment_points_marked = pd.Series([10, 20], index=["A1", "A2"])
     assignment_max = 20
@@ -706,7 +706,7 @@ def test_add_assignment_raises_on_missing_student():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
     # A2 is missing
     assignment_points_marked = pd.Series([10], index=["A1"])
@@ -728,7 +728,7 @@ def test_add_assignment_raises_on_unknown_student():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
     # foo is unknown
     assignment_points_marked = pd.Series([10, 20, 30], index=["A1", "A2", "A3"])
@@ -750,7 +750,7 @@ def test_add_assignment_raises_if_duplicate_name():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
     assignment_points_marked = pd.Series([10, 20], index=["A1", "A2"])
     assignment_max = 20

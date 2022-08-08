@@ -314,80 +314,6 @@ class Gradebook:
             f"and {len(self.pids)} students>"
         )
 
-    # class methods
-    # -------------
-
-    @classmethod
-    def from_gradebooks(cls, gradebooks, restrict_to_pids=None):
-        """Create a gradebook by safely combining several existing gradebooks.
-
-        It is crucial that the combined gradebooks have exactly the same
-        students -- we don't want students to have missing grades. This
-        function checks to make sure that the gradebooks have the same students
-        before combining them. Similarly, it verifies that each gradebook has
-        unique assignments, so that no conflicts occur when combining them.
-
-        The new gradebook will have its groups, notes, deductions, and options, reset
-        to the defaults.
-
-        Parameters
-        ----------
-        gradebooks : Collection[Gradebook]
-            The gradebooks to combine. Must have matching indices and unique
-            column names.
-        restrict_to_pids : Collection[str] or None
-            If provided, each input gradebook will be restricted to the PIDs
-            given before attempting to combine them. This is a convenience
-            option, and it simply calls :meth:`Gradebook.restrict_to_pids` on
-            each of the inputs.  Default: None
-
-        Returns
-        -------
-        Gradebook
-            A gradebook combining all of the input gradebooks.
-
-        Raises
-        ------
-        ValueError
-            If the PID indices of gradebooks do not match, or if there is a
-            duplicate assignment name.
-
-        """
-        # TODO we can merge notes and deductions
-
-        gradebooks = list(gradebooks)
-
-        if restrict_to_pids is not None:
-            gradebooks = [g.restrict_to_pids(restrict_to_pids) for g in gradebooks]
-
-        # check that all gradebooks have the same PIDs
-        reference_pids = gradebooks[0].pids
-        for gradebook in gradebooks[1:]:
-            if gradebook.pids != reference_pids:
-                raise ValueError("Not all gradebooks have the same PIDs.")
-
-        # check that all gradebooks have different assignment names
-        number_of_assignments = sum(len(g.assignments) for g in gradebooks)
-        unique_assignments = set()
-        for gradebook in gradebooks:
-            unique_assignments.update(gradebook.assignments)
-
-        if len(unique_assignments) != number_of_assignments:
-            raise ValueError("Gradebooks have duplicate assignments.")
-
-        # create the combined notebook
-        def concat_attr(a, axis=1):
-            """Create a DF/Series by combining the same attribute across gradebooks."""
-            all_tables = [getattr(g, a) for g in gradebooks]
-            return pd.concat(all_tables, axis=axis)
-
-        points = concat_attr("points_marked")
-        maximums = concat_attr("points_possible", axis=0)
-        lateness = concat_attr("lateness")
-        dropped = concat_attr("dropped")
-
-        return cls(points, maximums, lateness, dropped)
-
     # properties
     # ----------
 
@@ -508,10 +434,208 @@ class Gradebook:
             else:
                 new_kwargs[kwarg_name] = _copy(getattr(self, kwarg_name))
 
-        return Gradebook(**new_kwargs)
+        return self.__class__(**new_kwargs)
 
     def copy(self):
         return self._replace()
+
+    # methods: summaries and scoring
+    # ------------------------------
+
+    def number_of_lates(self, within=None):
+        """Return the number of late assignments for each student as a Series.
+
+        Parameters
+        ----------
+        within : Collection[str]
+            A collection of assignment names that will be used to restrict the
+            gradebook. If None, all assignments will be used. Default: None
+
+        Returns
+        -------
+        pd.Series
+            A series mapping PID to number of late assignments.
+
+        Raises
+        ------
+        ValueError
+            If `within` is empty.
+
+        """
+        if within is None:
+            within = self.assignments
+        else:
+            within = list(within)
+
+        if not within:
+            raise ValueError("Cannot pass an empty list of assignments.")
+
+        return self.late.loc[:, within].sum(axis=1)
+
+    def total(self, within):
+        """Computes the total points earned and available within one or more assignments.
+
+        Takes into account late assignments (treats them as zeros) and dropped
+        assignments (acts as if they were never assigned).
+
+        Parameters
+        ----------
+        within : Collection[str]
+            The assignments whose total points will be calculated
+
+        Returns
+        -------
+        pd.Series
+            The total points earned by each student.
+        pd.Series
+            The total points available for each student.
+
+        """
+        if isinstance(within, str):
+            within = [within]
+        else:
+            within = list(within)
+
+        points_with_lates_as_zeros = self.points_marked.copy()
+        points_with_lates_as_zeros[self.late.values] = 0
+        points_with_lates_as_zeros = points_with_lates_as_zeros[within]
+
+        # create a full array of points available
+        points_possible = self.points_marked.copy()[within]
+        points_possible.iloc[:, :] = self.points_possible[within].values
+
+        effective_points = points_with_lates_as_zeros[~self.dropped].sum(axis=1)
+        effective_possible = points_possible[~self.dropped].sum(axis=1)
+
+        return effective_points, effective_possible
+
+    def score(self, within):
+        """Computes the fraction of possible points earned across one or more assignments.
+
+        Takes into account late assignments (treats them as zeros) and dropped
+        assignments (acts as if they were never assigned).
+
+        Parameters
+        ----------
+        within : Collection[str]
+            The assignments whose overall score should be computed.
+
+        Returns
+        -------
+        pd.Series
+            The score for each student as a number between 0 and 1.
+
+        """
+        earned, available = self.total(within)
+        return earned / available
+
+    # misc
+
+    def give_equal_weights(self, within):
+        """Normalize maximum points so that all assignments are worth the same.
+
+        Parameters
+        ----------
+        within : Collection[str]
+            The assignments to reweight.
+
+        Returns
+        -------
+        Gradebook
+
+        """
+        extra = set(within) - set(self.assignments)
+        if extra:
+            raise ValueError(f"These assignments are not in the gradebook: {extra}.")
+
+        within = list(within)
+
+        scores = self.points_marked[within] / self.points_possible[within]
+
+        new_points_possible = self.points_possible.copy()
+        new_points_possible[within] = 1
+        new_points_marked = self.points_marked.copy()
+        new_points_marked.loc[:, within] = scores
+
+        return self._replace(
+            points_marked=new_points_marked, points_possible=new_points_possible
+        )
+
+class MutableGradebook(Gradebook):
+
+    # class methods
+    # -------------
+
+    @classmethod
+    def from_gradebooks(cls, gradebooks, restrict_to_pids=None):
+        """Create a gradebook by safely combining several existing gradebooks.
+
+        It is crucial that the combined gradebooks have exactly the same
+        students -- we don't want students to have missing grades. This
+        function checks to make sure that the gradebooks have the same students
+        before combining them. Similarly, it verifies that each gradebook has
+        unique assignments, so that no conflicts occur when combining them.
+
+        The new gradebook will have its groups, notes, deductions, and options, reset
+        to the defaults.
+
+        Parameters
+        ----------
+        gradebooks : Collection[Gradebook]
+            The gradebooks to combine. Must have matching indices and unique
+            column names.
+        restrict_to_pids : Collection[str] or None
+            If provided, each input gradebook will be restricted to the PIDs
+            given before attempting to combine them. This is a convenience
+            option, and it simply calls :meth:`Gradebook.restrict_to_pids` on
+            each of the inputs.  Default: None
+
+        Returns
+        -------
+        Gradebook
+            A gradebook combining all of the input gradebooks.
+
+        Raises
+        ------
+        ValueError
+            If the PID indices of gradebooks do not match, or if there is a
+            duplicate assignment name.
+
+        """
+        # TODO we can merge notes and deductions
+
+        gradebooks = list(gradebooks)
+
+        if restrict_to_pids is not None:
+            gradebooks = [g.restrict_to_pids(restrict_to_pids) for g in gradebooks]
+
+        # check that all gradebooks have the same PIDs
+        reference_pids = gradebooks[0].pids
+        for gradebook in gradebooks[1:]:
+            if gradebook.pids != reference_pids:
+                raise ValueError("Not all gradebooks have the same PIDs.")
+
+        # check that all gradebooks have different assignment names
+        number_of_assignments = sum(len(g.assignments) for g in gradebooks)
+        unique_assignments = set()
+        for gradebook in gradebooks:
+            unique_assignments.update(gradebook.assignments)
+
+        if len(unique_assignments) != number_of_assignments:
+            raise ValueError("Gradebooks have duplicate assignments.")
+
+        # create the combined notebook
+        def concat_attr(a, axis=1):
+            """Create a DF/Series by combining the same attribute across gradebooks."""
+            all_tables = [getattr(g, a) for g in gradebooks]
+            return pd.concat(all_tables, axis=axis)
+
+        points = concat_attr("points_marked")
+        maximums = concat_attr("points_possible", axis=0)
+        lateness = concat_attr("lateness")
+        dropped = concat_attr("dropped")
+
+        return cls(points, maximums, lateness, dropped)
 
     # methods: adding/removing assignments/students
     # ---------------------------------------------
@@ -665,7 +789,7 @@ class Gradebook:
         new_max[new_name] = assignment_max
         new_lateness[new_name] = assignment_lateness
 
-        return Gradebook(new_points, new_max, lateness=new_lateness)
+        return self.__class__(new_points, new_max, lateness=new_lateness)
 
     def combine_assignments(self, dct_or_callable):
         """Unifies the assignment parts into one single assignment with the new name.
@@ -776,130 +900,6 @@ class Gradebook:
             points_marked=r_points, lateness=r_lateness, dropped=r_dropped
         )
 
-    # methods: summaries and scoring
-    # ------------------------------
-
-    def number_of_lates(self, within=None):
-        """Return the number of late assignments for each student as a Series.
-
-        Parameters
-        ----------
-        within : Collection[str]
-            A collection of assignment names that will be used to restrict the
-            gradebook. If None, all assignments will be used. Default: None
-
-        Returns
-        -------
-        pd.Series
-            A series mapping PID to number of late assignments.
-
-        Raises
-        ------
-        ValueError
-            If `within` is empty.
-
-        """
-        if within is None:
-            within = self.assignments
-        else:
-            within = list(within)
-
-        if not within:
-            raise ValueError("Cannot pass an empty list of assignments.")
-
-        return self.late.loc[:, within].sum(axis=1)
-
-    def total(self, within):
-        """Computes the total points earned and available within one or more assignments.
-
-        Takes into account late assignments (treats them as zeros) and dropped
-        assignments (acts as if they were never assigned).
-
-        Parameters
-        ----------
-        within : Collection[str]
-            The assignments whose total points will be calculated
-
-        Returns
-        -------
-        pd.Series
-            The total points earned by each student.
-        pd.Series
-            The total points available for each student.
-
-        """
-        if isinstance(within, str):
-            within = [within]
-        else:
-            within = list(within)
-
-        points_with_lates_as_zeros = self.points_marked.copy()
-        points_with_lates_as_zeros[self.late.values] = 0
-        points_with_lates_as_zeros = points_with_lates_as_zeros[within]
-
-        # create a full array of points available
-        points_possible = self.points_marked.copy()[within]
-        points_possible.iloc[:, :] = self.points_possible[within].values
-
-        effective_points = points_with_lates_as_zeros[~self.dropped].sum(axis=1)
-        effective_possible = points_possible[~self.dropped].sum(axis=1)
-
-        return effective_points, effective_possible
-
-    def score(self, within):
-        """Computes the fraction of possible points earned across one or more assignments.
-
-        Takes into account late assignments (treats them as zeros) and dropped
-        assignments (acts as if they were never assigned).
-
-        Parameters
-        ----------
-        within : Collection[str]
-            The assignments whose overall score should be computed.
-
-        Returns
-        -------
-        pd.Series
-            The score for each student as a number between 0 and 1.
-
-        """
-        earned, available = self.total(within)
-        return earned / available
-
-    # misc
-
-    def give_equal_weights(self, within):
-        """Normalize maximum points so that all assignments are worth the same.
-
-        Parameters
-        ----------
-        within : Collection[str]
-            The assignments to reweight.
-
-        Returns
-        -------
-        Gradebook
-
-        """
-        extra = set(within) - set(self.assignments)
-        if extra:
-            raise ValueError(f"These assignments are not in the gradebook: {extra}.")
-
-        within = list(within)
-
-        scores = self.points_marked[within] / self.points_possible[within]
-
-        new_points_possible = self.points_possible.copy()
-        new_points_possible[within] = 1
-        new_points_marked = self.points_marked.copy()
-        new_points_marked.loc[:, within] = scores
-
-        return self._replace(
-            points_marked=new_points_marked, points_possible=new_points_possible
-        )
-
-class MutableGradebook(Gradebook):
-    pass
 
 class FinalizedGradebook:
     pass

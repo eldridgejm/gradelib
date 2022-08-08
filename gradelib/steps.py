@@ -225,9 +225,10 @@ class PenalizeLates:
 
     """
 
-    def __init__(self, within=None, forgive=0):
+    def __init__(self, within=None, forgive=0, deduction=Percentage(1)):
         self.within = within
         self.forgive = forgive
+        self.deduction = deduction
 
     def __call__(self, gradebook):
         if self.forgive < 0:
@@ -243,18 +244,12 @@ class PenalizeLates:
                     if forgiveness_left > 0:
                         forgiveness_left -= 1
                     else:
-                        gradebook.add_deduction(pid, assignment, Percentage(1))
+                        gradebook.add_deduction(pid, assignment, self.deduction)
 
         for student in gradebook.students:
             _penalize_lates_for(student)
 
         return gradebook
-
-
-def _points_with_lates_replaced_by_zeros(gradebook):
-    replaced = gradebook.points_marked.copy()
-    replaced[gradebook.late.values] = 0
-    return replaced
 
 
 def drop_lowest(self, n, within=None):

@@ -166,17 +166,23 @@ class Assignments(collections.abc.Sequence):
 # Deductions
 # ======================================================================================
 
-
 class PointsDeduction:
+
     def __init__(self, points, note):
         self.points = points
         self.note = note
+
+    def __eq__(self, other):
+        return self.points == other.points and self.note == other.note
 
 
 class PercentageDeduction:
     def __init__(self, percentage, note):
         self.percentage = percentage
         self.note = note
+
+    def __eq__(self, other):
+        return self.percentage == other.percentage and self.note == other.note
 
 
 # Gradebook
@@ -749,7 +755,31 @@ class MutableGradebook(Gradebook):
         new_max[new_name] = assignment_max
         new_lateness[new_name] = assignment_lateness
 
-        return self.__class__(new_points, new_max, lateness=new_lateness)
+        # combine and convert deductions
+        def _convert_deduction(assignment, deduction):
+            if isinstance(deduction, PercentageDeduction):
+                possible = self.points_possible.loc[assignment]
+                return PointsDeduction(possible * deduction.percentage, deduction.note)
+            else:
+                return deduction
+
+        new_deductions = {}
+        for student, assignments_dct in self.deductions.items():
+            new_deductions[student] = {}
+
+            combined_deductions = []
+            for assignment, deductions_lst in assignments_dct.items():
+
+                deductions_lst = [_convert_deduction(assignment, d) for d in deductions_lst]
+
+                if assignment in parts:
+                    combined_deductions.extend(deductions_lst)
+                else:
+                    new_deductions[student][assignment] = deductions_lst
+
+            new_deductions[student][new_name] = combined_deductions
+
+        return self.__class__(new_points, new_max, lateness=new_lateness, deductions=new_deductions)
 
     def combine_assignments(self, dct_or_callable):
         """Combine the assignment parts into one single assignment with the new name.
@@ -758,6 +788,8 @@ class MutableGradebook(Gradebook):
         in the grading software. For instance, a homework might
         have a written part and a programming part. This method makes it easy
         to combine these parts into a single assignment.
+
+        The individual assignment parts are removed from the gradebook.
 
         The new marked points and possible points are calculated by addition.
         The lateness of the new assignment is the *maximum* lateness of any of
@@ -812,9 +844,6 @@ class MutableGradebook(Gradebook):
                 })
 
         """
-        if self.deductions:
-            raise NotImplementedError("Cannot combine if deductions have been defined.")
-
         if not callable(dct_or_callable):
             dct = dct_or_callable
         else:

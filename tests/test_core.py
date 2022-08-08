@@ -587,7 +587,7 @@ def test_combine_assignments_with_callable():
     assert result.points_marked.shape[1] == 2
 
 
-def test_unify_uses_max_lateness_for_assignment_pieces():
+def test_combine_assignments_uses_max_lateness_for_assignment_pieces():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -607,7 +607,7 @@ def test_unify_uses_max_lateness_for_assignment_pieces():
     assert result.lateness.loc["A1", "hw01"] == pd.Timedelta(days=5)
 
 
-def test_unify_raises_if_any_part_is_dropped():
+def test_combine_assignments_raises_if_any_part_is_dropped():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -623,7 +623,7 @@ def test_unify_raises_if_any_part_is_dropped():
         result = gradebook.combine_assignments({"hw01": HOMEWORK_01_PARTS})
 
 
-def test_unify_raises_if_deductions_defined():
+def test_combine_assignments_combines_deductions():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -632,13 +632,43 @@ def test_unify_raises_if_deductions_defined():
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
-    gradebook.deductions["A1"] = {"hw01": [4]}
+    gradebook.deductions["A1"] = {"hw01": [4], "hw01 - programming": [5]}
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
-    with pytest.raises(NotImplementedError):
-        result = gradebook.combine_assignments({"hw01": HOMEWORK_01_PARTS})
+    result = gradebook.combine_assignments({"hw01": HOMEWORK_01_PARTS})
 
+    assert result.deductions == {
+        "A1": {
+            "hw01": [4, 5]
+        }
+    }
+
+def test_combine_assignments_converted_percentage_deductions_to_points():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+
+    gradebook.deductions["A1"] = {"hw01": [gradelib.PointsDeduction(4, "one")], "hw01 - programming": [
+        gradelib.PercentageDeduction(.3, "two")
+        ]}
+
+    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
+
+    result = gradebook.combine_assignments({"hw01": HOMEWORK_01_PARTS})
+
+    assert result.deductions == {
+        "A1": {
+            "hw01": [
+                gradelib.PointsDeduction(4, "one"),
+                gradelib.PointsDeduction(15, "two")
+            ]
+        }
+    }
 
 # add_assignment()
 # -----------------------------------------------------------------------------

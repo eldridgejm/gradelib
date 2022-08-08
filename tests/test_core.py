@@ -296,90 +296,90 @@ def test_find_student_raises_on_no_match():
 # =============================================================================
 
 
-# restrict_to_pids()
+# restricted_to_pids()
 # -----------------------------------------------------------------------------
 
 
-def test_restrict_to_pids():
+def test_restricted_to_pids():
     # when
-    actual = GRADESCOPE_EXAMPLE.restrict_to_pids(ROSTER.index)
+    actual = GRADESCOPE_EXAMPLE.restricted_to_pids(ROSTER.index)
 
     # then
     assert len(actual.pids) == 3
     assert_gradebook_is_sound(actual)
 
 
-def test_restrict_to_pids_raises_if_pid_does_not_exist():
+def test_restricted_to_pids_raises_if_pid_does_not_exist():
     # given
     pids = ["A12345678", "ADNEDNE00"]
 
     # when
     with pytest.raises(KeyError):
-        actual = GRADESCOPE_EXAMPLE.restrict_to_pids(pids)
+        actual = GRADESCOPE_EXAMPLE.restricted_to_pids(pids)
 
 
-def test_restrict_to_pids_copies_all_attributes():
+def test_restricted_to_pids_copies_all_attributes():
     # when
     original = GRADESCOPE_EXAMPLE.copy()
     original.notes = {"A100": {"drop": ["testing this"]}}
     original.deductions = {"A100": {"hw01": []}}
 
-    actual = original.restrict_to_pids(ROSTER.index)
+    actual = original.restricted_to_pids(ROSTER.index)
 
     # then
     assert actual.notes == original.notes
     assert actual.deductions == original.deductions
 
 
-# restrict_to_assignments() and remove_assignments()
+# restricted_to_assignments() and without_assignments()
 # -----------------------------------------------------------------------------
 
 
-def test_restrict_to_assignments():
+def test_restricted_to_assignments():
     # when
-    actual = GRADESCOPE_EXAMPLE.restrict_to_assignments(["homework 01", "homework 02"])
+    actual = GRADESCOPE_EXAMPLE.restricted_to_assignments(["homework 01", "homework 02"])
 
     # then
     assert set(actual.assignments) == {"homework 01", "homework 02"}
     assert_gradebook_is_sound(actual)
 
 
-def test_restrict_to_assignments_raises_if_assignment_does_not_exist():
+def test_restricted_to_assignments_raises_if_assignment_does_not_exist():
     # given
     assignments = ["homework 01", "this aint an assignment"]
 
     # then
     with pytest.raises(KeyError):
-        GRADESCOPE_EXAMPLE.restrict_to_assignments(assignments)
+        GRADESCOPE_EXAMPLE.restricted_to_assignments(assignments)
 
 
-def test_restrict_to_assignments_copies_all_attributes():
+def test_restricted_to_assignments_copies_all_attributes():
     # when
     original = GRADESCOPE_EXAMPLE.copy()
     original.notes = {"A100": {"drop": ["testing this"]}}
     original.deductions = {"A100": {"homework 01": []}}
 
-    actual = original.restrict_to_assignments(["homework 01", "homework 02"])
+    actual = original.restricted_to_assignments(["homework 01", "homework 02"])
 
     # then
     assert actual.notes == original.notes
     assert actual.deductions == original.deductions
 
 
-def test_restrict_to_assignments_removes_deductions_not_in_assignments():
+def test_restricted_to_assignments_removes_deductions_not_in_assignments():
     # when
     original = GRADESCOPE_EXAMPLE.copy()
     original.deductions = {"A100": {"homework 01": [1], "homework 03": [3]}}
 
-    actual = original.restrict_to_assignments(["homework 01", "homework 02"])
+    actual = original.restricted_to_assignments(["homework 01", "homework 02"])
 
     # then
     assert actual.deductions == {"A100": {"homework 01": [1]}}
 
 
-def test_remove_assignments():
+def test_without_assignments():
     # when
-    actual = GRADESCOPE_EXAMPLE.remove_assignments(
+    actual = GRADESCOPE_EXAMPLE.without_assignments(
         GRADESCOPE_EXAMPLE.assignments.starting_with("lab")
     )
 
@@ -398,23 +398,23 @@ def test_remove_assignments():
     assert_gradebook_is_sound(actual)
 
 
-def test_remove_assignments_raises_if_assignment_does_not_exist():
+def test_without_assignments_raises_if_assignment_does_not_exist():
     # given
     assignments = ["homework 01", "this aint an assignment"]
 
     # then
     with pytest.raises(KeyError):
-        GRADESCOPE_EXAMPLE.remove_assignments(assignments)
+        GRADESCOPE_EXAMPLE.without_assignments(assignments)
 
 
 # combine_gradebooks()
 # -----------------------------------------------------------------------------
 
 
-def test_combine_gradebooks_with_restrict_to_pids():
+def test_combine_gradebooks_with_restricted_to_pids():
     # when
     combined = gradelib.combine_gradebooks(
-        [GRADESCOPE_EXAMPLE, CANVAS_WITHOUT_LAB_EXAMPLE], restrict_to_pids=ROSTER.index
+        [GRADESCOPE_EXAMPLE, CANVAS_WITHOUT_LAB_EXAMPLE], restricted_to_pids=ROSTER.index
     )
 
     # then
@@ -454,7 +454,7 @@ def test_combine_gradebooks_concatenates_deductions():
     }
 
     combined = gradelib.combine_gradebooks(
-        [example_1, example_2], restrict_to_pids=ROSTER.index
+        [example_1, example_2], restricted_to_pids=ROSTER.index
     )
 
     # then
@@ -479,7 +479,7 @@ def test_combine_gradebooks_concatenates_notes():
     }
 
     combined = gradelib.combine_gradebooks(
-        [example_1, example_2], restrict_to_pids=ROSTER.index
+        [example_1, example_2], restricted_to_pids=ROSTER.index
     )
 
     # then
@@ -686,11 +686,11 @@ def test_combine_assignments_copies_attributes():
     assert result.notes == {"A1": ["ok"]}
 
 
-# add_assignment()
+# with_assignment()
 # -----------------------------------------------------------------------------
 
 
-def test_add_assignment():
+def test_with_assignment():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -707,7 +707,7 @@ def test_add_assignment():
     assignment_dropped = pd.Series([False, True], index=["A1", "A2"])
 
     # when
-    result = gradebook.add_assignment(
+    result = gradebook.with_assignment(
         "new",
         assignment_points_marked,
         points_possible=20,
@@ -723,7 +723,7 @@ def test_add_assignment():
     assert isinstance(result.dropped.index[0], gradelib.Student)
 
 
-def test_add_assignment_default_none_dropped_or_late():
+def test_with_assignment_default_none_dropped_or_late():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -736,7 +736,7 @@ def test_add_assignment_default_none_dropped_or_late():
     assignment_max = 20
 
     # when
-    result = gradebook.add_assignment(
+    result = gradebook.with_assignment(
         "new",
         assignment_points_marked,
         20,
@@ -747,7 +747,7 @@ def test_add_assignment_default_none_dropped_or_late():
     assert result.dropped.loc["A1", "new"] == False
 
 
-def test_add_assignment_raises_on_missing_student():
+def test_with_assignment_raises_on_missing_student():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -762,14 +762,14 @@ def test_add_assignment_raises_on_missing_student():
 
     # when
     with pytest.raises(ValueError):
-        gradebook.add_assignment(
+        gradebook.with_assignment(
             "new",
             assignment_points_marked,
             20,
         )
 
 
-def test_add_assignment_raises_on_unknown_student():
+def test_with_assignment_raises_on_unknown_student():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -784,14 +784,14 @@ def test_add_assignment_raises_on_unknown_student():
 
     # when
     with pytest.raises(ValueError):
-        gradebook.add_assignment(
+        gradebook.with_assignment(
             "new",
             assignment_points_marked,
             20,
         )
 
 
-def test_add_assignment_raises_if_duplicate_name():
+def test_with_assignment_raises_if_duplicate_name():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -804,7 +804,7 @@ def test_add_assignment_raises_if_duplicate_name():
 
     # when
     with pytest.raises(ValueError):
-        gradebook.add_assignment(
+        gradebook.with_assignment(
             "hw01",
             assignment_points_marked,
             20,

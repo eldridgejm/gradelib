@@ -495,7 +495,7 @@ def _concatenate_notes(gradebooks):
     return notes
 
 
-def combine_gradebooks(gradebooks, restrict_to_pids=None):
+def combine_gradebooks(gradebooks, restricted_to_pids=None):
     """Create a gradebook by safely combining several existing gradebooks.
 
     It is crucial that the combined gradebooks have exactly the same
@@ -513,10 +513,10 @@ def combine_gradebooks(gradebooks, restrict_to_pids=None):
     gradebooks : Collection[Gradebook]
         The gradebooks to combine. Must have matching indices and unique
         column names.
-    restrict_to_pids : Collection[str] or None
+    restricted_to_pids : Collection[str] or None
         If provided, each input gradebook will be restricted to the PIDs
         given before attempting to combine them. This is a convenience
-        option, and it simply calls :meth:`Gradebook.restrict_to_pids` on
+        option, and it simply calls :meth:`Gradebook.restricted_to_pids` on
         each of the inputs.  Default: None
 
     Returns
@@ -533,8 +533,8 @@ def combine_gradebooks(gradebooks, restrict_to_pids=None):
     """
     gradebooks = list(gradebooks)
 
-    if restrict_to_pids is not None:
-        gradebooks = [g.restrict_to_pids(restrict_to_pids) for g in gradebooks]
+    if restricted_to_pids is not None:
+        gradebooks = [g.restricted_to_pids(restricted_to_pids) for g in gradebooks]
 
     # check that all gradebooks have the same PIDs
     reference_pids = gradebooks[0].pids
@@ -614,7 +614,7 @@ class MutableGradebook(Gradebook):
     # methods: adding/removing assignments/students
     # ---------------------------------------------
 
-    def add_assignment(
+    def with_assignment(
         self, name, points_marked, points_possible, lateness=None, dropped=None
     ):
         """Adds a single assignment to the gradebook.
@@ -682,7 +682,7 @@ class MutableGradebook(Gradebook):
 
         return result
 
-    def restrict_to_assignments(self, assignments):
+    def restricted_to_assignments(self, assignments):
         """Restrict the gradebook to only the supplied assignments.
 
         Any deductions that reference a removed assignment are also removed.
@@ -729,7 +729,7 @@ class MutableGradebook(Gradebook):
             deductions=r_deductions,
         )
 
-    def remove_assignments(self, assignments):
+    def without_assignments(self, assignments):
         """Returns a new gradebook instance without the given assignments.
 
         Any deductions that reference a removed assignment are also removed.
@@ -755,7 +755,7 @@ class MutableGradebook(Gradebook):
         if extras:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
 
-        return self.restrict_to_assignments(set(self.assignments) - set(assignments))
+        return self.restricted_to_assignments(set(self.assignments) - set(assignments))
 
     def _combine_assignment(self, new_name, parts):
         """A helper function to combine assignments under the new name."""
@@ -873,7 +873,7 @@ class MutableGradebook(Gradebook):
             result = result._combine_assignment(key, value)
         return result
 
-    def restrict_to_pids(self, to):
+    def restricted_to_pids(self, to):
         """Restrict the gradebook to only the supplied PIDS.
 
         Parameters
@@ -907,6 +907,8 @@ class MutableGradebook(Gradebook):
 
     def add_note(self, pid, channel, message):
         """Convenience method for adding a note.
+
+        Mutates the gradebook.
 
         Parameters
         ----------

@@ -166,8 +166,8 @@ class Assignments(collections.abc.Sequence):
 # Deductions
 # ======================================================================================
 
-class PointsDeduction:
 
+class PointsDeduction:
     def __init__(self, points, note):
         self.points = points
         self.note = note
@@ -478,6 +478,7 @@ def _concatenate_deductions(gradebooks):
 
     return deductions
 
+
 def _concatenate_notes(gradebooks):
     """Concatenates the notes from a sequence of gradebooks."""
     notes = {}
@@ -527,6 +528,7 @@ def _combine_and_convert_deductions(parts, new_name, deductions, points_possible
         new_deductions[student][new_name] = combined_deductions
 
     return new_deductions
+
 
 class MutableGradebook(Gradebook):
     """A gradebook with methods for changing assignments and grades."""
@@ -715,8 +717,7 @@ class MutableGradebook(Gradebook):
         r_deductions = copy.deepcopy(self.deductions)
         for student, assignments_dct in r_deductions.items():
             assignments_dct = {
-                k: v for k, v in assignments_dct.items()
-                if k in assignments
+                k: v for k, v in assignments_dct.items() if k in assignments
             }
             r_deductions[student] = assignments_dct
 
@@ -725,7 +726,7 @@ class MutableGradebook(Gradebook):
             points_possible=r_maximums,
             lateness=r_lateness,
             dropped=r_dropped,
-            deductions=r_deductions
+            deductions=r_deductions,
         )
 
     def remove_assignments(self, assignments):
@@ -776,14 +777,22 @@ class MutableGradebook(Gradebook):
 
         # combines deductions from all of the parts, converting PercentageDeductions
         # to PointsDeductions along the way.
-        new_deductions = _combine_and_convert_deductions(parts, new_name, self.deductions, self.points_possible)
+        new_deductions = _combine_and_convert_deductions(
+            parts, new_name, self.deductions, self.points_possible
+        )
 
         # we're assuming that dropped was not set; we need to provide an empy
         # mask here, else ._replace will use the existing larger dropped table
         # of self, which contains all parts
         new_dropped = _empty_mask_like(new_points)
 
-        return self._replace(points_marked=new_points, points_possible=new_max, dropped=new_dropped, lateness=new_lateness, deductions=new_deductions)
+        return self._replace(
+            points_marked=new_points,
+            points_possible=new_max,
+            dropped=new_dropped,
+            lateness=new_lateness,
+            deductions=new_deductions,
+        )
 
     def combine_assignments(self, dct_or_callable):
         """Combine the assignment parts into one single assignment with the new name.
@@ -896,8 +905,78 @@ class MutableGradebook(Gradebook):
             points_marked=r_points, lateness=r_lateness, dropped=r_dropped
         )
 
-    def finalize(self, groups=None):
-        pass
+    def add_note(self, pid, channel, message):
+        """Convenience method for adding a note.
+
+        Parameters
+        ----------
+        pid : str
+            The pid of the student for which the note should be added.
+
+        channel : str
+            The channel that the note should be added to. Should be one of
+            "drop", "late", or "misc".
+
+        message : str
+            The note's message.
+
+        """
+        valid_channels = {"drop", "late", "misc"}
+        if channel not in valid_channels:
+            raise ValueError(
+                f"Channel {channel} unrecognized. Must be one of {valid_channels}."
+            )
+
+        if pid not in self.notes:
+            self.notes[pid] = {}
+
+        if channel not in self.notes[pid]:
+            self.notes[pid][channel] = []
+
+        self.notes[pid][channel].append(message)
+
+    def apply(self, transformations):
+        """Apply transformation(s) to the gradebook.
+
+        If a sequence of transformations is provided, the output of a
+        transformation is used as the input to the next transformation in the
+        sequence.
+
+        Parameters
+        ----------
+        transformations : Sequence[Callable] or Callable
+            Either a single gradebook transformation or a sequence of
+            transformations. A transformation is a callable that takes in a
+            gradebook object and returns a gradebook object.
+
+        Returns
+        -------
+        MutableGradebook
+            The result of the last transformation in the sequence.
+
+        """
+        try:
+            transformations = list(transformations)
+        except TypeError:
+            transformations = [transformations]
+
+        result = self
+        for transformation in transformations:
+            result = transformation(result)
+
+        return result
+
+    def finalize(self):
+        """Return a FinalizedGradebook from this MutableGradebook."""
+        return FinalizedGradebook(
+            points_marked=self.points_marked,
+            points_possible=self.points_possible,
+            lateness=self.lateness,
+            dropped=self.dropped,
+            deductions=self.deductions,
+            notes=self.notes,
+            opts=self.opts,
+        )
 
     def give_equal_weights(self, within):
         """Normalize maximum points so that all assignments are worth the same.
@@ -931,8 +1010,10 @@ class MutableGradebook(Gradebook):
             points_marked=new_points_marked, points_possible=new_points_possible
         )
 
+
 # FinalizedGradebook
 # ======================================================================================
+
 
 class FinalizedGradebook(Gradebook):
 

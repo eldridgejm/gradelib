@@ -638,11 +638,8 @@ def test_combine_assignments_combines_deductions():
 
     result = gradebook.combine_assignments({"hw01": HOMEWORK_01_PARTS})
 
-    assert result.deductions == {
-        "A1": {
-            "hw01": [4, 5]
-        }
-    }
+    assert result.deductions == {"A1": {"hw01": [4, 5]}}
+
 
 def test_combine_assignments_converted_percentage_deductions_to_points():
     # given
@@ -653,9 +650,10 @@ def test_combine_assignments_converted_percentage_deductions_to_points():
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
-    gradebook.deductions["A1"] = {"hw01": [gradelib.PointsDeduction(4, "one")], "hw01 - programming": [
-        gradelib.PercentageDeduction(.3, "two")
-        ]}
+    gradebook.deductions["A1"] = {
+        "hw01": [gradelib.PointsDeduction(4, "one")],
+        "hw01 - programming": [gradelib.PercentageDeduction(0.3, "two")],
+    }
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
@@ -665,10 +663,11 @@ def test_combine_assignments_converted_percentage_deductions_to_points():
         "A1": {
             "hw01": [
                 gradelib.PointsDeduction(4, "one"),
-                gradelib.PointsDeduction(15, "two")
+                gradelib.PointsDeduction(15, "two"),
             ]
         }
     }
+
 
 def test_combine_assignments_copies_attributes():
     # given

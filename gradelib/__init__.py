@@ -7,8 +7,8 @@ from .core import (
     FinalizedGradebook,
     Assignments,
     Student,
-    PointsDeduction,
-    PercentageDeduction,
+    Points,
+    Percentage,
 )
 from .scales import (
     DEFAULT_SCALE,

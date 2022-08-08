@@ -142,12 +142,12 @@ def test_points_after_deductions_takes_deductions_into_account():
     gb.deductions = {
         "A1": {
             "hw01": [
-                gradelib.PointsDeduction(5, "Late"),
+                gradelib.Points(5),
             ]
         },
         "A2": {
             "hw02": [
-                gradelib.PercentageDeduction(0.3, "No Name"),
+                gradelib.Percentage(0.3),
             ]
         },
     }
@@ -169,14 +169,14 @@ def test_points_after_deductions_takes_multiple_deductions_into_account():
     gb.deductions = {
         "A1": {
             "hw01": [
-                gradelib.PointsDeduction(5, "Late"),
-                gradelib.PointsDeduction(3, "No name"),
+                gradelib.Points(5),
+                gradelib.Points(3),
             ]
         },
         "A2": {
             "hw02": [
-                gradelib.PercentageDeduction(0.3, "Late"),
-                gradelib.PercentageDeduction(0.2, "No Name"),
+                gradelib.Percentage(0.3),
+                gradelib.Percentage(0.2),
             ]
         },
     }
@@ -198,7 +198,7 @@ def test_points_after_deductions_sets_floor_at_zero():
     gb.deductions = {
         "A1": {
             "hw01": [
-                gradelib.PointsDeduction(50, "Late"),
+                gradelib.Points(50),
             ]
         },
     }
@@ -651,8 +651,8 @@ def test_combine_assignments_converted_percentage_deductions_to_points():
     gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
     gradebook.deductions["A1"] = {
-        "hw01": [gradelib.PointsDeduction(4, "one")],
-        "hw01 - programming": [gradelib.PercentageDeduction(0.3, "two")],
+        "hw01": [gradelib.Points(4)],
+        "hw01 - programming": [gradelib.Percentage(0.3)],
     }
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
@@ -662,8 +662,8 @@ def test_combine_assignments_converted_percentage_deductions_to_points():
     assert result.deductions == {
         "A1": {
             "hw01": [
-                gradelib.PointsDeduction(4, "one"),
-                gradelib.PointsDeduction(15, "two"),
+                gradelib.Points(4),
+                gradelib.Points(15),
             ]
         }
     }

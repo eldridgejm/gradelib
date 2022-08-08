@@ -167,23 +167,23 @@ class Assignments(collections.abc.Sequence):
 # ======================================================================================
 
 
-class PointsDeduction:
-    def __init__(self, points, note):
-        self.points = points
-        self.note = note
+class _GradeAmount:
+
+    def __init__(self, amount):
+        self.amount = amount
 
     def __eq__(self, other):
-        return self.points == other.points and self.note == other.note
+        if not isinstance(other, self.__class__):
+            return False
+        return self.amount == other.amount
 
 
-class PercentageDeduction:
-    def __init__(self, percentage, note):
-        self.percentage = percentage
-        self.note = note
+class Points(_GradeAmount):
+    pass
 
-    def __eq__(self, other):
-        return self.percentage == other.percentage and self.note == other.note
 
+class Percentage(_GradeAmount):
+    pass
 
 # Gradebook
 # ======================================================================================
@@ -259,9 +259,8 @@ class Gradebook:
         A nested dictionary of deductions. The keys of the outer dictionary
         should be student PIDs, and the values should be dictionaries. The keys
         of these inner dictionaries should be assignment names, and the values
-        should be iterables of deduction objects (either PointsDeduction
-        objects or PercentageDeduction objects). If `None` is passed, an empty
-        dictionary is used by default.
+        should be iterables of either Points or Percentage objects. If `None`
+        is passed, an empty dictionary is used by default.
     notes : Optional[dict]
         A nested dictionary of notes, possibly used by report generating code.
         The keys of the outer dictionary should be student PIDs, and the values
@@ -392,11 +391,11 @@ class Gradebook:
         def _apply_deduction(pid, assignment, deduction):
             p = points.loc[pid, assignment]
 
-            if isinstance(deduction, PointsDeduction):
-                d = deduction.points
+            if isinstance(deduction, Points):
+                d = deduction.amount
             else:
                 # calculate percentage deduction based on points possible
-                d = deduction.percentage * self.points_possible.loc[assignment]
+                d = deduction.amount * self.points_possible.loc[assignment]
 
             points.loc[pid, assignment] = max(p - d, 0)
 
@@ -583,9 +582,9 @@ def _combine_and_convert_deductions(parts, new_name, deductions, points_possible
 
     # combine and convert deductions
     def _convert_deduction(assignment, deduction):
-        if isinstance(deduction, PercentageDeduction):
+        if isinstance(deduction, Percentage):
             possible = points_possible.loc[assignment]
-            return PointsDeduction(possible * deduction.percentage, deduction.note)
+            return Points(possible * deduction.amount)
         else:
             return deduction
 
@@ -776,8 +775,8 @@ class MutableGradebook(Gradebook):
         new_max[new_name] = assignment_max
         new_lateness[new_name] = assignment_lateness
 
-        # combines deductions from all of the parts, converting PercentageDeductions
-        # to PointsDeductions along the way.
+        # combines deductions from all of the parts, converting Percentage
+        # to Points along the way.
         new_deductions = _combine_and_convert_deductions(
             parts, new_name, self.deductions, self.points_possible
         )
@@ -809,12 +808,12 @@ class MutableGradebook(Gradebook):
         The lateness of the new assignment is the *maximum* lateness of any of
         its parts.
 
-        Deductions are concatenated. PointsDeductions are propagated unchanged,
-        but PercentageDeduction objects are converted to PointsDeductions according
-        to the ratio of the part's value to the total points possible. For example,
-        if the first part is worth 70 points, and the second part is worth 30 points,
-        and a 25% PercentageDeduction is applied to the second part, it is converted
-        to a 25% * 30 = 7.5 point PointsDeduction.
+        Deductions are concatenated. Points are propagated unchanged, but
+        Percentage objects are converted to Points according to the ratio of
+        the part's value to the total points possible. For example, if the
+        first part is worth 70 points, and the second part is worth 30 points,
+        and a 25% Percentage is applied to the second part, it is converted to
+        a 25% * 30 = 7.5 point Points.
 
         It is unclear what the result should be if any of the assignments to be
         unified has been dropped, but other parts have not. For this reason,

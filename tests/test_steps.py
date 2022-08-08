@@ -253,9 +253,6 @@ def test_combine_assignments_copies_attributes():
 # PenalizeLates()
 # -----------------------------------------------------------------------------
 
-def _number_of_lates(gb, within):
-    return gb.late[within].sum(axis=1)
-
 def test_penalize_lates_without_forgiveness_or_within_penalizes_all_lates():
     # given
     columns = ["hw01", "hw02", "lab01"]
@@ -508,22 +505,26 @@ def test_penalize_lates_with_empty_assignment_list_raises():
 
 
 def test_penalize_lates_does_not_forgive_dropped():
-    # given
-    labs = GRADESCOPE_EXAMPLE.assignments.starting_with("lab")
-    dropped = GRADESCOPE_EXAMPLE.dropped.copy()
-    dropped.iloc[:, :] = True
-    example = gradelib.MutableGradebook(
-        points_marked=GRADESCOPE_EXAMPLE.points_marked,
-        points_possible=GRADESCOPE_EXAMPLE.points_possible,
-        lateness=GRADESCOPE_EXAMPLE.lateness,
-        dropped=dropped,
-    ).copy()
+    columns = ["hw01", "hw02", "lab01"]
+    p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([50, 100, 20], index=columns)
+    lateness = pd.DataFrame([
+            pd.to_timedelta([5000, 0, 5000], 's'),
+            pd.to_timedelta([6000, 0, 0], 's')
+        ], columns=columns, index=points_marked.index)
 
-    # when
-    actual = example.apply(gradelib.steps.PenalizeLates(forgive=3, within=labs))
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible, lateness=lateness)
+    gradebook.dropped.loc['A1', :] = True
 
-    # then
-    assert list(_number_of_lates(actual, within=labs)) == [1, 4, 2, 2]
-    assert_gradebook_is_sound(actual)
+    result = gradebook.apply([
+        gradelib.steps.PenalizeLates(forgive=2)
+    ])
 
-
+    assert result.deductions == {
+            "A1": {
+                "hw01": [Percentage(1)],
+                "lab01": [Percentage(1)],
+            }
+    }

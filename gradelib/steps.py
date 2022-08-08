@@ -262,7 +262,7 @@ class PenalizeLates:
 
             for assignment in within:
                 if gradebook.late.loc[pid, assignment]:
-                    if forgiveness_left > 0:
+                    if forgiveness_left > 0 and not gradebook.dropped.loc[pid, assignment]:
                         forgiveness_left -= 1
                     else:
                         number += 1
@@ -281,6 +281,10 @@ class PenalizeLates:
             d = self.deduction
 
         gradebook.add_deduction(pid, assignment, d)
+
+
+# DropLowest
+# ======================================================================================
 
 
 def drop_lowest(self, n, within=None):

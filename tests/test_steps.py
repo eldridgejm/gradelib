@@ -312,8 +312,8 @@ def test_penalize_lates_with_callable_deduction():
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame([
-            pd.to_timedelta([0, 0, 50], 's'),
-            pd.to_timedelta([6000, 0, 0], 's')
+            pd.to_timedelta([6000, 6000, 6000], 's'),
+            pd.to_timedelta([0, 0, 0], 's')
         ], columns=columns, index=points_marked.index)
     gradebook = gradelib.MutableGradebook(points_marked, points_possible, lateness=lateness)
 
@@ -321,14 +321,51 @@ def test_penalize_lates_with_callable_deduction():
 
     gradebook.opts.lateness_fudge = 60 * 5
 
+    def deduction(info):
+        return Points(info.number)
+
     result = gradebook.apply(
-        gradelib.steps.PenalizeLates()
+        gradelib.steps.PenalizeLates(deduction=deduction)
     )
 
     assert result.deductions == {
-            "A2": {"hw01": [Percentage(1)]},
+            "A1": {
+                "hw01": [Points(1)],
+                "hw02": [Points(2)],
+                "lab01": [Points(3)]
+            },
     }
 
+def test_penalize_lates_with_callable_deduction_does_not_count_forgiven():
+    # given
+    columns = ["hw01", "hw02", "lab01"]
+    p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([50, 100, 20], index=columns)
+    lateness = pd.DataFrame([
+            pd.to_timedelta([6000, 6000, 6000], 's'),
+            pd.to_timedelta([0, 0, 0], 's')
+        ], columns=columns, index=points_marked.index)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible, lateness=lateness)
+
+    HOMEWORK = gradebook.assignments.starting_with("hw")
+
+    gradebook.opts.lateness_fudge = 60 * 5
+
+    def deduction(info):
+        return Points(info.number)
+
+    result = gradebook.apply(
+        gradelib.steps.PenalizeLates(deduction=deduction, forgive=1)
+    )
+
+    assert result.deductions == {
+            "A1": {
+                "hw02": [Points(1)],
+                "lab01": [Points(2)]
+            },
+    }
 
 def test_penalize_lates_respects_lateness_fudge():
     # given

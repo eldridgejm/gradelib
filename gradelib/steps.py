@@ -1,4 +1,5 @@
 import itertools
+import collections
 
 from .core import Percentage, Points
 
@@ -190,6 +191,9 @@ class CombineAssignments:
 # policies
 # ======================================================================================
 
+
+_LateInfo = collections.namedtuple("LateInfo", "gradebook pid assignment number")
+
 class PenalizeLates:
     """Penalize late assignments.
 
@@ -204,10 +208,8 @@ class PenalizeLates:
         callable producing such a sequence of assignments. If None, all
         assignments will be used. Default: None
     deduction : Optional[Union[Points, Percentage, Callable]]
-        The amount that should be deducted. If a callable, it is called with
-        the 1) lateness of the current assignment; 2) the points possible, and
-        3) the number of late assignments, including the current one. It should
-        return a Points or Percentage object. If None, 100% is deducted.
+        The amount that should be deducted. See the Notes for instructions
+        on using a callable. If None, 100% is deducted.
 
     Notes
     -----
@@ -220,6 +222,19 @@ class PenalizeLates:
 
     If a late assignment is marked as dropped it will not be forgiven, as
     it is advantageous for the student to use the forgiveness elsewhere.
+
+    `deduction` can be a callable, in which case it is called with a namedtuple
+    with the following attributes:
+
+        - `gradebook`: the current gradebook
+        - `assignment`: the current assignment
+        - `pid`: the pid of the student being penalized
+        - `number`: the number of late assignments seen so far that have not
+          been forgiven, including the current assignment
+
+    It should return either a Points or Percentage object. This is a very
+    general scheme, and allows penalizing based on the lateness of the
+    assignment, for example.
 
     Raises
     ------
@@ -243,18 +258,29 @@ class PenalizeLates:
 
         def _penalize_lates_for(pid):
             forgiveness_left = self.forgive
+            number = 0
 
             for assignment in within:
                 if gradebook.late.loc[pid, assignment]:
                     if forgiveness_left > 0:
                         forgiveness_left -= 1
                     else:
-                        gradebook.add_deduction(pid, assignment, self.deduction)
+                        number += 1
+                        self._deduct(gradebook, pid, assignment, number)
 
         for student in gradebook.students:
             _penalize_lates_for(student)
 
         return gradebook
+
+    def _deduct(self, gradebook, pid, assignment, number):
+        if callable(self.deduction):
+            info = _LateInfo(gradebook, pid, assignment, number)
+            d = self.deduction(info)
+        else:
+            d = self.deduction
+
+        gradebook.add_deduction(pid, assignment, d)
 
 
 def drop_lowest(self, n, within=None):

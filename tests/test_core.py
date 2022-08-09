@@ -1109,3 +1109,35 @@ def test_overall_score_respects_normalize_assignment_weights_and_drops_and_deduc
                 (2/2 + 7/50 + 0/100)/2 * 0.6 + 20/20 * 0.40
                 ], index=gradebook.students)
             )
+
+
+# letter_grades
+
+def test_letter_grades_respects_scale():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook.dropped.loc['A1', 'hw02'] = True
+    gradebook.dropped.loc['A2', 'hw03'] = True
+    gradebook.deductions = {
+            "A1": {"hw02": [gradelib.Points(10)], "hw03": [gradelib.Points(5)]}
+    }
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        gradelib.Group('homeworks', HOMEWORKS, 0.6, normalize_assignment_weights=True),
+        gradelib.Group('labs', ['lab01'], 0.4),
+    ]
+
+    # then
+    pd.testing.assert_series_equal(
+            gradebook.letter_grades,
+            pd.Series([
+                    "A", "B"
+                ], index=gradebook.students)
+            )

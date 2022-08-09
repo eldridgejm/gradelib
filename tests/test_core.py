@@ -797,7 +797,27 @@ def test_group_points_respects_deductions_and_dropped_assignments_simultaneously
                 ], index=gradebook.students, columns=['homeworks', 'labs'])
             )
 
-# what if all assignments in a group are dropped?
+def test_group_points_raises_if_all_assignments_in_a_group_are_dropped():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook.dropped.loc['A1', 'lab01'] = True
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        ('homeworks', HOMEWORKS, 0.5),
+        gradelib.Group('labs', ['lab01'], 0.5),
+    ]
+
+    # then
+    with pytest.raises(ValueError):
+        gradebook.group_effective_points_earned,
+
 
 # score()
 # -----------------------------------------------------------------------------

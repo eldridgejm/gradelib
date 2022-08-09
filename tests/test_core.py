@@ -683,7 +683,7 @@ def test_groups_setter_allows_callable_for_assignments():
             gradelib.Group('labs', gradelib.Assignments(['lab01']), weight=.5),
     ]
 
-# .group_points
+# .group_effective_points
 # -------------------
 
 def test_group_points_respects_deductions():
@@ -759,7 +759,44 @@ def test_group_points_respects_dropped_assignments():
                 ], index=gradebook.students, columns=['homeworks', 'labs'])
             )
 
-# drops and deductions
+def test_group_points_respects_deductions_and_dropped_assignments_simultaneously():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook.dropped.loc['A1', 'hw02'] = True
+    gradebook.dropped.loc['A2', 'hw03'] = True
+    gradebook.deductions = {
+            "A1": {"hw02": [gradelib.Points(10)], "hw03": [gradelib.Points(5)]}
+    }
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        ('homeworks', HOMEWORKS, 0.5),
+        gradelib.Group('labs', ['lab01'], 0.5),
+    ]
+
+    # then
+    pd.testing.assert_frame_equal(
+            gradebook.group_effective_points_earned,
+            pd.DataFrame([
+                [86, 20],
+                [9, 20]
+                ], index=gradebook.students, columns=['homeworks', 'labs'])
+            )
+
+    pd.testing.assert_frame_equal(
+            gradebook.group_effective_points_possible,
+            pd.DataFrame([
+                [102, 20],
+                [52, 20]
+                ], index=gradebook.students, columns=['homeworks', 'labs'])
+            )
+
 # what if all assignments in a group are dropped?
 
 # score()

@@ -852,7 +852,94 @@ def test_combine_assignments_copies_attributes():
     assert result.notes == {"A1": ["ok"]}
 
 
+# with_renamed_assignments
+# ------------------------
 
+def test_with_renamed_assignments_simple_example():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook.notes = {"A1": ["ok"]}
+
+    result = gradebook.with_renamed_assignments({
+        "hw01": "homework 01",
+        "hw01 - programming": "homework 01 - programming",
+    })
+
+    assert "homework 01" in result.assignments
+    assert "hw01" not in result.assignments
+    assert "homework 01 - programming" in result.assignments
+    assert "hw01 - programming" not in result.assignments
+
+    assert result.points_marked.loc['A1', 'homework 01'] == 1
+
+    assert_gradebook_is_sound(result)
+
+def test_with_renamed_assignments_raises_error_on_name_clash():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook.notes = {"A1": ["ok"]}
+
+    with pytest.raises(ValueError):
+        gradebook.with_renamed_assignments(
+            {"hw01": "hw02"},
+        )
+
+def test_with_renamed_assignments_allows_swapping_names():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook.notes = {"A1": ["ok"]}
+
+    result = gradebook.with_renamed_assignments({
+        "hw01": "hw02",
+        "hw02": "hw01",
+    })
+
+    assert result.points_marked.loc['A1', 'hw01'] == 90
+    assert result.points_marked.loc['A1', 'hw02'] == 1
+    assert result.points_marked.loc['A2', 'hw01'] == 15
+    assert result.points_marked.loc['A2', 'hw02'] == 2
+
+    assert_gradebook_is_sound(result)
+
+def test_with_renamed_assignments_updates_deductions():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook.notes = {"A1": ["ok"]}
+
+    gradebook.deductions = {
+            "A1": {"hw01": [1]}
+    }
+
+    result = gradebook.with_renamed_assignments(
+        {"hw01": "homework 01"},
+    )
+
+    assert result.deductions == {
+            "A1": {"homework 01": [1]}
+    }
+
+
+    assert_gradebook_is_sound(result)
 
 # FinalizedGradebook
 # ==================

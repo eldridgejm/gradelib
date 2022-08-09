@@ -929,6 +929,41 @@ class MutableGradebook(Gradebook):
 
         return result
 
+    def with_renamed_assignments(self, mapping):
+        # points_marked
+        # points_possible
+        # lateness
+        # dropped
+        # deductions
+
+        resulting_names = (set(self.assignments) - mapping.keys()) | set(mapping.values())
+        if len(resulting_names) != len(self.assignments):
+            raise ValueError("Name clashes in renamed assignments.")
+
+        result = self.copy()
+
+        def _update_key(key):
+            if key in mapping:
+                return mapping[key]
+            else:
+                return key
+
+        def _update_assignments_dct(assignments_dct):
+            return {
+                _update_key(k): v for k, v in assignments_dct.items()
+            }
+
+        result.deductions = {
+                pid: _update_assignments_dct(dct) for pid, dct in result.deductions.items()
+        }
+
+        result.points_marked.rename(columns=mapping, inplace=True)
+        result.points_possible.rename(index=mapping, inplace=True)
+        result.lateness.rename(columns=mapping, inplace=True)
+        result.dropped.rename(columns=mapping, inplace=True)
+        return result
+
+
     def add_note(self, pid, channel, message):
         """Convenience method for adding a note.
 

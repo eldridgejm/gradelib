@@ -1126,6 +1126,19 @@ def test_letter_grades_respects_scale():
     gradebook.deductions = {
             "A1": {"hw02": [gradelib.Points(10)], "hw03": [gradelib.Points(5)]}
     }
+    gradebook.scale = {
+            "A+": 0.9,
+            "A": 0.8,
+            "A-": 0.7,
+            "B+": 0.6,
+            "B": 0.5,
+            "B-": 0.4,
+            "C+": 0.35,
+            "C": 0.3,
+            "C-": 0.2,
+            "D": 0.1,
+            "F": 0
+    }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
 
@@ -1135,9 +1148,10 @@ def test_letter_grades_respects_scale():
     ]
 
     # then
+    # .805 and .742
     pd.testing.assert_series_equal(
             gradebook.letter_grades,
             pd.Series([
-                    "A", "B"
+                    "A", "A-"
                 ], index=gradebook.students)
             )

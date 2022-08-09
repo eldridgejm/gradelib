@@ -4,7 +4,7 @@ import collections.abc
 import copy
 import dataclasses
 
-from .scales import DEFAULT_SCALE
+from .scales import DEFAULT_SCALE, map_scores_to_letter_grades
 
 import numpy as np
 import pandas as pd
@@ -1004,6 +1004,10 @@ class FinalizedGradebook(Gradebook):
     def overall_score(self):
         group_weights = np.array([g.weight for g in self.groups])
         return (self.group_scores * group_weights).sum(axis=1)
+
+    @property
+    def letter_grades(self):
+        return map_scores_to_letter_grades(self.overall_score, scale=self.scale)
 
 
     # methods: summaries and scoring

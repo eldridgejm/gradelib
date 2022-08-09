@@ -440,9 +440,8 @@ def test_drop_lowest_ignores_assignments_already_dropped():
     assert list(actual.dropped.sum(axis=1)) == [3, 1]
     assert_gradebook_is_sound(actual)
 
-# Redemption
+# Redeem
 # ======================================================================================
-
 
 def test_redemption_on_single_assignment_pair():
     # given
@@ -454,7 +453,7 @@ def test_redemption_on_single_assignment_pair():
     gradebook = gradelib.MutableGradebook(points, maximums)
 
     # when
-    actual = gradebook.apply(gradelib.steps.Redemption({
+    actual = gradebook.apply(gradelib.steps.Redeem({
         'mt01 with redemption': ('mt01', 'mt01 - redemption')
     }))
 
@@ -475,10 +474,35 @@ def test_redemption_on_multiple_assignment_pairs():
     gradebook = gradelib.MutableGradebook(points, maximums)
 
     # when
-    actual = gradebook.apply(gradelib.steps.Redemption({
+    actual = gradebook.apply(gradelib.steps.Redeem({
         'mt01 with redemption': ('mt01', 'mt01 - redemption'),
         'mt02 with redemption': ('mt02', 'mt02 - redemption')
     }))
+
+    # then
+    assert actual.points_marked.loc["A1", "mt01 with redemption"] == 100
+    assert actual.points_marked.loc["A2", "mt01 with redemption"] == 92
+    assert actual.points_marked.loc["A1", "mt02 with redemption"] == 50
+    assert actual.points_marked.loc["A2", "mt02 with redemption"] == 40
+    assert 'mt01' in actual.assignments
+    assert 'mt01 - redemption' in actual.assignments
+    assert 'mt02' in actual.assignments
+    assert 'mt02 - redemption' in actual.assignments
+    assert_gradebook_is_sound(actual)
+
+def test_redemption_with_prefix_selector():
+    # given
+    columns = ["mt01", "mt01 - redemption", "mt02", "mt02 - redemption"]
+    p1 = pd.Series(data=[95, 100, 45, 50], index=columns, name="A1")
+    p2 = pd.Series(data=[92, 60, 40, 35], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([100, 100, 50, 50], index=columns)
+    gradebook = gradelib.MutableGradebook(points, maximums)
+
+    # when
+    actual = gradebook.apply(gradelib.steps.Redeem([
+        'mt01', 'mt02'
+    ]))
 
     # then
     assert actual.points_marked.loc["A1", "mt01 with redemption"] == 100
@@ -501,7 +525,7 @@ def test_redemption_with_remove_parts():
     gradebook = gradelib.MutableGradebook(points, maximums)
 
     # when
-    actual = gradebook.apply(gradelib.steps.Redemption({
+    actual = gradebook.apply(gradelib.steps.Redeem({
         'mt01 with redemption': ('mt01', 'mt01 - redemption')
     }, remove_parts=True))
 
@@ -524,7 +548,7 @@ def test_redemption_with_dropped_assignment_parts_raises():
 
     # when
     with pytest.raises(ValueError):
-        actual = gradebook.apply(gradelib.steps.Redemption({
+        actual = gradebook.apply(gradelib.steps.Redeem({
             'mt01 with redemption': ('mt01', 'mt01 - redemption')
         }))
 
@@ -541,7 +565,7 @@ def test_redemption_takes_deductions_into_account():
     }
 
     # when
-    actual = gradebook.apply(gradelib.steps.Redemption({
+    actual = gradebook.apply(gradelib.steps.Redeem({
         'mt01 with redemption': ('mt01', 'mt01 - redemption')
     }))
 
@@ -560,7 +584,7 @@ def test_redemption_with_unequal_points_possible_scales_to_the_maximum_of_the_tw
     gradebook = gradelib.MutableGradebook(points, maximums)
 
     # when
-    actual = gradebook.apply(gradelib.steps.Redemption({
+    actual = gradebook.apply(gradelib.steps.Redeem({
         'mt01 with redemption': ('mt01', 'mt01 - redemption')
     }))
 
@@ -580,7 +604,7 @@ def test_redemption_with_deduction():
     gradebook = gradelib.MutableGradebook(points, maximums)
 
     # when
-    actual = gradebook.apply(gradelib.steps.Redemption({
+    actual = gradebook.apply(gradelib.steps.Redeem({
         'mt01 with redemption': ('mt01', 'mt01 - redemption')
     }, deduction=Percentage(.25)))
 

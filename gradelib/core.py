@@ -980,9 +980,19 @@ class FinalizedGradebook(Gradebook):
                 columns=group.assignments
             )
             possible[self.dropped[group.assignments]] = 0
-            result[group.name] = possible.sum(axis=1)
+            possible = possible.sum(axis=1)
+
+            if (possible == 0).any():
+                problematic_pids = list(possible.index[possible == 0])
+                raise ValueError(f"All assignments are dropped for {problematic_pids} in group '{group.name}'.")
+
+            result[group.name] = possible
 
         return pd.DataFrame(result, index=self.students)
+
+    @property
+    def group_scores(self):
+        return self.group_effective_points_earned / self.group_effective_points_possible
 
 
     # methods: summaries and scoring

@@ -935,4 +935,32 @@ def test_group_scores_respects_deductions_and_dropped_assignments_simultaneously
             )
 
 # TODO respects normalize assignment weights
+def test_group_scores_respects_normalize_assignment_weights():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook.dropped.loc['A1', 'hw02'] = True
+    gradebook.dropped.loc['A2', 'hw03'] = True
+    gradebook.deductions = {
+            "A1": {"hw02": [gradelib.Points(10)], "hw03": [gradelib.Points(5)]}
+    }
 
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        gradelib.Group('homeworks', HOMEWORKS, 0.5, normalize_assignment_weights=True),
+        gradelib.Group('labs', ['lab01'], 0.5),
+    ]
+
+    # then
+    pd.testing.assert_frame_equal(
+            gradebook.group_scores,
+            pd.DataFrame([
+                [1/2 + 30/50 + 90/100, 20/20],
+                [2/2 + 7/50 + 15/100, 20/20]
+                ], index=gradebook.students, columns=['homeworks', 'labs'])
+            )

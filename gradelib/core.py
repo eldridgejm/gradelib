@@ -963,6 +963,8 @@ class FinalizedGradebook(Gradebook):
         result = {}
         for group in self.groups:
             earned = self.points_after_deductions[group.assignments]
+            if group.normalize_assignment_weights:
+                earned = earned / self.points_possible[group.assignments]
             earned[self.dropped[group.assignments]] = 0
             result[group.name] = earned.sum(axis=1)
         return pd.DataFrame(result, index=self.students)
@@ -979,6 +981,10 @@ class FinalizedGradebook(Gradebook):
                 index=self.students,
                 columns=group.assignments
             )
+
+            if group.normalize_assignment_weights:
+                possible.iloc[:,:] = 1
+
             possible[self.dropped[group.assignments]] = 0
             possible = possible.sum(axis=1)
 

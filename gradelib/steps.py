@@ -227,7 +227,7 @@ class DropLowest:
 
         return gradebook._replace(dropped=new_dropped)
 
-# Redemption
+# Redeem
 # ======================================================================================
 
 class Redeem:

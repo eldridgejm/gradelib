@@ -158,7 +158,7 @@ class Assignments(collections.abc.Sequence):
         return {key: Assignments(value) for key, value in dct.items()}
 
     def __repr__(self):
-        return f"Assignments(names={sorted(self._names)})"
+        return f"Assignments(names={self._names})"
 
     def __add__(self, other):
         return Assignments(set(self._names + other._names))
@@ -464,8 +464,15 @@ class Gradebook:
                 return False
             return name_query in student.name.lower()
 
-        [match] = [s for s in self.students if is_match(s)]
-        return match
+        matches = [s for s in self.students if is_match(s)]
+
+        if len(matches) == 0:
+            raise ValueError(f"No names matched {name_query}.")
+
+        if len(matches) > 1:
+            raise ValueError(f'Too many names matched "{name_query}": {matches}')
+
+        return matches[0]
 
 
 # MutableGradebook
@@ -730,6 +737,8 @@ class MutableGradebook(Gradebook):
 
         return self.restricted_to_assignments(set(self.assignments) - set(assignments))
 
+    # TODO rename assignment
+
     def restricted_to_pids(self, to):
         """Restrict the gradebook to only the supplied PIDS.
 
@@ -853,7 +862,7 @@ class MutableGradebook(Gradebook):
         except TypeError:
             transformations = [transformations]
 
-        result = self
+        result = self.copy()
         for transformation in transformations:
             result = transformation(result)
 
@@ -874,7 +883,7 @@ class MutableGradebook(Gradebook):
         )
 
     def grade(self, steps, groups=None, scale=None):
-        self.apply(steps).finalize(groups, scale)
+        return self.apply(steps).finalize(groups, scale)
 
     def give_equal_weights(self, within):
         """Normalize maximum points so that all assignments are worth the same.

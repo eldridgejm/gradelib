@@ -1,6 +1,9 @@
 import itertools
 import collections
 
+import numpy as np
+import pandas as pd
+
 from .core import Percentage, Points
 
 
@@ -21,7 +24,7 @@ def _resolve_within(gradebook, within):
     if not within:
         raise ValueError("Cannot use an empty list of assignments.")
 
-    return within
+    return list(within)
 
 
 # preprocessing
@@ -287,26 +290,29 @@ class PenalizeLates:
 # ======================================================================================
 
 
-def drop_lowest(self, n, within=None):
+class DropLowest:
     """Drop the lowest n grades within a group of assignments.
+
+    Modifies the input gradebook.
 
     Parameters
     ----------
     n : int
         The number of grades to drop.
-    within : Collection[str]
-        A collection of assignments; the lowest among them will be dropped.
-        If None, all assignments will be used. Default: None
+    within : Optional[Within]
+        A collection of assignments; the lowest among them will be dropped. If
+        a callable, it will be called on the gradebook's assignments to produce
+        such a collection. If None, all assignments will be used. Default: None
 
     Notes
     -----
     If all assignments are worth the same number of points, dropping the
     assignment with the lowest score is most advantageous to the student.
-    However, if the assignments are not worth the same number of points,
-    the best strategy for the student is not necessarily to drop to
-    assignment with the smallest score. In this case, the problem of
-    determining the optimal set of assignments to drop in order to maximize
-    the overall score is non-trivial.
+    However, if the assignments are not worth the same number of points, the
+    best strategy for the student is not necessarily to drop to assignment with
+    the smallest score. In this case, the problem of determining the optimal
+    set of assignments to drop in order to maximize the overall score is
+    non-trivial.
 
     In this implementation, dropping assignments is performed via a
     brute-force algorithm: each possible combination of kept assignments is
@@ -316,18 +322,14 @@ def drop_lowest(self, n, within=None):
     problem sizes. For a better algorithm, see:
     http://cseweb.ucsd.edu/~dakane/droplowest.pdf
 
-    If an assignment is marked as late, it will be considered a zero for
-    the purposes of dropping. Therefore it is usually preferable to use
-    :meth:`Gradebook.forgive_lates` before this method.
+    If an assignment has deductions for whatever reason, those deductions will
+    be applied before calculating which assignments to drop. For that reason,
+    it is usually best to apply whatever deductions are needed before using
+    this.
 
     If an assignment has already been marked as dropped, it won't be
     considered for dropping. This is useful, for instance, when a student's
     assignment is dropped due to an external circumstance.
-
-    Returns
-    -------
-    Gradebook
-        The gradebook with the specified assignments dropped.
 
     Raises
     ------
@@ -335,54 +337,105 @@ def drop_lowest(self, n, within=None):
         If `within` is empty, or if n is not a positive integer.
 
     """
-    # number of kept assignments
-    if within is None:
-        within = self.assignments
 
-    if not within:
-        raise ValueError("Cannot pass an empty list of assignments.")
+    def __init__(self, n, within=None):
+        self.n = n
+        self.within = within
 
-    # convert to a list because Pandas likes lists, not Assignments objects
-    within = list(within)
+    def __call__(self, gradebook):
+        # number of kept assignments
+        within = _resolve_within(gradebook, self.within)
 
-    # the combinations of assignments to drop
-    combinations = list(itertools.combinations(within, n))
+        # the combinations of assignments to drop
+        combinations = list(itertools.combinations(within, self.n))
 
-    # count lates as zeros
-    points_with_lates_as_zeros = _points_with_lates_replaced_by_zeros(gradebook)[within]
+        # count lates as zeros
+        points_after_deductions = gradebook.points_after_deductions[within]
 
-    # a full table of maximum points available. this will allow us to have
-    # different points available per person
-    points_possible = self.points_marked.copy()[within]
-    points_possible.iloc[:, :] = self.points_possible[within].values
+        # a full table of maximum points available. this will allow us to have
+        # different points available per person
+        points_possible = gradebook.points_marked.copy()[within]
+        points_possible.iloc[:, :] = gradebook.points_possible[within].values
 
-    # we will try each combination and compute the resulting score for each student
-    scores = []
-    for possibly_dropped in combinations:
-        possibly_dropped = list(possibly_dropped)
-        possibly_dropped_mask = self.dropped.copy()
-        possibly_dropped_mask[possibly_dropped] = True
+        # we will try each combination and compute the resulting score for each student
+        scores = []
+        for possibly_dropped in combinations:
+            possibly_dropped = list(possibly_dropped)
+            possibly_dropped_mask = gradebook.dropped.copy()
+            possibly_dropped_mask[possibly_dropped] = True
 
-        earned = points_with_lates_as_zeros.copy()
-        earned[possibly_dropped_mask] = 0
+            earned = points_after_deductions.copy()
+            earned[possibly_dropped_mask] = 0
 
-        out_of = points_possible.copy()
-        out_of[possibly_dropped_mask] = 0
+            out_of = points_possible.copy()
+            out_of[possibly_dropped_mask] = 0
 
-        score = earned.sum(axis=1) / out_of.sum(axis=1)
-        scores.append(score)
+            score = earned.sum(axis=1) / out_of.sum(axis=1)
+            scores.append(score)
 
-    # now we put the scores into a table and find the index of the best
-    # score for each student
-    all_scores = pd.concat(scores, axis=1)
-    index_of_best_score = all_scores.idxmax(axis=1)
+        # now we put the scores into a table and find the index of the best
+        # score for each student
+        all_scores = pd.concat(scores, axis=1)
+        index_of_best_score = all_scores.idxmax(axis=1)
 
-    # loop through the students and mark the assignments which should be
-    # dropped
-    new_dropped = self.dropped.copy()
-    for pid in self.pids:
-        best_combo_ix = index_of_best_score.loc[pid]
-        tossed = list(combinations[best_combo_ix])
-        new_dropped.loc[pid, tossed] = True
+        # loop through the students and mark the assignments which should be
+        # dropped
+        new_dropped = gradebook.dropped.copy()
+        for pid in gradebook.pids:
+            best_combo_ix = index_of_best_score.loc[pid]
+            tossed = list(combinations[best_combo_ix])
+            new_dropped.loc[pid, tossed] = True
 
-    return self._replace(dropped=new_dropped)
+        return gradebook._replace(dropped=new_dropped)
+
+# Redemption
+# ======================================================================================
+
+class Redemption:
+
+    def __init__(self, assignment_pairs, remove_parts=False, deduction=None):
+        self.assignment_pairs = assignment_pairs
+        self.remove_parts = remove_parts
+        self.deduction = deduction
+
+    def __call__(self, gradebook):
+        for new_name, assignment_pair in self.assignment_pairs.items():
+            gradebook = self._redeem(gradebook, new_name, assignment_pair)
+
+        if self.remove_parts:
+            gradebook = self._remove_parts(gradebook)
+
+        return gradebook
+
+    def _redeem(self, gradebook, new_name, assignment_pair):
+        first, second = assignment_pair
+
+        if gradebook.dropped[[first, second]].values.any():
+            raise ValueError("Cannot apply redemption to dropped assignments.")
+
+        points_possible = gradebook.points_possible[[first, second]].max()
+
+        first_scale, second_scale = points_possible / gradebook.points_possible[[first, second]]
+
+        first_points = gradebook.points_after_deductions[first] * first_scale
+        second_points = gradebook.points_after_deductions[second] * second_scale
+
+        if self.deduction is not None:
+            if isinstance(self.deduction, Percentage):
+                d = points_possible * self.deduction.amount
+            else:
+                d = self.deduction.amount
+
+            second_points = second_points - d
+
+        points_marked = np.maximum(first_points, second_points)
+
+        return gradebook.with_assignment(new_name, points_marked, points_possible)
+
+    def _remove_parts(self, gradebook):
+        for assignment_pair in self.assignment_pairs.values():
+            gradebook = gradebook.without_assignments(assignment_pair)
+        return gradebook
+
+
+

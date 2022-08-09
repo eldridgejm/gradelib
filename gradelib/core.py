@@ -6,6 +6,7 @@ import dataclasses
 
 from .scales import DEFAULT_SCALE
 
+import numpy as np
 import pandas as pd
 
 
@@ -76,6 +77,9 @@ class Assignments(collections.abc.Sequence):
 
     def __iter__(self):
         return iter(self._names)
+
+    def __eq__(self, other):
+        return list(self) == list(other)
 
     def starting_with(self, prefix):
         """Return only assignments starting with the prefix.
@@ -232,7 +236,8 @@ class GradebookOptions:
 class Group:
     name: str
     assignments: Assignments
-    normalize_weights: bool = False
+    weight: float
+    normalize_assignment_weights: bool = False
 
 
 class Gradebook:
@@ -909,6 +914,76 @@ class MutableGradebook(Gradebook):
 
 
 class FinalizedGradebook(Gradebook):
+
+    def __init__(
+        self,
+        points_marked,
+        points_possible,
+        groups=None,
+        scale=None,
+        **kwargs
+    ):
+        super().__init__(points_marked, points_possible, **kwargs)
+        self.groups = self.default_groups if groups is None else groups
+        self.scale = DEFAULT_SCALE if scale is None else scale
+
+    # properties
+    # ----------
+    @property
+    def default_groups(self):
+        weight = 1 / len(self.assignments)
+        return [
+                Group(assignment, Assignments([assignment]), weight)
+                for assignment in self.assignments
+        ]
+
+    @property
+    def groups(self):
+        return self._groups
+
+    @groups.setter
+    def groups(self, value):
+        def _make_group(g):
+            if isinstance(g, Group):
+                args = [g.name, g.assignments, g.weight, g.normalize_assignment_weights]
+            elif len(g) == 3:
+                args = list(g)
+            else:
+                raise TypeError("Unexpected type for groups.")
+
+            if callable(args[1]):
+                args[1] = args[1](self.assignments)
+
+            return Group(*args)
+
+        self._groups = [_make_group(g) for g in value]
+
+    @property
+    def group_effective_points_earned(self):
+        result = {}
+        for group in self.groups:
+            earned = self.points_after_deductions[group.assignments]
+            earned[self.dropped[group.assignments]] = 0
+            result[group.name] = earned.sum(axis=1)
+        return pd.DataFrame(result, index=self.students)
+
+    @property
+    def group_effective_points_possible(self):
+        result = {}
+        for group in self.groups:
+            possible = pd.DataFrame(
+                np.tile(
+                    self.points_possible[group.assignments],
+                    (self.points_marked.shape[0], 1)
+                ),
+                index=self.students,
+                columns=group.assignments
+            )
+            possible[self.dropped[group.assignments]] = 0
+            result[group.name] = possible.sum(axis=1)
+
+        return pd.DataFrame(result, index=self.students)
+
 
     # methods: summaries and scoring
     # ------------------------------

@@ -9,6 +9,7 @@ from .core import (
     Student,
     Points,
     Percentage,
+    Group,
 )
 
 from .scales import (

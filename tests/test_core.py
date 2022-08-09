@@ -843,7 +843,7 @@ def test_group_scores_raises_if_all_assignments_in_a_group_are_dropped():
     with pytest.raises(ValueError):
         gradebook.group_scores
 
-# group_scores()
+# group_scores
 # -----------------------------------------------------------------------------
 
 def test_group_scores_respects_deductions():
@@ -962,4 +962,150 @@ def test_group_scores_respects_normalize_assignment_weights_and_drops_and_deduct
                 [(1/2 + 0/50 + 85/100)/2, 20/20],
                 [(2/2 + 7/50 + 0/100)/2, 20/20]
                 ], index=gradebook.students, columns=['homeworks', 'labs'])
+            )
+
+# overall_score
+# -----------------------------------------------------------------------------
+
+def test_overall_score_respects_group_weighting():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        ('homeworks', HOMEWORKS, 0.6),
+        gradelib.Group('labs', ['lab01'], 0.4),
+    ]
+
+    # then
+    pd.testing.assert_series_equal(
+            gradebook.overall_score,
+            pd.Series([
+                121/152 * .6 + 20/20 * .4,
+                24/152 * .6 + 20/20 * .4
+                ], index=gradebook.students)
+            )
+
+def test_overall_score_respects_deductions():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+
+    gradebook.deductions = {
+        'A1': {'hw01': [gradelib.Percentage(1)]},
+        'A2': {'lab01': [gradelib.Percentage(.5)]},
+    }
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        ('homeworks', HOMEWORKS, 0.6),
+        gradelib.Group('labs', ['lab01'], 0.4),
+    ]
+
+    # then
+    pd.testing.assert_series_equal(
+            gradebook.overall_score,
+            pd.Series([
+                120/152 * 0.6 + 20/20 * 0.4,
+                24/152 * 0.6 + 10/20 * 0.40
+                ], index=gradebook.students)
+            )
+
+
+def test_overall_score_respects_dropped_assignments():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook.dropped.loc['A1', 'hw02'] = True
+    gradebook.dropped.loc['A2', 'hw03'] = True
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        ('homeworks', HOMEWORKS, 0.6),
+        gradelib.Group('labs', ['lab01'], 0.4),
+    ]
+
+    # then
+    pd.testing.assert_series_equal(
+            gradebook.overall_score,
+            pd.Series([
+                91/102 * 0.6 + 20/20 * 0.4,
+                9/52 * 0.6 + 20/20 * 0.40
+                ], index=gradebook.students)
+            )
+
+def test_overall_score_respects_deductions_and_dropped_assignments_simultaneously():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook.dropped.loc['A1', 'hw02'] = True
+    gradebook.dropped.loc['A2', 'hw03'] = True
+    gradebook.deductions = {
+            "A1": {"hw02": [gradelib.Points(10)], "hw03": [gradelib.Points(5)]}
+    }
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        ('homeworks', HOMEWORKS, 0.6),
+        gradelib.Group('labs', ['lab01'], 0.4),
+    ]
+
+    # then
+    pd.testing.assert_series_equal(
+            gradebook.overall_score,
+            pd.Series([
+                86/102 * 0.6 + 20/20 * 0.4,
+                9/52 * 0.6 + 20/20 * 0.40
+                ], index=gradebook.students)
+            )
+
+def test_overall_score_respects_normalize_assignment_weights_and_drops_and_deductions():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook.dropped.loc['A1', 'hw02'] = True
+    gradebook.dropped.loc['A2', 'hw03'] = True
+    gradebook.deductions = {
+            "A1": {"hw02": [gradelib.Points(10)], "hw03": [gradelib.Points(5)]}
+    }
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        gradelib.Group('homeworks', HOMEWORKS, 0.6, normalize_assignment_weights=True),
+        gradelib.Group('labs', ['lab01'], 0.4),
+    ]
+
+    # then
+    pd.testing.assert_series_equal(
+            gradebook.overall_score,
+            pd.Series([
+                (1/2 + 0/50 + 85/100)/2 * 0.6 + 20/20 * 0.4,
+                (2/2 + 7/50 + 0/100)/2 * 0.6 + 20/20 * 0.40
+                ], index=gradebook.students)
             )

@@ -1000,6 +1000,11 @@ class FinalizedGradebook(Gradebook):
     def group_scores(self):
         return self.group_effective_points_earned / self.group_effective_points_possible
 
+    @property
+    def overall_score(self):
+        group_weights = np.array([g.weight for g in self.groups])
+        return (self.group_scores * group_weights).sum(axis=1)
+
 
     # methods: summaries and scoring
     # ------------------------------

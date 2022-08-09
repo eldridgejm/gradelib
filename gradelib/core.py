@@ -843,7 +843,7 @@ class MutableGradebook(Gradebook):
         )
 
 
-    def with_assignments_combined(self, dct_or_callable):
+    def with_assignments_combined(self, selector):
         """Combine the assignment parts into one single assignment with the new name.
 
         Sometimes assignments may have several parts which are recorded separately
@@ -871,11 +871,12 @@ class MutableGradebook(Gradebook):
 
         Parameters
         ----------
-        dct_or_callable : Mapping[str, Collection[str]]
+        selector : Mapping[str, Collection[str]]
             Either: 1) a mapping whose keys are new assignment names, and whose
             values are collections of assignments that should be unified under
-            their common key; or 2) a callable which maps assignment names to
-            new assignment by which they should be grouped.
+            their common key; 2) a list of prefixes; each prefix defines a
+            group that should be combined; or 3) a callable which maps
+            assignment names to new assignment by which they should be grouped.
 
         Raises
         ------
@@ -890,21 +891,31 @@ class MutableGradebook(Gradebook):
         `homework 02`, `homework 02 - programming`, etc., the following will "combine" the
         assignments into `homework 01`, `homework 02`, etc:
 
-            >>> gradebook.apply(CombineAssignments(lambda s: s.split('-')[0].strip()))
+            >>> gradebook.with_assignments_combined(lambda s: s.split('-')[0].strip())
 
         Alternatively, you could write:
 
-            >>> gradebook.apply(CombineAssignments({
+            >>> gradebook.with_assignments_combined(["homework 01", "homework 02"])
+
+        Or:
+
+            >>> gradebook.with_assignments_combined({
                 'homework 01': {'homework 01', 'homework 01 - programming'},
                 'homework 02': {'homework 02', 'homework 02 - programming'}
-                }))
+                })
+
 
         """
 
-        if not callable(dct_or_callable):
-            dct = dct_or_callable
+        if not callable(selector):
+            if not isinstance(selector, dict):
+                dct = {}
+                for prefix in selector:
+                    dct[prefix] = {a for a in self.assignments if a.startswith(prefix)}
+            else:
+                dct = selector
         else:
-            to_key = dct_or_callable
+            to_key = selector
             dct = {}
             for assignment in self.assignments:
                 key = to_key(assignment)

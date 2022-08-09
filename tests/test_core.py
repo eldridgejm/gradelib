@@ -715,6 +715,34 @@ def test_combine_assignments_with_callable():
     assert result.points_marked.shape[1] == 2
 
 
+def test_combine_assignments_with_list_of_prefixes():
+    """test that points_marked / points_possible are added across unified assignments"""
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "hw02 - testing", "lab 01"]
+    p1 = pd.Series(data=[1, 30, 90, 20, 10], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20, 10], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20, 10], index=columns)
+    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+
+    # when
+    result = gradebook.with_assignments_combined(["hw01", "hw02"])
+
+    # then
+    assert len(result.assignments) == 3
+
+    assert result.points_possible["hw01"] == 52
+    assert result.points_marked.loc["A1", "hw01"] == 31
+
+    assert result.points_possible["hw02"] == 120
+    assert result.points_marked.loc["A1", "hw02"] == 110
+
+    assert result.points_possible.shape[0] == 3
+    assert result.late.shape[1] == 3
+    assert result.dropped.shape[1] == 3
+    assert result.points_marked.shape[1] == 3
+
+
 def test_combine_assignments_uses_max_lateness_for_assignment_pieces():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]

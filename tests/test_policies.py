@@ -423,7 +423,7 @@ def test_drop_lowest_takes_deductions_into_account():
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([10, 10], index=columns)
     gradebook = gradelib.MutableGradebook(points, maximums)
-    gradebook.adjustments = {"A1": {"hw01": [Percentage(1)]}}
+    gradebook.adjustments = {"A1": {"hw01": [gradelib.Deduction(Percentage(1))]}}
 
     # since A1's perfect homework has a 100% deduction, it should count as zero and be
     # dropped
@@ -596,7 +596,8 @@ def test_redemption_takes_deductions_into_account():
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([100, 100], index=columns)
     gradebook = gradelib.MutableGradebook(points, maximums)
-    gradebook.adjustments = {"A1": {"mt01 - redemption": [Percentage(0.5)]}}
+    gradebook.adjustments = {"A1": {"mt01 - redemption": [
+        gradelib.Deduction(Percentage(0.5))]}}
 
     # when
     actual = gradebook.apply(

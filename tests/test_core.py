@@ -275,54 +275,6 @@ def test_points_after_adjustments_respects_series_of_additions_and_deductions():
 
     assert gb.points_after_adjustments.loc["A1", "hw01"] == 8
 
-def test_points_after_adjustments_takes_overrides_into_account():
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
-    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
-
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([20, 50], index=columns)
-
-    gb = gradelib.Gradebook(points_marked, points_possible)
-
-    gb.adjustments = {
-        "A1": {
-            "hw01": [
-                gradelib.Override(gradelib.Points(5)),
-            ]
-        },
-        "A2": {
-            "hw02": [
-                gradelib.Override(gradelib.Percentage(0.3)),
-            ]
-        },
-    }
-
-    assert gb.points_after_adjustments.loc["A1", "hw01"] == 5
-    assert gb.points_after_adjustments.loc["A2", "hw02"] == 15
-
-
-def test_points_after_adjustments_with_override_in_a_sequence():
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
-    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
-
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([20, 50], index=columns)
-
-    gb = gradelib.Gradebook(points_marked, points_possible)
-
-    gb.adjustments = {
-        "A1": {
-            "hw01": [
-                gradelib.Override(gradelib.Points(50)),
-                gradelib.Addition(gradelib.Points(5)),
-            ]
-        },
-    }
-
-    assert gb.points_after_adjustments.loc["A1", "hw01"] == 55
-
 # give_equal_weights()
 # -----------------------------------------------------------------------------
 
@@ -922,13 +874,19 @@ def test_combine_assignments_combines_deductions():
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
-    gradebook.adjustments["A1"] = {"hw01": [4], "hw01 - programming": [5]}
+    gradebook.adjustments["A1"] = {"hw01": [
+        gradelib.Deduction(gradelib.Points(4))], "hw01 - programming": [
+            gradelib.Deduction(gradelib.Points(5))]}
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
     result = gradebook.with_assignments_combined({"hw01": HOMEWORK_01_PARTS})
 
-    assert result.adjustments == {"A1": {"hw01": [4, 5]}}
+    assert result.adjustments == {"A1": {"hw01": [
+
+        gradelib.Deduction(gradelib.Points(4)),
+        gradelib.Deduction(gradelib.Points(5)),
+        ]}}
 
 
 def test_combine_assignments_converted_percentage_deductions_to_points():
@@ -941,8 +899,8 @@ def test_combine_assignments_converted_percentage_deductions_to_points():
     gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
     gradebook.adjustments["A1"] = {
-        "hw01": [gradelib.Points(4)],
-        "hw01 - programming": [gradelib.Percentage(0.3)],
+        "hw01": [gradelib.Deduction(gradelib.Points(4))],
+        "hw01 - programming": [gradelib.Deduction(gradelib.Percentage(0.3))],
     }
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
@@ -952,12 +910,11 @@ def test_combine_assignments_converted_percentage_deductions_to_points():
     assert result.adjustments == {
         "A1": {
             "hw01": [
-                gradelib.Points(4),
-                gradelib.Points(15),
+                gradelib.Deduction(gradelib.Points(4)),
+                gradelib.Deduction(gradelib.Points(15)),
             ]
         }
     }
-
 
 def test_combine_assignments_copies_attributes():
     # given
@@ -1182,8 +1139,8 @@ def test_group_points_respects_deductions():
     gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
 
     gradebook.adjustments = {
-        "A1": {"hw01": [gradelib.Percentage(1)]},
-        "A2": {"lab01": [gradelib.Percentage(0.5)]},
+        "A1": {"hw01": [gradelib.Deduction(gradelib.Percentage(1))]},
+        "A2": {"lab01": [gradelib.Deduction(gradelib.Percentage(0.5))]},
     }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1260,7 +1217,7 @@ def test_group_points_respects_deductions_and_dropped_assignments_simultaneously
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
-        "A1": {"hw02": [gradelib.Points(10)], "hw03": [gradelib.Points(5)]}
+        "A1": {"hw02": [gradelib.Deduction(gradelib.Points(10))], "hw03": [gradelib.Deduction(gradelib.Points(5))]}
     }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1350,8 +1307,8 @@ def test_group_scores_respects_deductions():
     gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
 
     gradebook.adjustments = {
-        "A1": {"hw01": [gradelib.Percentage(1)]},
-        "A2": {"lab01": [gradelib.Percentage(0.5)]},
+        "A1": {"hw01": [gradelib.Deduction(gradelib.Percentage(1))]},
+        "A2": {"lab01": [gradelib.Deduction(gradelib.Percentage(0.5))]},
     }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1412,7 +1369,7 @@ def test_group_scores_respects_deductions_and_dropped_assignments_simultaneously
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
-        "A1": {"hw02": [gradelib.Points(10)], "hw03": [gradelib.Points(5)]}
+        "A1": {"hw02": [gradelib.Deduction(gradelib.Points(10))], "hw03": [gradelib.Deduction(gradelib.Points(5))]}
     }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1444,7 +1401,7 @@ def test_group_scores_respects_normalize_assignment_weights_and_drops_and_deduct
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
-        "A1": {"hw02": [gradelib.Points(10)], "hw03": [gradelib.Points(5)]}
+        "A1": {"hw02": [gradelib.Deduction(gradelib.Points(10))], "hw03": [gradelib.Deduction(gradelib.Points(5))]}
     }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1508,8 +1465,8 @@ def test_overall_score_respects_deductions():
     gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
 
     gradebook.adjustments = {
-        "A1": {"hw01": [gradelib.Percentage(1)]},
-        "A2": {"lab01": [gradelib.Percentage(0.5)]},
+        "A1": {"hw01": [gradelib.Deduction(gradelib.Percentage(1))]},
+        "A2": {"lab01": [gradelib.Deduction(gradelib.Percentage(0.5))]},
     }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1568,7 +1525,7 @@ def test_overall_score_respects_deductions_and_dropped_assignments_simultaneousl
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
-        "A1": {"hw02": [gradelib.Points(10)], "hw03": [gradelib.Points(5)]}
+        "A1": {"hw02": [gradelib.Deduction(gradelib.Points(10))], "hw03": [gradelib.Deduction(gradelib.Points(5))]}
     }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1599,7 +1556,7 @@ def test_overall_score_respects_normalize_assignment_weights_and_drops_and_deduc
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
-        "A1": {"hw02": [gradelib.Points(10)], "hw03": [gradelib.Points(5)]}
+        "A1": {"hw02": [gradelib.Deduction(gradelib.Points(10))], "hw03": [gradelib.Deduction(gradelib.Points(5))]}
     }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1636,7 +1593,7 @@ def test_letter_grades_respects_scale():
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
-        "A1": {"hw02": [gradelib.Points(10)], "hw03": [gradelib.Points(5)]}
+        "A1": {"hw02": [gradelib.Deduction(gradelib.Points(10))], "hw03": [gradelib.Deduction(gradelib.Points(5))]}
     }
     gradebook.scale = {
         "A+": 0.9,

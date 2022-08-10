@@ -196,8 +196,12 @@ class Percentage(_GradeAmount):
 # ======================================================================================
 
 class Adjustment:
-    pass
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}(amount={self.amount}, reason={self.reason})'
+
+    def __eq__(self, other):
+        return self.amount == other.amount and self.reason == other.reason
 
 class Deduction(Adjustment):
 
@@ -206,12 +210,6 @@ class Deduction(Adjustment):
         self.reason = reason
 
 class Addition(Adjustment):
-
-    def __init__(self, amount, reason=None):
-        self.amount = amount
-        self.reason = reason
-
-class Override(Adjustment):
 
     def __init__(self, amount, reason=None):
         self.amount = amount
@@ -438,17 +436,11 @@ class Gradebook:
 
             points.loc[pid, assignment] = max(p + a, 0)
 
-        def _apply_override(pid, assignment, adjustment):
-            a = _convert_amount_to_absolute_points(adjustment.amount, assignment)
-            points.loc[pid, assignment] = a
-
         for pid, assignments_dct in self.adjustments.items():
             for assignment, adjustments in assignments_dct.items():
                 for adjustment in adjustments:
                     if isinstance(adjustment, (Deduction, Addition)):
                         _apply_deduction_or_addition(pid, assignment, adjustment)
-                    elif isinstance(adjustment, Override):
-                        _apply_override(pid, assignment, adjustment)
                     else:
                         raise ValueError("Invalid adjustment type.")
 
@@ -625,38 +617,39 @@ def combine_gradebooks(gradebooks, restricted_to_pids=None):
     )
 
 
-def _combine_and_convert_deductions(parts, new_name, deductions, points_possible):
-    """Concatenates all deductions from the given parts.
+def _combine_and_convert_adjustments(parts, new_name, adjustments, points_possible):
+    """Concatenates all adjustments from the given parts.
 
-    Converts percentage deductions to points deductions along the way.
+    Converts percentage adjustments to points adjustments along the way.
 
     Used in MutableGradebook._combine_assignment
 
     """
 
-    # combine and convert deductions
-    def _convert_deduction(assignment, deduction):
-        if isinstance(deduction, Percentage):
+    # combine and convert adjustments
+    def _convert_adjustment(assignment, adjustment):
+        cls = type(adjustment)
+        if isinstance(adjustment.amount, Percentage):
             possible = points_possible.loc[assignment]
-            return Points(possible * deduction.amount)
+            return cls(Points(possible * adjustment.amount.amount), adjustment.reason)
         else:
-            return deduction
+            return adjustment
 
-    new_deductions = {}
-    for student, assignments_dct in deductions.items():
-        new_deductions[student] = {}
+    new_adjustments = {}
+    for student, assignments_dct in adjustments.items():
+        new_adjustments[student] = {}
 
-        combined_deductions = []
-        for assignment, deductions_lst in assignments_dct.items():
-            deductions_lst = [_convert_deduction(assignment, d) for d in deductions_lst]
+        combined_adjustments = []
+        for assignment, adjustments_lst in assignments_dct.items():
+            adjustments_lst = [_convert_adjustment(assignment, d) for d in adjustments_lst]
             if assignment in parts:
-                combined_deductions.extend(deductions_lst)
+                combined_adjustments.extend(adjustments_lst)
             else:
-                new_deductions[student][assignment] = deductions_lst
+                new_adjustments[student][assignment] = adjustments_lst
 
-        new_deductions[student][new_name] = combined_deductions
+        new_adjustments[student][new_name] = combined_adjustments
 
-    return new_deductions
+    return new_adjustments
 
 class MutableGradebook(Gradebook):
     """A gradebook with methods for changing assignments and grades."""
@@ -865,7 +858,7 @@ class MutableGradebook(Gradebook):
 
         # combines deductions from all of the parts, converting Percentage
         # to Points along the way.
-        new_deductions = _combine_and_convert_deductions(
+        new_deductions = _combine_and_convert_adjustments(
             parts, new_name, self.adjustments, self.points_possible
         )
 

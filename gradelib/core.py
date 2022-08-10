@@ -167,7 +167,7 @@ class Assignments(collections.abc.Sequence):
         return self._names[index]
 
 
-# Deductions
+# GradeAmounts
 # ======================================================================================
 
 
@@ -191,6 +191,31 @@ class Points(_GradeAmount):
 class Percentage(_GradeAmount):
     pass
 
+
+# Adjustments
+# ======================================================================================
+
+class Adjustment:
+    pass
+
+
+class Deduction(Adjustment):
+
+    def __init__(self, amount, reason=None):
+        self.amount = amount
+        self.reason = reason
+
+class Addition(Adjustment):
+
+    def __init__(self, amount, reason=None):
+        self.amount = amount
+        self.reason = reason
+
+class Override(Adjustment):
+
+    def __init__(self, amount, reason=None):
+        self.amount = amount
+        self.reason = reason
 
 # Gradebook
 # ======================================================================================

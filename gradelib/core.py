@@ -278,6 +278,32 @@ def _concatenate_notes(gradebooks):
 
     return notes
 
+def _concatenate_groups(gradebooks):
+    """Concatenates the groups from a sequence of gradebooks."""
+    groups = []
+    seen_group_names = set()
+    for gradebook in gradebooks:
+        groups.extend(gradebook.groups)
+        current_group_names = set(g.name for g in gradebook.groups)
+        names_seen_twice = seen_group_names & current_group_names
+        if names_seen_twice:
+            raise ValueError(f'Duplicate group names seen: {names_seen_twice}.')
+        seen_group_names.update(current_group_names)
+
+    return groups
+
+
+def _combine_if_equal(gradebooks, attr):
+    obj = None
+    for gradebook in gradebooks:
+        if obj is None:
+            obj = getattr(gradebook, attr)
+        else:
+            if getattr(gradebook, attr) != obj:
+                raise ValueError("Options do not match in all gradebooks.")
+
+    return obj
+
 
 def combine_gradebooks(gradebooks, restricted_to_pids=None):
     """Create a gradebook by safely combining several existing gradebooks.
@@ -286,11 +312,17 @@ def combine_gradebooks(gradebooks, restricted_to_pids=None):
     students -- we don't want students to have missing grades. This
     function checks to make sure that the gradebooks have the same students
     before combining them. Similarly, it verifies that each gradebook has
-    unique assignments, so that no conflicts occur when combining them.
+    unique assignments and group names, so that no conflicts occur when
+    combining them.
 
-    The new gradebook's adjustments are a union of the adjustments in the
-    existing gradebooks, as are the notes. The options are reset to their
-    defaults.
+    The new gradebook's adjustments and groups are a union of the adjustments
+    in the existing gradebooks, as are the groups and notes. 
+
+    If the scales are the same, the new scale is set to be the same as the old.
+    If they are different, a ValueError is raised.
+
+    If the options are the same, the new options are set to be the same as the
+    old. If they are different, a ValueError is raised.
 
     Parameters
     ----------
@@ -311,8 +343,9 @@ def combine_gradebooks(gradebooks, restricted_to_pids=None):
     Raises
     ------
     ValueError
-        If the PID indices of gradebooks do not match, or if there is a
-        duplicate assignment name.
+        If the PID indices of gradebooks do not match; if there is a duplicate
+        assignment name; a duplicate group name; the options do not match; the
+        scales do not match.
 
     """
     gradebooks = list(gradebooks)
@@ -341,16 +374,16 @@ def combine_gradebooks(gradebooks, restricted_to_pids=None):
         all_tables = [getattr(g, a) for g in gradebooks]
         return pd.concat(all_tables, axis=axis)
 
-    points = concat_attr("points_marked")
-    maximums = concat_attr("points_possible", axis=0)
-    lateness = concat_attr("lateness")
-    dropped = concat_attr("dropped")
-
-    adjustments = _concatenate_adjustments(gradebooks)
-    notes = _concatenate_notes(gradebooks)
-
     return Gradebook(
-        points, maximums, lateness, dropped, adjustments=adjustments, notes=notes
+        points_marked=concat_attr("points_marked"),
+        points_possible=concat_attr("points_possible", axis=0),
+        lateness=concat_attr("lateness"),
+        dropped=concat_attr("dropped"),
+        adjustments=_concatenate_adjustments(gradebooks),
+        notes=_concatenate_notes(gradebooks),
+        groups=_concatenate_groups(gradebooks),
+        opts=_combine_if_equal(gradebooks, 'opts'),
+        scale=_combine_if_equal(gradebooks, 'scale')
     )
 
 

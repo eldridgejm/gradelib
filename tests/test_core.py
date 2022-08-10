@@ -531,6 +531,105 @@ def test_combine_gradebooks_raises_if_indices_do_not_match():
             [CANVAS_WITHOUT_LAB_EXAMPLE, GRADESCOPE_EXAMPLE]
         )
 
+def test_combine_gradebooks_concatenates_groups():
+    ex_1 = GRADESCOPE_EXAMPLE.copy()
+    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
+
+    ex_1.groups = [
+        ('homeworks', ex_1.assignments.starting_with('home'), .25),
+        ('labs', ex_1.assignments.starting_with('lab'), .25),
+    ]
+
+    ex_2.groups = [
+        ('exams', ['midterm exam', 'final exam'], .5)
+    ]
+
+    combined = gradelib.combine_gradebooks(
+        [ex_1, ex_2],
+        restricted_to_pids=ROSTER.index,
+    )
+
+    assert combined.groups == ex_1.groups + ex_2.groups
+
+def test_combine_gradebooks_raises_if_group_names_conflict():
+    ex_1 = GRADESCOPE_EXAMPLE.copy()
+    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
+
+    ex_1.groups = [
+        ('homeworks', ex_1.assignments.starting_with('home'), .25),
+        ('labs', ex_1.assignments.starting_with('lab'), .25),
+    ]
+
+    ex_2.groups = [
+        ('homeworks', ['midterm exam', 'final exam'], .5)
+    ]
+
+    with pytest.raises(ValueError):
+        combined = gradelib.combine_gradebooks(
+            [ex_1, ex_2],
+            restricted_to_pids=ROSTER.index,
+        )
+
+def test_combine_gradebooks_uses_existing_options_if_all_the_same():
+    ex_1 = GRADESCOPE_EXAMPLE.copy()
+    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
+
+    ex_1.opts.lateness_fudge = 789
+    ex_2.opts.lateness_fudge = 789
+
+    combined = gradelib.combine_gradebooks(
+        [ex_1, ex_2],
+        restricted_to_pids=ROSTER.index,
+    )
+
+    assert combined.opts.lateness_fudge == 789
+
+def test_combine_gradebooks_raises_if_options_do_not_match():
+    ex_1 = GRADESCOPE_EXAMPLE.copy()
+    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
+
+    ex_1.opts.lateness_fudge = 5000
+    ex_2.opts.lateness_fudge = 6000
+
+    with pytest.raises(ValueError):
+        combined = gradelib.combine_gradebooks(
+            [ex_1, ex_2],
+            restricted_to_pids=ROSTER.index,
+        )
+
+def test_combine_gradebooks_uses_existing_scales_if_all_the_same():
+    ex_1 = GRADESCOPE_EXAMPLE.copy()
+    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
+
+    import gradelib.scales
+
+    ex_1.scale = gradelib.scales.ROUNDED_DEFAULT_SCALE
+    ex_2.scale = gradelib.scales.ROUNDED_DEFAULT_SCALE
+
+    combined = gradelib.combine_gradebooks(
+        [ex_1, ex_2],
+        restricted_to_pids=ROSTER.index,
+    )
+
+    assert combined.scale == gradelib.scales.ROUNDED_DEFAULT_SCALE
+
+def test_combine_gradebooks_raises_if_scales_do_not_match():
+    ex_1 = GRADESCOPE_EXAMPLE.copy()
+    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
+
+    ex_2.scale = gradelib.scales.ROUNDED_DEFAULT_SCALE
+
+    with pytest.raises(ValueError):
+        combined = gradelib.combine_gradebooks(
+            [ex_1, ex_2],
+            restricted_to_pids=ROSTER.index,
+        )
+
+# combines options if same
+# raises if scales do not match
+
+
+# TODO .groups returns tuple
 
 def test_combine_gradebooks_concatenates_adjustments():
     # when

@@ -57,9 +57,7 @@ def test_penalize_lates_without_forgiveness_or_within_penalizes_all_lates():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.Gradebook(
-        points_marked, points_possible, lateness=lateness
-    )
+    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -83,9 +81,7 @@ def test_penalize_lates_with_custom_flat_deduction():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.Gradebook(
-        points_marked, points_possible, lateness=lateness
-    )
+    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -109,9 +105,7 @@ def test_penalize_lates_with_callable_deduction():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.Gradebook(
-        points_marked, points_possible, lateness=lateness
-    )
+    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -123,7 +117,11 @@ def test_penalize_lates_with_callable_deduction():
     result = gradebook.apply(gradelib.policies.PenalizeLates(deduction=deduction))
 
     assert result.adjustments == {
-        "A1": {"hw01": [Deduction(Points(1))], "hw02": [Deduction(Points(2))], "lab01": [Deduction(Points(3))]},
+        "A1": {
+            "hw01": [Deduction(Points(1))],
+            "hw02": [Deduction(Points(2))],
+            "lab01": [Deduction(Points(3))],
+        },
     }
 
 
@@ -139,9 +137,7 @@ def test_penalize_lates_with_callable_deduction_does_not_count_forgiven():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.Gradebook(
-        points_marked, points_possible, lateness=lateness
-    )
+    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -171,9 +167,7 @@ def test_penalize_lates_respects_lateness_fudge():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.Gradebook(
-        points_marked, points_possible, lateness=lateness
-    )
+    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -198,9 +192,7 @@ def test_penalize_lates_within_assignments():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.Gradebook(
-        points_marked, points_possible, lateness=lateness
-    )
+    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -223,9 +215,7 @@ def test_penalize_lates_within_accepts_callable():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.Gradebook(
-        points_marked, points_possible, lateness=lateness
-    )
+    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
 
     HOMEWORK = lambda asmts: asmts.starting_with("hw")
 
@@ -248,9 +238,7 @@ def test_penalize_lates_with_forgiveness():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.Gradebook(
-        points_marked, points_possible, lateness=lateness
-    )
+    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -273,9 +261,7 @@ def test_penalize_lates_with_forgiveness_and_within():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.Gradebook(
-        points_marked, points_possible, lateness=lateness
-    )
+    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -327,9 +313,7 @@ def test_penalize_lates_does_not_forgive_dropped():
         index=points_marked.index,
     )
 
-    gradebook = gradelib.Gradebook(
-        points_marked, points_possible, lateness=lateness
-    )
+    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
     gradebook.dropped.loc["A1", :] = True
 
     result = gradebook.apply([gradelib.policies.PenalizeLates(forgive=2)])
@@ -757,6 +741,7 @@ def test_make_exceptions_with_replace():
     assert actual.points_after_adjustments.loc["A1", "hw02"] == 9
     assert_gradebook_is_sound(actual)
 
+
 def test_make_exceptions_with_override():
     # given
     columns = ["hw01", "hw02", "hw03", "hw04"]
@@ -771,10 +756,11 @@ def test_make_exceptions_with_override():
 
     # when
     actual = gradelib.policies.MakeExceptions(
-        "Justin", [
-            gradelib.policies.Override("hw01", gradelib.Percentage(.5)),
+        "Justin",
+        [
+            gradelib.policies.Override("hw01", gradelib.Percentage(0.5)),
             gradelib.policies.Override("hw02", gradelib.Points(8)),
-        ]
+        ],
     )(gradebook)
 
     # then

@@ -32,7 +32,6 @@ def _resolve_within(gradebook, within):
 
 
 class MakeExceptions:
-
     def __init__(self, student, exceptions):
         self.student = student
         self.exceptions = exceptions
@@ -45,17 +44,16 @@ class MakeExceptions:
 
 
 class ForgiveLate:
-
     def __init__(self, assignment):
         self.assignment = assignment
 
     def __call__(self, gradebook, student):
         pid = gradebook.find_student(student)
-        gradebook.lateness.loc[pid, self.assignment] = pd.Timedelta(0, 's')
+        gradebook.lateness.loc[pid, self.assignment] = pd.Timedelta(0, "s")
         return gradebook
 
-class Drop:
 
+class Drop:
     def __init__(self, assignment):
         self.assignment = assignment
 
@@ -71,8 +69,8 @@ def _adjustment_from_difference(difference):
     else:
         return Addition(Points(difference))
 
-class Replace:
 
+class Replace:
     def __init__(self, assignment, with_):
         self.assignment = assignment
         self.with_ = with_
@@ -86,6 +84,7 @@ class Replace:
         gradebook.add_adjustment(pid, self.assignment, adjustment)
         return gradebook
 
+
 def _convert_amount_to_absolute_points(amount, gradebook, assignment):
     if isinstance(amount, Points):
         return amount.amount
@@ -93,8 +92,8 @@ def _convert_amount_to_absolute_points(amount, gradebook, assignment):
         # calculate percentage adjustment based on points possible
         return amount.amount * gradebook.points_possible.loc[assignment]
 
-class Override:
 
+class Override:
     def __init__(self, assignment, amount):
         self.assignment = assignment
         self.amount = amount
@@ -102,7 +101,9 @@ class Override:
     def __call__(self, gradebook, student):
         pid = gradebook.find_student(student)
         current_points = gradebook.points_after_adjustments.loc[pid, self.assignment]
-        new_points = _convert_amount_to_absolute_points(self.amount, gradebook, self.assignment)
+        new_points = _convert_amount_to_absolute_points(
+            self.amount, gradebook, self.assignment
+        )
         adjustment = _adjustment_from_difference(new_points - current_points)
         gradebook.add_adjustment(pid, self.assignment, adjustment)
         return gradebook
@@ -113,6 +114,7 @@ class Override:
 
 
 _LateInfo = collections.namedtuple("LateInfo", "gradebook pid assignment number")
+
 
 class PenalizeLates:
     """Penalize late assignments.
@@ -182,7 +184,10 @@ class PenalizeLates:
 
             for assignment in within:
                 if gradebook.late.loc[pid, assignment]:
-                    if forgiveness_left > 0 and not gradebook.dropped.loc[pid, assignment]:
+                    if (
+                        forgiveness_left > 0
+                        and not gradebook.dropped.loc[pid, assignment]
+                    ):
                         forgiveness_left -= 1
                     else:
                         number += 1
@@ -305,12 +310,15 @@ class DropLowest:
 
         return gradebook._replace(dropped=new_dropped)
 
+
 # Redeem
 # ======================================================================================
 
-class Redeem:
 
-    def __init__(self, selector, remove_parts=False, deduction=None, suffix=' with redemption'):
+class Redeem:
+    def __init__(
+        self, selector, remove_parts=False, deduction=None, suffix=" with redemption"
+    ):
         self.selector = selector
         self.remove_parts = remove_parts
         self.deduction = deduction
@@ -324,7 +332,9 @@ class Redeem:
             for prefix in self.selector:
                 pair = [a for a in gradebook.assignments if a.startswith(prefix)]
                 if len(pair) != 2:
-                    raise ValueError(f'Prefix "{prefix}" does not match a pair of assignments.')
+                    raise ValueError(
+                        f'Prefix "{prefix}" does not match a pair of assignments.'
+                    )
                 assignment_pairs[prefix + self.suffix] = pair
 
         for new_name, assignment_pair in assignment_pairs.items():
@@ -343,7 +353,9 @@ class Redeem:
 
         points_possible = gradebook.points_possible[[first, second]].max()
 
-        first_scale, second_scale = points_possible / gradebook.points_possible[[first, second]]
+        first_scale, second_scale = (
+            points_possible / gradebook.points_possible[[first, second]]
+        )
 
         first_points = gradebook.points_after_adjustments[first] * first_scale
         second_points = gradebook.points_after_adjustments[second] * second_scale
@@ -367,6 +379,3 @@ class Redeem:
         for assignment_pair in self.selector.values():
             gradebook = gradebook.without_assignments(assignment_pair)
         return gradebook
-
-
-

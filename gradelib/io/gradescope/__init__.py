@@ -81,10 +81,10 @@ def read(path, standardize_pids=True, standardize_assignments=True):
         table.index = table.index.str.upper()
 
     # read the names
-    if 'First Name' in table:
+    if "First Name" in table:
         student_names = table["First Name"] + " " + table["Last Name"]
     else:
-        student_names = table['Name']
+        student_names = table["Name"]
 
     table.index = [
         Student(pid, name) for (pid, name) in zip(table.index, student_names)

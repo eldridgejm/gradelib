@@ -469,20 +469,22 @@ def test_restricted_to_assignments_removes_adjustments_not_in_assignments():
     # then
     assert actual.adjustments == {"A100": {"homework 01": [1]}}
 
+
 def test_restricted_to_assignments_updates_groups():
     # when
     original = GRADESCOPE_EXAMPLE.copy()
     original.groups = [
-        ('homeworks', original.assignments.starting_with('home'), .75),
-        ('labs', original.assignments.starting_with('lab'), .25),
+        ("homeworks", original.assignments.starting_with("home"), 0.75),
+        ("labs", original.assignments.starting_with("lab"), 0.25),
     ]
 
     actual = original.restricted_to_assignments(["homework 01", "homework 02"])
 
     # then
     assert actual.groups == [
-        gradelib.Group('homeworks', ['homework 01', 'homework 02'], .75),
+        gradelib.Group("homeworks", ["homework 01", "homework 02"], 0.75),
     ]
+
 
 def test_without_assignments():
     # when
@@ -545,18 +547,17 @@ def test_combine_gradebooks_raises_if_indices_do_not_match():
             [CANVAS_WITHOUT_LAB_EXAMPLE, GRADESCOPE_EXAMPLE]
         )
 
+
 def test_combine_gradebooks_concatenates_groups():
     ex_1 = GRADESCOPE_EXAMPLE.copy()
     ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
 
     ex_1.groups = [
-        ('homeworks', ex_1.assignments.starting_with('home'), .25),
-        ('labs', ex_1.assignments.starting_with('lab'), .25),
+        ("homeworks", ex_1.assignments.starting_with("home"), 0.25),
+        ("labs", ex_1.assignments.starting_with("lab"), 0.25),
     ]
 
-    ex_2.groups = [
-        ('exams', ['midterm exam', 'final exam'], .5)
-    ]
+    ex_2.groups = [("exams", ["midterm exam", "final exam"], 0.5)]
 
     combined = gradelib.combine_gradebooks(
         [ex_1, ex_2],
@@ -565,24 +566,24 @@ def test_combine_gradebooks_concatenates_groups():
 
     assert combined.groups == ex_1.groups + ex_2.groups
 
+
 def test_combine_gradebooks_raises_if_group_names_conflict():
     ex_1 = GRADESCOPE_EXAMPLE.copy()
     ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
 
     ex_1.groups = [
-        ('homeworks', ex_1.assignments.starting_with('home'), .25),
-        ('labs', ex_1.assignments.starting_with('lab'), .25),
+        ("homeworks", ex_1.assignments.starting_with("home"), 0.25),
+        ("labs", ex_1.assignments.starting_with("lab"), 0.25),
     ]
 
-    ex_2.groups = [
-        ('homeworks', ['midterm exam', 'final exam'], .5)
-    ]
+    ex_2.groups = [("homeworks", ["midterm exam", "final exam"], 0.5)]
 
     with pytest.raises(ValueError):
         combined = gradelib.combine_gradebooks(
             [ex_1, ex_2],
             restricted_to_pids=ROSTER.index,
         )
+
 
 def test_combine_gradebooks_uses_existing_options_if_all_the_same():
     ex_1 = GRADESCOPE_EXAMPLE.copy()
@@ -598,6 +599,7 @@ def test_combine_gradebooks_uses_existing_options_if_all_the_same():
 
     assert combined.opts.lateness_fudge == 789
 
+
 def test_combine_gradebooks_raises_if_options_do_not_match():
     ex_1 = GRADESCOPE_EXAMPLE.copy()
     ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
@@ -610,6 +612,7 @@ def test_combine_gradebooks_raises_if_options_do_not_match():
             [ex_1, ex_2],
             restricted_to_pids=ROSTER.index,
         )
+
 
 def test_combine_gradebooks_uses_existing_scales_if_all_the_same():
     ex_1 = GRADESCOPE_EXAMPLE.copy()
@@ -627,6 +630,7 @@ def test_combine_gradebooks_uses_existing_scales_if_all_the_same():
 
     assert combined.scale == gradelib.scales.ROUNDED_DEFAULT_SCALE
 
+
 def test_combine_gradebooks_raises_if_scales_do_not_match():
     ex_1 = GRADESCOPE_EXAMPLE.copy()
     ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
@@ -638,6 +642,7 @@ def test_combine_gradebooks_raises_if_scales_do_not_match():
             [ex_1, ex_2],
             restricted_to_pids=ROSTER.index,
         )
+
 
 def test_combine_gradebooks_concatenates_adjustments():
     # when
@@ -1030,6 +1035,7 @@ def test_combine_assignments_converted_percentage_adjustments_to_points():
         }
     }
 
+
 def test_combine_assignments_copies_attributes():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
@@ -1043,6 +1049,7 @@ def test_combine_assignments_copies_attributes():
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
     result = gradebook.with_assignments_combined({"hw01": HOMEWORK_01_PARTS})
+
 
 # with_renamed_assignments
 # ------------------------
@@ -1164,6 +1171,7 @@ def test_default_groups_one_assignment_per_group_equally_weighted():
 # groups
 
 # TODO .groups returns tuple
+
 
 def test_groups_setter_allows_three_tuple_form():
     # given
@@ -1408,10 +1416,6 @@ def test_group_scores_raises_if_all_assignments_in_a_group_are_dropped():
         gradebook.group_scores
 
 
-# group_scores
-# -----------------------------------------------------------------------------
-
-
 def test_group_scores_respects_adjustments():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -1545,6 +1549,148 @@ def test_group_scores_respects_normalize_assignment_weights_and_drops_and_adjust
         ),
     )
 
+
+# effective_assignment_weight
+# ---------------------------
+
+def test_effective_assignment_weight_weights_by_group_weights():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        gradelib.Group("homeworks", HOMEWORKS, 0.6),
+        gradelib.Group("labs", ["lab01"], 0.4),
+    ]
+
+    # then
+    pd.testing.assert_frame_equal(
+        gradebook.effective_assignment_weight,
+        pd.DataFrame(
+            [
+                [2/152 * .6, 50/152 * .6, 100/152 * .6, 20/20 * .4],
+                [2/152 * .6, 50/152 * .6, 100/152 * .6, 20/20 * .4],
+            ],
+            index=gradebook.students,
+            columns=gradebook.assignments
+        ),
+    )
+
+def test_effective_assignment_weight_sums_to_one_across_each_row():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        gradelib.Group("homeworks", HOMEWORKS, 0.6),
+        gradelib.Group("labs", ["lab01"], 0.4),
+    ]
+
+    # then
+    assert (gradebook.effective_assignment_weight.sum(axis=1) == [1, 1]).all()
+
+def test_effective_assignment_weight_takes_into_account_normalized_groups():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        gradelib.Group("homeworks", HOMEWORKS, 0.6, normalize_assignment_weights=True),
+        gradelib.Group("labs", ["lab01"], 0.4),
+    ]
+
+    # then
+    pd.testing.assert_frame_equal(
+        gradebook.effective_assignment_weight,
+        pd.DataFrame(
+            [
+                [1/3 * .6, 1/3 * .6, 1/3 * .6, 20/20 * .4],
+                [1/3 * .6, 1/3 * .6, 1/3 * .6, 20/20 * .4],
+            ],
+            index=gradebook.students,
+            columns=gradebook.assignments
+        ),
+    )
+
+# gives zero to assignments not in any group
+def test_effective_assignment_weight_assigns_zero_to_any_assignments_not_in_a_group():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        gradelib.Group("homeworks", HOMEWORKS, 0.6, normalize_assignment_weights=True),
+    ]
+
+    # then
+    pd.testing.assert_frame_equal(
+        gradebook.effective_assignment_weight,
+        pd.DataFrame(
+            [
+                [1/3 * .6, 1/3 * .6, 1/3 * .6, 0.0],
+                [1/3 * .6, 1/3 * .6, 1/3 * .6, 0.0],
+            ],
+            index=gradebook.students,
+            columns=gradebook.assignments
+        ),
+    )
+
+# gives a zero to dropped assignments
+def test_effective_assignment_weight_assigns_zero_to_dropped_assignments():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
+    gradebook.dropped.loc['A1', 'hw02'] = True
+    gradebook.dropped.loc['A2', 'hw01'] = True
+    gradebook.dropped.loc['A2', 'hw03'] = True
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        gradelib.Group("homeworks", HOMEWORKS, 0.6),
+        gradelib.Group("labs", ['lab01'], 0.4),
+    ]
+
+    # then
+    pd.testing.assert_frame_equal(
+        gradebook.effective_assignment_weight,
+        pd.DataFrame(
+            [
+                [2/102 * .6, 0.0, 100/102 * .6, .4],
+                [0.0, .6, 0.0, .4],
+            ],
+            index=gradebook.students,
+            columns=gradebook.assignments
+        ),
+    )
 
 # overall_score
 # -----------------------------------------------------------------------------

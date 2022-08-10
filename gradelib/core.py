@@ -195,25 +195,26 @@ class Percentage(_GradeAmount):
 # Adjustments
 # ======================================================================================
 
-class Adjustment:
 
+class Adjustment:
     def __repr__(self):
-        return f'{self.__class__.__name__}(amount={self.amount}, reason={self.reason})'
+        return f"{self.__class__.__name__}(amount={self.amount}, reason={self.reason})"
 
     def __eq__(self, other):
         return self.amount == other.amount and self.reason == other.reason
 
-class Deduction(Adjustment):
 
+class Deduction(Adjustment):
     def __init__(self, amount, reason=None):
         self.amount = amount
         self.reason = reason
+
 
 class Addition(Adjustment):
-
     def __init__(self, amount, reason=None):
         self.amount = amount
         self.reason = reason
+
 
 # Gradebook
 # ======================================================================================
@@ -278,6 +279,7 @@ def _concatenate_notes(gradebooks):
 
     return notes
 
+
 def _concatenate_groups(gradebooks):
     """Concatenates the groups from a sequence of gradebooks."""
     groups = []
@@ -287,7 +289,7 @@ def _concatenate_groups(gradebooks):
         current_group_names = set(g.name for g in gradebook.groups)
         names_seen_twice = seen_group_names & current_group_names
         if names_seen_twice:
-            raise ValueError(f'Duplicate group names seen: {names_seen_twice}.')
+            raise ValueError(f"Duplicate group names seen: {names_seen_twice}.")
         seen_group_names.update(current_group_names)
 
     return groups
@@ -316,7 +318,7 @@ def combine_gradebooks(gradebooks, restricted_to_pids=None):
     combining them.
 
     The new gradebook's adjustments and groups are a union of the adjustments
-    in the existing gradebooks, as are the groups and notes. 
+    in the existing gradebooks, as are the groups and notes.
 
     If the scales are the same, the new scale is set to be the same as the old.
     If they are different, a ValueError is raised.
@@ -382,8 +384,8 @@ def combine_gradebooks(gradebooks, restricted_to_pids=None):
         adjustments=_concatenate_adjustments(gradebooks),
         notes=_concatenate_notes(gradebooks),
         groups=_concatenate_groups(gradebooks),
-        opts=_combine_if_equal(gradebooks, 'opts'),
-        scale=_combine_if_equal(gradebooks, 'scale')
+        opts=_combine_if_equal(gradebooks, "opts"),
+        scale=_combine_if_equal(gradebooks, "scale"),
     )
 
 
@@ -411,7 +413,9 @@ def _combine_and_convert_adjustments(parts, new_name, adjustments, points_possib
 
         combined_adjustments = []
         for assignment, adjustments_lst in assignments_dct.items():
-            adjustments_lst = [_convert_adjustment(assignment, d) for d in adjustments_lst]
+            adjustments_lst = [
+                _convert_adjustment(assignment, d) for d in adjustments_lst
+            ]
             if assignment in parts:
                 combined_adjustments.extend(adjustments_lst)
             else:
@@ -420,6 +424,7 @@ def _combine_and_convert_adjustments(parts, new_name, adjustments, points_possib
         new_adjustments[student][new_name] = combined_adjustments
 
     return new_adjustments
+
 
 @dataclasses.dataclass
 class GradebookOptions:
@@ -586,8 +591,8 @@ class Gradebook:
     def default_groups(self):
         weight = 1 / len(self.assignments)
         return [
-                Group(assignment, Assignments([assignment]), weight)
-                for assignment in self.assignments
+            Group(assignment, Assignments([assignment]), weight)
+            for assignment in self.assignments
         ]
 
     @property
@@ -675,21 +680,23 @@ class Gradebook:
             possible = pd.DataFrame(
                 np.tile(
                     self.points_possible[group.assignments],
-                    (self.points_marked.shape[0], 1)
+                    (self.points_marked.shape[0], 1),
                 ),
                 index=self.students,
-                columns=group.assignments
+                columns=group.assignments,
             )
 
             if group.normalize_assignment_weights:
-                possible.iloc[:,:] = 1
+                possible.iloc[:, :] = 1
 
             possible[self.dropped[group.assignments]] = 0
             possible = possible.sum(axis=1)
 
             if (possible == 0).any():
                 problematic_pids = list(possible.index[possible == 0])
-                raise ValueError(f"All assignments are dropped for {problematic_pids} in group '{group.name}'.")
+                raise ValueError(
+                    f"All assignments are dropped for {problematic_pids} in group '{group.name}'."
+                )
 
             result[group.name] = possible
 
@@ -698,6 +705,62 @@ class Gradebook:
     @property
     def group_scores(self):
         return self.group_effective_points_earned / self.group_effective_points_possible
+
+    @property
+    def effective_assignment_weight(self):
+        """How much does each assignment contribute to the student's overall score?
+
+        Takes drops and group weights into account. If an assignment is dropped
+        for a student, it contributes 0 to the overall score. Likewise, if an
+        assignment is not in a group, it contributes 0.
+
+        """
+        def _group_containing_assignment(assignment):
+            for group in self.groups:
+                if assignment in group.assignments:
+                    return group
+            else:
+                return None
+
+        def _group_weight(assignment):
+            g = _group_containing_assignment(assignment)
+            if g is None:
+                return 0
+            else:
+                return g.weight
+
+        n = len(self.points_marked)
+
+        factors = pd.DataFrame(
+                np.tile([_group_weight(a) for a in self.assignments], (n, 1)),
+                index=self.students,
+                columns=self.assignments
+            )
+
+        group_total_points = {}
+        for group in self.groups:
+            total = self.group_effective_points_possible[group.name]
+            for assignment in group.assignments:
+                group_total_points[assignment] = total
+        group_total_points = pd.DataFrame(group_total_points)
+
+        effective_points_possible = {}
+        for group in self.groups:
+            for assignment in group.assignments:
+                if group.normalize_assignment_weights:
+                    effective_points_possible[assignment] = np.ones(n)
+                else:
+                    effective_points_possible[assignment] = np.repeat(self.points_possible[assignment],
+                        n)
+
+        effective_points_possible = pd.DataFrame(effective_points_possible,
+                index=self.points_marked.index, columns=self.assignments)
+        # if NaN, the assignment was not in any group
+        effective_points_possible = effective_points_possible.fillna(0)
+        effective_points_possible[self.dropped] = 0
+
+        result = effective_points_possible / group_total_points * factors
+        return result.fillna(0)
 
     @property
     def overall_score(self):
@@ -885,7 +948,9 @@ class Gradebook:
         def _update_groups():
             def _update_group(g):
                 kept_assignments = [a for a in g.assignments if a in assignments]
-                return Group(g.name, kept_assignments, g.weight, g.normalize_assignment_weights)
+                return Group(
+                    g.name, kept_assignments, g.weight, g.normalize_assignment_weights
+                )
 
             new_groups_with_empties = [_update_group(g) for g in self.groups]
             return [g for g in new_groups_with_empties if g.assignments]
@@ -896,7 +961,7 @@ class Gradebook:
             lateness=r_lateness,
             dropped=r_dropped,
             adjustments=r_adjustments,
-            groups=_update_groups()
+            groups=_update_groups(),
         )
 
     def without_assignments(self, assignments):
@@ -960,7 +1025,6 @@ class Gradebook:
             points_marked=r_points, lateness=r_lateness, dropped=r_dropped
         )
 
-
     def _combine_assignment(self, new_name, parts):
         """A helper function to combine assignments under the new name."""
         parts = list(parts)
@@ -999,7 +1063,6 @@ class Gradebook:
         )
 
         return result.without_assignments(set(parts) - {new_name})
-
 
     def with_assignments_combined(self, selector):
         """Combine the assignment parts into one single assignment with the new name.
@@ -1091,7 +1154,9 @@ class Gradebook:
         return result
 
     def with_renamed_assignments(self, mapping):
-        resulting_names = (set(self.assignments) - mapping.keys()) | set(mapping.values())
+        resulting_names = (set(self.assignments) - mapping.keys()) | set(
+            mapping.values()
+        )
         if len(resulting_names) != len(self.assignments):
             raise ValueError("Name clashes in renamed assignments.")
 
@@ -1104,12 +1169,10 @@ class Gradebook:
                 return key
 
         def _update_assignments_dct(assignments_dct):
-            return {
-                _update_key(k): v for k, v in assignments_dct.items()
-            }
+            return {_update_key(k): v for k, v in assignments_dct.items()}
 
         result.adjustments = {
-                pid: _update_assignments_dct(dct) for pid, dct in result.adjustments.items()
+            pid: _update_assignments_dct(dct) for pid, dct in result.adjustments.items()
         }
 
         result.points_marked.rename(columns=mapping, inplace=True)
@@ -1252,4 +1315,3 @@ class Gradebook:
         return self._replace(
             points_marked=new_points_marked, points_possible=new_points_possible
         )
-

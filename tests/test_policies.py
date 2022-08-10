@@ -415,7 +415,7 @@ def test_drop_lowest_on_simple_example_2():
     assert_gradebook_is_sound(actual)
 
 
-def test_drop_lowest_takes_deductions_into_account():
+def test_drop_lowest_takes_adjustments_into_account():
     # given
     columns = ["hw01", "hw02"]
     p1 = pd.Series(data=[10, 5], index=columns, name="A1")
@@ -588,7 +588,7 @@ def test_redemption_with_dropped_assignment_parts_raises():
         )
 
 
-def test_redemption_takes_deductions_into_account():
+def test_redemption_takes_adjustments_into_account():
     # given
     columns = ["mt01", "mt01 - redemption"]
     p1 = pd.Series(data=[95, 100], index=columns, name="A1")
@@ -596,8 +596,9 @@ def test_redemption_takes_deductions_into_account():
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([100, 100], index=columns)
     gradebook = gradelib.MutableGradebook(points, maximums)
-    gradebook.adjustments = {"A1": {"mt01 - redemption": [
-        gradelib.Deduction(Percentage(0.5))]}}
+    gradebook.adjustments = {
+        "A1": {"mt01 - redemption": [gradelib.Deduction(Percentage(0.5))]}
+    }
 
     # when
     actual = gradebook.apply(
@@ -725,7 +726,7 @@ def test_make_exceptions_with_drop():
     )(gradebook)
 
     # then
-    assert actual.dropped.loc['A1', 'hw01'] == True
+    assert actual.dropped.loc["A1", "hw01"] == True
     assert_gradebook_is_sound(actual)
 
 
@@ -743,10 +744,10 @@ def test_make_exceptions_with_replace():
 
     # when
     actual = gradelib.policies.MakeExceptions(
-        "Justin", [gradelib.policies.Replace("hw02", with_='hw01')]
+        "Justin", [gradelib.policies.Replace("hw02", with_="hw01")]
     )(gradebook)
 
     # then
-    assert actual.points_marked.loc['A1', 'hw01'] == 9
-    assert actual.points_marked.loc['A1', 'hw02'] == 9
+    assert actual.points_marked.loc["A1", "hw01"] == 9
+    assert actual.points_marked.loc["A1", "hw02"] == 9
     assert_gradebook_is_sound(actual)

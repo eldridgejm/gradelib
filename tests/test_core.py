@@ -253,6 +253,7 @@ def test_points_after_adjustments_does_not_set_ceiling():
 
     assert gb.points_after_adjustments.loc["A1", "hw01"] == 60
 
+
 def test_points_after_adjustments_respects_series_of_additions_and_deductions():
     columns = ["hw01", "hw02"]
     p1 = pd.Series(data=[10, 30], index=columns, name="A1")
@@ -268,12 +269,13 @@ def test_points_after_adjustments_respects_series_of_additions_and_deductions():
             "hw01": [
                 gradelib.Deduction(gradelib.Points(3)),
                 gradelib.Addition(gradelib.Points(5)),
-                gradelib.Deduction(gradelib.Percentage(.2)),
+                gradelib.Deduction(gradelib.Percentage(0.2)),
             ]
         },
     }
 
     assert gb.points_after_adjustments.loc["A1", "hw01"] == 8
+
 
 # give_equal_weights()
 # -----------------------------------------------------------------------------
@@ -343,6 +345,7 @@ def test_find_student_is_case_insensitive_with_capitalized_query():
 
     # then
     assert s == points_marked.index[0]
+
 
 def test_find_student_raises_on_multiple_matches():
     # given
@@ -456,7 +459,7 @@ def test_restricted_to_assignments_copies_all_attributes():
     assert actual.adjustments == original.adjustments
 
 
-def test_restricted_to_assignments_removes_deductions_not_in_assignments():
+def test_restricted_to_assignments_removes_adjustments_not_in_assignments():
     # when
     original = GRADESCOPE_EXAMPLE.copy()
     original.adjustments = {"A100": {"homework 01": [1], "homework 03": [3]}}
@@ -529,7 +532,7 @@ def test_combine_gradebooks_raises_if_indices_do_not_match():
         )
 
 
-def test_combine_gradebooks_concatenates_deductions():
+def test_combine_gradebooks_concatenates_adjustments():
     # when
     example_1 = GRADESCOPE_EXAMPLE.copy()
     example_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
@@ -865,7 +868,7 @@ def test_combine_assignments_raises_if_any_part_is_dropped():
         result = gradebook.with_assignments_combined({"hw01": HOMEWORK_01_PARTS})
 
 
-def test_combine_assignments_combines_deductions():
+def test_combine_assignments_combines_adjustments():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -874,22 +877,26 @@ def test_combine_assignments_combines_deductions():
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.MutableGradebook(points_marked, points_possible)
 
-    gradebook.adjustments["A1"] = {"hw01": [
-        gradelib.Deduction(gradelib.Points(4))], "hw01 - programming": [
-            gradelib.Deduction(gradelib.Points(5))]}
+    gradebook.adjustments["A1"] = {
+        "hw01": [gradelib.Deduction(gradelib.Points(4))],
+        "hw01 - programming": [gradelib.Deduction(gradelib.Points(5))],
+    }
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
     result = gradebook.with_assignments_combined({"hw01": HOMEWORK_01_PARTS})
 
-    assert result.adjustments == {"A1": {"hw01": [
+    assert result.adjustments == {
+        "A1": {
+            "hw01": [
+                gradelib.Deduction(gradelib.Points(4)),
+                gradelib.Deduction(gradelib.Points(5)),
+            ]
+        }
+    }
 
-        gradelib.Deduction(gradelib.Points(4)),
-        gradelib.Deduction(gradelib.Points(5)),
-        ]}}
 
-
-def test_combine_assignments_converted_percentage_deductions_to_points():
+def test_combine_assignments_converted_percentage_adjustments_to_points():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -915,6 +922,7 @@ def test_combine_assignments_converted_percentage_deductions_to_points():
             ]
         }
     }
+
 
 def test_combine_assignments_copies_attributes():
     # given
@@ -1005,7 +1013,7 @@ def test_with_renamed_assignments_allows_swapping_names():
     assert_gradebook_is_sound(result)
 
 
-def test_with_renamed_assignments_updates_deductions():
+def test_with_renamed_assignments_updates_adjustments():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -1129,7 +1137,7 @@ def test_groups_setter_allows_callable_for_assignments():
 # -----------------------
 
 
-def test_group_points_respects_deductions():
+def test_group_points_respects_adjustments():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -1206,7 +1214,7 @@ def test_group_points_respects_dropped_assignments():
     )
 
 
-def test_group_points_respects_deductions_and_dropped_assignments_simultaneously():
+def test_group_points_respects_adjustments_and_dropped_assignments_simultaneously():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -1217,7 +1225,10 @@ def test_group_points_respects_deductions_and_dropped_assignments_simultaneously
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
-        "A1": {"hw02": [gradelib.Deduction(gradelib.Points(10))], "hw03": [gradelib.Deduction(gradelib.Points(5))]}
+        "A1": {
+            "hw02": [gradelib.Deduction(gradelib.Points(10))],
+            "hw03": [gradelib.Deduction(gradelib.Points(5))],
+        }
     }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1297,7 +1308,7 @@ def test_group_scores_raises_if_all_assignments_in_a_group_are_dropped():
 # -----------------------------------------------------------------------------
 
 
-def test_group_scores_respects_deductions():
+def test_group_scores_respects_adjustments():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -1358,7 +1369,7 @@ def test_group_scores_respects_dropped_assignments():
     )
 
 
-def test_group_scores_respects_deductions_and_dropped_assignments_simultaneously():
+def test_group_scores_respects_adjustments_and_dropped_assignments_simultaneously():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -1369,7 +1380,10 @@ def test_group_scores_respects_deductions_and_dropped_assignments_simultaneously
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
-        "A1": {"hw02": [gradelib.Deduction(gradelib.Points(10))], "hw03": [gradelib.Deduction(gradelib.Points(5))]}
+        "A1": {
+            "hw02": [gradelib.Deduction(gradelib.Points(10))],
+            "hw03": [gradelib.Deduction(gradelib.Points(5))],
+        }
     }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1390,7 +1404,7 @@ def test_group_scores_respects_deductions_and_dropped_assignments_simultaneously
     )
 
 
-def test_group_scores_respects_normalize_assignment_weights_and_drops_and_deductions():
+def test_group_scores_respects_normalize_assignment_weights_and_drops_and_adjustments():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -1401,7 +1415,10 @@ def test_group_scores_respects_normalize_assignment_weights_and_drops_and_deduct
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
-        "A1": {"hw02": [gradelib.Deduction(gradelib.Points(10))], "hw03": [gradelib.Deduction(gradelib.Points(5))]}
+        "A1": {
+            "hw02": [gradelib.Deduction(gradelib.Points(10))],
+            "hw03": [gradelib.Deduction(gradelib.Points(5))],
+        }
     }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1455,7 +1472,7 @@ def test_overall_score_respects_group_weighting():
     )
 
 
-def test_overall_score_respects_deductions():
+def test_overall_score_respects_adjustments():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -1514,7 +1531,7 @@ def test_overall_score_respects_dropped_assignments():
     )
 
 
-def test_overall_score_respects_deductions_and_dropped_assignments_simultaneously():
+def test_overall_score_respects_adjustments_and_dropped_assignments_simultaneously():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -1525,7 +1542,10 @@ def test_overall_score_respects_deductions_and_dropped_assignments_simultaneousl
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
-        "A1": {"hw02": [gradelib.Deduction(gradelib.Points(10))], "hw03": [gradelib.Deduction(gradelib.Points(5))]}
+        "A1": {
+            "hw02": [gradelib.Deduction(gradelib.Points(10))],
+            "hw03": [gradelib.Deduction(gradelib.Points(5))],
+        }
     }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1545,7 +1565,7 @@ def test_overall_score_respects_deductions_and_dropped_assignments_simultaneousl
     )
 
 
-def test_overall_score_respects_normalize_assignment_weights_and_drops_and_deductions():
+def test_overall_score_respects_normalize_assignment_weights_and_drops_and_adjustments():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -1556,7 +1576,10 @@ def test_overall_score_respects_normalize_assignment_weights_and_drops_and_deduc
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
-        "A1": {"hw02": [gradelib.Deduction(gradelib.Points(10))], "hw03": [gradelib.Deduction(gradelib.Points(5))]}
+        "A1": {
+            "hw02": [gradelib.Deduction(gradelib.Points(10))],
+            "hw03": [gradelib.Deduction(gradelib.Points(5))],
+        }
     }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1593,7 +1616,10 @@ def test_letter_grades_respects_scale():
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
-        "A1": {"hw02": [gradelib.Deduction(gradelib.Points(10))], "hw03": [gradelib.Deduction(gradelib.Points(5))]}
+        "A1": {
+            "hw02": [gradelib.Deduction(gradelib.Points(10))],
+            "hw03": [gradelib.Deduction(gradelib.Points(5))],
+        }
     }
     gradebook.scale = {
         "A+": 0.9,

@@ -985,6 +985,26 @@ def test_groups_setter_allows_three_tuple_form():
             gradelib.Group('labs', gradelib.Assignments(['lab01']), weight=.5),
     ]
 
+def test_groups_setter_allows_two_tuple_form():
+    # given
+    columns = ["hw01", "hw02", "hw03", "midterm"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+
+    gradebook.groups = [
+        ('homeworks', ['hw01', 'hw02', 'hw03'], 0.5),
+        ('midterm', 0.5),
+    ]
+
+    # then
+    assert gradebook.groups == [
+            gradelib.Group('homeworks', gradelib.Assignments(['hw01', 'hw02', 'hw03']), weight=.5),
+            gradelib.Group('midterm', gradelib.Assignments(['midterm']), weight=.5),
+    ]
+
 def test_groups_setter_allows_callable_for_assignments():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]

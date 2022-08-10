@@ -1075,8 +1075,8 @@ class MutableGradebook(Gradebook):
             scale=scale,
         )
 
-    def grade(self, steps, groups=None, scale=None):
-        return self.apply(steps).finalize(groups, scale)
+    def grade(self, policies, groups=None, scale=None):
+        return self.apply(policies).finalize(groups, scale)
 
     def give_equal_weights(self, within):
         """Normalize maximum points so that all assignments are worth the same.
@@ -1148,6 +1148,9 @@ class FinalizedGradebook(Gradebook):
         def _make_group(g):
             if isinstance(g, Group):
                 args = [g.name, g.assignments, g.weight, g.normalize_assignment_weights]
+            elif len(g) == 2:
+                # expecting a single assignment
+                args = (g[0], Assignments([g[0]]), g[1])
             elif len(g) == 3:
                 args = list(g)
             else:

@@ -462,7 +462,7 @@ class Gradebook:
         def is_match(student):
             if student.name is None:
                 return False
-            return name_query in student.name.lower()
+            return name_query.lower() in student.name.lower()
 
         matches = [s for s in self.students if is_match(s)]
 

@@ -421,21 +421,36 @@ class Gradebook:
         """
         points = self.points_marked.copy()
 
-        def _apply_deduction(pid, assignment, deduction):
+        def _convert_amount_to_absolute_points(amount, assignment):
+            if isinstance(amount, Points):
+                return amount.amount
+            else:
+                # calculate percentage adjustment based on points possible
+                return amount.amount * self.points_possible.loc[assignment]
+
+        def _apply_deduction_or_addition(pid, assignment, adjustment):
             p = points.loc[pid, assignment]
 
-            if isinstance(deduction, Points):
-                d = deduction.amount
-            else:
-                # calculate percentage deduction based on points possible
-                d = deduction.amount * self.points_possible.loc[assignment]
+            a = _convert_amount_to_absolute_points(adjustment.amount, assignment)
 
-            points.loc[pid, assignment] = max(p - d, 0)
+            if isinstance(adjustment, Deduction):
+                a = -a
+
+            points.loc[pid, assignment] = max(p + a, 0)
+
+        def _apply_override(pid, assignment, adjustment):
+            a = _convert_amount_to_absolute_points(adjustment.amount, assignment)
+            points.loc[pid, assignment] = a
 
         for pid, assignments_dct in self.adjustments.items():
-            for assignment, deductions in assignments_dct.items():
-                for deduction in deductions:
-                    _apply_deduction(pid, assignment, deduction)
+            for assignment, adjustments in assignments_dct.items():
+                for adjustment in adjustments:
+                    if isinstance(adjustment, (Deduction, Addition)):
+                        _apply_deduction_or_addition(pid, assignment, adjustment)
+                    elif isinstance(adjustment, Override):
+                        _apply_override(pid, assignment, adjustment)
+                    else:
+                        raise ValueError("Invalid adjustment type.")
 
         return points
 

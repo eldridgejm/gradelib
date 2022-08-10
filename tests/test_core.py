@@ -142,12 +142,12 @@ def test_points_after_adjustments_takes_deductions_into_account():
     gb.adjustments = {
         "A1": {
             "hw01": [
-                gradelib.Points(5),
+                gradelib.Deduction(gradelib.Points(5)),
             ]
         },
         "A2": {
             "hw02": [
-                gradelib.Percentage(0.3),
+                gradelib.Deduction(gradelib.Percentage(0.3)),
             ]
         },
     }
@@ -169,14 +169,14 @@ def test_points_after_adjustments_takes_multiple_deductions_into_account():
     gb.adjustments = {
         "A1": {
             "hw01": [
-                gradelib.Points(5),
-                gradelib.Points(3),
+                gradelib.Deduction(gradelib.Points(5)),
+                gradelib.Deduction(gradelib.Points(3)),
             ]
         },
         "A2": {
             "hw02": [
-                gradelib.Percentage(0.3),
-                gradelib.Percentage(0.2),
+                gradelib.Deduction(gradelib.Percentage(0.3)),
+                gradelib.Deduction(gradelib.Percentage(0.2)),
             ]
         },
     }
@@ -198,13 +198,130 @@ def test_points_after_adjustments_sets_floor_at_zero():
     gb.adjustments = {
         "A1": {
             "hw01": [
-                gradelib.Points(50),
+                gradelib.Deduction(gradelib.Points(50)),
             ]
         },
     }
 
     assert gb.points_after_adjustments.loc["A1", "hw01"] == 0
 
+
+def test_points_after_adjustments_takes_additions_into_account():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50], index=columns)
+
+    gb = gradelib.Gradebook(points_marked, points_possible)
+
+    gb.adjustments = {
+        "A1": {
+            "hw01": [
+                gradelib.Addition(gradelib.Points(5)),
+            ]
+        },
+        "A2": {
+            "hw02": [
+                gradelib.Addition(gradelib.Percentage(0.3)),
+            ]
+        },
+    }
+
+    assert gb.points_after_adjustments.loc["A1", "hw01"] == 15
+    assert gb.points_after_adjustments.loc["A2", "hw02"] == 40 + 15
+
+
+def test_points_after_adjustments_does_not_set_ceiling():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50], index=columns)
+
+    gb = gradelib.Gradebook(points_marked, points_possible)
+
+    gb.adjustments = {
+        "A1": {
+            "hw01": [
+                gradelib.Addition(gradelib.Points(50)),
+            ]
+        },
+    }
+
+    assert gb.points_after_adjustments.loc["A1", "hw01"] == 60
+
+def test_points_after_adjustments_respects_series_of_additions_and_deductions():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50], index=columns)
+
+    gb = gradelib.Gradebook(points_marked, points_possible)
+
+    gb.adjustments = {
+        "A1": {
+            "hw01": [
+                gradelib.Deduction(gradelib.Points(3)),
+                gradelib.Addition(gradelib.Points(5)),
+                gradelib.Deduction(gradelib.Percentage(.2)),
+            ]
+        },
+    }
+
+    assert gb.points_after_adjustments.loc["A1", "hw01"] == 8
+
+def test_points_after_adjustments_takes_overrides_into_account():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50], index=columns)
+
+    gb = gradelib.Gradebook(points_marked, points_possible)
+
+    gb.adjustments = {
+        "A1": {
+            "hw01": [
+                gradelib.Override(gradelib.Points(5)),
+            ]
+        },
+        "A2": {
+            "hw02": [
+                gradelib.Override(gradelib.Percentage(0.3)),
+            ]
+        },
+    }
+
+    assert gb.points_after_adjustments.loc["A1", "hw01"] == 5
+    assert gb.points_after_adjustments.loc["A2", "hw02"] == 15
+
+
+def test_points_after_adjustments_with_override_in_a_sequence():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50], index=columns)
+
+    gb = gradelib.Gradebook(points_marked, points_possible)
+
+    gb.adjustments = {
+        "A1": {
+            "hw01": [
+                gradelib.Override(gradelib.Points(50)),
+                gradelib.Addition(gradelib.Points(5)),
+            ]
+        },
+    }
+
+    assert gb.points_after_adjustments.loc["A1", "hw01"] == 55
 
 # give_equal_weights()
 # -----------------------------------------------------------------------------

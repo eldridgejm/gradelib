@@ -971,9 +971,9 @@ class Gradebook:
         assignment_max = self.points_possible[parts].sum()
         assignment_lateness = self.lateness[parts].max(axis=1)
 
-        new_points = self.points_marked.copy().drop(columns=parts)
-        new_max = self.points_possible.copy().drop(parts)
-        new_lateness = self.lateness.copy().drop(columns=parts)
+        new_points = self.points_marked.copy()
+        new_max = self.points_possible.copy()
+        new_lateness = self.lateness.copy()
 
         new_points[new_name] = assignment_points
         new_max[new_name] = assignment_max
@@ -990,13 +990,15 @@ class Gradebook:
         # of self, which contains all parts
         new_dropped = _empty_mask_like(new_points)
 
-        return self._replace(
+        result = self._replace(
             points_marked=new_points,
             points_possible=new_max,
             dropped=new_dropped,
             lateness=new_lateness,
             adjustments=new_adjustments,
         )
+
+        return result.without_assignments(set(parts) - {new_name})
 
 
     def with_assignments_combined(self, selector):
@@ -1024,6 +1026,9 @@ class Gradebook:
         unified has been dropped, but other parts have not. For this reason,
         this method will raise a `ValueError` if *any* of the parts have been
         dropped.
+
+        Groups updated so that the parts no longer appear in any group, but new
+        groups are not created.
 
         Parameters
         ----------

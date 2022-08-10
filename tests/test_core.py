@@ -1030,7 +1030,6 @@ def test_combine_assignments_converted_percentage_adjustments_to_points():
         }
     }
 
-
 def test_combine_assignments_copies_attributes():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
@@ -1044,9 +1043,6 @@ def test_combine_assignments_copies_attributes():
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
     result = gradebook.with_assignments_combined({"hw01": HOMEWORK_01_PARTS})
-
-    assert result.notes == {"A1": ["ok"]}
-
 
 # with_renamed_assignments
 # ------------------------

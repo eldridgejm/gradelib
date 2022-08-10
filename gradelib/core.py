@@ -796,14 +796,13 @@ class MutableGradebook(Gradebook):
             If an assignment was specified that was not in the gradebook.
 
         """
+        # TODO preserve order better
         assignments = list(assignments)
         extras = set(assignments) - set(self.assignments)
         if extras:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
 
         return self.restricted_to_assignments(set(self.assignments) - set(assignments))
-
-    # TODO rename assignment
 
     def restricted_to_pids(self, to):
         """Restrict the gradebook to only the supplied PIDS.

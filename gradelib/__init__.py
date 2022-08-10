@@ -9,6 +9,8 @@ from .core import (
     Student,
     Points,
     Percentage,
+    Deduction,
+    Addition,
     Group,
 )
 

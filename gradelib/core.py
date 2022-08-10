@@ -196,8 +196,12 @@ class Percentage(_GradeAmount):
 # ======================================================================================
 
 class Adjustment:
-    pass
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}(amount={self.amount}, reason={self.reason})'
+
+    def __eq__(self, other):
+        return self.amount == other.amount and self.reason == other.reason
 
 class Deduction(Adjustment):
 
@@ -206,12 +210,6 @@ class Deduction(Adjustment):
         self.reason = reason
 
 class Addition(Adjustment):
-
-    def __init__(self, amount, reason=None):
-        self.amount = amount
-        self.reason = reason
-
-class Override(Adjustment):
 
     def __init__(self, amount, reason=None):
         self.amount = amount
@@ -421,21 +419,30 @@ class Gradebook:
         """
         points = self.points_marked.copy()
 
-        def _apply_deduction(pid, assignment, deduction):
+        def _convert_amount_to_absolute_points(amount, assignment):
+            if isinstance(amount, Points):
+                return amount.amount
+            else:
+                # calculate percentage adjustment based on points possible
+                return amount.amount * self.points_possible.loc[assignment]
+
+        def _apply_deduction_or_addition(pid, assignment, adjustment):
             p = points.loc[pid, assignment]
 
-            if isinstance(deduction, Points):
-                d = deduction.amount
-            else:
-                # calculate percentage deduction based on points possible
-                d = deduction.amount * self.points_possible.loc[assignment]
+            a = _convert_amount_to_absolute_points(adjustment.amount, assignment)
 
-            points.loc[pid, assignment] = max(p - d, 0)
+            if isinstance(adjustment, Deduction):
+                a = -a
+
+            points.loc[pid, assignment] = max(p + a, 0)
 
         for pid, assignments_dct in self.adjustments.items():
-            for assignment, deductions in assignments_dct.items():
-                for deduction in deductions:
-                    _apply_deduction(pid, assignment, deduction)
+            for assignment, adjustments in assignments_dct.items():
+                for adjustment in adjustments:
+                    if isinstance(adjustment, (Deduction, Addition)):
+                        _apply_deduction_or_addition(pid, assignment, adjustment)
+                    else:
+                        raise ValueError("Invalid adjustment type.")
 
         return points
 
@@ -504,18 +511,18 @@ class Gradebook:
 # ======================================================================================
 
 
-def _concatenate_deductions(gradebooks):
-    """Concatenates the deductions from a sequence of gradebooks."""
-    deductions = {}
+def _concatenate_adjustments(gradebooks):
+    """Concatenates the adjustments from a sequence of gradebooks."""
+    adjustments = {}
     for gradebook in gradebooks:
         for pid, assignments_dct in gradebook.adjustments.items():
-            if pid not in deductions:
-                deductions[pid] = {}
+            if pid not in adjustments:
+                adjustments[pid] = {}
 
             for assignment in assignments_dct:
-                deductions[pid][assignment] = assignments_dct[assignment]
+                adjustments[pid][assignment] = assignments_dct[assignment]
 
-    return deductions
+    return adjustments
 
 
 def _concatenate_notes(gradebooks):
@@ -544,7 +551,7 @@ def combine_gradebooks(gradebooks, restricted_to_pids=None):
     before combining them. Similarly, it verifies that each gradebook has
     unique assignments, so that no conflicts occur when combining them.
 
-    The new gradebook's deductions are a union of the deductions in the
+    The new gradebook's adjustments are a union of the adjustments in the
     existing gradebooks, as are the notes. The options are reset to their
     defaults.
 
@@ -602,46 +609,47 @@ def combine_gradebooks(gradebooks, restricted_to_pids=None):
     lateness = concat_attr("lateness")
     dropped = concat_attr("dropped")
 
-    deductions = _concatenate_deductions(gradebooks)
+    adjustments = _concatenate_adjustments(gradebooks)
     notes = _concatenate_notes(gradebooks)
 
     return MutableGradebook(
-        points, maximums, lateness, dropped, adjustments=deductions, notes=notes
+        points, maximums, lateness, dropped, adjustments=adjustments, notes=notes
     )
 
 
-def _combine_and_convert_deductions(parts, new_name, deductions, points_possible):
-    """Concatenates all deductions from the given parts.
+def _combine_and_convert_adjustments(parts, new_name, adjustments, points_possible):
+    """Concatenates all adjustments from the given parts.
 
-    Converts percentage deductions to points deductions along the way.
+    Converts percentage adjustments to points adjustments along the way.
 
     Used in MutableGradebook._combine_assignment
 
     """
 
-    # combine and convert deductions
-    def _convert_deduction(assignment, deduction):
-        if isinstance(deduction, Percentage):
+    # combine and convert adjustments
+    def _convert_adjustment(assignment, adjustment):
+        cls = type(adjustment)
+        if isinstance(adjustment.amount, Percentage):
             possible = points_possible.loc[assignment]
-            return Points(possible * deduction.amount)
+            return cls(Points(possible * adjustment.amount.amount), adjustment.reason)
         else:
-            return deduction
+            return adjustment
 
-    new_deductions = {}
-    for student, assignments_dct in deductions.items():
-        new_deductions[student] = {}
+    new_adjustments = {}
+    for student, assignments_dct in adjustments.items():
+        new_adjustments[student] = {}
 
-        combined_deductions = []
-        for assignment, deductions_lst in assignments_dct.items():
-            deductions_lst = [_convert_deduction(assignment, d) for d in deductions_lst]
+        combined_adjustments = []
+        for assignment, adjustments_lst in assignments_dct.items():
+            adjustments_lst = [_convert_adjustment(assignment, d) for d in adjustments_lst]
             if assignment in parts:
-                combined_deductions.extend(deductions_lst)
+                combined_adjustments.extend(adjustments_lst)
             else:
-                new_deductions[student][assignment] = deductions_lst
+                new_adjustments[student][assignment] = adjustments_lst
 
-        new_deductions[student][new_name] = combined_deductions
+        new_adjustments[student][new_name] = combined_adjustments
 
-    return new_deductions
+    return new_adjustments
 
 class MutableGradebook(Gradebook):
     """A gradebook with methods for changing assignments and grades."""
@@ -751,26 +759,26 @@ class MutableGradebook(Gradebook):
         r_lateness = self.lateness.loc[:, assignments].copy()
         r_dropped = self.dropped.loc[:, assignments].copy()
 
-        # keep only the deductions which are for assignments in `assignments`
-        r_deductions = copy.deepcopy(self.adjustments)
-        for student, assignments_dct in r_deductions.items():
+        # keep only the adjustments which are for assignments in `assignments`
+        r_adjustments = copy.deepcopy(self.adjustments)
+        for student, assignments_dct in r_adjustments.items():
             assignments_dct = {
                 k: v for k, v in assignments_dct.items() if k in assignments
             }
-            r_deductions[student] = assignments_dct
+            r_adjustments[student] = assignments_dct
 
         return self._replace(
             points_marked=r_points,
             points_possible=r_maximums,
             lateness=r_lateness,
             dropped=r_dropped,
-            adjustments=r_deductions,
+            adjustments=r_adjustments,
         )
 
     def without_assignments(self, assignments):
         """Returns a new gradebook instance without the given assignments.
 
-        Any deductions that reference a removed assignment are also removed.
+        Any adjustments that reference a removed assignment are also removed.
 
         Parameters
         ----------
@@ -848,9 +856,9 @@ class MutableGradebook(Gradebook):
         new_max[new_name] = assignment_max
         new_lateness[new_name] = assignment_lateness
 
-        # combines deductions from all of the parts, converting Percentage
+        # combines adjustments from all of the parts, converting Percentage
         # to Points along the way.
-        new_deductions = _combine_and_convert_deductions(
+        new_adjustments = _combine_and_convert_adjustments(
             parts, new_name, self.adjustments, self.points_possible
         )
 
@@ -864,7 +872,7 @@ class MutableGradebook(Gradebook):
             points_possible=new_max,
             dropped=new_dropped,
             lateness=new_lateness,
-            adjustments=new_deductions,
+            adjustments=new_adjustments,
         )
 
 
@@ -882,7 +890,7 @@ class MutableGradebook(Gradebook):
         The lateness of the new assignment is the *maximum* lateness of any of
         its parts.
 
-        Deductions are concatenated. Points are propagated unchanged, but
+        Adjustments are concatenated. Points are propagated unchanged, but
         Percentage objects are converted to Points according to the ratio of
         the part's value to the total points possible. For example, if the
         first part is worth 70 points, and the second part is worth 30 points,
@@ -955,12 +963,6 @@ class MutableGradebook(Gradebook):
         return result
 
     def with_renamed_assignments(self, mapping):
-        # points_marked
-        # points_possible
-        # lateness
-        # dropped
-        # deductions
-
         resulting_names = (set(self.assignments) - mapping.keys()) | set(mapping.values())
         if len(resulting_names) != len(self.assignments):
             raise ValueError("Name clashes in renamed assignments.")

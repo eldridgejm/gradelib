@@ -481,7 +481,7 @@ def test_restricted_to_assignments_updates_groups():
 
     # then
     assert actual.groups == [
-        ('homeworks', ['homework 01', 'homework 02'], .75),
+        gradelib.Group('homeworks', ['homework 01', 'homework 02'], .75),
     ]
 
 def test_without_assignments():

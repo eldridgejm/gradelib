@@ -882,12 +882,21 @@ class Gradebook:
             }
             r_adjustments[student] = assignments_dct
 
+        def _update_groups():
+            def _update_group(g):
+                kept_assignments = [a for a in g.assignments if a in assignments]
+                return Group(g.name, kept_assignments, g.weight, g.normalize_assignment_weights)
+
+            new_groups_with_empties = [_update_group(g) for g in self.groups]
+            return [g for g in new_groups_with_empties if g.assignments]
+
         return self._replace(
             points_marked=r_points,
             points_possible=r_maximums,
             lateness=r_lateness,
             dropped=r_dropped,
             adjustments=r_adjustments,
+            groups=_update_groups()
         )
 
     def without_assignments(self, assignments):

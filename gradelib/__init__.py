@@ -3,8 +3,6 @@
 from .core import (
     combine_gradebooks,
     Gradebook,
-    MutableGradebook,
-    FinalizedGradebook,
     Assignments,
     Student,
     Points,

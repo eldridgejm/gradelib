@@ -15,7 +15,7 @@ GRADESCOPE_EXAMPLE = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescop
 CANVAS_EXAMPLE = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 
 # the canvas example has Lab 01, which is also in Gradescope. Let's remove it
-CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.MutableGradebook(
+CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.Gradebook(
     points_marked=CANVAS_EXAMPLE.points_marked.drop(columns="lab 01"),
     points_possible=CANVAS_EXAMPLE.points_possible.drop(index="lab 01"),
     lateness=CANVAS_EXAMPLE.lateness.drop(columns="lab 01"),
@@ -41,7 +41,7 @@ def assert_gradebook_is_sound(gradebook):
 
 
 def as_gradebook_type(gb, gradebook_cls):
-    """Creates a Gradebook object from a MutableGradebook or FinalizedGradebook."""
+    """Creates a Gradebook object from a Gradebook or Gradebook."""
     return gradebook_cls(
         points_marked=gb.points_marked,
         points_possible=gb.points_possible,
@@ -288,7 +288,7 @@ def test_give_equal_weights_on_example():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     homeworks = gradebook.assignments.starting_with("hw")
 
     # when
@@ -383,7 +383,7 @@ def test_find_student_raises_on_no_match():
         gradebook.find_student("steve")
 
 
-# MutableGradebook
+# Gradebook
 # =============================================================================
 
 
@@ -593,7 +593,7 @@ def test_with_assignment():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     assignment_points_marked = pd.Series([10, 20], index=["A1", "A2"])
     assignment_max = 20
@@ -626,7 +626,7 @@ def test_with_assignment_default_none_dropped_or_late():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     assignment_points_marked = pd.Series([10, 20], index=["A1", "A2"])
     assignment_max = 20
@@ -650,7 +650,7 @@ def test_with_assignment_raises_on_missing_student():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     # A2 is missing
     assignment_points_marked = pd.Series([10], index=["A1"])
@@ -672,7 +672,7 @@ def test_with_assignment_raises_on_unknown_student():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     # foo is unknown
     assignment_points_marked = pd.Series([10, 20, 30], index=["A1", "A2", "A3"])
@@ -694,7 +694,7 @@ def test_with_assignment_raises_if_duplicate_name():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     assignment_points_marked = pd.Series([10, 20], index=["A1", "A2"])
 
@@ -719,7 +719,7 @@ def test_combine_assignments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
@@ -745,7 +745,7 @@ def test_combine_assignments_with_multiple_in_dictionary():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
     HOMEWORK_02_PARTS = gradebook.assignments.starting_with("hw02")
@@ -778,7 +778,7 @@ def test_combine_assignments_with_callable():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
     HOMEWORK_02_PARTS = gradebook.assignments.starting_with("hw02")
@@ -812,7 +812,7 @@ def test_combine_assignments_with_list_of_prefixes():
     p2 = pd.Series(data=[2, 7, 15, 20, 10], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20, 10], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     # when
     result = gradebook.with_assignments_combined(["hw01", "hw02"])
@@ -839,7 +839,7 @@ def test_combine_assignments_uses_max_lateness_for_assignment_pieces():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(days=3)
     gradebook.lateness.loc["A1", "hw01 - programming"] = pd.Timedelta(days=5)
@@ -859,7 +859,7 @@ def test_combine_assignments_raises_if_any_part_is_dropped():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     gradebook.dropped.loc["A1", "hw01"] = True
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
@@ -875,7 +875,7 @@ def test_combine_assignments_combines_adjustments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     gradebook.adjustments["A1"] = {
         "hw01": [gradelib.Deduction(gradelib.Points(4))],
@@ -903,7 +903,7 @@ def test_combine_assignments_converted_percentage_adjustments_to_points():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     gradebook.adjustments["A1"] = {
         "hw01": [gradelib.Deduction(gradelib.Points(4))],
@@ -931,7 +931,7 @@ def test_combine_assignments_copies_attributes():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.notes = {"A1": ["ok"]}
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
@@ -952,7 +952,7 @@ def test_with_renamed_assignments_simple_example():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.notes = {"A1": ["ok"]}
 
     result = gradebook.with_renamed_assignments(
@@ -979,7 +979,7 @@ def test_with_renamed_assignments_raises_error_on_name_clash():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.notes = {"A1": ["ok"]}
 
     with pytest.raises(ValueError):
@@ -995,7 +995,7 @@ def test_with_renamed_assignments_allows_swapping_names():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.notes = {"A1": ["ok"]}
 
     result = gradebook.with_renamed_assignments(
@@ -1020,7 +1020,7 @@ def test_with_renamed_assignments_updates_adjustments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.notes = {"A1": ["ok"]}
 
     gradebook.adjustments = {"A1": {"hw01": [1]}}
@@ -1034,7 +1034,7 @@ def test_with_renamed_assignments_updates_adjustments():
     assert_gradebook_is_sound(result)
 
 
-# FinalizedGradebook
+# Gradebook
 # ==================
 
 # default_groups
@@ -1047,7 +1047,7 @@ def test_default_groups_one_assignment_per_group_equally_weighted():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     # then
     assert gradebook.default_groups == [
@@ -1068,7 +1068,7 @@ def test_groups_setter_allows_three_tuple_form():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     gradebook.groups = [
         ("homeworks", ["hw01", "hw02", "hw03"], 0.5),
@@ -1091,7 +1091,7 @@ def test_groups_setter_allows_two_tuple_form():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     gradebook.groups = [
         ("homeworks", ["hw01", "hw02", "hw03"], 0.5),
@@ -1114,7 +1114,7 @@ def test_groups_setter_allows_callable_for_assignments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     HOMEWORKS_LAZY = lambda asmts: asmts.starting_with("hw")
     LABS_LAZY = lambda asmts: asmts.starting_with("lab")
@@ -1144,7 +1144,7 @@ def test_group_points_respects_adjustments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     gradebook.adjustments = {
         "A1": {"hw01": [gradelib.Deduction(gradelib.Percentage(1))]},
@@ -1185,7 +1185,7 @@ def test_group_points_respects_dropped_assignments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
 
@@ -1221,7 +1221,7 @@ def test_group_points_respects_adjustments_and_dropped_assignments_simultaneousl
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
@@ -1263,7 +1263,7 @@ def test_group_points_raises_if_all_assignments_in_a_group_are_dropped():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "lab01"] = True
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1289,7 +1289,7 @@ def test_group_scores_raises_if_all_assignments_in_a_group_are_dropped():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "lab01"] = True
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
@@ -1315,7 +1315,7 @@ def test_group_scores_respects_adjustments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     gradebook.adjustments = {
         "A1": {"hw01": [gradelib.Deduction(gradelib.Percentage(1))]},
@@ -1347,7 +1347,7 @@ def test_group_scores_respects_dropped_assignments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
 
@@ -1376,7 +1376,7 @@ def test_group_scores_respects_adjustments_and_dropped_assignments_simultaneousl
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
@@ -1411,7 +1411,7 @@ def test_group_scores_respects_normalize_assignment_weights_and_drops_and_adjust
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
@@ -1453,7 +1453,7 @@ def test_overall_score_respects_group_weighting():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
 
@@ -1479,7 +1479,7 @@ def test_overall_score_respects_adjustments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     gradebook.adjustments = {
         "A1": {"hw01": [gradelib.Deduction(gradelib.Percentage(1))]},
@@ -1510,7 +1510,7 @@ def test_overall_score_respects_dropped_assignments():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
 
@@ -1538,7 +1538,7 @@ def test_overall_score_respects_adjustments_and_dropped_assignments_simultaneous
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
@@ -1572,7 +1572,7 @@ def test_overall_score_respects_normalize_assignment_weights_and_drops_and_adjus
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {
@@ -1612,7 +1612,7 @@ def test_letter_grades_respects_scale():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.FinalizedGradebook(points_marked, points_possible)
+    gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
     gradebook.adjustments = {

@@ -13,7 +13,7 @@ GRADESCOPE_EXAMPLE = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescop
 CANVAS_EXAMPLE = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 
 # the canvas example has Lab 01, which is also in Gradescope. Let's remove it
-CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.MutableGradebook(
+CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.Gradebook(
     points_marked=CANVAS_EXAMPLE.points_marked.drop(columns="lab 01"),
     points_possible=CANVAS_EXAMPLE.points_possible.drop(index="lab 01"),
     lateness=CANVAS_EXAMPLE.lateness.drop(columns="lab 01"),
@@ -57,7 +57,7 @@ def test_penalize_lates_without_forgiveness_or_within_penalizes_all_lates():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.MutableGradebook(
+    gradebook = gradelib.Gradebook(
         points_marked, points_possible, lateness=lateness
     )
 
@@ -83,7 +83,7 @@ def test_penalize_lates_with_custom_flat_deduction():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.MutableGradebook(
+    gradebook = gradelib.Gradebook(
         points_marked, points_possible, lateness=lateness
     )
 
@@ -109,7 +109,7 @@ def test_penalize_lates_with_callable_deduction():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.MutableGradebook(
+    gradebook = gradelib.Gradebook(
         points_marked, points_possible, lateness=lateness
     )
 
@@ -139,7 +139,7 @@ def test_penalize_lates_with_callable_deduction_does_not_count_forgiven():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.MutableGradebook(
+    gradebook = gradelib.Gradebook(
         points_marked, points_possible, lateness=lateness
     )
 
@@ -171,7 +171,7 @@ def test_penalize_lates_respects_lateness_fudge():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.MutableGradebook(
+    gradebook = gradelib.Gradebook(
         points_marked, points_possible, lateness=lateness
     )
 
@@ -198,7 +198,7 @@ def test_penalize_lates_within_assignments():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.MutableGradebook(
+    gradebook = gradelib.Gradebook(
         points_marked, points_possible, lateness=lateness
     )
 
@@ -223,7 +223,7 @@ def test_penalize_lates_within_accepts_callable():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.MutableGradebook(
+    gradebook = gradelib.Gradebook(
         points_marked, points_possible, lateness=lateness
     )
 
@@ -248,7 +248,7 @@ def test_penalize_lates_with_forgiveness():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.MutableGradebook(
+    gradebook = gradelib.Gradebook(
         points_marked, points_possible, lateness=lateness
     )
 
@@ -273,7 +273,7 @@ def test_penalize_lates_with_forgiveness_and_within():
         columns=columns,
         index=points_marked.index,
     )
-    gradebook = gradelib.MutableGradebook(
+    gradebook = gradelib.Gradebook(
         points_marked, points_possible, lateness=lateness
     )
 
@@ -327,7 +327,7 @@ def test_penalize_lates_does_not_forgive_dropped():
         index=points_marked.index,
     )
 
-    gradebook = gradelib.MutableGradebook(
+    gradebook = gradelib.Gradebook(
         points_marked, points_possible, lateness=lateness
     )
     gradebook.dropped.loc["A1", :] = True
@@ -353,7 +353,7 @@ def test_drop_lowest_with_callable_within():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
     homeworks = lambda asmts: asmts.starting_with("hw")
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
@@ -376,7 +376,7 @@ def test_drop_lowest_on_simple_example_1():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
     homeworks = gradebook.assignments.starting_with("hw")
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
@@ -399,7 +399,7 @@ def test_drop_lowest_on_simple_example_2():
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
     homeworks = gradebook.assignments.starting_with("hw")
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
@@ -422,7 +422,7 @@ def test_drop_lowest_takes_adjustments_into_account():
     p2 = pd.Series(data=[10, 10], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([10, 10], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
     gradebook.adjustments = {"A1": {"hw01": [gradelib.Deduction(Percentage(1))]}}
 
     # since A1's perfect homework has a 100% deduction, it should count as zero and be
@@ -444,7 +444,7 @@ def test_drop_lowest_ignores_assignments_already_dropped():
     p2 = pd.Series(data=[10, 10, 10, 10], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([10, 10, 10, 10], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A1", "hw04"] = True
 
@@ -473,7 +473,7 @@ def test_redemption_on_single_assignment_pair():
     p2 = pd.Series(data=[92, 60], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([100, 100], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
 
     # when
     actual = gradebook.apply(
@@ -497,7 +497,7 @@ def test_redemption_on_multiple_assignment_pairs():
     p2 = pd.Series(data=[92, 60, 40, 35], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([100, 100, 50, 50], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
 
     # when
     actual = gradebook.apply(
@@ -528,7 +528,7 @@ def test_redemption_with_prefix_selector():
     p2 = pd.Series(data=[92, 60, 40, 35], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([100, 100, 50, 50], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
 
     # when
     actual = gradebook.apply(gradelib.policies.Redeem(["mt01", "mt02"]))
@@ -552,7 +552,7 @@ def test_redemption_with_remove_parts():
     p2 = pd.Series(data=[92, 60], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([100, 100], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
 
     # when
     actual = gradebook.apply(
@@ -576,7 +576,7 @@ def test_redemption_with_dropped_assignment_parts_raises():
     p2 = pd.Series(data=[92, 60], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([100, 100], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
     gradebook.dropped.loc["A1", "mt01"] = True
 
     # when
@@ -595,7 +595,7 @@ def test_redemption_takes_adjustments_into_account():
     p2 = pd.Series(data=[92, 60], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([100, 100], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
     gradebook.adjustments = {
         "A1": {"mt01 - redemption": [gradelib.Deduction(Percentage(0.5))]}
     }
@@ -620,7 +620,7 @@ def test_redemption_with_unequal_points_possible_scales_to_the_maximum_of_the_tw
     p2 = pd.Series(data=[92, 40], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([100, 50], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
 
     # when
     actual = gradebook.apply(
@@ -643,7 +643,7 @@ def test_redemption_with_deduction():
     p2 = pd.Series(data=[50, 100], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([100, 100], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
 
     # when
     actual = gradebook.apply(
@@ -668,7 +668,7 @@ def test_redemption_with_nans():
     p2 = pd.Series(data=[50, np.nan], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([100, 100], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
 
     # when
     actual = gradelib.policies.Redeem(
@@ -695,7 +695,7 @@ def test_make_exceptions_with_forgive_lates():
         index=[gradelib.Student("A1", "Justin"), gradelib.Student("A2", "Steve")],
     )
     maximums = pd.Series([10, 10, 10, 10], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
     gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(5000, "s")
 
     # when
@@ -718,7 +718,7 @@ def test_make_exceptions_with_drop():
         index=[gradelib.Student("A1", "Justin"), gradelib.Student("A2", "Steve")],
     )
     maximums = pd.Series([10, 10, 10, 10], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
 
     # when
     actual = gradelib.policies.MakeExceptions(
@@ -740,7 +740,7 @@ def test_make_exceptions_with_replace():
         index=[gradelib.Student("A1", "Justin"), gradelib.Student("A2", "Steve")],
     )
     maximums = pd.Series([10, 10, 10, 10], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
 
     # when
     actual = gradelib.policies.MakeExceptions(
@@ -767,7 +767,7 @@ def test_make_exceptions_with_override():
         index=[gradelib.Student("A1", "Justin"), gradelib.Student("A2", "Steve")],
     )
     maximums = pd.Series([10, 10, 10, 10], index=columns)
-    gradebook = gradelib.MutableGradebook(points, maximums)
+    gradebook = gradelib.Gradebook(points, maximums)
 
     # when
     actual = gradelib.policies.MakeExceptions(

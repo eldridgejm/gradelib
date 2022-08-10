@@ -316,6 +316,8 @@ class Gradebook:
         "dropped",
         "adjustments",
         "notes",
+        "groups",
+        "scale",
         "opts",
     ]
 
@@ -327,6 +329,8 @@ class Gradebook:
         dropped=None,
         adjustments=None,
         notes=None,
+        groups=None,
+        scale=None,
         opts=None,
     ):
         self.points_marked = _cast_index(points_marked)
@@ -339,6 +343,8 @@ class Gradebook:
         )
         self.adjustments = {} if adjustments is None else adjustments
         self.notes = {} if notes is None else notes
+        self.groups = self.default_groups if groups is None else groups
+        self.scale = DEFAULT_SCALE if scale is None else scale
         self.opts = opts if opts is not None else GradebookOptions()
 
     def __repr__(self):
@@ -505,157 +511,6 @@ class Gradebook:
             raise ValueError(f'Too many names matched "{name_query}": {matches}')
 
         return matches[0]
-
-
-# MutableGradebook
-# ======================================================================================
-
-
-def _concatenate_adjustments(gradebooks):
-    """Concatenates the adjustments from a sequence of gradebooks."""
-    adjustments = {}
-    for gradebook in gradebooks:
-        for pid, assignments_dct in gradebook.adjustments.items():
-            if pid not in adjustments:
-                adjustments[pid] = {}
-
-            for assignment in assignments_dct:
-                adjustments[pid][assignment] = assignments_dct[assignment]
-
-    return adjustments
-
-
-def _concatenate_notes(gradebooks):
-    """Concatenates the notes from a sequence of gradebooks."""
-    notes = {}
-    for gradebook in gradebooks:
-        for pid, channels_dct in gradebook.notes.items():
-            if pid not in notes:
-                notes[pid] = {}
-
-            for channel, messages in channels_dct.items():
-                if channel not in notes[pid]:
-                    notes[pid][channel] = []
-
-                notes[pid][channel].extend(messages)
-
-    return notes
-
-
-def combine_gradebooks(gradebooks, restricted_to_pids=None):
-    """Create a gradebook by safely combining several existing gradebooks.
-
-    It is crucial that the combined gradebooks have exactly the same
-    students -- we don't want students to have missing grades. This
-    function checks to make sure that the gradebooks have the same students
-    before combining them. Similarly, it verifies that each gradebook has
-    unique assignments, so that no conflicts occur when combining them.
-
-    The new gradebook's adjustments are a union of the adjustments in the
-    existing gradebooks, as are the notes. The options are reset to their
-    defaults.
-
-    Parameters
-    ----------
-    gradebooks : Collection[Gradebook]
-        The gradebooks to combine. Must have matching indices and unique
-        column names.
-    restricted_to_pids : Collection[str] or None
-        If provided, each input gradebook will be restricted to the PIDs
-        given before attempting to combine them. This is a convenience
-        option, and it simply calls :meth:`Gradebook.restricted_to_pids` on
-        each of the inputs.  Default: None
-
-    Returns
-    -------
-    MutableGradebook
-        A gradebook combining all of the input gradebooks.
-
-    Raises
-    ------
-    ValueError
-        If the PID indices of gradebooks do not match, or if there is a
-        duplicate assignment name.
-
-    """
-    gradebooks = list(gradebooks)
-
-    if restricted_to_pids is not None:
-        gradebooks = [g.restricted_to_pids(restricted_to_pids) for g in gradebooks]
-
-    # check that all gradebooks have the same PIDs
-    reference_pids = gradebooks[0].pids
-    for gradebook in gradebooks[1:]:
-        if gradebook.pids != reference_pids:
-            raise ValueError("Not all gradebooks have the same PIDs.")
-
-    # check that all gradebooks have different assignment names
-    number_of_assignments = sum(len(g.assignments) for g in gradebooks)
-    unique_assignments = set()
-    for gradebook in gradebooks:
-        unique_assignments.update(gradebook.assignments)
-
-    if len(unique_assignments) != number_of_assignments:
-        raise ValueError("Gradebooks have duplicate assignments.")
-
-    # create the combined notebook
-    def concat_attr(a, axis=1):
-        """Create a DF/Series by combining the same attribute across gradebooks."""
-        all_tables = [getattr(g, a) for g in gradebooks]
-        return pd.concat(all_tables, axis=axis)
-
-    points = concat_attr("points_marked")
-    maximums = concat_attr("points_possible", axis=0)
-    lateness = concat_attr("lateness")
-    dropped = concat_attr("dropped")
-
-    adjustments = _concatenate_adjustments(gradebooks)
-    notes = _concatenate_notes(gradebooks)
-
-    return MutableGradebook(
-        points, maximums, lateness, dropped, adjustments=adjustments, notes=notes
-    )
-
-
-def _combine_and_convert_adjustments(parts, new_name, adjustments, points_possible):
-    """Concatenates all adjustments from the given parts.
-
-    Converts percentage adjustments to points adjustments along the way.
-
-    Used in MutableGradebook._combine_assignment
-
-    """
-
-    # combine and convert adjustments
-    def _convert_adjustment(assignment, adjustment):
-        cls = type(adjustment)
-        if isinstance(adjustment.amount, Percentage):
-            possible = points_possible.loc[assignment]
-            return cls(Points(possible * adjustment.amount.amount), adjustment.reason)
-        else:
-            return adjustment
-
-    new_adjustments = {}
-    for student, assignments_dct in adjustments.items():
-        new_adjustments[student] = {}
-
-        combined_adjustments = []
-        for assignment, adjustments_lst in assignments_dct.items():
-            adjustments_lst = [_convert_adjustment(assignment, d) for d in adjustments_lst]
-            if assignment in parts:
-                combined_adjustments.extend(adjustments_lst)
-            else:
-                new_adjustments[student][assignment] = adjustments_lst
-
-        new_adjustments[student][new_name] = combined_adjustments
-
-    return new_adjustments
-
-class MutableGradebook(Gradebook):
-    """A gradebook with methods for changing assignments and grades."""
-
-    # class methods
-    # -------------
 
     # methods: adding/removing assignments/students
     # ---------------------------------------------
@@ -1072,7 +927,7 @@ class MutableGradebook(Gradebook):
 
         Returns
         -------
-        MutableGradebook
+        Gradebook
             The result of the last transformation in the sequence.
 
         """
@@ -1086,23 +941,6 @@ class MutableGradebook(Gradebook):
             result = transformation(result)
 
         return result
-
-    def finalize(self, groups=None, scale=None):
-        """Return a FinalizedGradebook from this MutableGradebook."""
-        return FinalizedGradebook(
-            points_marked=self.points_marked,
-            points_possible=self.points_possible,
-            lateness=self.lateness,
-            dropped=self.dropped,
-            adjustments=self.adjustments,
-            notes=self.notes,
-            opts=self.opts,
-            groups=groups,
-            scale=scale,
-        )
-
-    def grade(self, policies, groups=None, scale=None):
-        return self.apply(policies).finalize(groups, scale)
 
     def give_equal_weights(self, within):
         """Normalize maximum points so that all assignments are worth the same.
@@ -1136,24 +974,6 @@ class MutableGradebook(Gradebook):
             points_marked=new_points_marked, points_possible=new_points_possible
         )
 
-
-# FinalizedGradebook
-# ======================================================================================
-
-
-class FinalizedGradebook(Gradebook):
-
-    def __init__(
-        self,
-        points_marked,
-        points_possible,
-        groups=None,
-        scale=None,
-        **kwargs
-    ):
-        super().__init__(points_marked, points_possible, **kwargs)
-        self.groups = self.default_groups if groups is None else groups
-        self.scale = DEFAULT_SCALE if scale is None else scale
 
     # properties
     # ----------
@@ -1300,3 +1120,145 @@ class FinalizedGradebook(Gradebook):
         """
         earned, available = self.total(within)
         return earned / available
+
+
+
+def _concatenate_adjustments(gradebooks):
+    """Concatenates the adjustments from a sequence of gradebooks."""
+    adjustments = {}
+    for gradebook in gradebooks:
+        for pid, assignments_dct in gradebook.adjustments.items():
+            if pid not in adjustments:
+                adjustments[pid] = {}
+
+            for assignment in assignments_dct:
+                adjustments[pid][assignment] = assignments_dct[assignment]
+
+    return adjustments
+
+
+def _concatenate_notes(gradebooks):
+    """Concatenates the notes from a sequence of gradebooks."""
+    notes = {}
+    for gradebook in gradebooks:
+        for pid, channels_dct in gradebook.notes.items():
+            if pid not in notes:
+                notes[pid] = {}
+
+            for channel, messages in channels_dct.items():
+                if channel not in notes[pid]:
+                    notes[pid][channel] = []
+
+                notes[pid][channel].extend(messages)
+
+    return notes
+
+
+def combine_gradebooks(gradebooks, restricted_to_pids=None):
+    """Create a gradebook by safely combining several existing gradebooks.
+
+    It is crucial that the combined gradebooks have exactly the same
+    students -- we don't want students to have missing grades. This
+    function checks to make sure that the gradebooks have the same students
+    before combining them. Similarly, it verifies that each gradebook has
+    unique assignments, so that no conflicts occur when combining them.
+
+    The new gradebook's adjustments are a union of the adjustments in the
+    existing gradebooks, as are the notes. The options are reset to their
+    defaults.
+
+    Parameters
+    ----------
+    gradebooks : Collection[Gradebook]
+        The gradebooks to combine. Must have matching indices and unique
+        column names.
+    restricted_to_pids : Collection[str] or None
+        If provided, each input gradebook will be restricted to the PIDs
+        given before attempting to combine them. This is a convenience
+        option, and it simply calls :meth:`Gradebook.restricted_to_pids` on
+        each of the inputs.  Default: None
+
+    Returns
+    -------
+    Gradebook
+        A gradebook combining all of the input gradebooks.
+
+    Raises
+    ------
+    ValueError
+        If the PID indices of gradebooks do not match, or if there is a
+        duplicate assignment name.
+
+    """
+    gradebooks = list(gradebooks)
+
+    if restricted_to_pids is not None:
+        gradebooks = [g.restricted_to_pids(restricted_to_pids) for g in gradebooks]
+
+    # check that all gradebooks have the same PIDs
+    reference_pids = gradebooks[0].pids
+    for gradebook in gradebooks[1:]:
+        if gradebook.pids != reference_pids:
+            raise ValueError("Not all gradebooks have the same PIDs.")
+
+    # check that all gradebooks have different assignment names
+    number_of_assignments = sum(len(g.assignments) for g in gradebooks)
+    unique_assignments = set()
+    for gradebook in gradebooks:
+        unique_assignments.update(gradebook.assignments)
+
+    if len(unique_assignments) != number_of_assignments:
+        raise ValueError("Gradebooks have duplicate assignments.")
+
+    # create the combined notebook
+    def concat_attr(a, axis=1):
+        """Create a DF/Series by combining the same attribute across gradebooks."""
+        all_tables = [getattr(g, a) for g in gradebooks]
+        return pd.concat(all_tables, axis=axis)
+
+    points = concat_attr("points_marked")
+    maximums = concat_attr("points_possible", axis=0)
+    lateness = concat_attr("lateness")
+    dropped = concat_attr("dropped")
+
+    adjustments = _concatenate_adjustments(gradebooks)
+    notes = _concatenate_notes(gradebooks)
+
+    return Gradebook(
+        points, maximums, lateness, dropped, adjustments=adjustments, notes=notes
+    )
+
+
+def _combine_and_convert_adjustments(parts, new_name, adjustments, points_possible):
+    """Concatenates all adjustments from the given parts.
+
+    Converts percentage adjustments to points adjustments along the way.
+
+    Used in Gradebook._combine_assignment
+
+    """
+
+    # combine and convert adjustments
+    def _convert_adjustment(assignment, adjustment):
+        cls = type(adjustment)
+        if isinstance(adjustment.amount, Percentage):
+            possible = points_possible.loc[assignment]
+            return cls(Points(possible * adjustment.amount.amount), adjustment.reason)
+        else:
+            return adjustment
+
+    new_adjustments = {}
+    for student, assignments_dct in adjustments.items():
+        new_adjustments[student] = {}
+
+        combined_adjustments = []
+        for assignment, adjustments_lst in assignments_dct.items():
+            adjustments_lst = [_convert_adjustment(assignment, d) for d in adjustments_lst]
+            if assignment in parts:
+                combined_adjustments.extend(adjustments_lst)
+            else:
+                new_adjustments[student][assignment] = adjustments_lst
+
+        new_adjustments[student][new_name] = combined_adjustments
+
+    return new_adjustments

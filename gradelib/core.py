@@ -845,6 +845,9 @@ class Gradebook:
 
         Any adjustments that reference a removed assignment are also removed.
 
+        Groups are updated so that they reference only the assignments listed
+        in `assignments`.
+
         Parameters
         ----------
         assignments : Collection[str]

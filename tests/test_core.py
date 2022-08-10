@@ -469,6 +469,20 @@ def test_restricted_to_assignments_removes_adjustments_not_in_assignments():
     # then
     assert actual.adjustments == {"A100": {"homework 01": [1]}}
 
+def test_restricted_to_assignments_updates_groups():
+    # when
+    original = GRADESCOPE_EXAMPLE.copy()
+    original.groups = [
+        ('homeworks', original.assignments.starting_with('home'), .75),
+        ('labs', original.assignments.starting_with('lab'), .25),
+    ]
+
+    actual = original.restricted_to_assignments(["homework 01", "homework 02"])
+
+    # then
+    assert actual.groups == [
+        ('homeworks', ['homework 01', 'homework 02'], .75),
+    ]
 
 def test_without_assignments():
     # when
@@ -624,12 +638,6 @@ def test_combine_gradebooks_raises_if_scales_do_not_match():
             [ex_1, ex_2],
             restricted_to_pids=ROSTER.index,
         )
-
-# combines options if same
-# raises if scales do not match
-
-
-# TODO .groups returns tuple
 
 def test_combine_gradebooks_concatenates_adjustments():
     # when
@@ -1159,6 +1167,7 @@ def test_default_groups_one_assignment_per_group_equally_weighted():
 
 # groups
 
+# TODO .groups returns tuple
 
 def test_groups_setter_allows_three_tuple_form():
     # given

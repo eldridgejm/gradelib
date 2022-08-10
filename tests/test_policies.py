@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 import gradelib
-from gradelib import Percentage, Points
+from gradelib import Percentage, Points, Deduction
 
 EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent / "examples"
 GRADESCOPE_EXAMPLE = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
@@ -66,8 +66,8 @@ def test_penalize_lates_without_forgiveness_or_within_penalizes_all_lates():
     result = gradebook.apply(gradelib.policies.PenalizeLates())
 
     assert result.adjustments == {
-        "A1": {"lab01": [Percentage(1)]},
-        "A2": {"hw01": [Percentage(1)]},
+        "A1": {"lab01": [Deduction(Percentage(1))]},
+        "A2": {"hw01": [Deduction(Percentage(1))]},
     }
 
 
@@ -92,8 +92,8 @@ def test_penalize_lates_with_custom_flat_deduction():
     result = gradebook.apply(gradelib.policies.PenalizeLates(deduction=Points(3)))
 
     assert result.adjustments == {
-        "A1": {"lab01": [Points(3)]},
-        "A2": {"hw01": [Points(3)]},
+        "A1": {"lab01": [Deduction(Points(3))]},
+        "A2": {"hw01": [Deduction(Points(3))]},
     }
 
 
@@ -123,7 +123,7 @@ def test_penalize_lates_with_callable_deduction():
     result = gradebook.apply(gradelib.policies.PenalizeLates(deduction=deduction))
 
     assert result.adjustments == {
-        "A1": {"hw01": [Points(1)], "hw02": [Points(2)], "lab01": [Points(3)]},
+        "A1": {"hw01": [Deduction(Points(1))], "hw02": [Deduction(Points(2))], "lab01": [Deduction(Points(3))]},
     }
 
 
@@ -155,7 +155,7 @@ def test_penalize_lates_with_callable_deduction_does_not_count_forgiven():
     )
 
     assert result.adjustments == {
-        "A1": {"hw02": [Points(1)], "lab01": [Points(2)]},
+        "A1": {"hw02": [Deduction(Points(1))], "lab01": [Deduction(Points(2))]},
     }
 
 
@@ -182,7 +182,7 @@ def test_penalize_lates_respects_lateness_fudge():
     result = gradebook.apply(gradelib.policies.PenalizeLates())
 
     assert result.adjustments == {
-        "A2": {"hw01": [Percentage(1)]},
+        "A2": {"hw01": [Deduction(Percentage(1))]},
     }
 
 
@@ -207,7 +207,7 @@ def test_penalize_lates_within_assignments():
     result = gradebook.apply(gradelib.policies.PenalizeLates(within=HOMEWORK))
 
     assert result.adjustments == {
-        "A2": {"hw01": [Percentage(1)]},
+        "A2": {"hw01": [Deduction(Percentage(1))]},
     }
 
 
@@ -232,7 +232,7 @@ def test_penalize_lates_within_accepts_callable():
     result = gradebook.apply(gradelib.policies.PenalizeLates(within=HOMEWORK))
 
     assert result.adjustments == {
-        "A2": {"hw01": [Percentage(1)]},
+        "A2": {"hw01": [Deduction(Percentage(1))]},
     }
 
 
@@ -257,7 +257,7 @@ def test_penalize_lates_with_forgiveness():
     result = gradebook.apply(gradelib.policies.PenalizeLates(forgive=1))
 
     assert result.adjustments == {
-        "A1": {"lab01": [Percentage(1)]},
+        "A1": {"lab01": [Deduction(Percentage(1))]},
     }
 
 
@@ -287,7 +287,7 @@ def test_penalize_lates_with_forgiveness_and_within():
     )
 
     assert result.adjustments == {
-        "A1": {"lab01": [Percentage(1)]},
+        "A1": {"lab01": [Deduction(Percentage(1))]},
     }
 
 
@@ -304,8 +304,8 @@ def test_penalize_lates_forgives_the_first_n_lates():
 
     # then
     assert actual.adjustments["A10000000"] == {
-        "lab 01": [Percentage(1)],
-        "lab 03": [Percentage(1)],
+        "lab 01": [Deduction(Percentage(1))],
+        "lab 03": [Deduction(Percentage(1))],
     }
 
 
@@ -336,8 +336,8 @@ def test_penalize_lates_does_not_forgive_dropped():
 
     assert result.adjustments == {
         "A1": {
-            "hw01": [Percentage(1)],
-            "lab01": [Percentage(1)],
+            "hw01": [Deduction(Percentage(1))],
+            "lab01": [Deduction(Percentage(1))],
         }
     }
 
@@ -748,6 +748,42 @@ def test_make_exceptions_with_replace():
     )(gradebook)
 
     # then
-    assert actual.points_marked.loc["A1", "hw01"] == 9
-    assert actual.points_marked.loc["A1", "hw02"] == 9
+    assert actual.adjustments == {
+        "A1": {
+            "hw02": [gradelib.Addition(gradelib.Points(9))],
+        }
+    }
+    assert actual.points_after_adjustments.loc["A1", "hw01"] == 9
+    assert actual.points_after_adjustments.loc["A1", "hw02"] == 9
+    assert_gradebook_is_sound(actual)
+
+def test_make_exceptions_with_override():
+    # given
+    columns = ["hw01", "hw02", "hw03", "hw04"]
+    p1 = pd.Series(data=[9, 0, 7, 0], index=columns)
+    p2 = pd.Series(data=[10, 10, 10, 10], index=columns)
+    points = pd.DataFrame(
+        [p1, p2],
+        index=[gradelib.Student("A1", "Justin"), gradelib.Student("A2", "Steve")],
+    )
+    maximums = pd.Series([10, 10, 10, 10], index=columns)
+    gradebook = gradelib.MutableGradebook(points, maximums)
+
+    # when
+    actual = gradelib.policies.MakeExceptions(
+        "Justin", [
+            gradelib.policies.Override("hw01", gradelib.Percentage(.5)),
+            gradelib.policies.Override("hw02", gradelib.Points(8)),
+        ]
+    )(gradebook)
+
+    # then
+    assert actual.adjustments == {
+        "A1": {
+            "hw02": [gradelib.Addition(gradelib.Points(8))],
+            "hw01": [gradelib.Deduction(gradelib.Points(4))],
+        }
+    }
+    assert actual.points_after_adjustments.loc["A1", "hw01"] == 5
+    assert actual.points_after_adjustments.loc["A1", "hw02"] == 8
     assert_gradebook_is_sound(actual)

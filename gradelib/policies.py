@@ -4,7 +4,7 @@ import collections
 import numpy as np
 import pandas as pd
 
-from .core import Percentage, Points
+from .core import Percentage, Points, Deduction, Addition
 
 
 def _empty_mask_like(table):
@@ -64,6 +64,13 @@ class Drop:
         gradebook.dropped.loc[pid, self.assignment] = True
         return gradebook
 
+
+def _adjustment_from_difference(difference):
+    if difference < 0:
+        return Deduction(Points(-difference))
+    else:
+        return Addition(Points(difference))
+
 class Replace:
 
     def __init__(self, assignment, with_):
@@ -72,8 +79,34 @@ class Replace:
 
     def __call__(self, gradebook, student):
         pid = gradebook.find_student(student)
-        gradebook.points_marked.loc[pid, self.assignment] = gradebook.points_after_adjustments.loc[pid, self.with_]
+        current_points = gradebook.points_after_adjustments.loc[pid, self.assignment]
+        new_points = gradebook.points_after_adjustments.loc[pid, self.with_]
+        difference = new_points - current_points
+        adjustment = _adjustment_from_difference(difference)
+        gradebook.add_adjustment(pid, self.assignment, adjustment)
         return gradebook
+
+def _convert_amount_to_absolute_points(amount, gradebook, assignment):
+    if isinstance(amount, Points):
+        return amount.amount
+    else:
+        # calculate percentage adjustment based on points possible
+        return amount.amount * gradebook.points_possible.loc[assignment]
+
+class Override:
+
+    def __init__(self, assignment, amount):
+        self.assignment = assignment
+        self.amount = amount
+
+    def __call__(self, gradebook, student):
+        pid = gradebook.find_student(student)
+        current_points = gradebook.points_after_adjustments.loc[pid, self.assignment]
+        new_points = _convert_amount_to_absolute_points(self.amount, gradebook, self.assignment)
+        adjustment = _adjustment_from_difference(new_points - current_points)
+        gradebook.add_adjustment(pid, self.assignment, adjustment)
+        return gradebook
+
 
 # policies
 # ======================================================================================
@@ -167,7 +200,7 @@ class PenalizeLates:
         else:
             d = self.deduction
 
-        gradebook.add_deduction(pid, assignment, d)
+        gradebook.add_adjustment(pid, assignment, Deduction(d))
 
 
 # DropLowest

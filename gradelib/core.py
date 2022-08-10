@@ -1023,7 +1023,7 @@ class MutableGradebook(Gradebook):
 
         self.notes[pid][channel].append(message)
 
-    def add_deduction(self, pid, assignment, amount):
+    def add_adjustment(self, pid, assignment, adjustment):
         """Convenience method for adding a note.
 
         Mutates the gradebook.
@@ -1034,10 +1034,10 @@ class MutableGradebook(Gradebook):
             The pid of the student for which the note should be added.
 
         assignment : str
-            The assignment that the deduction should be added to.
+            The assignment that the adjustment should be added to.
 
-        amount : Union[Points, Percentage]
-            The amount of the deduction.
+        adjustment : Adjustment
+            The adjustment
 
         """
         if pid not in self.adjustments:
@@ -1046,7 +1046,7 @@ class MutableGradebook(Gradebook):
         if assignment not in self.adjustments[pid]:
             self.adjustments[pid][assignment] = []
 
-        self.adjustments[pid][assignment].append(amount)
+        self.adjustments[pid][assignment].append(adjustment)
 
     def apply(self, transformations):
         """Apply transformation(s) to the gradebook.

@@ -35,7 +35,7 @@ def assert_gradebook_is_sound(gradebook):
     assert (gradebook.points_marked.index == gradebook.dropped.index).all()
     assert (gradebook.points_marked.index == gradebook.lateness.index).all()
     assert (gradebook.points_marked.columns == gradebook.points_possible.index).all()
-    assert isinstance(gradebook.deductions, dict)
+    assert isinstance(gradebook.adjustments, dict)
 
 
 # preprocessing
@@ -65,7 +65,7 @@ def test_penalize_lates_without_forgiveness_or_within_penalizes_all_lates():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates())
 
-    assert result.deductions == {
+    assert result.adjustments == {
         "A1": {"lab01": [Percentage(1)]},
         "A2": {"hw01": [Percentage(1)]},
     }
@@ -91,7 +91,7 @@ def test_penalize_lates_with_custom_flat_deduction():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates(deduction=Points(3)))
 
-    assert result.deductions == {
+    assert result.adjustments == {
         "A1": {"lab01": [Points(3)]},
         "A2": {"hw01": [Points(3)]},
     }
@@ -122,7 +122,7 @@ def test_penalize_lates_with_callable_deduction():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates(deduction=deduction))
 
-    assert result.deductions == {
+    assert result.adjustments == {
         "A1": {"hw01": [Points(1)], "hw02": [Points(2)], "lab01": [Points(3)]},
     }
 
@@ -154,7 +154,7 @@ def test_penalize_lates_with_callable_deduction_does_not_count_forgiven():
         gradelib.policies.PenalizeLates(deduction=deduction, forgive=1)
     )
 
-    assert result.deductions == {
+    assert result.adjustments == {
         "A1": {"hw02": [Points(1)], "lab01": [Points(2)]},
     }
 
@@ -181,7 +181,7 @@ def test_penalize_lates_respects_lateness_fudge():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates())
 
-    assert result.deductions == {
+    assert result.adjustments == {
         "A2": {"hw01": [Percentage(1)]},
     }
 
@@ -206,7 +206,7 @@ def test_penalize_lates_within_assignments():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates(within=HOMEWORK))
 
-    assert result.deductions == {
+    assert result.adjustments == {
         "A2": {"hw01": [Percentage(1)]},
     }
 
@@ -231,7 +231,7 @@ def test_penalize_lates_within_accepts_callable():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates(within=HOMEWORK))
 
-    assert result.deductions == {
+    assert result.adjustments == {
         "A2": {"hw01": [Percentage(1)]},
     }
 
@@ -256,7 +256,7 @@ def test_penalize_lates_with_forgiveness():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates(forgive=1))
 
-    assert result.deductions == {
+    assert result.adjustments == {
         "A1": {"lab01": [Percentage(1)]},
     }
 
@@ -286,7 +286,7 @@ def test_penalize_lates_with_forgiveness_and_within():
         ]
     )
 
-    assert result.deductions == {
+    assert result.adjustments == {
         "A1": {"lab01": [Percentage(1)]},
     }
 
@@ -303,7 +303,7 @@ def test_penalize_lates_forgives_the_first_n_lates():
     )
 
     # then
-    assert actual.deductions["A10000000"] == {
+    assert actual.adjustments["A10000000"] == {
         "lab 01": [Percentage(1)],
         "lab 03": [Percentage(1)],
     }
@@ -334,7 +334,7 @@ def test_penalize_lates_does_not_forgive_dropped():
 
     result = gradebook.apply([gradelib.policies.PenalizeLates(forgive=2)])
 
-    assert result.deductions == {
+    assert result.adjustments == {
         "A1": {
             "hw01": [Percentage(1)],
             "lab01": [Percentage(1)],
@@ -423,7 +423,7 @@ def test_drop_lowest_takes_deductions_into_account():
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([10, 10], index=columns)
     gradebook = gradelib.MutableGradebook(points, maximums)
-    gradebook.deductions = {"A1": {"hw01": [Percentage(1)]}}
+    gradebook.adjustments = {"A1": {"hw01": [Percentage(1)]}}
 
     # since A1's perfect homework has a 100% deduction, it should count as zero and be
     # dropped
@@ -596,7 +596,7 @@ def test_redemption_takes_deductions_into_account():
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([100, 100], index=columns)
     gradebook = gradelib.MutableGradebook(points, maximums)
-    gradebook.deductions = {"A1": {"mt01 - redemption": [Percentage(0.5)]}}
+    gradebook.adjustments = {"A1": {"mt01 - redemption": [Percentage(0.5)]}}
 
     # when
     actual = gradebook.apply(

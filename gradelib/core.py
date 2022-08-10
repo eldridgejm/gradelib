@@ -248,7 +248,7 @@ class Gradebook:
     points_marked : pandas.DataFrame
         A dataframe with one row per student, and one column for each assignment.
         Each entry should be the raw number of points earned by the student on the
-        given assignment without any deductions, e.g., for lateness. The index
+        given assignment without any adjustments, e.g., for lateness. The index
         of the dataframe should consist of Student objects.
     points_possible : pandas.Series
         A series containing the maximum number of points possible for each
@@ -263,8 +263,8 @@ class Gradebook:
         A Boolean dataframe with the same columns/index as `points_marked`. An
         entry that is `True` indicates that the assignment should be dropped.
         If `None` is passed, a dataframe of all `False`s is used by default.
-    deductions : Optional[dict]
-        A nested dictionary of deductions. The keys of the outer dictionary
+    adjustments : Optional[dict]
+        A nested dictionary of adjustments. The keys of the outer dictionary
         should be student PIDs, and the values should be dictionaries. The keys
         of these inner dictionaries should be assignment names, and the values
         should be iterables of either Points or Percentage objects. If `None`
@@ -291,7 +291,7 @@ class Gradebook:
         "points_possible",
         "lateness",
         "dropped",
-        "deductions",
+        "adjustments",
         "notes",
         "opts",
     ]
@@ -302,7 +302,7 @@ class Gradebook:
         points_possible,
         lateness=None,
         dropped=None,
-        deductions=None,
+        adjustments=None,
         notes=None,
         opts=None,
     ):
@@ -314,7 +314,7 @@ class Gradebook:
         self.dropped = (
             dropped if dropped is not None else _empty_mask_like(points_marked)
         )
-        self.deductions = {} if deductions is None else deductions
+        self.adjustments = {} if adjustments is None else adjustments
         self.notes = {} if notes is None else notes
         self.opts = opts if opts is not None else GradebookOptions()
 
@@ -381,13 +381,13 @@ class Gradebook:
         return self.lateness > pd.Timedelta(fudge, unit="s")
 
     @property
-    def points_after_deductions(self):
-        """A dataframe of points earned after taking deductions into account.
+    def points_after_adjustments(self):
+        """A dataframe of points earned after taking adjustments into account.
 
         Will have the same index and columns as the `points_marked` attribute.
 
-        Deductions are applied in the order they appear in the `deductions` attribute.
-        A percentage deduction is calculated *after* applying earlier deductions. For
+        Adjustments are applied in the order they appear in the `adjustments` attribute.
+        A percentage adjustment is calculated *after* applying earlier adjustments. For
         example, if 100 points are marked and two percentage deductions of 30% and 10%
         are applied, the result is 100 points * 70% * 90% = 63 points.
 
@@ -407,7 +407,7 @@ class Gradebook:
 
             points.loc[pid, assignment] = max(p - d, 0)
 
-        for pid, assignments_dct in self.deductions.items():
+        for pid, assignments_dct in self.adjustments.items():
             for assignment, deductions in assignments_dct.items():
                 for deduction in deductions:
                     _apply_deduction(pid, assignment, deduction)
@@ -483,7 +483,7 @@ def _concatenate_deductions(gradebooks):
     """Concatenates the deductions from a sequence of gradebooks."""
     deductions = {}
     for gradebook in gradebooks:
-        for pid, assignments_dct in gradebook.deductions.items():
+        for pid, assignments_dct in gradebook.adjustments.items():
             if pid not in deductions:
                 deductions[pid] = {}
 
@@ -581,7 +581,7 @@ def combine_gradebooks(gradebooks, restricted_to_pids=None):
     notes = _concatenate_notes(gradebooks)
 
     return MutableGradebook(
-        points, maximums, lateness, dropped, deductions=deductions, notes=notes
+        points, maximums, lateness, dropped, adjustments=deductions, notes=notes
     )
 
 
@@ -698,7 +698,7 @@ class MutableGradebook(Gradebook):
     def restricted_to_assignments(self, assignments):
         """Restrict the gradebook to only the supplied assignments.
 
-        Any deductions that reference a removed assignment are also removed.
+        Any adjustments that reference a removed assignment are also removed.
 
         Parameters
         ----------
@@ -727,7 +727,7 @@ class MutableGradebook(Gradebook):
         r_dropped = self.dropped.loc[:, assignments].copy()
 
         # keep only the deductions which are for assignments in `assignments`
-        r_deductions = copy.deepcopy(self.deductions)
+        r_deductions = copy.deepcopy(self.adjustments)
         for student, assignments_dct in r_deductions.items():
             assignments_dct = {
                 k: v for k, v in assignments_dct.items() if k in assignments
@@ -739,7 +739,7 @@ class MutableGradebook(Gradebook):
             points_possible=r_maximums,
             lateness=r_lateness,
             dropped=r_dropped,
-            deductions=r_deductions,
+            adjustments=r_deductions,
         )
 
     def without_assignments(self, assignments):
@@ -826,7 +826,7 @@ class MutableGradebook(Gradebook):
         # combines deductions from all of the parts, converting Percentage
         # to Points along the way.
         new_deductions = _combine_and_convert_deductions(
-            parts, new_name, self.deductions, self.points_possible
+            parts, new_name, self.adjustments, self.points_possible
         )
 
         # we're assuming that dropped was not set; we need to provide an empy
@@ -839,7 +839,7 @@ class MutableGradebook(Gradebook):
             points_possible=new_max,
             dropped=new_dropped,
             lateness=new_lateness,
-            deductions=new_deductions,
+            adjustments=new_deductions,
         )
 
 
@@ -953,8 +953,8 @@ class MutableGradebook(Gradebook):
                 _update_key(k): v for k, v in assignments_dct.items()
             }
 
-        result.deductions = {
-                pid: _update_assignments_dct(dct) for pid, dct in result.deductions.items()
+        result.adjustments = {
+                pid: _update_assignments_dct(dct) for pid, dct in result.adjustments.items()
         }
 
         result.points_marked.rename(columns=mapping, inplace=True)
@@ -1013,13 +1013,13 @@ class MutableGradebook(Gradebook):
             The amount of the deduction.
 
         """
-        if pid not in self.deductions:
-            self.deductions[pid] = {}
+        if pid not in self.adjustments:
+            self.adjustments[pid] = {}
 
-        if assignment not in self.deductions[pid]:
-            self.deductions[pid][assignment] = []
+        if assignment not in self.adjustments[pid]:
+            self.adjustments[pid][assignment] = []
 
-        self.deductions[pid][assignment].append(amount)
+        self.adjustments[pid][assignment].append(amount)
 
     def apply(self, transformations):
         """Apply transformation(s) to the gradebook.
@@ -1068,7 +1068,7 @@ class MutableGradebook(Gradebook):
             points_possible=self.points_possible,
             lateness=self.lateness,
             dropped=self.dropped,
-            deductions=self.deductions,
+            adjustments=self.adjustments,
             notes=self.notes,
             opts=self.opts,
             groups=groups,
@@ -1167,7 +1167,7 @@ class FinalizedGradebook(Gradebook):
     def group_effective_points_earned(self):
         result = {}
         for group in self.groups:
-            earned = self.points_after_deductions[group.assignments]
+            earned = self.points_after_adjustments[group.assignments]
             if group.normalize_assignment_weights:
                 earned = earned / self.points_possible[group.assignments]
             earned[self.dropped[group.assignments]] = 0

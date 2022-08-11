@@ -165,7 +165,7 @@ class Assignments(collections.abc.Sequence):
         return f"Assignments(names={self._names})"
 
     def __add__(self, other):
-        return Assignments(set(self._names + other._names))
+        return Assignments(self._names + other._names)
 
     def __getitem__(self, index):
         return self._names[index]

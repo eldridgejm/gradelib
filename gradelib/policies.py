@@ -132,6 +132,10 @@ class PenalizeLates:
     deduction : Optional[Union[Points, Percentage, Callable]]
         The amount that should be deducted. See the Notes for instructions
         on using a callable. If None, 100% is deducted.
+    order_by : str
+        One of {'value', 'index'}. If 'value', highly-valued assignments are
+        forgiven first. If 'index', assignments are forgiven in the order they
+        appear in `within`. Default: 'value'.
 
     Notes
     -----
@@ -167,10 +171,11 @@ class PenalizeLates:
 
     """
 
-    def __init__(self, within=None, forgive=0, deduction=Percentage(1)):
+    def __init__(self, within=None, forgive=0, deduction=Percentage(1), order_by='value'):
         self.within = within
         self.forgive = forgive
         self.deduction = deduction
+        self.order_by = order_by
 
     def __call__(self, gradebook):
         if self.forgive < 0:
@@ -182,11 +187,20 @@ class PenalizeLates:
             forgiveness_left = self.forgive
             number = 0
 
-            for assignment in within:
+            # by default, reorder assignments from most valuable to least valuable,
+            # since forgiveness will be given to most valuable assignments first
+            if self.order_by == 'value':
+                value = gradebook.value[within]
+                sorted_assignments = sorted(within, key=lambda a: value.loc[pid, a], reverse=True)
+            else:
+                sorted_assignments = self.within
+
+            for assignment in sorted_assignments:
                 if gradebook.late.loc[pid, assignment]:
+                    if gradebook.dropped.loc[pid, assignment]:
+                        continue
                     if (
                         forgiveness_left > 0
-                        and not gradebook.dropped.loc[pid, assignment]
                     ):
                         forgiveness_left -= 1
                     else:

@@ -2,6 +2,7 @@
 
 from .core import (
     combine_gradebooks,
+    NORMALIZE,
     Gradebook,
     Assignments,
     Student,

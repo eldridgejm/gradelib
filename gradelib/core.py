@@ -3,11 +3,15 @@
 import collections.abc
 import copy
 import dataclasses
+import typing
 
 from .scales import DEFAULT_SCALE, map_scores_to_letter_grades
 
 import numpy as np
 import pandas as pd
+
+
+NORMALIZE = object()
 
 
 # Student
@@ -433,12 +437,22 @@ class GradebookOptions:
     lateness_fudge: int = 5 * 60
 
 
-@dataclasses.dataclass
 class Group:
-    name: str
-    assignments: Assignments
-    weight: float
-    normalize_assignment_weights: bool = False
+
+    _attrs = ['name', 'assignments', 'weight', 'normalize_assignment_weights', 'assignment_weights']
+
+    def __init__(self, name, assignments, weight, normalize_assignment_weights=False,
+            assignment_weights=None):
+
+        if isinstance(assignment_weights, dict):
+            if set(assignment_weights.keys()) != set(assignments):
+                raise ValueError("Assignments weights dict must contain all assignments.")
+
+        for attr in self._attrs:
+            setattr(self, attr, vars()[attr])
+
+    def __eq__(self, other):
+        return all(getattr(self, attr) == getattr(other, attr) for attr in self._attrs)
 
 
 class Gradebook:
@@ -603,7 +617,7 @@ class Gradebook:
     def groups(self, value):
         def _make_group(g):
             if isinstance(g, Group):
-                args = [g.name, g.assignments, g.weight, g.normalize_assignment_weights]
+                args = [g.name, g.assignments, g.weight, g.normalize_assignment_weights, g.assignment_weights]
             elif len(g) == 2:
                 # expecting a single assignment
                 args = (g[0], Assignments([g[0]]), g[1])
@@ -663,6 +677,33 @@ class Gradebook:
         return points
 
     @property
+    def weight(self):
+        result = (
+            self.points_possible
+            /
+            self._by_group_to_by_assignment(self.group_points_possible_after_drops)
+        )
+
+        for group in self.groups:
+            if group.assignment_weights is None:
+                continue
+            elif group.assignment_weights is NORMALIZE:
+                # count the number of undropped assignments
+                n = (~self.dropped)[group.assignments].sum(axis=1)
+                n.name = group.name
+                n = n.to_frame()
+                n = self._by_group_to_by_assignment(n)
+                result.loc[:, group.assignments] = 1/n
+            elif isinstance(group.assignment_weights, dict):
+                weights = pd.Series(group.assignment_weights)
+                weights = self._everyone_to_per_student(weights)
+                weights = weights * ~self.dropped[group.assignments]
+                weights = (weights.T / weights.sum(axis=1)).T
+                result.loc[:, group.assignments] = weights
+
+        return result * (~self.dropped)
+
+    @property
     def group_effective_points_earned(self):
         result = {}
         for group in self.groups:
@@ -674,7 +715,7 @@ class Gradebook:
         return pd.DataFrame(result, index=self.students)
 
     @property
-    def group_effective_points_possible(self):
+    def group_points_possible_after_drops(self):
         result = {}
         for group in self.groups:
             possible = pd.DataFrame(
@@ -704,7 +745,7 @@ class Gradebook:
 
     @property
     def group_scores(self):
-        return self.group_effective_points_earned / self.group_effective_points_possible
+        return self.group_effective_points_earned / self.group_points_possible_after_drops
 
     def _by_group_to_by_assignment(self, by_group):
         """Creates an (students, assignments) DataFrame by tiling.
@@ -802,7 +843,7 @@ class Gradebook:
         })
 
         a = self._everyone_to_per_student(self.points_possible)
-        b = self._by_group_to_by_assignment(self.group_effective_points_possible)
+        b = self._by_group_to_by_assignment(self.group_points_possible_after_drops)
         c = ~self.dropped
         d = self._by_group_to_by_assignment(group_weights)
 

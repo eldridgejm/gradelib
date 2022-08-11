@@ -285,29 +285,15 @@ class DropLowest:
         # the combinations of assignments to drop
         combinations = list(itertools.combinations(within, self.n))
 
-        # count lates as zeros
-        points_after_adjustments = gradebook.points_after_adjustments[within]
-
-        # a full table of maximum points available. this will allow us to have
-        # different points available per person
-        points_possible = gradebook.points_marked.copy()[within]
-        points_possible.iloc[:, :] = gradebook.points_possible[within].values
+        # we'll repeatedly replace this gradebook's dropped attribute
+        testbed = gradebook.copy()
 
         # we will try each combination and compute the resulting score for each student
         scores = []
         for possibly_dropped in combinations:
-            possibly_dropped = list(possibly_dropped)
-            possibly_dropped_mask = gradebook.dropped.copy()
-            possibly_dropped_mask[possibly_dropped] = True
-
-            earned = points_after_adjustments.copy()
-            earned[possibly_dropped_mask] = 0
-
-            out_of = points_possible.copy()
-            out_of[possibly_dropped_mask] = 0
-
-            score = earned.sum(axis=1) / out_of.sum(axis=1)
-            scores.append(score)
+            testbed.dropped = gradebook.dropped.copy()
+            testbed.dropped.loc[:, possibly_dropped] = True
+            scores.append(testbed.overall_score)
 
         # now we put the scores into a table and find the index of the best
         # score for each student

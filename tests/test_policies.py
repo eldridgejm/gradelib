@@ -403,6 +403,11 @@ def test_drop_lowest_with_callable_within():
     gradebook = gradelib.Gradebook(points, maximums)
     homeworks = lambda asmts: asmts.starting_with("hw")
 
+    gradebook.groups = (
+            ("homeworks", homeworks, .75),
+            ("lab01", .25)
+    )
+
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
 
@@ -424,13 +429,18 @@ def test_drop_lowest_maximizes_overall_score():
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = gradebook.assignments.starting_with("hw")
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+    gradebook.groups = (
+            ("homeworks", HOMEWORKS, .75),
+            ("lab01", .25)
+    )
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
 
     # when
-    actual = gradebook.apply(gradelib.policies.DropLowest(1, within=homeworks))
+    actual = gradebook.apply(gradelib.policies.DropLowest(1, within=HOMEWORKS))
 
     # then
     assert actual.dropped.iloc[0, 1]
@@ -439,7 +449,7 @@ def test_drop_lowest_maximizes_overall_score():
     assert_gradebook_is_sound(actual)
 
 
-def test_drop_lowest_on_simple_example_2():
+def test_drop_lowest_with_multiple_dropped():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -448,6 +458,11 @@ def test_drop_lowest_on_simple_example_2():
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
     homeworks = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = (
+            ("homeworks", homeworks, .75),
+            ("lab01", .25)
+    )
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
@@ -472,6 +487,10 @@ def test_drop_lowest_takes_adjustments_into_account():
     gradebook = gradelib.Gradebook(points, maximums)
     gradebook.adjustments = {"A1": {"hw01": [gradelib.Deduction(Percentage(1))]}}
 
+    gradebook.groups = (
+            ("homeworks", gradebook.assignments.starting_with('hw'), .75),
+    )
+
     # since A1's perfect homework has a 100% deduction, it should count as zero and be
     # dropped
 
@@ -494,6 +513,10 @@ def test_drop_lowest_ignores_assignments_already_dropped():
     gradebook = gradelib.Gradebook(points, maximums)
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A1", "hw04"] = True
+
+    gradebook.groups = (
+            ("homeworks", gradebook.assignments.starting_with("hw"), 1),
+    )
 
     # since A1's perfect homeworks are already dropped, we should drop a third
     # homework, too: this will be HW03

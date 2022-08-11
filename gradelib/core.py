@@ -806,36 +806,11 @@ class Gradebook:
         c = ~self.dropped
         d = self._by_group_to_by_assignment(group_weights)
 
-        factors = pd.DataFrame(
-                np.tile([_group_weight(a) for a in self.assignments], (n, 1)),
-                index=self.students,
-                columns=self.assignments
-            )
-
-        group_total_points = {}
         for group in self.groups:
-            total = self.group_effective_points_possible[group.name]
-            for assignment in group.assignments:
-                group_total_points[assignment] = total
-        group_total_points = pd.DataFrame(group_total_points)
+            if group.normalize_assignment_weights:
+                a.loc[:,group.assignments] = 1
 
-        effective_points_possible = {}
-        for group in self.groups:
-            for assignment in group.assignments:
-                if group.normalize_assignment_weights:
-                    effective_points_possible[assignment] = np.ones(n)
-                else:
-                    effective_points_possible[assignment] = np.repeat(self.points_possible[assignment],
-                        n)
-
-        effective_points_possible = pd.DataFrame(effective_points_possible,
-                index=self.points_marked.index, columns=self.assignments)
-        # if NaN, the assignment was not in any group
-        effective_points_possible = effective_points_possible.fillna(0)
-        effective_points_possible[self.dropped] = 0
-
-        result = effective_points_possible / group_total_points * factors
-        return a / b * c * d
+        return (a / b * c * d).fillna(0)
 
     @property
     def overall_score(self):

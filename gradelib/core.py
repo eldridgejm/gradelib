@@ -512,7 +512,7 @@ class Gradebook:
         opts=None,
     ):
         self.points_marked = _cast_index(points_marked)
-        self.points_possible = _cast_index(points_possible)
+        self.points_possible = points_possible
         self.lateness = (
             lateness if lateness is not None else _empty_lateness_like(points_marked)
         )
@@ -706,6 +706,58 @@ class Gradebook:
     def group_scores(self):
         return self.group_effective_points_earned / self.group_effective_points_possible
 
+    def _by_group_to_by_assignment(self, by_group):
+        """Creates an (students, assignments) DataFrame by tiling.
+
+        Parameters
+        ----------
+        by_group
+            Can be a Series or a DataFrame. If it is a DataFrame, it should
+            have group names as columns and students in the index. Each
+            column is "expanded" by creating a new column for each
+            assignment in the group whose value is a copy of the group's
+            column in the input. If a Series, it should have group names as
+            its index. The Series is first converted to a (student, groups)
+            dataframe by tiling, then to a (student, assignments) dataframe
+            using the above procedure.
+
+        Returns
+        -------
+        DataFrame
+
+        """
+        def _get_group_by_name(name):
+            for group in self.groups:
+                if group.name == name:
+                    return group
+
+        def _convert_df(df):
+            new_columns = {}
+            for group_name in df.columns:
+                for assignment in _get_group_by_name(group_name).assignments:
+                    new_columns[assignment] = df[group_name]
+            return pd.DataFrame(new_columns, index=self.students)
+
+        def _convert_series(s):
+            new_columns = {}
+            for group_name in s.index:
+                new_columns[group_name] = np.repeat(s[group_name], len(self.points_marked))
+            df = pd.DataFrame(new_columns, index=self.students)
+            return _convert_df(df)
+
+        if isinstance(by_group, pd.Series):
+            return _convert_series(by_group)
+        else:
+            return _convert_df(by_group)
+
+    def _everyone_to_per_student(self, s):
+        """Converts a (groups,) or (assignments,) Series to a (students, *) DataFrame."""
+        return pd.DataFrame(
+                np.tile(s.values, (len(self.points_marked), 1)),
+                columns=s.index,
+                index=self.students
+        )
+
     @property
     def effective_assignment_weight(self):
         """How much does each assignment contribute to the student's overall score?
@@ -730,6 +782,29 @@ class Gradebook:
                 return g.weight
 
         n = len(self.points_marked)
+
+        # TODO self.weights
+
+        # this is calculated using the following formula:
+        #
+        #   everyone_to_per_student(self.points_possible)
+        #   *
+        #   1 / by_group_to_by_assignment(self.group_effective_points_possible)
+        #   *
+        #   ~self.dropped
+        #   *
+        #   by_group_to_by_assignment(group_weights)
+        #
+        # where group_weights is a Series of group weights.
+        
+        group_weights = pd.Series({
+            group.name: group.weight for group in self.groups
+        })
+
+        a = self._everyone_to_per_student(self.points_possible)
+        b = self._by_group_to_by_assignment(self.group_effective_points_possible)
+        c = ~self.dropped
+        d = self._by_group_to_by_assignment(group_weights)
 
         factors = pd.DataFrame(
                 np.tile([_group_weight(a) for a in self.assignments], (n, 1)),
@@ -760,7 +835,7 @@ class Gradebook:
         effective_points_possible[self.dropped] = 0
 
         result = effective_points_possible / group_total_points * factors
-        return result.fillna(0)
+        return a / b * c * d
 
     @property
     def overall_score(self):

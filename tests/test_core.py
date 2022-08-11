@@ -276,8 +276,10 @@ def test_points_after_adjustments_respects_series_of_additions_and_deductions():
 
     assert gb.points_after_adjustments.loc["A1", "hw01"] == 8
 
+
 # weight
 # ------
+
 
 def test_weight_defaults_to_being_computed_from_points_possible():
     columns = ["hw01", "hw02", "lab01", "lab02"]
@@ -290,14 +292,15 @@ def test_weight_defaults_to_being_computed_from_points_possible():
     gb = gradelib.Gradebook(points_marked, points_possible)
 
     gb.groups = [
-            ('homeworks', gb.assignments.starting_with("hw"), .75),
-            ('labs', gb.assignments.starting_with("lab"), .25),
+        ("homeworks", gb.assignments.starting_with("hw"), 0.75),
+        ("labs", gb.assignments.starting_with("lab"), 0.25),
     ]
 
-    assert gb.weight.loc['A1', 'hw01'] == 20/70
-    assert gb.weight.loc['A1', 'hw02'] == 50/70
-    assert gb.weight.loc['A2', 'hw01'] == 20/70
-    assert gb.weight.loc['A2', 'hw02'] == 50/70
+    assert gb.weight.loc["A1", "hw01"] == 20 / 70
+    assert gb.weight.loc["A1", "hw02"] == 50 / 70
+    assert gb.weight.loc["A2", "hw01"] == 20 / 70
+    assert gb.weight.loc["A2", "hw02"] == 50 / 70
+
 
 def test_weight_assignments_not_in_a_group_are_nan():
     columns = ["hw01", "hw02", "lab01", "lab02"]
@@ -310,17 +313,18 @@ def test_weight_assignments_not_in_a_group_are_nan():
     gb = gradelib.Gradebook(points_marked, points_possible)
 
     gb.groups = [
-            ('homeworks', gb.assignments.starting_with("hw"), .75),
+        ("homeworks", gb.assignments.starting_with("hw"), 0.75),
     ]
 
-    assert gb.weight.loc['A1', 'hw01'] == 20/70
-    assert gb.weight.loc['A1', 'hw02'] == 50/70
-    assert gb.weight.loc['A2', 'hw01'] == 20/70
-    assert gb.weight.loc['A2', 'hw02'] == 50/70
-    assert np.isnan(gb.weight.loc['A1', 'lab01'])
-    assert np.isnan(gb.weight.loc['A1', 'lab02'])
-    assert np.isnan(gb.weight.loc['A2', 'lab01'])
-    assert np.isnan(gb.weight.loc['A2', 'lab02'])
+    assert gb.weight.loc["A1", "hw01"] == 20 / 70
+    assert gb.weight.loc["A1", "hw02"] == 50 / 70
+    assert gb.weight.loc["A2", "hw01"] == 20 / 70
+    assert gb.weight.loc["A2", "hw02"] == 50 / 70
+    assert np.isnan(gb.weight.loc["A1", "lab01"])
+    assert np.isnan(gb.weight.loc["A1", "lab02"])
+    assert np.isnan(gb.weight.loc["A2", "lab01"])
+    assert np.isnan(gb.weight.loc["A2", "lab02"])
+
 
 def test_weight_takes_drops_into_account():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -331,19 +335,19 @@ def test_weight_takes_drops_into_account():
     points_possible = pd.Series([20, 50, 30, 40], index=columns)
 
     gb = gradelib.Gradebook(points_marked, points_possible)
-    gb.dropped.loc['A1', 'hw01'] = True
-    gb.dropped.loc['A2', 'hw01'] = True
-    gb.dropped.loc['A2', 'hw03'] = True
+    gb.dropped.loc["A1", "hw01"] = True
+    gb.dropped.loc["A2", "hw01"] = True
+    gb.dropped.loc["A2", "hw03"] = True
 
     gb.groups = [
-            ('homeworks', gb.assignments.starting_with("hw"), .75),
-            ('labs', gb.assignments.starting_with("lab"), .25),
+        ("homeworks", gb.assignments.starting_with("hw"), 0.75),
+        ("labs", gb.assignments.starting_with("lab"), 0.25),
     ]
 
-    assert gb.weight.loc['A1', 'hw01'] == 0.0
-    assert gb.weight.loc['A1', 'hw02'] == 50/80
-    assert gb.weight.loc['A2', 'hw01'] == 0.0
-    assert gb.weight.loc['A2', 'hw02'] == 1.0
+    assert gb.weight.loc["A1", "hw01"] == 0.0
+    assert gb.weight.loc["A1", "hw02"] == 50 / 80
+    assert gb.weight.loc["A2", "hw01"] == 0.0
+    assert gb.weight.loc["A2", "hw02"] == 1.0
 
 
 def test_weight_with_normalization():
@@ -357,13 +361,24 @@ def test_weight_with_normalization():
     gb = gradelib.Gradebook(points_marked, points_possible)
 
     gb.groups = [
-            gradelib.Group('homeworks', gb.assignments.starting_with("hw"), .75, assignment_weights=gradelib.NORMALIZE),
-            gradelib.Group('labs', gb.assignments.starting_with("lab"), .25, assignment_weights=gradelib.NORMALIZE),
+        gradelib.Group(
+            "homeworks",
+            gb.assignments.starting_with("hw"),
+            0.75,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
+        gradelib.Group(
+            "labs",
+            gb.assignments.starting_with("lab"),
+            0.25,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
     ]
 
-    assert gb.weight.loc['A1', 'hw01'] == 1/3
-    assert gb.weight.loc['A1', 'hw02'] == 1/3
-    assert gb.weight.loc['A2', 'lab01'] == 1.0
+    assert gb.weight.loc["A1", "hw01"] == 1 / 3
+    assert gb.weight.loc["A1", "hw02"] == 1 / 3
+    assert gb.weight.loc["A2", "lab01"] == 1.0
+
 
 def test_weight_with_normalization_and_drops():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -375,18 +390,29 @@ def test_weight_with_normalization_and_drops():
 
     gb = gradelib.Gradebook(points_marked, points_possible)
 
-    gb.dropped.loc['A1', 'hw02'] = True
-    gb.dropped.loc['A2', 'hw01'] = True
-    gb.dropped.loc['A2', 'hw03'] = True
+    gb.dropped.loc["A1", "hw02"] = True
+    gb.dropped.loc["A2", "hw01"] = True
+    gb.dropped.loc["A2", "hw03"] = True
 
     gb.groups = [
-            gradelib.Group('homeworks', gb.assignments.starting_with("hw"), .75, assignment_weights=gradelib.NORMALIZE),
-            gradelib.Group('labs', gb.assignments.starting_with("lab"), .25, assignment_weights=gradelib.NORMALIZE),
+        gradelib.Group(
+            "homeworks",
+            gb.assignments.starting_with("hw"),
+            0.75,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
+        gradelib.Group(
+            "labs",
+            gb.assignments.starting_with("lab"),
+            0.25,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
     ]
 
-    assert gb.weight.loc['A1', 'hw01'] == 1/2
-    assert gb.weight.loc['A1', 'hw02'] == 0.0
-    assert gb.weight.loc['A2', 'hw02'] == 1.0
+    assert gb.weight.loc["A1", "hw01"] == 1 / 2
+    assert gb.weight.loc["A1", "hw02"] == 0.0
+    assert gb.weight.loc["A2", "hw02"] == 1.0
+
 
 def test_weight_with_custom_weights():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -399,17 +425,28 @@ def test_weight_with_custom_weights():
     gb = gradelib.Gradebook(points_marked, points_possible)
 
     gb.groups = [
-            gradelib.Group('homeworks', gb.assignments.starting_with("hw"), .75, assignment_weights={
-                'hw01': .3,
-                'hw02': .5,
-                'hw03': .2,
-            }),
-            gradelib.Group('labs', gb.assignments.starting_with("lab"), .25, assignment_weights=gradelib.NORMALIZE),
+        gradelib.Group(
+            "homeworks",
+            gb.assignments.starting_with("hw"),
+            0.75,
+            assignment_weights={
+                "hw01": 0.3,
+                "hw02": 0.5,
+                "hw03": 0.2,
+            },
+        ),
+        gradelib.Group(
+            "labs",
+            gb.assignments.starting_with("lab"),
+            0.25,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
     ]
 
-    assert gb.weight.loc['A1', 'hw01'] == 0.3
-    assert gb.weight.loc['A1', 'hw02'] == 0.5
-    assert gb.weight.loc['A2', 'hw02'] == 0.5
+    assert gb.weight.loc["A1", "hw01"] == 0.3
+    assert gb.weight.loc["A1", "hw02"] == 0.5
+    assert gb.weight.loc["A2", "hw02"] == 0.5
+
 
 def test_weight_with_custom_weights_and_drops():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -421,26 +458,38 @@ def test_weight_with_custom_weights_and_drops():
 
     gb = gradelib.Gradebook(points_marked, points_possible)
 
-    gb.dropped.loc['A1', 'hw02'] = True
-    gb.dropped.loc['A2', 'hw01'] = True
-    gb.dropped.loc['A2', 'hw03'] = True
+    gb.dropped.loc["A1", "hw02"] = True
+    gb.dropped.loc["A2", "hw01"] = True
+    gb.dropped.loc["A2", "hw03"] = True
 
     gb.groups = [
-            gradelib.Group('homeworks', gb.assignments.starting_with("hw"), .75, assignment_weights={
-                'hw01': .3,
-                'hw02': .5,
-                'hw03': .2,
-            }),
-            gradelib.Group('labs', gb.assignments.starting_with("lab"), .25, assignment_weights=gradelib.NORMALIZE),
+        gradelib.Group(
+            "homeworks",
+            gb.assignments.starting_with("hw"),
+            0.75,
+            assignment_weights={
+                "hw01": 0.3,
+                "hw02": 0.5,
+                "hw03": 0.2,
+            },
+        ),
+        gradelib.Group(
+            "labs",
+            gb.assignments.starting_with("lab"),
+            0.25,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
     ]
 
-    assert gb.weight.loc['A1', 'hw01'] == .3/.5
-    assert gb.weight.loc['A1', 'hw02'] == 0.0
-    assert gb.weight.loc['A1', 'hw03'] == .2/.5
-    assert gb.weight.loc['A2', 'hw02'] == 1.0
+    assert gb.weight.loc["A1", "hw01"] == 0.3 / 0.5
+    assert gb.weight.loc["A1", "hw02"] == 0.0
+    assert gb.weight.loc["A1", "hw03"] == 0.2 / 0.5
+    assert gb.weight.loc["A2", "hw02"] == 1.0
+
 
 # overall_weight
 # --------------
+
 
 def test_overall_weight_defaults_to_being_computed_from_points_possible():
     columns = ["hw01", "hw02", "lab01", "lab02"]
@@ -453,14 +502,15 @@ def test_overall_weight_defaults_to_being_computed_from_points_possible():
     gb = gradelib.Gradebook(points_marked, points_possible)
 
     gb.groups = [
-            ('homeworks', gb.assignments.starting_with("hw"), .75),
-            ('labs', gb.assignments.starting_with("lab"), .25),
+        ("homeworks", gb.assignments.starting_with("hw"), 0.75),
+        ("labs", gb.assignments.starting_with("lab"), 0.25),
     ]
 
-    assert gb.overall_weight.loc['A1', 'hw01'] == 20/70 * .75
-    assert gb.overall_weight.loc['A1', 'hw02'] == 50/70 * .75
-    assert gb.overall_weight.loc['A2', 'hw01'] == 20/70 * .75
-    assert gb.overall_weight.loc['A2', 'hw02'] == 50/70 * .75
+    assert gb.overall_weight.loc["A1", "hw01"] == 20 / 70 * 0.75
+    assert gb.overall_weight.loc["A1", "hw02"] == 50 / 70 * 0.75
+    assert gb.overall_weight.loc["A2", "hw01"] == 20 / 70 * 0.75
+    assert gb.overall_weight.loc["A2", "hw02"] == 50 / 70 * 0.75
+
 
 def test_overall_weight_assignments_not_in_a_group_are_nan():
     columns = ["hw01", "hw02", "lab01", "lab02"]
@@ -473,17 +523,18 @@ def test_overall_weight_assignments_not_in_a_group_are_nan():
     gb = gradelib.Gradebook(points_marked, points_possible)
 
     gb.groups = [
-            ('homeworks', gb.assignments.starting_with("hw"), .75),
+        ("homeworks", gb.assignments.starting_with("hw"), 0.75),
     ]
 
-    assert gb.overall_weight.loc['A1', 'hw01'] == 20/70 * .75
-    assert gb.overall_weight.loc['A1', 'hw02'] == 50/70 * .75
-    assert gb.overall_weight.loc['A2', 'hw01'] == 20/70 * .75
-    assert gb.overall_weight.loc['A2', 'hw02'] == 50/70 * .75
-    assert np.isnan(gb.overall_weight.loc['A1', 'lab01'])
-    assert np.isnan(gb.overall_weight.loc['A1', 'lab02'])
-    assert np.isnan(gb.overall_weight.loc['A2', 'lab01'])
-    assert np.isnan(gb.overall_weight.loc['A2', 'lab02'])
+    assert gb.overall_weight.loc["A1", "hw01"] == 20 / 70 * 0.75
+    assert gb.overall_weight.loc["A1", "hw02"] == 50 / 70 * 0.75
+    assert gb.overall_weight.loc["A2", "hw01"] == 20 / 70 * 0.75
+    assert gb.overall_weight.loc["A2", "hw02"] == 50 / 70 * 0.75
+    assert np.isnan(gb.overall_weight.loc["A1", "lab01"])
+    assert np.isnan(gb.overall_weight.loc["A1", "lab02"])
+    assert np.isnan(gb.overall_weight.loc["A2", "lab01"])
+    assert np.isnan(gb.overall_weight.loc["A2", "lab02"])
+
 
 def test_overall_weight_takes_drops_into_account():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -494,19 +545,19 @@ def test_overall_weight_takes_drops_into_account():
     points_possible = pd.Series([20, 50, 30, 40], index=columns)
 
     gb = gradelib.Gradebook(points_marked, points_possible)
-    gb.dropped.loc['A1', 'hw01'] = True
-    gb.dropped.loc['A2', 'hw01'] = True
-    gb.dropped.loc['A2', 'hw03'] = True
+    gb.dropped.loc["A1", "hw01"] = True
+    gb.dropped.loc["A2", "hw01"] = True
+    gb.dropped.loc["A2", "hw03"] = True
 
     gb.groups = [
-            ('homeworks', gb.assignments.starting_with("hw"), .75),
-            ('labs', gb.assignments.starting_with("lab"), .25),
+        ("homeworks", gb.assignments.starting_with("hw"), 0.75),
+        ("labs", gb.assignments.starting_with("lab"), 0.25),
     ]
 
-    assert gb.overall_weight.loc['A1', 'hw01'] == 0.0 * .75
-    assert gb.overall_weight.loc['A1', 'hw02'] == 50/80 * .75
-    assert gb.overall_weight.loc['A2', 'hw01'] == 0.0 * .75
-    assert gb.overall_weight.loc['A2', 'hw02'] == 1.0 * .75
+    assert gb.overall_weight.loc["A1", "hw01"] == 0.0 * 0.75
+    assert gb.overall_weight.loc["A1", "hw02"] == 50 / 80 * 0.75
+    assert gb.overall_weight.loc["A2", "hw01"] == 0.0 * 0.75
+    assert gb.overall_weight.loc["A2", "hw02"] == 1.0 * 0.75
 
 
 def test_overall_weight_with_normalization():
@@ -520,13 +571,24 @@ def test_overall_weight_with_normalization():
     gb = gradelib.Gradebook(points_marked, points_possible)
 
     gb.groups = [
-            gradelib.Group('homeworks', gb.assignments.starting_with("hw"), .75, assignment_weights=gradelib.NORMALIZE),
-            gradelib.Group('labs', gb.assignments.starting_with("lab"), .25, assignment_weights=gradelib.NORMALIZE),
+        gradelib.Group(
+            "homeworks",
+            gb.assignments.starting_with("hw"),
+            0.75,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
+        gradelib.Group(
+            "labs",
+            gb.assignments.starting_with("lab"),
+            0.25,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
     ]
 
-    assert gb.overall_weight.loc['A1', 'hw01'] == 1/3 * .75
-    assert gb.overall_weight.loc['A1', 'hw02'] == 1/3 * .75
-    assert gb.overall_weight.loc['A2', 'lab01'] == 1.0 * .25
+    assert gb.overall_weight.loc["A1", "hw01"] == 1 / 3 * 0.75
+    assert gb.overall_weight.loc["A1", "hw02"] == 1 / 3 * 0.75
+    assert gb.overall_weight.loc["A2", "lab01"] == 1.0 * 0.25
+
 
 def test_overall_weight_with_normalization_and_drops():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -538,18 +600,29 @@ def test_overall_weight_with_normalization_and_drops():
 
     gb = gradelib.Gradebook(points_marked, points_possible)
 
-    gb.dropped.loc['A1', 'hw02'] = True
-    gb.dropped.loc['A2', 'hw01'] = True
-    gb.dropped.loc['A2', 'hw03'] = True
+    gb.dropped.loc["A1", "hw02"] = True
+    gb.dropped.loc["A2", "hw01"] = True
+    gb.dropped.loc["A2", "hw03"] = True
 
     gb.groups = [
-            gradelib.Group('homeworks', gb.assignments.starting_with("hw"), .75, assignment_weights=gradelib.NORMALIZE),
-            gradelib.Group('labs', gb.assignments.starting_with("lab"), .25, assignment_weights=gradelib.NORMALIZE),
+        gradelib.Group(
+            "homeworks",
+            gb.assignments.starting_with("hw"),
+            0.75,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
+        gradelib.Group(
+            "labs",
+            gb.assignments.starting_with("lab"),
+            0.25,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
     ]
 
-    assert gb.overall_weight.loc['A1', 'hw01'] == 1/2 * .75
-    assert gb.overall_weight.loc['A1', 'hw02'] == 0.0 * .75
-    assert gb.overall_weight.loc['A2', 'hw02'] == 1.0 * .75
+    assert gb.overall_weight.loc["A1", "hw01"] == 1 / 2 * 0.75
+    assert gb.overall_weight.loc["A1", "hw02"] == 0.0 * 0.75
+    assert gb.overall_weight.loc["A2", "hw02"] == 1.0 * 0.75
+
 
 def test_overall_weight_with_custom_weights():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -562,17 +635,28 @@ def test_overall_weight_with_custom_weights():
     gb = gradelib.Gradebook(points_marked, points_possible)
 
     gb.groups = [
-            gradelib.Group('homeworks', gb.assignments.starting_with("hw"), .75, assignment_weights={
-                'hw01': .3,
-                'hw02': .5,
-                'hw03': .2,
-            }),
-            gradelib.Group('labs', gb.assignments.starting_with("lab"), .25, assignment_weights=gradelib.NORMALIZE),
+        gradelib.Group(
+            "homeworks",
+            gb.assignments.starting_with("hw"),
+            0.75,
+            assignment_weights={
+                "hw01": 0.3,
+                "hw02": 0.5,
+                "hw03": 0.2,
+            },
+        ),
+        gradelib.Group(
+            "labs",
+            gb.assignments.starting_with("lab"),
+            0.25,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
     ]
 
-    assert gb.overall_weight.loc['A1', 'hw01'] == 0.3 * .75
-    assert gb.overall_weight.loc['A1', 'hw02'] == 0.5 * .75
-    assert gb.overall_weight.loc['A2', 'hw02'] == 0.5 * .75
+    assert gb.overall_weight.loc["A1", "hw01"] == 0.3 * 0.75
+    assert gb.overall_weight.loc["A1", "hw02"] == 0.5 * 0.75
+    assert gb.overall_weight.loc["A2", "hw02"] == 0.5 * 0.75
+
 
 def test_overall_weight_with_custom_weights_and_drops():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -584,23 +668,34 @@ def test_overall_weight_with_custom_weights_and_drops():
 
     gb = gradelib.Gradebook(points_marked, points_possible)
 
-    gb.dropped.loc['A1', 'hw02'] = True
-    gb.dropped.loc['A2', 'hw01'] = True
-    gb.dropped.loc['A2', 'hw03'] = True
+    gb.dropped.loc["A1", "hw02"] = True
+    gb.dropped.loc["A2", "hw01"] = True
+    gb.dropped.loc["A2", "hw03"] = True
 
     gb.groups = [
-            gradelib.Group('homeworks', gb.assignments.starting_with("hw"), .75, assignment_weights={
-                'hw01': .3,
-                'hw02': .5,
-                'hw03': .2,
-            }),
-            gradelib.Group('labs', gb.assignments.starting_with("lab"), .25, assignment_weights=gradelib.NORMALIZE),
+        gradelib.Group(
+            "homeworks",
+            gb.assignments.starting_with("hw"),
+            0.75,
+            assignment_weights={
+                "hw01": 0.3,
+                "hw02": 0.5,
+                "hw03": 0.2,
+            },
+        ),
+        gradelib.Group(
+            "labs",
+            gb.assignments.starting_with("lab"),
+            0.25,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
     ]
 
-    assert gb.overall_weight.loc['A1', 'hw01'] == .3/.5 * .75
-    assert gb.overall_weight.loc['A1', 'hw02'] == 0.0 * .75
-    assert gb.overall_weight.loc['A1', 'hw03'] == .2/.5 * .75
-    assert gb.overall_weight.loc['A2', 'hw02'] == 1.0 * .75
+    assert gb.overall_weight.loc["A1", "hw01"] == 0.3 / 0.5 * 0.75
+    assert gb.overall_weight.loc["A1", "hw02"] == 0.0 * 0.75
+    assert gb.overall_weight.loc["A1", "hw03"] == 0.2 / 0.5 * 0.75
+    assert gb.overall_weight.loc["A2", "hw02"] == 1.0 * 0.75
+
 
 # give_equal_weights()
 # -----------------------------------------------------------------------------
@@ -1497,7 +1592,6 @@ def test_default_groups_one_assignment_per_group_equally_weighted():
 
 # TODO .groups returns tuple
 
-
 def test_groups_setter_allows_three_tuple_form():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -1580,21 +1674,33 @@ def test_groups_setter_raises_if_assignment_weights_not_given_for_all_assignment
 
     gb = gradelib.Gradebook(points_marked, points_possible)
 
-    gb.dropped.loc['A1', 'hw02'] = True
-    gb.dropped.loc['A2', 'hw01'] = True
-    gb.dropped.loc['A2', 'hw03'] = True
+    gb.dropped.loc["A1", "hw02"] = True
+    gb.dropped.loc["A2", "hw01"] = True
+    gb.dropped.loc["A2", "hw03"] = True
 
     with pytest.raises(ValueError):
         gb.groups = [
-                gradelib.Group('homeworks', gb.assignments.starting_with("hw"), .75, assignment_weights={
-                    'hw01': .3,
-                    'hw02': .5,
-                }),
-                gradelib.Group('labs', gb.assignments.starting_with("lab"), .25, assignment_weights=gradelib.NORMALIZE),
+            gradelib.Group(
+                "homeworks",
+                gb.assignments.starting_with("hw"),
+                0.75,
+                assignment_weights={
+                    "hw01": 0.3,
+                    "hw02": 0.5,
+                },
+            ),
+            gradelib.Group(
+                "labs",
+                gb.assignments.starting_with("lab"),
+                0.25,
+                assignment_weights=gradelib.NORMALIZE,
+            ),
         ]
+
 
 # .value
 # ---------------
+
 
 def test_value_with_default_weights():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -1607,13 +1713,19 @@ def test_value_with_default_weights():
     gb = gradelib.Gradebook(points_marked, points_possible)
 
     gb.groups = [
-            gradelib.Group('homeworks', gb.assignments.starting_with("hw"), .75),
-            gradelib.Group('labs', gb.assignments.starting_with("lab"), .25, assignment_weights=gradelib.NORMALIZE),
+        gradelib.Group("homeworks", gb.assignments.starting_with("hw"), 0.75),
+        gradelib.Group(
+            "labs",
+            gb.assignments.starting_with("lab"),
+            0.25,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
     ]
 
-    assert gb.value.loc['A1', 'hw01'] == 10/20 * 20/100 * .75
-    assert gb.value.loc['A1', 'hw02'] == 30/50 * 50/100 * .75
-    assert gb.value.loc['A1', 'lab01'] == 25/40 * .25
+    assert gb.value.loc["A1", "hw01"] == 10 / 20 * 20 / 100 * 0.75
+    assert gb.value.loc["A1", "hw02"] == 30 / 50 * 50 / 100 * 0.75
+    assert gb.value.loc["A1", "lab01"] == 25 / 40 * 0.25
+
 
 def test_value_with_drops():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -1624,18 +1736,24 @@ def test_value_with_drops():
     points_possible = pd.Series([20, 50, 30, 40], index=columns)
 
     gb = gradelib.Gradebook(points_marked, points_possible)
-    gb.dropped.loc['A1', 'hw02'] = True
-    gb.dropped.loc['A2', 'hw01'] = True
-    gb.dropped.loc['A2', 'hw03'] = True
+    gb.dropped.loc["A1", "hw02"] = True
+    gb.dropped.loc["A2", "hw01"] = True
+    gb.dropped.loc["A2", "hw03"] = True
 
     gb.groups = [
-            gradelib.Group('homeworks', gb.assignments.starting_with("hw"), .75),
-            gradelib.Group('labs', gb.assignments.starting_with("lab"), .25, assignment_weights=gradelib.NORMALIZE),
+        gradelib.Group("homeworks", gb.assignments.starting_with("hw"), 0.75),
+        gradelib.Group(
+            "labs",
+            gb.assignments.starting_with("lab"),
+            0.25,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
     ]
 
-    assert gb.value.loc['A1', 'hw01'] == 10/20 * 20/50 * .75
-    assert gb.value.loc['A1', 'hw02'] == 0.0
-    assert gb.value.loc['A1', 'lab01'] == 25/40 * .25
+    assert gb.value.loc["A1", "hw01"] == 10 / 20 * 20 / 50 * 0.75
+    assert gb.value.loc["A1", "hw02"] == 0.0
+    assert gb.value.loc["A1", "lab01"] == 25 / 40 * 0.25
+
 
 def test_value_with_custom_assignment_weights():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -1648,17 +1766,28 @@ def test_value_with_custom_assignment_weights():
     gb = gradelib.Gradebook(points_marked, points_possible)
 
     gb.groups = [
-            gradelib.Group('homeworks', gb.assignments.starting_with("hw"), .75, assignment_weights={
-                'hw01': .3,
-                'hw02': .5,
-                'hw03': .2,
-            }),
-            gradelib.Group('labs', gb.assignments.starting_with("lab"), .25, assignment_weights=gradelib.NORMALIZE),
+        gradelib.Group(
+            "homeworks",
+            gb.assignments.starting_with("hw"),
+            0.75,
+            assignment_weights={
+                "hw01": 0.3,
+                "hw02": 0.5,
+                "hw03": 0.2,
+            },
+        ),
+        gradelib.Group(
+            "labs",
+            gb.assignments.starting_with("lab"),
+            0.25,
+            assignment_weights=gradelib.NORMALIZE,
+        ),
     ]
 
-    assert gb.value.loc['A1', 'hw01'] == 10/20 * .3 * .75
-    assert gb.value.loc['A1', 'hw02'] == 30/50 * .5 * .75
-    assert gb.value.loc['A1', 'lab01'] == 25/40 * .25
+    assert gb.value.loc["A1", "hw01"] == 10 / 20 * 0.3 * 0.75
+    assert gb.value.loc["A1", "hw02"] == 30 / 50 * 0.5 * 0.75
+    assert gb.value.loc["A1", "lab01"] == 25 / 40 * 0.25
+
 
 # .group_effective_points
 # -----------------------
@@ -1686,14 +1815,6 @@ def test_group_points_respects_adjustments():
     ]
 
     # then
-    pd.testing.assert_frame_equal(
-        gradebook.group_effective_points_earned,
-        pd.DataFrame(
-            [[120, 20], [24, 10]],
-            index=gradebook.students,
-            columns=["homeworks", "labs"],
-        ),
-    )
 
     pd.testing.assert_frame_equal(
         gradebook.group_points_possible_after_drops,
@@ -1724,12 +1845,6 @@ def test_group_points_respects_dropped_assignments():
     ]
 
     # then
-    pd.testing.assert_frame_equal(
-        gradebook.group_effective_points_earned,
-        pd.DataFrame(
-            [[91, 20], [9, 20]], index=gradebook.students, columns=["homeworks", "labs"]
-        ),
-    )
 
     pd.testing.assert_frame_equal(
         gradebook.group_points_possible_after_drops,
@@ -1766,12 +1881,6 @@ def test_group_points_respects_adjustments_and_dropped_assignments_simultaneousl
     ]
 
     # then
-    pd.testing.assert_frame_equal(
-        gradebook.group_effective_points_earned,
-        pd.DataFrame(
-            [[86, 20], [9, 20]], index=gradebook.students, columns=["homeworks", "labs"]
-        ),
-    )
 
     pd.testing.assert_frame_equal(
         gradebook.group_points_possible_after_drops,
@@ -1947,7 +2056,7 @@ def test_group_scores_respects_normalize_assignment_weights_and_drops_and_adjust
     HOMEWORKS = gradebook.assignments.starting_with("hw")
 
     gradebook.groups = [
-        gradelib.Group("homeworks", HOMEWORKS, 0.5, normalize_assignment_weights=True),
+        gradelib.Group("homeworks", HOMEWORKS, 0.5, assignment_weights=gradelib.NORMALIZE),
         gradelib.Group("labs", ["lab01"], 0.5),
     ]
 
@@ -1964,148 +2073,6 @@ def test_group_scores_respects_normalize_assignment_weights_and_drops_and_adjust
         ),
     )
 
-
-# effective_assignment_weight
-# ---------------------------
-
-def test_effective_assignment_weight_weights_by_group_weights():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        gradelib.Group("homeworks", HOMEWORKS, 0.6),
-        gradelib.Group("labs", ["lab01"], 0.4),
-    ]
-
-    # then
-    pd.testing.assert_frame_equal(
-        gradebook.effective_assignment_weight,
-        pd.DataFrame(
-            [
-                [2/152 * .6, 50/152 * .6, 100/152 * .6, 20/20 * .4],
-                [2/152 * .6, 50/152 * .6, 100/152 * .6, 20/20 * .4],
-            ],
-            index=gradebook.students,
-            columns=gradebook.assignments
-        ),
-    )
-
-def test_effective_assignment_weight_sums_to_one_across_each_row():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        gradelib.Group("homeworks", HOMEWORKS, 0.6),
-        gradelib.Group("labs", ["lab01"], 0.4),
-    ]
-
-    # then
-    assert (gradebook.effective_assignment_weight.sum(axis=1) == [1, 1]).all()
-
-def test_effective_assignment_weight_takes_into_account_normalized_groups():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        gradelib.Group("homeworks", HOMEWORKS, 0.6, normalize_assignment_weights=True),
-        gradelib.Group("labs", ["lab01"], 0.4),
-    ]
-
-    # then
-    pd.testing.assert_frame_equal(
-        gradebook.effective_assignment_weight,
-        pd.DataFrame(
-            [
-                [1/3 * .6, 1/3 * .6, 1/3 * .6, 20/20 * .4],
-                [1/3 * .6, 1/3 * .6, 1/3 * .6, 20/20 * .4],
-            ],
-            index=gradebook.students,
-            columns=gradebook.assignments
-        ),
-    )
-
-# gives zero to assignments not in any group
-def test_effective_assignment_weight_assigns_zero_to_any_assignments_not_in_a_group():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        gradelib.Group("homeworks", HOMEWORKS, 0.6, normalize_assignment_weights=True),
-    ]
-
-    # then
-    pd.testing.assert_frame_equal(
-        gradebook.effective_assignment_weight,
-        pd.DataFrame(
-            [
-                [1/3 * .6, 1/3 * .6, 1/3 * .6, 0.0],
-                [1/3 * .6, 1/3 * .6, 1/3 * .6, 0.0],
-            ],
-            index=gradebook.students,
-            columns=gradebook.assignments
-        ),
-    )
-
-# gives a zero to dropped assignments
-def test_effective_assignment_weight_assigns_zero_to_dropped_assignments():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-    gradebook.dropped.loc['A1', 'hw02'] = True
-    gradebook.dropped.loc['A2', 'hw01'] = True
-    gradebook.dropped.loc['A2', 'hw03'] = True
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        gradelib.Group("homeworks", HOMEWORKS, 0.6),
-        gradelib.Group("labs", ['lab01'], 0.4),
-    ]
-
-    # then
-    pd.testing.assert_frame_equal(
-        gradebook.effective_assignment_weight,
-        pd.DataFrame(
-            [
-                [2/102 * .6, 0.0, 100/102 * .6, .4],
-                [0.0, .6, 0.0, .4],
-            ],
-            index=gradebook.students,
-            columns=gradebook.assignments
-        ),
-    )
 
 # overall_score
 # -----------------------------------------------------------------------------
@@ -2250,7 +2217,7 @@ def test_overall_score_respects_normalize_assignment_weights_and_drops_and_adjus
     HOMEWORKS = gradebook.assignments.starting_with("hw")
 
     gradebook.groups = [
-        gradelib.Group("homeworks", HOMEWORKS, 0.6, normalize_assignment_weights=True),
+        gradelib.Group("homeworks", HOMEWORKS, 0.6, assignment_weights=gradelib.NORMALIZE),
         gradelib.Group("labs", ["lab01"], 0.4),
     ]
 
@@ -2303,7 +2270,7 @@ def test_letter_grades_respects_scale():
     HOMEWORKS = gradebook.assignments.starting_with("hw")
 
     gradebook.groups = [
-        gradelib.Group("homeworks", HOMEWORKS, 0.6, normalize_assignment_weights=True),
+        gradelib.Group("homeworks", HOMEWORKS, 0.6, assignment_weights=gradelib.NORMALIZE),
         gradelib.Group("labs", ["lab01"], 0.4),
     ]
 

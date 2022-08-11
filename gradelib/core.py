@@ -62,6 +62,12 @@ class Student:
 # ======================================================================================
 
 
+class Normalized:
+
+    def __init__(self, assignments):
+        self.assignments = assignments
+
+
 class Assignments(collections.abc.Sequence):
     """A sequence of assignments.
 
@@ -443,7 +449,6 @@ class Group:
         "name",
         "assignments",
         "weight",
-        "assignment_weights",
     ]
 
     def __init__(
@@ -451,19 +456,17 @@ class Group:
         name,
         assignments,
         weight,
-        assignment_weights=None,
     ):
 
-        if isinstance(assignment_weights, dict):
-            if set(assignment_weights.keys()) != set(assignments):
-                raise ValueError(
-                    "Assignments weights dict must contain all assignments."
-                )
-
         self.name = name
-        self.assignments = assignments
+        if isinstance(assignments, Normalized):
+            value = 1 / len(assignments.assignments)
+            self.assignments = {
+                    a: value for a in assignments.assignments
+            }
+        else:
+            self.assignments = assignments
         self.weight = weight
-        self.assignment_weights = assignment_weights
 
     def __eq__(self, other):
         return all(getattr(self, attr) == getattr(other, attr) for attr in self._attrs)
@@ -635,7 +638,6 @@ class Gradebook:
                     g.name,
                     g.assignments,
                     g.weight,
-                    g.assignment_weights,
                 ]
             elif len(g) == 2:
                 # expecting a single assignment
@@ -702,21 +704,12 @@ class Gradebook:
         )
 
         for group in self.groups:
-            if group.assignment_weights is None:
-                continue
-            elif group.assignment_weights is NORMALIZE:
-                # count the number of undropped assignments
-                n = (~self.dropped)[group.assignments].sum(axis=1)
-                n.name = group.name
-                n = n.to_frame()
-                n = self._by_group_to_by_assignment(n)
-                result.loc[:, group.assignments] = 1 / n
-            elif isinstance(group.assignment_weights, dict):
-                weights = pd.Series(group.assignment_weights)
+            if isinstance(group.assignments, dict):
+                weights = pd.Series(group.assignments)
                 weights = self._everyone_to_per_student(weights)
-                weights = weights * ~self.dropped[group.assignments]
+                weights = weights * ~self.dropped[list(group.assignments)]
                 weights = (weights.T / weights.sum(axis=1)).T
-                result.loc[:, group.assignments] = weights
+                result.loc[:, list(group.assignments)] = weights
 
         return result * (~self.dropped)
 
@@ -737,17 +730,14 @@ class Gradebook:
         for group in self.groups:
             possible = pd.DataFrame(
                 np.tile(
-                    self.points_possible[group.assignments],
+                    self.points_possible[list(group.assignments)],
                     (self.points_marked.shape[0], 1),
                 ),
                 index=self.students,
-                columns=group.assignments,
+                columns=list(group.assignments),
             )
 
-            if group.assignment_weights is NORMALIZE:
-                possible.iloc[:, :] = 1
-
-            possible[self.dropped[group.assignments]] = 0
+            possible[self.dropped[list(group.assignments)]] = 0
             possible = possible.sum(axis=1)
 
             if (possible == 0).any():
@@ -762,7 +752,7 @@ class Gradebook:
 
     @property
     def group_scores(self):
-        group_values = pd.DataFrame({group.name: self.value[group.assignments].sum(axis=1) for group in self.groups})
+        group_values = pd.DataFrame({group.name: self.value[list(group.assignments)].sum(axis=1) for group in self.groups})
         group_weights = pd.Series({group.name: group.weight for group in self.groups})
         return group_values / group_weights
 
@@ -1007,7 +997,7 @@ class Gradebook:
             def _update_group(g):
                 kept_assignments = [a for a in g.assignments if a in assignments]
                 return Group(
-                    g.name, kept_assignments, g.weight, g.assignment_weights
+                    g.name, kept_assignments, g.weight
                 )
 
             new_groups_with_empties = [_update_group(g) for g in self.groups]

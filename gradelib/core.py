@@ -448,8 +448,11 @@ class Group:
             if set(assignment_weights.keys()) != set(assignments):
                 raise ValueError("Assignments weights dict must contain all assignments.")
 
-        for attr in self._attrs:
-            setattr(self, attr, vars()[attr])
+        self.name = name
+        self.assignments = assignments
+        self.weight = weight
+        self.normalize_assignment_weights = normalize_assignment_weights
+        self.assignment_weights = assignment_weights
 
     def __eq__(self, other):
         return all(getattr(self, attr) == getattr(other, attr) for attr in self._attrs)
@@ -704,6 +707,17 @@ class Gradebook:
         return result * (~self.dropped)
 
     @property
+    def overall_weight(self):
+        group_weights = pd.Series({
+            group.name: group.weight for group in self.groups
+        })
+        return self.weight * self._by_group_to_by_assignment(group_weights)
+
+    @property
+    def value(self):
+        return ( self.points_after_adjustments / self.points_possible ) * self.overall_weight
+
+    @property
     def group_effective_points_earned(self):
         result = {}
         for group in self.groups:
@@ -823,8 +837,6 @@ class Gradebook:
                 return g.weight
 
         n = len(self.points_marked)
-
-        # TODO self.weights
 
         # this is calculated using the following formula:
         #

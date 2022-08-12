@@ -200,15 +200,13 @@ class _GradeAmount:
 
 
 class Points(_GradeAmount):
-
     def __str__(self):
-        return f'{self.amount} points'
+        return f"{self.amount} points"
 
 
 class Percentage(_GradeAmount):
-
     def __str__(self):
-        return f'{self.amount}%'
+        return f"{self.amount}%"
 
 
 # Adjustments
@@ -228,11 +226,11 @@ class Adjustment:
         return self.amount == other.amount and self.reason == other.reason
 
     def __str__(self):
-        s = f'{self.verb} {self.amount}'
+        s = f"{self.verb} {self.amount}"
         if self.reason:
-            s = s + ': ' + self.reason
+            s = s + ": " + self.reason
         else:
-            s = s + '.'
+            s = s + "."
         return s
 
 
@@ -244,6 +242,7 @@ class Deduction(Adjustment):
         self.amount = amount
         self.reason = reason
 
+
 class Addition(Adjustment):
 
     verb = "Added"
@@ -251,6 +250,7 @@ class Addition(Adjustment):
     def __init__(self, amount, reason=None):
         self.amount = amount
         self.reason = reason
+
 
 # Gradebook
 # ======================================================================================
@@ -504,20 +504,21 @@ class ClassSummary:
         lines = []
 
         def item(desc, msg):
-            lines.append(f'<p><b>{desc}:</b> {msg}')
+            lines.append(f"<p><b>{desc}:</b> {msg}")
 
-        lines.append('<h1>Class Summary</h1>')
+        lines.append("<h1>Class Summary</h1>")
 
-        item('Number of students', len(self.gradebook.students))
+        item("Number of students", len(self.gradebook.students))
 
-        lines.append('<h2>Letter Grades</h2>')
+        lines.append("<h2>Letter Grades</h2>")
 
         lines.append(self.gradebook.letter_grade_distribution.to_frame().T.to_html())
 
         agpa = average_gpa(self.gradebook.letter_grades)
         lines.append(f"<p><b>Class GPA:</b> {agpa:0.2f}</p>")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
+
 
 class StudentSummary:
     def __init__(self, gradebook, student):
@@ -528,50 +529,51 @@ class StudentSummary:
         lines = []
 
         def par(desc, msg):
-            lines.append(f'<p><b>{desc}:</b> {msg}</p>')
+            lines.append(f"<p><b>{desc}:</b> {msg}</p>")
 
         def li(desc, msg):
-            lines.append(f'<li><b>{desc}:</b> {msg}</li>')
+            lines.append(f"<li><b>{desc}:</b> {msg}</li>")
 
         def _fmt_as_pct(f):
-            return f'{f * 100:0.2f}%'
+            return f"{f * 100:0.2f}%"
 
         name = self.student.name
         pid = self.student.pid
 
-        lines.append(f'<h1>Student Summary: {name} ({pid})</h1>')
+        lines.append(f"<h1>Student Summary: {name} ({pid})</h1>")
 
-        par("Overall score", f'{_fmt_as_pct(self.gradebook.overall_score.loc[pid])}')
+        par("Overall score", f"{_fmt_as_pct(self.gradebook.overall_score.loc[pid])}")
         par("Letter grade", self.gradebook.letter_grades.loc[pid])
         par("Rank", f"{self.gradebook.rank.loc[pid]} out of {len(self.gradebook.rank)}")
         par("Percentile", f"{self.gradebook.percentile.loc[pid]:0.2f}")
 
-        lines.append('<h2>Group Scores</h2>')
+        lines.append("<h2>Group Scores</h2>")
         lines.append("<ul>")
         for group in self.gradebook.groups:
             score = self.gradebook.group_scores.loc[pid, group.name]
             li(group.name, _fmt_as_pct(score))
         lines.append("</ul>")
 
-        assignments_dct = self.gradebook.adjustments[pid]
-        lines.append("<h2>Adjustments</h2>")
-        lines.append("<ul>")
-        for assignment, adjustments in assignments_dct.items():
-            for adjustment in adjustments:
-                li(assignment, adjustment)
-        lines.append("</ul>")
-
-
-        notes = self.gradebook.notes[pid]
-        lines.append("<h2>Notes</h2>")
-        for channel in notes:
+        assignments_dct = self.gradebook.adjustments.get(pid, {})
+        if assignments_dct:
+            lines.append("<h2>Adjustments</h2>")
             lines.append("<ul>")
-            lines.append(f"<h3>{channel.capitalize()}</h3>")
-            for note in notes[channel]:
-                lines.append(f"<li>{note}</li>")
+            for assignment, adjustments in assignments_dct.items():
+                for adjustment in adjustments:
+                    li(assignment, adjustment)
             lines.append("</ul>")
 
-        return '\n'.join(lines)
+        notes = self.gradebook.notes.get(pid, None)
+        if notes is not None:
+            lines.append("<h2>Notes</h2>")
+            for channel in notes:
+                lines.append(f"<h3>{channel.capitalize()}</h3>")
+                lines.append("<ul>")
+                for note in notes[channel]:
+                    lines.append(f"<li>{note}</li>")
+                lines.append("</ul>")
+
+        return "\n".join(lines)
 
 
 class Gradebook:
@@ -936,13 +938,13 @@ class Gradebook:
             else:
                 distribution[letter] = 0
 
-        return pd.Series(distribution, name='Count')
+        return pd.Series(distribution, name="Count")
 
     @property
     def rank(self):
         sorted_scores = self.overall_score.sort_values(ascending=False).to_frame()
-        sorted_scores['rank'] = np.arange(1, len(sorted_scores) + 1)
-        return sorted_scores['rank']
+        sorted_scores["rank"] = np.arange(1, len(sorted_scores) + 1)
+        return sorted_scores["rank"]
 
     @property
     def percentile(self):

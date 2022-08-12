@@ -6,6 +6,8 @@ import pandas as pd
 
 from .core import Percentage, Points, Deduction, Addition
 
+def _fmt_as_pct(f):
+    return f"{f * 100:0.2f}%"
 
 def _empty_mask_like(table):
     """Given a dataframe, create another just like it with every entry False."""
@@ -51,7 +53,7 @@ class ForgiveLate:
         pid = gradebook.find_student(student)
         gradebook.lateness.loc[pid, self.assignment] = pd.Timedelta(0, "s")
         gradebook.add_note(
-            pid, "lates", f"Exception applied: late {self.assignment} is forgiven."
+            pid, "lates", f"Exception applied: late {self.assignment.title()} is forgiven."
         )
         return gradebook
 
@@ -64,7 +66,7 @@ class Drop:
         pid = gradebook.find_student(student)
         gradebook.dropped.loc[pid, self.assignment] = True
         gradebook.add_note(
-            pid, "drops", f"Exception applied: {self.assignment} dropped."
+            pid, "drops", f"Exception applied: {self.assignment.title()} dropped."
         )
         return gradebook
 
@@ -84,14 +86,19 @@ class Replace:
     def __call__(self, gradebook, student):
         pid = gradebook.find_student(student)
         current_points = gradebook.points_after_adjustments.loc[pid, self.assignment]
-        other_assignment_score = (gradebook.points_after_adjustments.loc[pid, self.with_] / 
-            gradebook.points_possible.loc[self.with_])
-        new_points = other_assignment_score * gradebook.points_possible.loc[self.assignment]
+        other_assignment_score = (
+            gradebook.points_after_adjustments.loc[pid, self.with_]
+            / gradebook.points_possible.loc[self.with_]
+        )
+        new_points = (
+            other_assignment_score * gradebook.points_possible.loc[self.assignment]
+        )
         difference = new_points - current_points
         adjustment = _adjustment_from_difference(difference)
-        adjustment.reason = f"Replacing {self.assignment} with {self.with_}."
+        adjustment.reason = f"Replacing {self.assignment.title()} with {self.with_.title()}."
         gradebook.add_adjustment(pid, self.assignment, adjustment)
         return gradebook
+
 
 def _convert_amount_to_absolute_points(amount, gradebook, assignment):
     if isinstance(amount, Points):
@@ -113,6 +120,7 @@ class Override:
             self.amount, gradebook, self.assignment
         )
         adjustment = _adjustment_from_difference(new_points - current_points)
+        adjustment.reason = "Manually set points as part of an exception."
         gradebook.add_adjustment(pid, self.assignment, adjustment)
         return gradebook
 
@@ -216,7 +224,7 @@ class PenalizeLates:
                         forgiveness_left -= 1
                         message = (
                             f"Slip day #{self.forgive - forgiveness_left} used on "
-                            f"{assignment}. {forgiveness_left} remaining."
+                            f"{assignment.title()}. Slip days remaining: {forgiveness_left}."
                         )
                         gradebook.add_note(pid, "lates", message)
                     else:
@@ -392,12 +400,28 @@ class Redeem:
 
         points_marked = np.maximum(first_points, second_points)
 
-        for pid in points_marked.index:
-            if first_points.loc[pid] >= second_points.loc[pid]:
-                message = f"{second} does not replace {first} because it is lower."
+        # used for messaging
+        first_raw_score = gradebook.points_after_adjustments[first] / gradebook.points_possible[first]
+        second_raw_score = gradebook.points_after_adjustments[second] / gradebook.points_possible[second]
+
+        def _fmt_score(score):
+            if np.isnan(score):
+                return 'n/a'
             else:
-                message = f"{second} replaces {first} because it is higher."
-            gradebook.add_note(pid, "redemption", message)
+                return _fmt_as_pct(score)
+
+        for pid in points_marked.index:
+            first_score_string = _fmt_score(first_raw_score.loc[pid])
+            second_score_string = _fmt_score(second_raw_score.loc[pid])
+            pieces = [
+                f"{first.title()} score: {first_score_string}.",
+                f"{second.title()} score: {second_score_string}."
+            ]
+            if first_points.loc[pid] >= second_points.loc[pid]:
+                pieces.append(f"{first.title()} score used.")
+            else:
+                pieces.append(f"{second.title()} score used.")
+            gradebook.add_note(pid, "redemption", " ".join(pieces))
 
         return gradebook.with_assignment(new_name, points_marked, points_possible)
 

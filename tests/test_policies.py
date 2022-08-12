@@ -432,13 +432,13 @@ def test_penalize_lates_with_forgiveness_adds_note_for_forgiven_assignments():
     assert result.notes == {
         "A1": {
             "lates": [
-                "Slip day #1 used on hw02. 1 remaining.",
-                "Slip day #2 used on hw01. 0 remaining.",
+                "Slip day #1 used on Hw02. Slip days remaining: 1.",
+                "Slip day #2 used on Hw01. Slip days remaining: 0.",
             ]
         },
         "A2": {
             "lates": [
-                "Slip day #1 used on hw01. 1 remaining.",
+                "Slip day #1 used on Hw01. Slip days remaining: 1.",
             ]
         },
     }
@@ -646,12 +646,12 @@ def test_redemption_adds_note():
     assert actual.notes == {
         "A1": {
             "redemption": [
-                "mt01 - redemption replaces mt01 because it is higher.",
+                "Mt01 score: 95.00%. Mt01 - Redemption score: 100.00%. Mt01 - Redemption score used.",
             ]
         },
         "A2": {
             "redemption": [
-                "mt01 - redemption does not replace mt01 because it is lower.",
+                "Mt01 score: 92.00%. Mt01 - Redemption score: 60.00%. Mt01 score used.",
             ]
         },
     }
@@ -895,7 +895,7 @@ def test_make_exceptions_with_forgive_lates_adds_note():
 
     # then
     assert actual.notes == {
-        "A1": {"lates": ["Exception applied: late hw01 is forgiven."]}
+        "A1": {"lates": ["Exception applied: late Hw01 is forgiven."]}
     }
 
 
@@ -940,7 +940,7 @@ def test_make_exceptions_with_drop_adds_note():
 
     # then
     assert actual.dropped.loc["A1", "hw01"] == True
-    assert actual.notes == {"A1": {"drops": ["Exception applied: hw01 dropped."]}}
+    assert actual.notes == {"A1": {"drops": ["Exception applied: Hw01 dropped."]}}
 
 
 def test_make_exceptions_with_replace():
@@ -963,7 +963,11 @@ def test_make_exceptions_with_replace():
     # then
     assert actual.adjustments == {
         "A1": {
-            "hw02": [gradelib.Addition(gradelib.Points(9), reason="Replacing hw02 with hw01.")],
+            "hw02": [
+                gradelib.Addition(
+                    gradelib.Points(9), reason="Replacing Hw02 with Hw01."
+                )
+            ],
         }
     }
     assert actual.points_after_adjustments.loc["A1", "hw01"] == 9
@@ -991,7 +995,11 @@ def test_make_exceptions_with_replace_scales_using_points_possible():
     # then
     expected = {
         "A1": {
-            "hw01": [gradelib.Deduction(gradelib.Points(1.5), reason="Replacing hw01 with hw02.")],
+            "hw01": [
+                gradelib.Deduction(
+                    gradelib.Points(1.5), reason="Replacing Hw01 with Hw02."
+                )
+            ],
         }
     }
     assert actual.adjustments == expected
@@ -1024,8 +1032,8 @@ def test_make_exceptions_with_override():
     # then
     assert actual.adjustments == {
         "A1": {
-            "hw02": [gradelib.Addition(gradelib.Points(8))],
-            "hw01": [gradelib.Deduction(gradelib.Points(4))],
+            "hw02": [gradelib.Addition(gradelib.Points(8), reason="Manually set points as part of an exception.")],
+            "hw01": [gradelib.Deduction(gradelib.Points(4), reason="Manually set points as part of an exception.")],
         }
     }
     assert actual.points_after_adjustments.loc["A1", "hw01"] == 5

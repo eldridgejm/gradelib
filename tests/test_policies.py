@@ -431,13 +431,13 @@ def test_penalize_lates_with_forgiveness_adds_note_for_forgiven_assignments():
 
     assert result.notes == {
         "A1": {
-            "late": [
+            "lates": [
                 "Slip day #1 used on hw02. 1 remaining.",
                 "Slip day #2 used on hw01. 0 remaining.",
             ]
         },
         "A2": {
-            "late": [
+            "lates": [
                 "Slip day #1 used on hw01. 1 remaining.",
             ]
         }
@@ -573,7 +573,7 @@ def test_drop_lowest_ignores_assignments_already_dropped():
     assert list(actual.dropped.sum(axis=1)) == [3, 1]
     assert_gradebook_is_sound(actual)
 
-def test_drop_lowest_with_multiple_dropped():
+def test_drop_lowest_with_multiple_dropped_adds_note():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -593,13 +593,13 @@ def test_drop_lowest_with_multiple_dropped():
 
     assert actual.notes == {
             "A1": {
-                "drop": [
+                "drops": [
                     "hw01 dropped.",
                     "hw02 dropped."
                 ]
             },
             "A2": {
-                "drop": [
+                "drops": [
                     "hw02 dropped.",
                     "hw03 dropped."
                 ]
@@ -653,12 +653,12 @@ def test_redemption_adds_note():
     assert actual.notes == {
         "A1": {
             "redemption": [
-                "mt 01 - redemption score replaces mt01 score because it is higher.",
+                "mt01 - redemption replaces mt01 because it is higher.",
             ]
         },
         "A2": {
             "redemption": [
-                "mt 01 - redemption score does not replace mt01 score because it is lower.",
+                "mt01 - redemption does not replace mt01 because it is lower.",
             ]
         }
     }
@@ -880,6 +880,28 @@ def test_make_exceptions_with_forgive_lates():
     assert actual.lateness.loc["A1", "hw01"] == pd.Timedelta(0, "s")
     assert_gradebook_is_sound(actual)
 
+def test_make_exceptions_with_forgive_lates_adds_note():
+    # given
+    columns = ["hw01", "hw02", "hw03", "hw04"]
+    p1 = pd.Series(data=[9, 0, 7, 0], index=columns)
+    p2 = pd.Series(data=[10, 10, 10, 10], index=columns)
+    points = pd.DataFrame(
+        [p1, p2],
+        index=[gradelib.Student("A1", "Justin"), gradelib.Student("A2", "Steve")],
+    )
+    maximums = pd.Series([10, 10, 10, 10], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+    gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(5000, "s")
+
+    # when
+    actual = gradelib.policies.MakeExceptions(
+        "Justin", [gradelib.policies.ForgiveLate("hw01")]
+    )(gradebook)
+
+    # then
+    assert actual.notes == {
+        "A1": {'lates': ['Exception applied: late hw01 is forgiven.']}
+    }
 
 def test_make_exceptions_with_drop():
     # given
@@ -902,6 +924,28 @@ def test_make_exceptions_with_drop():
     assert actual.dropped.loc["A1", "hw01"] == True
     assert_gradebook_is_sound(actual)
 
+def test_make_exceptions_with_drop_adds_note():
+    # given
+    columns = ["hw01", "hw02", "hw03", "hw04"]
+    p1 = pd.Series(data=[9, 0, 7, 0], index=columns)
+    p2 = pd.Series(data=[10, 10, 10, 10], index=columns)
+    points = pd.DataFrame(
+        [p1, p2],
+        index=[gradelib.Student("A1", "Justin"), gradelib.Student("A2", "Steve")],
+    )
+    maximums = pd.Series([10, 10, 10, 10], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    # when
+    actual = gradelib.policies.MakeExceptions(
+        "Justin", [gradelib.policies.Drop("hw01")]
+    )(gradebook)
+
+    # then
+    assert actual.dropped.loc["A1", "hw01"] == True
+    assert actual.notes == {
+        "A1": {'drops': ['Exception applied: hw01 dropped.']}
+    }
 
 def test_make_exceptions_with_replace():
     # given
@@ -929,7 +973,6 @@ def test_make_exceptions_with_replace():
     assert actual.points_after_adjustments.loc["A1", "hw01"] == 9
     assert actual.points_after_adjustments.loc["A1", "hw02"] == 9
     assert_gradebook_is_sound(actual)
-
 
 def test_make_exceptions_with_override():
     # given

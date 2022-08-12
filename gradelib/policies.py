@@ -50,6 +50,7 @@ class ForgiveLate:
     def __call__(self, gradebook, student):
         pid = gradebook.find_student(student)
         gradebook.lateness.loc[pid, self.assignment] = pd.Timedelta(0, "s")
+        gradebook.add_note(pid, 'lates', f"Exception applied: late {self.assignment} is forgiven.")
         return gradebook
 
 
@@ -60,6 +61,7 @@ class Drop:
     def __call__(self, gradebook, student):
         pid = gradebook.find_student(student)
         gradebook.dropped.loc[pid, self.assignment] = True
+        gradebook.add_note(pid, 'drops', f"Exception applied: {self.assignment} dropped.")
         return gradebook
 
 
@@ -210,7 +212,7 @@ class PenalizeLates:
                             f"Slip day #{self.forgive - forgiveness_left} used on "
                             f"{assignment}. {forgiveness_left} remaining."
                         )
-                        gradebook.add_note(pid, 'late', message)
+                        gradebook.add_note(pid, 'lates', message)
                     else:
                         number += 1
                         self._deduct(gradebook, pid, assignment, number)
@@ -317,7 +319,7 @@ class DropLowest:
             new_dropped.loc[pid, tossed] = True
 
             for assignment in tossed:
-                gradebook.add_note(pid, 'drop', f'{assignment} dropped.')
+                gradebook.add_note(pid, 'drops', f'{assignment} dropped.')
 
 
         return gradebook._replace(dropped=new_dropped)
@@ -384,6 +386,13 @@ class Redeem:
             second_points = second_points - d
 
         points_marked = np.maximum(first_points, second_points)
+
+        for pid in points_marked.index:
+            if first_points.loc[pid] >= second_points.loc[pid]:
+                message = f'{second} does not replace {first} because it is lower.'
+            else:
+                message = f'{second} replaces {first} because it is higher.'
+            gradebook.add_note(pid, 'redemption', message)
 
         return gradebook.with_assignment(new_name, points_marked, points_possible)
 

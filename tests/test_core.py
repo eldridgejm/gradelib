@@ -681,32 +681,6 @@ def test_overall_weight_with_custom_weights_and_drops():
     assert gb.overall_weight.loc["A2", "hw02"] == 1.0 * 0.75
 
 
-# give_equal_weights()
-# -----------------------------------------------------------------------------
-
-
-def test_give_equal_weights_on_example():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-    homeworks = gradebook.assignments.starting_with("hw")
-
-    # when
-    actual = gradebook.give_equal_weights(within=homeworks)
-
-    # then
-    assert actual.points_possible.loc["hw01"] == 1
-    assert actual.points_possible.loc["hw02"] == 1
-    assert actual.points_possible.loc["hw03"] == 1
-    assert actual.points_possible.loc["lab01"] == 20
-    assert actual.points_marked.loc["A1", "hw01"] == 1 / 2
-    assert actual.points_marked.loc["A1", "hw02"] == 30 / 50
-
-
 # find_student()
 # -----------------------------------------------------------------------------
 

@@ -1331,35 +1331,3 @@ class Gradebook:
             result = transformation(result)
 
         return result
-
-    def give_equal_weights(self, within):
-        """Normalize maximum points so that all assignments are worth the same.
-
-        Parameters
-        ----------
-        within : Collection[str]
-            The assignments to reweight.
-
-        Returns
-        -------
-        Gradebook
-
-        """
-        # TODO: probably will remove this, move functionality to FinalizedGradebook when
-        # we compute group scores
-        extra = set(within) - set(self.assignments)
-        if extra:
-            raise ValueError(f"These assignments are not in the gradebook: {extra}.")
-
-        within = list(within)
-
-        scores = self.points_marked[within] / self.points_possible[within]
-
-        new_points_possible = self.points_possible.copy()
-        new_points_possible[within] = 1
-        new_points_marked = self.points_marked.copy()
-        new_points_marked.loc[:, within] = scores
-
-        return self._replace(
-            points_marked=new_points_marked, points_possible=new_points_possible
-        )

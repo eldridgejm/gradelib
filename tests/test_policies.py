@@ -633,6 +633,35 @@ def test_redemption_on_single_assignment_pair():
     assert "mt01 - redemption" in actual.assignments
     assert_gradebook_is_sound(actual)
 
+def test_redemption_adds_note():
+    # given
+    columns = ["mt01", "mt01 - redemption"]
+    p1 = pd.Series(data=[95, 100], index=columns, name="A1")
+    p2 = pd.Series(data=[92, 60], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([100, 100], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    # when
+    actual = gradebook.apply(
+        gradelib.policies.Redeem(
+            {"mt01 with redemption": ("mt01", "mt01 - redemption")}
+        )
+    )
+
+    # then
+    assert actual.notes == {
+        "A1": {
+            "redemption": [
+                "mt 01 - redemption score replaces mt01 score because it is higher.",
+            ]
+        },
+        "A2": {
+            "redemption": [
+                "mt 01 - redemption score does not replace mt01 score because it is lower.",
+            ]
+        }
+    }
 
 def test_redemption_on_multiple_assignment_pairs():
     # given

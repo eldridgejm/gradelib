@@ -5,7 +5,7 @@ import copy
 import dataclasses
 import typing
 
-from .scales import DEFAULT_SCALE, map_scores_to_letter_grades
+from .scales import DEFAULT_SCALE, map_scores_to_letter_grades, average_gpa
 
 import numpy as np
 import pandas as pd
@@ -169,6 +169,12 @@ class Assignments(collections.abc.Sequence):
     def __repr__(self):
         return f"Assignments(names={self._names})"
 
+    def _repr_pretty_(self, p, cycle):
+        p.text("Assignments(names=[\n")
+        for name in self._names:
+            p.text(f"  {name!r}\n")
+        p.text("])")
+
     def __add__(self, other):
         return Assignments(self._names + other._names)
 
@@ -194,11 +200,15 @@ class _GradeAmount:
 
 
 class Points(_GradeAmount):
-    pass
+
+    def __str__(self):
+        return f'{self.amount} points'
 
 
 class Percentage(_GradeAmount):
-    pass
+
+    def __str__(self):
+        return f'{self.amount}%'
 
 
 # Adjustments
@@ -206,24 +216,41 @@ class Percentage(_GradeAmount):
 
 
 class Adjustment:
+
+    amount = NotImplemented
+    reason = NotImplemented
+    verb = NotImplemented
+
     def __repr__(self):
         return f"{self.__class__.__name__}(amount={self.amount}, reason={self.reason})"
 
     def __eq__(self, other):
         return self.amount == other.amount and self.reason == other.reason
 
+    def __str__(self):
+        s = f'{self.verb} {self.amount}'
+        if self.reason:
+            s = s + ': ' + self.reason
+        else:
+            s = s + '.'
+        return s
+
 
 class Deduction(Adjustment):
+
+    verb = "Deducted"
+
     def __init__(self, amount, reason=None):
         self.amount = amount
         self.reason = reason
-
 
 class Addition(Adjustment):
+
+    verb = "Added"
+
     def __init__(self, amount, reason=None):
         self.amount = amount
         self.reason = reason
-
 
 # Gradebook
 # ======================================================================================
@@ -469,6 +496,84 @@ class Group:
         return all(getattr(self, attr) == getattr(other, attr) for attr in self._attrs)
 
 
+class ClassSummary:
+    def __init__(self, gradebook):
+        self.gradebook = gradebook
+
+    def _repr_html_(self):
+        lines = []
+
+        def item(desc, msg):
+            lines.append(f'<p><b>{desc}:</b> {msg}')
+
+        lines.append('<h1>Class Summary</h1>')
+
+        item('Number of students', len(self.gradebook.students))
+
+        lines.append('<h2>Letter Grades</h2>')
+
+        lines.append(self.gradebook.letter_grade_distribution.to_frame().T.to_html())
+
+        agpa = average_gpa(self.gradebook.letter_grades)
+        lines.append(f"<p><b>Class GPA:</b> {agpa:0.2f}</p>")
+
+        return '\n'.join(lines)
+
+class StudentSummary:
+    def __init__(self, gradebook, student):
+        self.gradebook = gradebook
+        self.student = student
+
+    def _repr_html_(self):
+        lines = []
+
+        def par(desc, msg):
+            lines.append(f'<p><b>{desc}:</b> {msg}</p>')
+
+        def li(desc, msg):
+            lines.append(f'<li><b>{desc}:</b> {msg}</li>')
+
+        def _fmt_as_pct(f):
+            return f'{f * 100:0.2f}%'
+
+        name = self.student.name
+        pid = self.student.pid
+
+        lines.append(f'<h1>Student Summary: {name} ({pid})</h1>')
+
+        par("Overall score", f'{_fmt_as_pct(self.gradebook.overall_score.loc[pid])}')
+        par("Letter grade", self.gradebook.letter_grades.loc[pid])
+        par("Rank", f"{self.gradebook.rank.loc[pid]} out of {len(self.gradebook.rank)}")
+        par("Percentile", f"{self.gradebook.percentile.loc[pid]:0.2f}")
+
+        lines.append('<h2>Group Scores</h2>')
+        lines.append("<ul>")
+        for group in self.gradebook.groups:
+            score = self.gradebook.group_scores.loc[pid, group.name]
+            li(group.name, _fmt_as_pct(score))
+        lines.append("</ul>")
+
+        assignments_dct = self.gradebook.adjustments[pid]
+        lines.append("<h2>Adjustments</h2>")
+        lines.append("<ul>")
+        for assignment, adjustments in assignments_dct.items():
+            for adjustment in adjustments:
+                li(assignment, adjustment)
+        lines.append("</ul>")
+
+
+        notes = self.gradebook.notes[pid]
+        lines.append("<h2>Notes</h2>")
+        for channel in notes:
+            lines.append("<ul>")
+            lines.append(f"<h3>{channel.capitalize()}</h3>")
+            for note in notes[channel]:
+                lines.append(f"<li>{note}</li>")
+            lines.append("</ul>")
+
+        return '\n'.join(lines)
+
+
 class Gradebook:
     """Data structure which facilitates common grading operations.
 
@@ -618,14 +723,14 @@ class Gradebook:
     @property
     def default_groups(self):
         weight = 1 / len(self.assignments)
-        return [
+        return tuple(
             Group(assignment, Assignments([assignment]), weight)
             for assignment in self.assignments
-        ]
+        )
 
     @property
     def groups(self):
-        return self._groups
+        return tuple(self._groups)
 
     @groups.setter
     def groups(self, value):
@@ -820,6 +925,34 @@ class Gradebook:
     @property
     def letter_grades(self):
         return map_scores_to_letter_grades(self.overall_score, scale=self.scale)
+
+    @property
+    def letter_grade_distribution(self):
+        counts = self.letter_grades.value_counts()
+        distribution = {}
+        for letter in self.scale:
+            if letter in counts:
+                distribution[letter] = counts.loc[letter]
+            else:
+                distribution[letter] = 0
+
+        return pd.Series(distribution, name='Count')
+
+    @property
+    def rank(self):
+        sorted_scores = self.overall_score.sort_values(ascending=False).to_frame()
+        sorted_scores['rank'] = np.arange(1, len(sorted_scores) + 1)
+        return sorted_scores['rank']
+
+    @property
+    def percentile(self):
+        return 1 - ((self.rank - 1) / len(self.rank))
+
+    def summary(self, student=None):
+        if student is not None:
+            return StudentSummary(self, self.find_student(student))
+        else:
+            return ClassSummary(self)
 
     # copying / replacing
     # -------------------

@@ -50,7 +50,9 @@ class ForgiveLate:
     def __call__(self, gradebook, student):
         pid = gradebook.find_student(student)
         gradebook.lateness.loc[pid, self.assignment] = pd.Timedelta(0, "s")
-        gradebook.add_note(pid, 'lates', f"Exception applied: late {self.assignment} is forgiven.")
+        gradebook.add_note(
+            pid, "lates", f"Exception applied: late {self.assignment} is forgiven."
+        )
         return gradebook
 
 
@@ -61,7 +63,9 @@ class Drop:
     def __call__(self, gradebook, student):
         pid = gradebook.find_student(student)
         gradebook.dropped.loc[pid, self.assignment] = True
-        gradebook.add_note(pid, 'drops', f"Exception applied: {self.assignment} dropped.")
+        gradebook.add_note(
+            pid, "drops", f"Exception applied: {self.assignment} dropped."
+        )
         return gradebook
 
 
@@ -80,12 +84,14 @@ class Replace:
     def __call__(self, gradebook, student):
         pid = gradebook.find_student(student)
         current_points = gradebook.points_after_adjustments.loc[pid, self.assignment]
-        new_points = gradebook.points_after_adjustments.loc[pid, self.with_]
+        other_assignment_score = (gradebook.points_after_adjustments.loc[pid, self.with_] / 
+            gradebook.points_possible.loc[self.with_])
+        new_points = other_assignment_score * gradebook.points_possible.loc[self.assignment]
         difference = new_points - current_points
         adjustment = _adjustment_from_difference(difference)
+        adjustment.reason = f"Replacing {self.assignment} with {self.with_}."
         gradebook.add_adjustment(pid, self.assignment, adjustment)
         return gradebook
-
 
 def _convert_amount_to_absolute_points(amount, gradebook, assignment):
     if isinstance(amount, Points):
@@ -212,7 +218,7 @@ class PenalizeLates:
                             f"Slip day #{self.forgive - forgiveness_left} used on "
                             f"{assignment}. {forgiveness_left} remaining."
                         )
-                        gradebook.add_note(pid, 'lates', message)
+                        gradebook.add_note(pid, "lates", message)
                     else:
                         number += 1
                         self._deduct(gradebook, pid, assignment, number)
@@ -319,8 +325,7 @@ class DropLowest:
             new_dropped.loc[pid, tossed] = True
 
             for assignment in tossed:
-                gradebook.add_note(pid, 'drops', f'{assignment} dropped.')
-
+                gradebook.add_note(pid, "drops", f"{assignment} dropped.")
 
         return gradebook._replace(dropped=new_dropped)
 
@@ -389,10 +394,10 @@ class Redeem:
 
         for pid in points_marked.index:
             if first_points.loc[pid] >= second_points.loc[pid]:
-                message = f'{second} does not replace {first} because it is lower.'
+                message = f"{second} does not replace {first} because it is lower."
             else:
-                message = f'{second} replaces {first} because it is higher.'
-            gradebook.add_note(pid, 'redemption', message)
+                message = f"{second} replaces {first} because it is higher."
+            gradebook.add_note(pid, "redemption", message)
 
         return gradebook.with_assignment(new_name, points_marked, points_possible)
 

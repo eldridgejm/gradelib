@@ -859,9 +859,9 @@ def test_restricted_to_assignments_updates_groups():
     actual = original.restricted_to_assignments(["homework 01", "homework 02"])
 
     # then
-    assert actual.groups == [
+    assert actual.groups == (
         gradelib.Group("homeworks", ["homework 01", "homework 02"], 0.75),
-    ]
+    )
 
 
 def test_without_assignments():
@@ -1538,12 +1538,12 @@ def test_default_groups_one_assignment_per_group_equally_weighted():
     gradebook = gradelib.Gradebook(points_marked, points_possible)
 
     # then
-    assert gradebook.default_groups == [
+    assert gradebook.default_groups == (
         gradelib.Group("hw01", gradelib.Assignments(["hw01"]), weight=0.25),
         gradelib.Group("hw02", gradelib.Assignments(["hw02"]), weight=0.25),
         gradelib.Group("hw03", gradelib.Assignments(["hw03"]), weight=0.25),
         gradelib.Group("lab01", gradelib.Assignments(["lab01"]), weight=0.25),
-    ]
+    )
 
 
 # groups
@@ -1566,12 +1566,12 @@ def test_groups_setter_allows_three_tuple_form():
     ]
 
     # then
-    assert gradebook.groups == [
+    assert gradebook.groups == (
         gradelib.Group(
             "homeworks", gradelib.Assignments(["hw01", "hw02", "hw03"]), weight=0.5
         ),
         gradelib.Group("labs", gradelib.Assignments(["lab01"]), weight=0.5),
-    ]
+    )
 
 
 def test_groups_setter_allows_two_tuple_form():
@@ -1589,12 +1589,12 @@ def test_groups_setter_allows_two_tuple_form():
     ]
 
     # then
-    assert gradebook.groups == [
+    assert gradebook.groups == (
         gradelib.Group(
             "homeworks", gradelib.Assignments(["hw01", "hw02", "hw03"]), weight=0.5
         ),
         gradelib.Group("midterm", gradelib.Assignments(["midterm"]), weight=0.5),
-    ]
+    )
 
 
 def test_groups_setter_allows_callable_for_assignments():
@@ -1615,12 +1615,12 @@ def test_groups_setter_allows_callable_for_assignments():
     ]
 
     # then
-    assert gradebook.groups == [
+    assert gradebook.groups == (
         gradelib.Group(
             "homeworks", gradelib.Assignments(["hw01", "hw02", "hw03"]), weight=0.5
         ),
         gradelib.Group("labs", gradelib.Assignments(["lab01"]), weight=0.5),
-    ]
+    )
 
 
 # .value

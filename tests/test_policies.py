@@ -440,7 +440,7 @@ def test_penalize_lates_with_forgiveness_adds_note_for_forgiven_assignments():
             "lates": [
                 "Slip day #1 used on hw01. 1 remaining.",
             ]
-        }
+        },
     }
 
 
@@ -573,6 +573,7 @@ def test_drop_lowest_ignores_assignments_already_dropped():
     assert list(actual.dropped.sum(axis=1)) == [3, 1]
     assert_gradebook_is_sound(actual)
 
+
 def test_drop_lowest_with_multiple_dropped_adds_note():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -592,19 +593,10 @@ def test_drop_lowest_with_multiple_dropped_adds_note():
     actual = gradebook.apply(gradelib.policies.DropLowest(2, within=homeworks))
 
     assert actual.notes == {
-            "A1": {
-                "drops": [
-                    "hw01 dropped.",
-                    "hw02 dropped."
-                ]
-            },
-            "A2": {
-                "drops": [
-                    "hw02 dropped.",
-                    "hw03 dropped."
-                ]
-            }
+        "A1": {"drops": ["hw01 dropped.", "hw02 dropped."]},
+        "A2": {"drops": ["hw02 dropped.", "hw03 dropped."]},
     }
+
 
 # Redeem
 # ======================================================================================
@@ -633,6 +625,7 @@ def test_redemption_on_single_assignment_pair():
     assert "mt01 - redemption" in actual.assignments
     assert_gradebook_is_sound(actual)
 
+
 def test_redemption_adds_note():
     # given
     columns = ["mt01", "mt01 - redemption"]
@@ -660,8 +653,9 @@ def test_redemption_adds_note():
             "redemption": [
                 "mt01 - redemption does not replace mt01 because it is lower.",
             ]
-        }
+        },
     }
+
 
 def test_redemption_on_multiple_assignment_pairs():
     # given
@@ -880,6 +874,7 @@ def test_make_exceptions_with_forgive_lates():
     assert actual.lateness.loc["A1", "hw01"] == pd.Timedelta(0, "s")
     assert_gradebook_is_sound(actual)
 
+
 def test_make_exceptions_with_forgive_lates_adds_note():
     # given
     columns = ["hw01", "hw02", "hw03", "hw04"]
@@ -900,8 +895,9 @@ def test_make_exceptions_with_forgive_lates_adds_note():
 
     # then
     assert actual.notes == {
-        "A1": {'lates': ['Exception applied: late hw01 is forgiven.']}
+        "A1": {"lates": ["Exception applied: late hw01 is forgiven."]}
     }
+
 
 def test_make_exceptions_with_drop():
     # given
@@ -924,6 +920,7 @@ def test_make_exceptions_with_drop():
     assert actual.dropped.loc["A1", "hw01"] == True
     assert_gradebook_is_sound(actual)
 
+
 def test_make_exceptions_with_drop_adds_note():
     # given
     columns = ["hw01", "hw02", "hw03", "hw04"]
@@ -943,9 +940,8 @@ def test_make_exceptions_with_drop_adds_note():
 
     # then
     assert actual.dropped.loc["A1", "hw01"] == True
-    assert actual.notes == {
-        "A1": {'drops': ['Exception applied: hw01 dropped.']}
-    }
+    assert actual.notes == {"A1": {"drops": ["Exception applied: hw01 dropped."]}}
+
 
 def test_make_exceptions_with_replace():
     # given
@@ -967,12 +963,42 @@ def test_make_exceptions_with_replace():
     # then
     assert actual.adjustments == {
         "A1": {
-            "hw02": [gradelib.Addition(gradelib.Points(9))],
+            "hw02": [gradelib.Addition(gradelib.Points(9), reason="Replacing hw02 with hw01.")],
         }
     }
     assert actual.points_after_adjustments.loc["A1", "hw01"] == 9
     assert actual.points_after_adjustments.loc["A1", "hw02"] == 9
     assert_gradebook_is_sound(actual)
+
+
+def test_make_exceptions_with_replace_scales_using_points_possible():
+    # given
+    columns = ["hw01", "hw02", "hw03", "hw04"]
+    p1 = pd.Series(data=[9, 15, 7, 0], index=columns)
+    p2 = pd.Series(data=[10, 10, 10, 10], index=columns)
+    points = pd.DataFrame(
+        [p1, p2],
+        index=[gradelib.Student("A1", "Justin"), gradelib.Student("A2", "Steve")],
+    )
+    maximums = pd.Series([10, 20, 10, 10], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    # when
+    actual = gradelib.policies.MakeExceptions(
+        "Justin", [gradelib.policies.Replace("hw01", with_="hw02")]
+    )(gradebook)
+
+    # then
+    expected = {
+        "A1": {
+            "hw01": [gradelib.Deduction(gradelib.Points(1.5), reason="Replacing hw01 with hw02.")],
+        }
+    }
+    assert actual.adjustments == expected
+    assert actual.points_after_adjustments.loc["A1", "hw01"] == 7.5
+    assert actual.points_after_adjustments.loc["A1", "hw02"] == 15
+    assert_gradebook_is_sound(actual)
+
 
 def test_make_exceptions_with_override():
     # given

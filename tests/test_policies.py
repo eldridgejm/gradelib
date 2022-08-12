@@ -41,6 +41,7 @@ def assert_gradebook_is_sound(gradebook):
 # PenalizeLates()
 # -----------------------------------------------------------------------------
 
+
 def test_penalize_lates_without_forgiveness_or_within_penalizes_all_lates():
     # given
     columns = ["hw01", "hw02", "lab01"]
@@ -286,6 +287,7 @@ def test_penalize_lates_with_forgiveness_and_within():
         "A1": {"lab01": [Deduction(Percentage(1))]},
     }
 
+
 def test_penalize_lates_with_forgiveness_forgives_most_valuable_assignments_first_by_default():
     # given
     columns = ["hw01", "hw02", "lab01"]
@@ -294,7 +296,10 @@ def test_penalize_lates_with_forgiveness_forgives_most_valuable_assignments_firs
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame(
-        [pd.to_timedelta([5000, 5000, 5000], "s"), pd.to_timedelta([6000, 5000, 5000], "s")],
+        [
+            pd.to_timedelta([5000, 5000, 5000], "s"),
+            pd.to_timedelta([6000, 5000, 5000], "s"),
+        ],
         columns=columns,
         index=points_marked.index,
     )
@@ -304,11 +309,13 @@ def test_penalize_lates_with_forgiveness_forgives_most_valuable_assignments_firs
     LABS = gradebook.assignments.starting_with("lab")
 
     gradebook.groups = (
-        ("homeworks", HOMEWORK, .75),
-        ("labs", LABS, .25),
+        ("homeworks", HOMEWORK, 0.75),
+        ("labs", LABS, 0.25),
     )
 
-    result = gradelib.policies.PenalizeLates(within=HOMEWORK + LABS, forgive=2)(gradebook)
+    result = gradelib.policies.PenalizeLates(within=HOMEWORK + LABS, forgive=2)(
+        gradebook
+    )
 
     # in order from least to most valuable
     # for AI: hw01, lab01, hw02 -- penalize hw01
@@ -327,7 +334,10 @@ def test_penalize_lates_forgives_the_first_n_lates_when_order_by_is_index():
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame(
-        [pd.to_timedelta([5000, 5000, 5000], "s"), pd.to_timedelta([6000, 5000, 5000], "s")],
+        [
+            pd.to_timedelta([5000, 5000, 5000], "s"),
+            pd.to_timedelta([6000, 5000, 5000], "s"),
+        ],
         columns=columns,
         index=points_marked.index,
     )
@@ -337,16 +347,19 @@ def test_penalize_lates_forgives_the_first_n_lates_when_order_by_is_index():
     LABS = gradebook.assignments.starting_with("lab")
 
     gradebook.groups = (
-        ("homeworks", HOMEWORK, .75),
-        ("labs", LABS, .25),
+        ("homeworks", HOMEWORK, 0.75),
+        ("labs", LABS, 0.25),
     )
 
-    result = gradelib.policies.PenalizeLates(within=HOMEWORK + LABS, forgive=2, order_by='index')(gradebook)
+    result = gradelib.policies.PenalizeLates(
+        within=HOMEWORK + LABS, forgive=2, order_by="index"
+    )(gradebook)
 
     assert result.adjustments == {
         "A1": {"lab01": [Deduction(Percentage(1))]},
         "A2": {"lab01": [Deduction(Percentage(1))]},
     }
+
 
 def test_penalize_lates_with_empty_assignment_list_raises():
     # when
@@ -361,18 +374,21 @@ def test_penalize_lates_by_default_takes_into_account_drops():
     points_marked = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20, 20], index=columns)
     lateness = pd.DataFrame(
-        [pd.to_timedelta([5000, 5000, 5000, 50000], "s"), pd.to_timedelta([6000, 0, 0, 0], "s")],
+        [
+            pd.to_timedelta([5000, 5000, 5000, 50000], "s"),
+            pd.to_timedelta([6000, 0, 0, 0], "s"),
+        ],
         columns=columns,
         index=points_marked.index,
     )
 
     gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
     gradebook.groups = [
-            ("homeworks", gradebook.assignments.starting_with("hw"), .75),
-            ("labs", gradebook.assignments.starting_with("lab"), .75),
+        ("homeworks", gradebook.assignments.starting_with("hw"), 0.75),
+        ("labs", gradebook.assignments.starting_with("lab"), 0.75),
     ]
 
-    gradebook.dropped.loc["A1", 'hw02'] = True
+    gradebook.dropped.loc["A1", "hw02"] = True
 
     # after dropping, values from least to greatest
     # A1: hw02, lab02, lab01, hw01
@@ -385,6 +401,45 @@ def test_penalize_lates_by_default_takes_into_account_drops():
         "A1": {
             "lab01": [Deduction(Percentage(1))],
             "lab02": [Deduction(Percentage(1))],
+        }
+    }
+
+
+def test_penalize_lates_with_forgiveness_adds_note_for_forgiven_assignments():
+    # given
+    columns = ["hw01", "hw02", "hw03"]
+    p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
+    points_marked = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([50, 100, 20], index=columns)
+    lateness = pd.DataFrame(
+        [pd.to_timedelta([5000, 5000, 5000], "s"), pd.to_timedelta([6000, 0, 0], "s")],
+        columns=columns,
+        index=points_marked.index,
+    )
+    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
+
+    HOMEWORK = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [("homeworks", HOMEWORK, 1)]
+
+    result = gradebook.apply(gradelib.policies.PenalizeLates(forgive=2))
+
+    # least to greatest value
+    # A1: hw01 hw02 lab01
+    # A2: hw01 hw02 lab01
+
+    assert result.notes == {
+        "A1": {
+            "late": [
+                "Slip day #1 used on hw02. 1 remaining.",
+                "Slip day #2 used on hw01. 0 remaining.",
+            ]
+        },
+        "A2": {
+            "late": [
+                "Slip day #1 used on hw01. 1 remaining.",
+            ]
         }
     }
 
@@ -403,10 +458,7 @@ def test_drop_lowest_with_callable_within():
     gradebook = gradelib.Gradebook(points, maximums)
     homeworks = lambda asmts: asmts.starting_with("hw")
 
-    gradebook.groups = (
-            ("homeworks", homeworks, .75),
-            ("lab01", .25)
-    )
+    gradebook.groups = (("homeworks", homeworks, 0.75), ("lab01", 0.25))
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
@@ -431,10 +483,7 @@ def test_drop_lowest_maximizes_overall_score():
     gradebook = gradelib.Gradebook(points, maximums)
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
-    gradebook.groups = (
-            ("homeworks", HOMEWORKS, .75),
-            ("lab01", .25)
-    )
+    gradebook.groups = (("homeworks", HOMEWORKS, 0.75), ("lab01", 0.25))
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
@@ -459,10 +508,7 @@ def test_drop_lowest_with_multiple_dropped():
     gradebook = gradelib.Gradebook(points, maximums)
     homeworks = gradebook.assignments.starting_with("hw")
 
-    gradebook.groups = (
-            ("homeworks", homeworks, .75),
-            ("lab01", .25)
-    )
+    gradebook.groups = (("homeworks", homeworks, 0.75), ("lab01", 0.25))
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
@@ -487,9 +533,7 @@ def test_drop_lowest_takes_adjustments_into_account():
     gradebook = gradelib.Gradebook(points, maximums)
     gradebook.adjustments = {"A1": {"hw01": [gradelib.Deduction(Percentage(1))]}}
 
-    gradebook.groups = (
-            ("homeworks", gradebook.assignments.starting_with('hw'), .75),
-    )
+    gradebook.groups = (("homeworks", gradebook.assignments.starting_with("hw"), 0.75),)
 
     # since A1's perfect homework has a 100% deduction, it should count as zero and be
     # dropped
@@ -514,9 +558,7 @@ def test_drop_lowest_ignores_assignments_already_dropped():
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A1", "hw04"] = True
 
-    gradebook.groups = (
-            ("homeworks", gradebook.assignments.starting_with("hw"), 1),
-    )
+    gradebook.groups = (("homeworks", gradebook.assignments.starting_with("hw"), 1),)
 
     # since A1's perfect homeworks are already dropped, we should drop a third
     # homework, too: this will be HW03

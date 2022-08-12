@@ -63,7 +63,6 @@ class Student:
 
 
 class Normalized:
-
     def __init__(self, assignments):
         self.assignments = assignments
 
@@ -461,9 +460,7 @@ class Group:
         self.name = name
         if isinstance(assignments, Normalized):
             value = 1 / len(assignments.assignments)
-            self.assignments = {
-                    a: value for a in assignments.assignments
-            }
+            self.assignments = {a: value for a in assignments.assignments}
         else:
             self.assignments = assignments
         self.weight = weight
@@ -752,7 +749,12 @@ class Gradebook:
 
     @property
     def group_scores(self):
-        group_values = pd.DataFrame({group.name: self.value[list(group.assignments)].sum(axis=1) for group in self.groups})
+        group_values = pd.DataFrame(
+            {
+                group.name: self.value[list(group.assignments)].sum(axis=1)
+                for group in self.groups
+            }
+        )
         group_weights = pd.Series({group.name: group.weight for group in self.groups})
         return group_values / group_weights
 
@@ -996,9 +998,7 @@ class Gradebook:
         def _update_groups():
             def _update_group(g):
                 kept_assignments = [a for a in g.assignments if a in assignments]
-                return Group(
-                    g.name, kept_assignments, g.weight
-                )
+                return Group(g.name, kept_assignments, g.weight)
 
             new_groups_with_empties = [_update_group(g) for g in self.groups]
             return [g for g in new_groups_with_empties if g.assignments]

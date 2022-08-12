@@ -1550,6 +1550,7 @@ def test_default_groups_one_assignment_per_group_equally_weighted():
 
 # TODO .groups returns tuple
 
+
 def test_groups_setter_allows_three_tuple_form():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]

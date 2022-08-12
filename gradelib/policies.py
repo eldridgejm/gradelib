@@ -171,7 +171,9 @@ class PenalizeLates:
 
     """
 
-    def __init__(self, within=None, forgive=0, deduction=Percentage(1), order_by='value'):
+    def __init__(
+        self, within=None, forgive=0, deduction=Percentage(1), order_by="value"
+    ):
         self.within = within
         self.forgive = forgive
         self.deduction = deduction
@@ -189,9 +191,11 @@ class PenalizeLates:
 
             # by default, reorder assignments from most valuable to least valuable,
             # since forgiveness will be given to most valuable assignments first
-            if self.order_by == 'value':
+            if self.order_by == "value":
                 value = gradebook.value[within]
-                sorted_assignments = sorted(within, key=lambda a: value.loc[pid, a], reverse=True)
+                sorted_assignments = sorted(
+                    within, key=lambda a: value.loc[pid, a], reverse=True
+                )
             else:
                 sorted_assignments = self.within
 
@@ -199,10 +203,14 @@ class PenalizeLates:
                 if gradebook.late.loc[pid, assignment]:
                     if gradebook.dropped.loc[pid, assignment]:
                         continue
-                    if (
-                        forgiveness_left > 0
-                    ):
+                    if forgiveness_left > 0:
+                        # forgiven
                         forgiveness_left -= 1
+                        message = (
+                            f"Slip day #{self.forgive - forgiveness_left} used on "
+                            f"{assignment}. {forgiveness_left} remaining."
+                        )
+                        gradebook.add_note(pid, 'late', message)
                     else:
                         number += 1
                         self._deduct(gradebook, pid, assignment, number)

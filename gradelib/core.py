@@ -1243,19 +1243,12 @@ class Gradebook:
             The pid of the student for which the note should be added.
 
         channel : str
-            The channel that the note should be added to. Should be one of
-            "drop", "late", or "misc".
+            The channel that the note should be added to.
 
         message : str
             The note's message.
 
         """
-        valid_channels = {"drop", "late", "misc"}
-        if channel not in valid_channels:
-            raise ValueError(
-                f"Channel {channel} unrecognized. Must be one of {valid_channels}."
-            )
-
         if pid not in self.notes:
             self.notes[pid] = {}
 

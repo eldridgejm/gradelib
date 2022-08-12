@@ -316,6 +316,10 @@ class DropLowest:
             tossed = list(combinations[best_combo_ix])
             new_dropped.loc[pid, tossed] = True
 
+            for assignment in tossed:
+                gradebook.add_note(pid, 'drop', f'{assignment} dropped.')
+
+
         return gradebook._replace(dropped=new_dropped)
 
 

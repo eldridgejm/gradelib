@@ -14,7 +14,7 @@
             python310Packages.buildPythonPackage rec {
               name = "gradelib";
               src = ./.;
-              propagatedBuildInputs = with python310Packages; [ pandas matplotlib numpy ];
+              propagatedBuildInputs = with python310Packages; [ pandas altair matplotlib numpy ];
               nativeBuildInputs = with python310Packages; [ pytest ipython sphinx sphinx_rtd_theme ];
             }
           );

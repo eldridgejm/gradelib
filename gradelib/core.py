@@ -6,6 +6,7 @@ import dataclasses
 import typing
 
 from .scales import DEFAULT_SCALE, map_scores_to_letter_grades, average_gpa
+from . import plot as _plot
 
 import numpy as np
 import pandas as pd
@@ -13,6 +14,11 @@ import pandas as pd
 
 NORMALIZE = object()
 
+def _is_notebook():
+    try:
+        return get_ipython().__class__.__name__ == 'ZMQInteractiveShell'
+    except NameError:
+        return False
 
 # Student
 # ======================================================================================
@@ -496,84 +502,9 @@ class Group:
         return all(getattr(self, attr) == getattr(other, attr) for attr in self._attrs)
 
 
-class ClassSummary:
-    def __init__(self, gradebook):
-        self.gradebook = gradebook
-
-    def _repr_html_(self):
-        lines = []
-
-        def item(desc, msg):
-            lines.append(f"<p><b>{desc}:</b> {msg}")
-
-        lines.append("<h1>Class Summary</h1>")
-
-        item("Number of students", len(self.gradebook.students))
-
-        lines.append("<h2>Letter Grades</h2>")
-
-        lines.append(self.gradebook.letter_grade_distribution.to_frame().T.to_html())
-
-        agpa = average_gpa(self.gradebook.letter_grades)
-        lines.append(f"<p><b>Class GPA:</b> {agpa:0.2f}</p>")
-
-        return "\n".join(lines)
 
 
-class StudentSummary:
-    def __init__(self, gradebook, student):
-        self.gradebook = gradebook
-        self.student = student
-
-    def _repr_html_(self):
-        lines = []
-
-        def par(desc, msg):
-            lines.append(f"<p><b>{desc}:</b> {msg}</p>")
-
-        def li(desc, msg):
-            lines.append(f"<li><b>{desc}:</b> {msg}</li>")
-
-        def _fmt_as_pct(f):
-            return f"{f * 100:0.2f}%"
-
-        name = self.student.name
-        pid = self.student.pid
-
-        lines.append(f"<h1>Student Summary: {name} ({pid})</h1>")
-
-        par("Overall score", f"{_fmt_as_pct(self.gradebook.overall_score.loc[pid])}")
-        par("Letter grade", self.gradebook.letter_grades.loc[pid])
-        par("Rank", f"{self.gradebook.rank.loc[pid]} out of {len(self.gradebook.rank)}")
-        par("Percentile", f"{self.gradebook.percentile.loc[pid]:0.2f}")
-
-        lines.append("<h2>Group Scores</h2>")
-        lines.append("<ul>")
-        for group in self.gradebook.groups:
-            score = self.gradebook.group_scores.loc[pid, group.name]
-            li(group.name, _fmt_as_pct(score))
-        lines.append("</ul>")
-
-        assignments_dct = self.gradebook.adjustments.get(pid, {})
-        if assignments_dct:
-            lines.append("<h2>Adjustments</h2>")
-            lines.append("<ul>")
-            for assignment, adjustments in assignments_dct.items():
-                for adjustment in adjustments:
-                    li(assignment, adjustment)
-            lines.append("</ul>")
-
-        notes = self.gradebook.notes.get(pid, None)
-        if notes is not None:
-            lines.append("<h2>Notes</h2>")
-            for channel in notes:
-                lines.append(f"<h3>{channel.capitalize()}</h3>")
-                lines.append("<ul>")
-                for note in notes[channel]:
-                    lines.append(f"<li>{note}</li>")
-                lines.append("</ul>")
-
-        return "\n".join(lines)
+    
 
 
 class Gradebook:
@@ -950,11 +881,87 @@ class Gradebook:
     def percentile(self):
         return 1 - ((self.rank - 1) / len(self.rank))
 
+    def _student_summary(self, student):
+        from IPython.display import display, HTML
+
+        lines = []
+
+        def par(desc, msg):
+            lines.append(f"<p><b>{desc}:</b> {msg}</p>")
+
+        def li(desc, msg):
+            lines.append(f"<li><b>{desc}:</b> {msg}</li>")
+
+        def _fmt_as_pct(f):
+            return f"{f * 100:0.2f}%"
+
+        name = student.name
+        pid = student.pid
+
+        lines.append(f"<h1>Student Summary: {name} ({pid})</h1>")
+
+        par("Overall score", f"{_fmt_as_pct(self.overall_score.loc[pid])}")
+        par("Letter grade", self.letter_grades.loc[pid])
+        par("Rank", f"{self.rank.loc[pid]} out of {len(self.rank)}")
+        par("Percentile", f"{self.percentile.loc[pid]:0.2f}")
+
+        lines.append("<h2>Group Scores</h2>")
+        lines.append("<ul>")
+        for group in self.groups:
+            score = self.group_scores.loc[pid, group.name]
+            li(group.name, _fmt_as_pct(score))
+        lines.append("</ul>")
+
+        assignments_dct = self.adjustments.get(pid, {})
+        if assignments_dct:
+            lines.append("<h2>Adjustments</h2>")
+            lines.append("<ul>")
+            for assignment, adjustments in assignments_dct.items():
+                for adjustment in adjustments:
+                    li(assignment, adjustment)
+            lines.append("</ul>")
+
+        notes = self.notes.get(pid, None)
+        if notes is not None:
+            lines.append("<h2>Notes</h2>")
+            for channel in notes:
+                lines.append(f"<h3>{channel.capitalize()}</h3>")
+                lines.append("<ul>")
+                for note in notes[channel]:
+                    lines.append(f"<li>{note}</li>")
+                lines.append("</ul>")
+
+        display(HTML("\n".join(lines)))
+
+    def _class_summary(self):
+        from IPython.display import display, HTML
+
+        lines = []
+
+        def item(desc, msg):
+            lines.append(f"<p><b>{desc}:</b> {msg}")
+
+        lines.append("<h1>Class Summary</h1>")
+
+        item("Number of students", len(self.students))
+
+        lines.append("<h2>Letter Grades</h2>")
+
+        lines.append(self.letter_grade_distribution.to_frame().T.to_html())
+
+        agpa = average_gpa(self.letter_grades)
+        lines.append(f"<p><b>Class GPA:</b> {agpa:0.2f}</p>")
+        lines.append("<h2>Distribution</h2>")
+
+        display(HTML("\n".join(lines)))
+
+        display(_plot.grade_distribution(self))
+
     def summary(self, student=None):
         if student is not None:
-            return StudentSummary(self, self.find_student(student))
+            return self._student_summary(self.find_student(student))
         else:
-            return ClassSummary(self)
+            return self._class_summary()
 
     # copying / replacing
     # -------------------

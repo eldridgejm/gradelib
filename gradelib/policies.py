@@ -208,15 +208,16 @@ class PenalizeLates:
             # by default, reorder assignments from most valuable to least valuable,
             # since forgiveness will be given to most valuable assignments first
             if self.order_by == "value":
-                value = gradebook.value[within]
+                value = gradebook.value[within].loc[pid]
                 sorted_assignments = sorted(
-                    within, key=lambda a: value.loc[pid, a], reverse=True
+                    within, key=lambda a: value[a], reverse=True
                 )
             else:
                 sorted_assignments = self.within
 
+            late = gradebook.late.loc[pid]
             for assignment in sorted_assignments:
-                if gradebook.late.loc[pid, assignment]:
+                if late[assignment]:
                     if gradebook.dropped.loc[pid, assignment]:
                         continue
                     if forgiveness_left > 0:

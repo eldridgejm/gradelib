@@ -8,6 +8,7 @@ import typing
 from .scales import DEFAULT_SCALE, map_scores_to_letter_grades, average_gpa
 from . import plot as _plot
 
+import altair
 import numpy as np
 import pandas as pd
 
@@ -852,6 +853,10 @@ class Gradebook:
         )
 
     @property
+    def score(self):
+        return self.points_after_adjustments / self.points_possible
+
+    @property
     def overall_score(self):
         return self.value.sum(axis=1)
 
@@ -879,7 +884,46 @@ class Gradebook:
 
     @property
     def percentile(self):
-        return 1 - ((self.rank - 1) / len(self.rank))
+        s = 1 - ((self.rank - 1) / len(self.rank))
+        s.name = 'percentile'
+        return s
+
+    def _assignment_plot(self, pid):
+        data = self.score.loc[pid].to_frame(name='Score')
+        data['Notes'] = self.dropped.loc[pid].apply(lambda d: 'dropped' if d else '')
+
+        data = (
+            data
+            .sort_index()
+            .reset_index()
+            .rename(
+                columns={'index': 'Assignment'}
+            )
+            .reset_index()
+            .fillna(0)
+        )
+
+        data['Formatted Score'] = data['Score'].apply(lambda s: f'{s * 100:0.2f}%')
+
+        bars = altair.Chart(data).mark_bar().encode(
+            x='Score:Q',
+            y='Assignment:N',
+            tooltip='Formatted Score'
+        )
+
+        text = altair.Chart(data).mark_text(
+            align='left',
+            baseline='middle',
+            color='black',
+            fontWeight='bold',
+            dx=3  # Nudges text to right so it doesn't appear on top of the bar
+        ).encode(
+            x='Score:Q',
+            y='Assignment:N',
+            text='Notes:N'
+        )
+
+        return bars + text
 
     def _student_summary(self, student):
         from IPython.display import display, HTML
@@ -932,6 +976,8 @@ class Gradebook:
                 lines.append("</ul>")
 
         display(HTML("\n".join(lines)))
+
+        display(self._assignment_plot(pid))
 
     def _class_summary(self):
         from IPython.display import display, HTML

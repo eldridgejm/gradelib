@@ -15,8 +15,8 @@ def test_read_gradescope_produces_assignments_in_order():
     gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 
     # then
-    assert gb.points_marked.columns[0] == "lab 01"
-    assert gb.points_marked.columns[1] == "homework 01"
+    assert gb.points_earned.columns[0] == "lab 01"
+    assert gb.points_earned.columns[1] == "homework 01"
 
 
 def test_read_gradescope_same_shapes_and_columns_in_all_tables():
@@ -24,9 +24,9 @@ def test_read_gradescope_same_shapes_and_columns_in_all_tables():
     gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 
     # then
-    assert (gb.points_marked.columns == gb.late.columns).all()
-    assert gb.points_marked.shape == gb.late.shape
-    assert (gb.points_marked.columns == gb.points_possible.index).all()
+    assert (gb.points_earned.columns == gb.late.columns).all()
+    assert gb.points_earned.shape == gb.late.shape
+    assert (gb.points_earned.columns == gb.points_possible.index).all()
 
 
 def test_read_gradescope_standardizes_pids_by_default():
@@ -35,7 +35,7 @@ def test_read_gradescope_standardizes_pids_by_default():
 
     # then
     # the last PID is lowercased in the file, should be made uppercase
-    assert set(gb.points_marked.index) == set(
+    assert set(gb.points_earned.index) == set(
         ["A12345678", "A10000000", "A16000000", "A87654321"]
     )
 
@@ -45,8 +45,8 @@ def test_read_gradescope_standardizes_assignments_by_default():
     gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 
     # then
-    assert "homework 01" in gb.points_marked.columns
-    assert "homework 02" in gb.points_marked.columns
+    assert "homework 01" in gb.points_earned.columns
+    assert "homework 02" in gb.points_earned.columns
 
 
 def test_read_gradescope_creates_index_of_student_objects_with_names():
@@ -54,9 +54,9 @@ def test_read_gradescope_creates_index_of_student_objects_with_names():
     gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 
     # then
-    assert gb.points_marked.index[0].pid == "A16000000"
+    assert gb.points_earned.index[0].pid == "A16000000"
     assert (
-        gb.points_marked.index[0].name == "Fitzgerald Zelda"
+        gb.points_earned.index[0].name == "Fitzgerald Zelda"
     )  # I got the order wrong in the example CSV
 
     assert gb.late.index[0].pid == "A16000000"
@@ -71,9 +71,9 @@ def test_read_gradescope_without_canvas_link_produces_correct_assignments():
     gb = gradelib.io.gradescope.read(path)
 
     # then
-    assert gb.points_marked.columns[0] == "demo midterm"
-    assert gb.points_marked.columns[1] == "fake assignment"
-    assert len(gb.points_marked.columns) == 2
+    assert gb.points_earned.columns[0] == "demo midterm"
+    assert gb.points_earned.columns[1] == "fake assignment"
+    assert len(gb.points_earned.columns) == 2
 
 
 def test_read_gradescope_keeps_lateness_as_timedelta():

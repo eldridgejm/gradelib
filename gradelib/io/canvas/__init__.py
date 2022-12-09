@@ -96,21 +96,21 @@ def read(
 
     # clean up the table. get rid of the student column, and drop all rows with
     # NaN indices
-    points_marked = table[~pd.isna(table.index)].drop(columns=["Student"]).astype(float)
+    points_earned = table[~pd.isna(table.index)].drop(columns=["Student"]).astype(float)
 
     if standardize_assignments:
-        points_marked.columns = points_marked.columns.str.lower()
+        points_earned.columns = points_earned.columns.str.lower()
 
     if remove_assignment_ids:
-        points_marked.columns = [
-            _remove_assignment_id(c) for c in points_marked.columns
+        points_earned.columns = [
+            _remove_assignment_id(c) for c in points_earned.columns
         ]
 
     # we've possibly changed column names in points table; propagate these
     # changes to max_points
-    points_possible.index = points_marked.columns
+    points_possible.index = points_earned.columns
 
-    return Gradebook(points_marked, points_possible)
+    return Gradebook(points_earned, points_possible)
 
 
 def write_canvas_grades(existing, output, grades):

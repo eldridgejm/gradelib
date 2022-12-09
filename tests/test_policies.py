@@ -14,7 +14,7 @@ CANVAS_EXAMPLE = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 
 # the canvas example has Lab 01, which is also in Gradescope. Let's remove it
 CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.Gradebook(
-    points_marked=CANVAS_EXAMPLE.points_marked.drop(columns="lab 01"),
+    points_earned=CANVAS_EXAMPLE.points_earned.drop(columns="lab 01"),
     points_possible=CANVAS_EXAMPLE.points_possible.drop(index="lab 01"),
     lateness=CANVAS_EXAMPLE.lateness.drop(columns="lab 01"),
     dropped=CANVAS_EXAMPLE.dropped.drop(columns="lab 01"),
@@ -26,15 +26,15 @@ ROSTER = gradelib.io.ucsd.read_egrades_roster(EXAMPLES_DIRECTORY / "egrades.csv"
 
 def assert_gradebook_is_sound(gradebook):
     assert (
-        gradebook.points_marked.shape
+        gradebook.points_earned.shape
         == gradebook.dropped.shape
         == gradebook.lateness.shape
     )
-    assert (gradebook.points_marked.columns == gradebook.dropped.columns).all()
-    assert (gradebook.points_marked.columns == gradebook.lateness.columns).all()
-    assert (gradebook.points_marked.index == gradebook.dropped.index).all()
-    assert (gradebook.points_marked.index == gradebook.lateness.index).all()
-    assert (gradebook.points_marked.columns == gradebook.points_possible.index).all()
+    assert (gradebook.points_earned.columns == gradebook.dropped.columns).all()
+    assert (gradebook.points_earned.columns == gradebook.lateness.columns).all()
+    assert (gradebook.points_earned.index == gradebook.dropped.index).all()
+    assert (gradebook.points_earned.index == gradebook.lateness.index).all()
+    assert (gradebook.points_earned.columns == gradebook.points_possible.index).all()
     assert isinstance(gradebook.adjustments, dict)
 
 
@@ -47,14 +47,14 @@ def test_penalize_lates_without_forgiveness_or_within_penalizes_all_lates():
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
+    points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame(
         [pd.to_timedelta([0, 0, 5000], "s"), pd.to_timedelta([6000, 0, 0], "s")],
         columns=columns,
-        index=points_marked.index,
+        index=points_earned.index,
     )
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -71,14 +71,14 @@ def test_penalize_lates_with_custom_flat_deduction():
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
+    points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame(
         [pd.to_timedelta([0, 0, 5000], "s"), pd.to_timedelta([6000, 0, 0], "s")],
         columns=columns,
-        index=points_marked.index,
+        index=points_earned.index,
     )
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -95,14 +95,14 @@ def test_penalize_lates_with_callable_deduction():
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
+    points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame(
         [pd.to_timedelta([6000, 6000, 6000], "s"), pd.to_timedelta([0, 0, 0], "s")],
         columns=columns,
-        index=points_marked.index,
+        index=points_earned.index,
     )
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -132,14 +132,14 @@ def test_penalize_lates_with_callable_deduction_does_not_count_forgiven():
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
+    points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame(
         [pd.to_timedelta([6000, 6000, 6000], "s"), pd.to_timedelta([0, 0, 0], "s")],
         columns=columns,
-        index=points_marked.index,
+        index=points_earned.index,
     )
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -167,14 +167,14 @@ def test_penalize_lates_respects_lateness_fudge():
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
+    points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame(
         [pd.to_timedelta([0, 0, 50], "s"), pd.to_timedelta([6000, 0, 0], "s")],
         columns=columns,
-        index=points_marked.index,
+        index=points_earned.index,
     )
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -192,14 +192,14 @@ def test_penalize_lates_within_assignments():
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
+    points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame(
         [pd.to_timedelta([0, 0, 5000], "s"), pd.to_timedelta([6000, 0, 0], "s")],
         columns=columns,
-        index=points_marked.index,
+        index=points_earned.index,
     )
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -215,14 +215,14 @@ def test_penalize_lates_within_accepts_callable():
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
+    points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame(
         [pd.to_timedelta([0, 0, 5000], "s"), pd.to_timedelta([6000, 0, 0], "s")],
         columns=columns,
-        index=points_marked.index,
+        index=points_earned.index,
     )
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     HOMEWORK = lambda asmts: asmts.starting_with("hw")
 
@@ -238,14 +238,14 @@ def test_penalize_lates_with_forgiveness():
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
+    points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame(
         [pd.to_timedelta([5000, 0, 5000], "s"), pd.to_timedelta([6000, 0, 0], "s")],
         columns=columns,
-        index=points_marked.index,
+        index=points_earned.index,
     )
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -265,14 +265,14 @@ def test_penalize_lates_with_forgiveness_and_within():
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
+    points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame(
         [pd.to_timedelta([5000, 0, 5000], "s"), pd.to_timedelta([6000, 0, 0], "s")],
         columns=columns,
-        index=points_marked.index,
+        index=points_earned.index,
     )
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -293,7 +293,7 @@ def test_penalize_lates_with_forgiveness_forgives_most_valuable_assignments_firs
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[45, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
+    points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame(
         [
@@ -301,9 +301,9 @@ def test_penalize_lates_with_forgiveness_forgives_most_valuable_assignments_firs
             pd.to_timedelta([6000, 5000, 5000], "s"),
         ],
         columns=columns,
-        index=points_marked.index,
+        index=points_earned.index,
     )
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
     LABS = gradebook.assignments.starting_with("lab")
@@ -331,7 +331,7 @@ def test_penalize_lates_forgives_the_first_n_lates_when_order_by_is_index():
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[45, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
+    points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame(
         [
@@ -339,9 +339,9 @@ def test_penalize_lates_forgives_the_first_n_lates_when_order_by_is_index():
             pd.to_timedelta([6000, 5000, 5000], "s"),
         ],
         columns=columns,
-        index=points_marked.index,
+        index=points_earned.index,
     )
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
     LABS = gradebook.assignments.starting_with("lab")
@@ -371,7 +371,7 @@ def test_penalize_lates_by_default_takes_into_account_drops():
     columns = ["hw01", "hw02", "lab01", "lab02"]
     p1 = pd.Series(data=[30, 90, 20, 1], index=columns, name="A1")
     p2 = pd.Series(data=[7, 15, 20, 1], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
+    points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20, 20], index=columns)
     lateness = pd.DataFrame(
         [
@@ -379,10 +379,10 @@ def test_penalize_lates_by_default_takes_into_account_drops():
             pd.to_timedelta([6000, 0, 0, 0], "s"),
         ],
         columns=columns,
-        index=points_marked.index,
+        index=points_earned.index,
     )
 
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
     gradebook.groups = [
         ("homeworks", gradebook.assignments.starting_with("hw"), 0.75),
         ("labs", gradebook.assignments.starting_with("lab"), 0.75),
@@ -410,14 +410,14 @@ def test_penalize_lates_with_forgiveness_adds_note_for_forgiven_assignments():
     columns = ["hw01", "hw02", "hw03"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
+    points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([50, 100, 20], index=columns)
     lateness = pd.DataFrame(
         [pd.to_timedelta([5000, 5000, 5000], "s"), pd.to_timedelta([6000, 0, 0], "s")],
         columns=columns,
-        index=points_marked.index,
+        index=points_earned.index,
     )
-    gradebook = gradelib.Gradebook(points_marked, points_possible, lateness=lateness)
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -619,8 +619,8 @@ def test_redemption_on_single_assignment_pair():
     )
 
     # then
-    assert actual.points_marked.loc["A1", "mt01 with redemption"] == 100
-    assert actual.points_marked.loc["A2", "mt01 with redemption"] == 92
+    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 100
+    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 92
     assert "mt01" in actual.assignments
     assert "mt01 - redemption" in actual.assignments
     assert_gradebook_is_sound(actual)
@@ -677,10 +677,10 @@ def test_redemption_on_multiple_assignment_pairs():
     )
 
     # then
-    assert actual.points_marked.loc["A1", "mt01 with redemption"] == 100
-    assert actual.points_marked.loc["A2", "mt01 with redemption"] == 92
-    assert actual.points_marked.loc["A1", "mt02 with redemption"] == 50
-    assert actual.points_marked.loc["A2", "mt02 with redemption"] == 40
+    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 100
+    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 92
+    assert actual.points_earned.loc["A1", "mt02 with redemption"] == 50
+    assert actual.points_earned.loc["A2", "mt02 with redemption"] == 40
     assert "mt01" in actual.assignments
     assert "mt01 - redemption" in actual.assignments
     assert "mt02" in actual.assignments
@@ -701,10 +701,10 @@ def test_redemption_with_prefix_selector():
     actual = gradebook.apply(gradelib.policies.Redeem(["mt01", "mt02"]))
 
     # then
-    assert actual.points_marked.loc["A1", "mt01 with redemption"] == 100
-    assert actual.points_marked.loc["A2", "mt01 with redemption"] == 92
-    assert actual.points_marked.loc["A1", "mt02 with redemption"] == 50
-    assert actual.points_marked.loc["A2", "mt02 with redemption"] == 40
+    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 100
+    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 92
+    assert actual.points_earned.loc["A1", "mt02 with redemption"] == 50
+    assert actual.points_earned.loc["A2", "mt02 with redemption"] == 40
     assert "mt01" in actual.assignments
     assert "mt01 - redemption" in actual.assignments
     assert "mt02" in actual.assignments
@@ -729,8 +729,8 @@ def test_redemption_with_remove_parts():
     )
 
     # then
-    assert actual.points_marked.loc["A1", "mt01 with redemption"] == 100
-    assert actual.points_marked.loc["A2", "mt01 with redemption"] == 92
+    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 100
+    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 92
     assert "mt01" not in actual.assignments
     assert "mt01 - redemption" not in actual.assignments
     assert_gradebook_is_sound(actual)
@@ -775,8 +775,8 @@ def test_redemption_takes_adjustments_into_account():
     )
 
     # then
-    assert actual.points_marked.loc["A1", "mt01 with redemption"] == 95
-    assert actual.points_marked.loc["A2", "mt01 with redemption"] == 92
+    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 95
+    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 92
     assert_gradebook_is_sound(actual)
 
 
@@ -797,8 +797,8 @@ def test_redemption_with_unequal_points_possible_scales_to_the_maximum_of_the_tw
     )
 
     # then
-    assert actual.points_marked.loc["A1", "mt01 with redemption"] == 100
-    assert actual.points_marked.loc["A2", "mt01 with redemption"] == 92
+    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 100
+    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 92
     assert actual.points_possible["mt01 with redemption"] == 100
     assert_gradebook_is_sound(actual)
 
@@ -821,8 +821,8 @@ def test_redemption_with_deduction():
     )
 
     # then
-    assert actual.points_marked.loc["A1", "mt01 with redemption"] == 95
-    assert actual.points_marked.loc["A2", "mt01 with redemption"] == 75
+    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 95
+    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 75
     assert "mt01" in actual.assignments
     assert "mt01 - redemption" in actual.assignments
     assert_gradebook_is_sound(actual)
@@ -843,8 +843,8 @@ def test_redemption_with_nans():
     )(gradebook)
 
     # then
-    assert actual.points_marked.loc["A1", "mt01 with redemption"] == 100
-    assert actual.points_marked.loc["A2", "mt01 with redemption"] == 50
+    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 100
+    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 50
     assert_gradebook_is_sound(actual)
 
 

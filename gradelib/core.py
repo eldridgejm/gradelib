@@ -13,13 +13,9 @@ import numpy as np
 import pandas as pd
 
 
+
 NORMALIZE = object()
 
-def _is_notebook():
-    try:
-        return get_ipython().__class__.__name__ == 'ZMQInteractiveShell'
-    except NameError:
-        return False
 
 # Student
 # ======================================================================================
@@ -36,7 +32,7 @@ class Student:
 
     .. code::
 
-        gradebook.points_marked.loc['A1000234', 'homework 03']
+        gradebook.points_earned.loc['A1000234', 'homework 03']
 
     which looks up the the number points marked for Homework 01 by student 'A1000234'.
     But when the table is printed, the student's name will appear instead of their pid.
@@ -85,6 +81,8 @@ class Assignments(collections.abc.Sequence):
     def __init__(self, names):
         self._names = list(names)
 
+    # dunder methods -------------------------------------------------------------------
+
     def __contains__(self, element):
         return element in self._names
 
@@ -96,6 +94,23 @@ class Assignments(collections.abc.Sequence):
 
     def __eq__(self, other):
         return list(self) == list(other)
+
+    def __add__(self, other):
+        return Assignments(self._names + other._names)
+
+    def __getitem__(self, index):
+        return self._names[index]
+
+    def __repr__(self):
+        return f"Assignments(names={self._names})"
+
+    def _repr_pretty_(self, p, cycle):
+        p.text("Assignments(names=[\n")
+        for name in self._names:
+            p.text(f"  {name!r}\n")
+        p.text("])")
+
+    # helper methods -------------------------------------------------------------------
 
     def starting_with(self, prefix):
         """Return only assignments starting with the prefix.
@@ -173,20 +188,6 @@ class Assignments(collections.abc.Sequence):
 
         return {key: Assignments(value) for key, value in dct.items()}
 
-    def __repr__(self):
-        return f"Assignments(names={self._names})"
-
-    def _repr_pretty_(self, p, cycle):
-        p.text("Assignments(names=[\n")
-        for name in self._names:
-            p.text(f"  {name!r}\n")
-        p.text("])")
-
-    def __add__(self, other):
-        return Assignments(self._names + other._names)
-
-    def __getitem__(self, index):
-        return self._names[index]
 
 
 # GradeAmounts
@@ -216,52 +217,10 @@ class Percentage(_GradeAmount):
         return f"{self.amount}%"
 
 
-# Adjustments
-# ======================================================================================
-
-
-class Adjustment:
-
-    amount = NotImplemented
-    reason = NotImplemented
-    verb = NotImplemented
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(amount={self.amount}, reason={self.reason})"
-
-    def __eq__(self, other):
-        return self.amount == other.amount and self.reason == other.reason
-
-    def __str__(self):
-        s = f"{self.verb} {self.amount}"
-        if self.reason:
-            s = s + ": " + self.reason
-        else:
-            s = s + "."
-        return s
-
-
-class Deduction(Adjustment):
-
-    verb = "Deducted"
-
-    def __init__(self, amount, reason=None):
-        self.amount = amount
-        self.reason = reason
-
-
-class Addition(Adjustment):
-
-    verb = "Added"
-
-    def __init__(self, amount, reason=None):
-        self.amount = amount
-        self.reason = reason
-
-
 # Gradebook
 # ======================================================================================
 
+# helpers ------------------------------------------------------------------------------
 
 def _empty_mask_like(table):
     """Given a dataframe, create another just like it with every entry False."""
@@ -290,20 +249,6 @@ def _cast_index(df):
 
     df.index = [_cast(x) for x in df.index]
     return df
-
-
-def _concatenate_adjustments(gradebooks):
-    """Concatenates the adjustments from a sequence of gradebooks."""
-    adjustments = {}
-    for gradebook in gradebooks:
-        for pid, assignments_dct in gradebook.adjustments.items():
-            if pid not in adjustments:
-                adjustments[pid] = {}
-
-            for assignment in assignments_dct:
-                adjustments[pid][assignment] = assignments_dct[assignment]
-
-    return adjustments
 
 
 def _concatenate_notes(gradebooks):
@@ -360,8 +305,7 @@ def combine_gradebooks(gradebooks, restricted_to_pids=None):
     unique assignments and group names, so that no conflicts occur when
     combining them.
 
-    The new gradebook's adjustments and groups are a union of the adjustments
-    in the existing gradebooks, as are the groups and notes.
+    The new gradebook's groups are a union of the groups, as are the notes.
 
     If the scales are the same, the new scale is set to be the same as the old.
     If they are different, a ValueError is raised.
@@ -420,53 +364,15 @@ def combine_gradebooks(gradebooks, restricted_to_pids=None):
         return pd.concat(all_tables, axis=axis)
 
     return Gradebook(
-        points_marked=concat_attr("points_marked"),
+        points_earned=concat_attr("points_earned"),
         points_possible=concat_attr("points_possible", axis=0),
         lateness=concat_attr("lateness"),
         dropped=concat_attr("dropped"),
-        adjustments=_concatenate_adjustments(gradebooks),
         notes=_concatenate_notes(gradebooks),
         groups=_concatenate_groups(gradebooks),
         opts=_combine_if_equal(gradebooks, "opts"),
         scale=_combine_if_equal(gradebooks, "scale"),
     )
-
-
-def _combine_and_convert_adjustments(parts, new_name, adjustments, points_possible):
-    """Concatenates all adjustments from the given parts.
-
-    Converts percentage adjustments to points adjustments along the way.
-
-    Used in Gradebook._combine_assignment
-
-    """
-
-    # combine and convert adjustments
-    def _convert_adjustment(assignment, adjustment):
-        cls = type(adjustment)
-        if isinstance(adjustment.amount, Percentage):
-            possible = points_possible.loc[assignment]
-            return cls(Points(possible * adjustment.amount.amount), adjustment.reason)
-        else:
-            return adjustment
-
-    new_adjustments = {}
-    for student, assignments_dct in adjustments.items():
-        new_adjustments[student] = {}
-
-        combined_adjustments = []
-        for assignment, adjustments_lst in assignments_dct.items():
-            adjustments_lst = [
-                _convert_adjustment(assignment, d) for d in adjustments_lst
-            ]
-            if assignment in parts:
-                combined_adjustments.extend(adjustments_lst)
-            else:
-                new_adjustments[student][assignment] = adjustments_lst
-
-        new_adjustments[student][new_name] = combined_adjustments
-
-    return new_adjustments
 
 
 @dataclasses.dataclass
@@ -509,30 +415,24 @@ class Gradebook:
 
     Parameters
     ----------
-    points_marked : pandas.DataFrame
+    points_earned : pandas.DataFrame
         A dataframe with one row per student, and one column for each assignment.
         Each entry should be the raw number of points earned by the student on the
-        given assignment without any adjustments, e.g., for lateness. The index
-        of the dataframe should consist of Student objects.
+        given assignment. The index of the dataframe should consist of Student
+        objects.
     points_possible : pandas.Series
         A series containing the maximum number of points possible for each
         assignment. The index of the series should match the columns of the
-        `points_marked` dataframe.
+        `points_earned` dataframe.
     lateness : Optional[pandas.DataFrame]
         A dataframe of pd.Timedelta objects with the same columns/index as
-        `points_marked`. An entry in the dataframe tells how late a student
+        `points_earned`. An entry in the dataframe tells how late a student
         turned in the assignment. If `None` is passed, a dataframe of zero
         second timedeltas is used by default.
     dropped : Optional[pandas.DataFrame]
-        A Boolean dataframe with the same columns/index as `points_marked`. An
+        A Boolean dataframe with the same columns/index as `points_earned`. An
         entry that is `True` indicates that the assignment should be dropped.
         If `None` is passed, a dataframe of all `False`s is used by default.
-    adjustments : Optional[dict]
-        A nested dictionary of adjustments. The keys of the outer dictionary
-        should be student PIDs, and the values should be dictionaries. The keys
-        of these inner dictionaries should be assignment names, and the values
-        should be iterables of either Points or Percentage objects. If `None`
-        is passed, an empty dictionary is used by default.
     notes : Optional[dict]
         A nested dictionary of notes, possibly used by report generating code.
         The keys of the outer dictionary should be student PIDs, and the values
@@ -551,11 +451,10 @@ class Gradebook:
     """
 
     _kwarg_names = [
-        "points_marked",
+        "points_earned",
         "points_possible",
         "lateness",
         "dropped",
-        "adjustments",
         "notes",
         "groups",
         "scale",
@@ -564,25 +463,23 @@ class Gradebook:
 
     def __init__(
         self,
-        points_marked,
+        points_earned,
         points_possible,
         lateness=None,
         dropped=None,
-        adjustments=None,
         notes=None,
         groups=None,
         scale=None,
         opts=None,
     ):
-        self.points_marked = _cast_index(points_marked)
+        self.points_earned = _cast_index(points_earned)
         self.points_possible = points_possible
         self.lateness = (
-            lateness if lateness is not None else _empty_lateness_like(points_marked)
+            lateness if lateness is not None else _empty_lateness_like(points_earned)
         )
         self.dropped = (
-            dropped if dropped is not None else _empty_mask_like(points_marked)
+            dropped if dropped is not None else _empty_mask_like(points_earned)
         )
-        self.adjustments = {} if adjustments is None else adjustments
         self.notes = {} if notes is None else notes
         self.groups = self.default_groups if groups is None else groups
         self.scale = DEFAULT_SCALE if scale is None else scale
@@ -595,8 +492,7 @@ class Gradebook:
             f"and {len(self.pids)} students>"
         )
 
-    # properties
-    # ----------
+    # properties -----------------------------------------------------------------------
 
     @property
     def assignments(self):
@@ -607,7 +503,7 @@ class Gradebook:
         Assignments
 
         """
-        return Assignments(self.points_marked.columns)
+        return Assignments(self.points_earned.columns)
 
     @property
     def pids(self):
@@ -618,13 +514,13 @@ class Gradebook:
         set
 
         """
-        return set(self.points_marked.index)
+        return set(self.points_earned.index)
 
     @property
     def students(self):
         """All students as Student objects.
 
-        Returned in the order they appear in the indices of the `points_marked`
+        Returned in the order they appear in the indices of the `points_earned`
         attribute.
 
         Returns
@@ -632,13 +528,13 @@ class Gradebook:
         List[Student]
 
         """
-        return [s for s in self.points_marked.index]
+        return [s for s in self.points_earned.index]
 
     @property
     def late(self):
         """A boolean dataframe telling which assignments were turned in late.
 
-        Will have the same index and columns as the `points_marked` attribute.
+        Will have the same index and columns as the `points_earned` attribute.
 
         This is computed from the `.lateness` using the `.opts.lateness_fudge`
         option. If the lateness is less than the lateness fudge, the assignment
@@ -649,6 +545,8 @@ class Gradebook:
         """
         fudge = self.opts.lateness_fudge
         return self.lateness > pd.Timedelta(fudge, unit="s")
+
+    # properties: groups ---------------------------------------------------------------
 
     @property
     def default_groups(self):
@@ -686,48 +584,7 @@ class Gradebook:
 
         self._groups = [_make_group(g) for g in value]
 
-    @property
-    def points_after_adjustments(self):
-        """A dataframe of points earned after taking adjustments into account.
-
-        Will have the same index and columns as the `points_marked` attribute.
-
-        Adjustments are applied in the order they appear in the `adjustments` attribute.
-        A percentage adjustment is calculated *after* applying earlier adjustments. For
-        example, if 100 points are marked and two percentage deductions of 30% and 10%
-        are applied, the result is 100 points * 70% * 90% = 63 points.
-
-        This does not take drops into account.
-
-        """
-        points = self.points_marked.copy()
-
-        def _convert_amount_to_absolute_points(amount, assignment):
-            if isinstance(amount, Points):
-                return amount.amount
-            else:
-                # calculate percentage adjustment based on points possible
-                return amount.amount * self.points_possible.loc[assignment]
-
-        def _apply_deduction_or_addition(pid, assignment, adjustment):
-            p = points.loc[pid, assignment]
-
-            a = _convert_amount_to_absolute_points(adjustment.amount, assignment)
-
-            if isinstance(adjustment, Deduction):
-                a = -a
-
-            points.loc[pid, assignment] = max(p + a, 0)
-
-        for pid, assignments_dct in self.adjustments.items():
-            for assignment, adjustments in assignments_dct.items():
-                for adjustment in adjustments:
-                    if isinstance(adjustment, (Deduction, Addition)):
-                        _apply_deduction_or_addition(pid, assignment, adjustment)
-                    else:
-                        raise ValueError("Invalid adjustment type.")
-
-        return points
+    # properties: weights and values ---------------------------------------------------
 
     @property
     def weight(self):
@@ -753,8 +610,10 @@ class Gradebook:
     @property
     def value(self):
         return (
-            self.points_after_adjustments / self.points_possible
+            self.points_earned / self.points_possible
         ) * self.overall_weight
+
+    # properties: scores ---------------------------------------------------------------
 
     @property
     def group_points_possible_after_drops(self):
@@ -763,7 +622,7 @@ class Gradebook:
             possible = pd.DataFrame(
                 np.tile(
                     self.points_possible[list(group.assignments)],
-                    (self.points_marked.shape[0], 1),
+                    (self.points_earned.shape[0], 1),
                 ),
                 index=self.students,
                 columns=list(group.assignments),
@@ -830,7 +689,7 @@ class Gradebook:
             new_columns = {}
             for group_name in s.index:
                 new_columns[group_name] = np.repeat(
-                    s[group_name], len(self.points_marked)
+                    s[group_name], len(self.points_earned)
                 )
             df = pd.DataFrame(new_columns, index=self.students)
             return _convert_df(df)
@@ -843,18 +702,20 @@ class Gradebook:
     def _everyone_to_per_student(self, s):
         """Converts a (groups,) or (assignments,) Series to a (students, *) DataFrame."""
         return pd.DataFrame(
-            np.tile(s.values, (len(self.points_marked), 1)),
+            np.tile(s.values, (len(self.points_earned), 1)),
             columns=s.index,
             index=self.students,
         )
 
     @property
     def score(self):
-        return self.points_after_adjustments / self.points_possible
+        return self.points / self.points_possible
 
     @property
     def overall_score(self):
         return self.value.sum(axis=1)
+
+    # properties: letter grades --------------------------------------------------------
 
     @property
     def letter_grades(self):
@@ -872,6 +733,8 @@ class Gradebook:
 
         return pd.Series(distribution, name="Count")
 
+    # properties: ranks and percentiles
+
     @property
     def rank(self):
         sorted_scores = self.overall_score.sort_values(ascending=False).to_frame()
@@ -883,6 +746,8 @@ class Gradebook:
         s = 1 - ((self.rank - 1) / len(self.rank))
         s.name = 'percentile'
         return s
+
+    # summaries ------------------------------------------------------------------------
 
     def _assignment_plot(self, pid):
         data = self.score.loc[pid].to_frame(name='Score')
@@ -952,15 +817,6 @@ class Gradebook:
             li(group.name, _fmt_as_pct(score))
         lines.append("</ul>")
 
-        assignments_dct = self.adjustments.get(pid, {})
-        if assignments_dct:
-            lines.append("<h2>Adjustments</h2>")
-            lines.append("<ul>")
-            for assignment, adjustments in assignments_dct.items():
-                for adjustment in adjustments:
-                    li(assignment, adjustment)
-            lines.append("</ul>")
-
         notes = self.notes.get(pid, None)
         if notes is not None:
             lines.append("<h2>Notes</h2>")
@@ -1005,8 +861,7 @@ class Gradebook:
         else:
             return self._class_summary()
 
-    # copying / replacing
-    # -------------------
+    # copying / replacing --------------------------------------------------------------
 
     def _replace(self, **kwargs):
 
@@ -1031,8 +886,7 @@ class Gradebook:
     def copy(self):
         return self._replace()
 
-    # misc
-    # ----
+    # find student ---------------------------------------------------------------------
 
     def find_student(self, name_query):
         """Finds a student from a fragment of their name.
@@ -1066,11 +920,10 @@ class Gradebook:
 
         return matches[0]
 
-    # methods: adding/removing assignments/students
-    # ---------------------------------------------
+    # adding/removing assignments/students ---------------------------------------------
 
     def with_assignment(
-        self, name, points_marked, points_possible, lateness=None, dropped=None
+        self, name, points_earned, points_possible, lateness=None, dropped=None
     ):
         """Adds a single assignment to the gradebook.
 
@@ -1083,7 +936,7 @@ class Gradebook:
         ----------
         name : str
             The name of the new assignment. Must be unique.
-        points_marked : Series[float]
+        points_earned : Series[float]
             A Series of points earned by each student.
         points_possible : float
             The maximum number of points possible on the assignment.
@@ -1126,11 +979,11 @@ class Gradebook:
             if ours - theirs:
                 raise ValueError(f'"{where}" is missing PIDs: {ours - theirs}')
 
-        _match_pids(points_marked.index, "points")
+        _match_pids(points_earned.index, "points")
         _match_pids(lateness.index, "late")
         _match_pids(dropped.index, "dropped")
 
-        result.points_marked[name] = points_marked
+        result.points_earned[name] = points_earned
         result.points_possible[name] = points_possible
         result.lateness[name] = lateness
         result.dropped[name] = dropped
@@ -1139,8 +992,6 @@ class Gradebook:
 
     def restricted_to_assignments(self, assignments):
         """Restrict the gradebook to only the supplied assignments.
-
-        Any adjustments that reference a removed assignment are also removed.
 
         Groups are updated so that they reference only the assignments listed
         in `assignments`.
@@ -1166,18 +1017,10 @@ class Gradebook:
         if extras:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
 
-        r_points = self.points_marked.loc[:, assignments].copy()
+        r_points = self.points_earned.loc[:, assignments].copy()
         r_maximums = self.points_possible[assignments].copy()
         r_lateness = self.lateness.loc[:, assignments].copy()
         r_dropped = self.dropped.loc[:, assignments].copy()
-
-        # keep only the adjustments which are for assignments in `assignments`
-        r_adjustments = copy.deepcopy(self.adjustments)
-        for student, assignments_dct in r_adjustments.items():
-            assignments_dct = {
-                k: v for k, v in assignments_dct.items() if k in assignments
-            }
-            r_adjustments[student] = assignments_dct
 
         def _update_groups():
             def _update_group(g):
@@ -1188,18 +1031,15 @@ class Gradebook:
             return [g for g in new_groups_with_empties if g.assignments]
 
         return self._replace(
-            points_marked=r_points,
+            points_earned=r_points,
             points_possible=r_maximums,
             lateness=r_lateness,
             dropped=r_dropped,
-            adjustments=r_adjustments,
             groups=_update_groups(),
         )
 
     def without_assignments(self, assignments):
         """Returns a new gradebook instance without the given assignments.
-
-        Any adjustments that reference a removed assignment are also removed.
 
         Parameters
         ----------
@@ -1249,12 +1089,12 @@ class Gradebook:
         if extras:
             raise KeyError(f"These PIDs were not in the gradebook: {extras}.")
 
-        r_points = self.points_marked.loc[pids].copy()
+        r_points = self.points_earned.loc[pids].copy()
         r_lateness = self.lateness.loc[pids].copy()
         r_dropped = self.dropped.loc[pids].copy()
 
         return self._replace(
-            points_marked=r_points, lateness=r_lateness, dropped=r_dropped
+            points_earned=r_points, lateness=r_lateness, dropped=r_dropped
         )
 
     def _combine_assignment(self, new_name, parts):
@@ -1263,11 +1103,11 @@ class Gradebook:
         if self.dropped[parts].any(axis=None):
             raise ValueError("Cannot combine assignments with drops.")
 
-        assignment_points = self.points_marked[parts].sum(axis=1)
+        assignment_points = self.points_earned[parts].sum(axis=1)
         assignment_max = self.points_possible[parts].sum()
         assignment_lateness = self.lateness[parts].max(axis=1)
 
-        new_points = self.points_marked.copy()
+        new_points = self.points_earned.copy()
         new_max = self.points_possible.copy()
         new_lateness = self.lateness.copy()
 
@@ -1275,23 +1115,16 @@ class Gradebook:
         new_max[new_name] = assignment_max
         new_lateness[new_name] = assignment_lateness
 
-        # combines adjustments from all of the parts, converting Percentage
-        # to Points along the way.
-        new_adjustments = _combine_and_convert_adjustments(
-            parts, new_name, self.adjustments, self.points_possible
-        )
-
         # we're assuming that dropped was not set; we need to provide an empy
         # mask here, else ._replace will use the existing larger dropped table
         # of self, which contains all parts
         new_dropped = _empty_mask_like(new_points)
 
         result = self._replace(
-            points_marked=new_points,
+            points_earned=new_points,
             points_possible=new_max,
             dropped=new_dropped,
             lateness=new_lateness,
-            adjustments=new_adjustments,
         )
 
         return result.without_assignments(set(parts) - {new_name})
@@ -1310,12 +1143,11 @@ class Gradebook:
         The lateness of the new assignment is the *maximum* lateness of any of
         its parts.
 
-        Adjustments are concatenated. Points are propagated unchanged, but
-        Percentage objects are converted to Points according to the ratio of
-        the part's value to the total points possible. For example, if the
-        first part is worth 70 points, and the second part is worth 30 points,
-        and a 25% Percentage is applied to the second part, it is converted to
-        a 25% * 30 = 7.5 point Points.
+        Points are propagated unchanged, but Percentage objects are converted
+        to Points according to the ratio of the part's value to the total
+        points possible. For example, if the first part is worth 70 points, and
+        the second part is worth 30 points, and a 25% Percentage is applied to
+        the second part, it is converted to a 25% * 30 = 7.5 point Points.
 
         It is unclear what the result should be if any of the assignments to be
         unified has been dropped, but other parts have not. For this reason,
@@ -1403,18 +1235,13 @@ class Gradebook:
         def _update_assignments_dct(assignments_dct):
             return {_update_key(k): v for k, v in assignments_dct.items()}
 
-        result.adjustments = {
-            pid: _update_assignments_dct(dct) for pid, dct in result.adjustments.items()
-        }
-
-        result.points_marked.rename(columns=mapping, inplace=True)
+        result.points_earned.rename(columns=mapping, inplace=True)
         result.points_possible.rename(index=mapping, inplace=True)
         result.lateness.rename(columns=mapping, inplace=True)
         result.dropped.rename(columns=mapping, inplace=True)
         return result
 
-    # mutating helpers
-    # ----------------
+    # notes ----------------------------------------------------------------------------
 
     def add_note(self, pid, channel, message):
         """Convenience method for adding a note.
@@ -1441,33 +1268,7 @@ class Gradebook:
 
         self.notes[pid][channel].append(message)
 
-    def add_adjustment(self, pid, assignment, adjustment):
-        """Convenience method for adding a note.
-
-        Mutates the gradebook.
-
-        Parameters
-        ----------
-        pid : str
-            The pid of the student for which the note should be added.
-
-        assignment : str
-            The assignment that the adjustment should be added to.
-
-        adjustment : Adjustment
-            The adjustment
-
-        """
-        if pid not in self.adjustments:
-            self.adjustments[pid] = {}
-
-        if assignment not in self.adjustments[pid]:
-            self.adjustments[pid][assignment] = []
-
-        self.adjustments[pid][assignment].append(adjustment)
-
-    # apply
-    # -----
+    # apply ----------------------------------------------------------------------------
 
     def apply(self, transformations):
         """Apply transformation(s) to the gradebook.

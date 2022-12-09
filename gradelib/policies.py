@@ -4,7 +4,7 @@ import collections
 import numpy as np
 import pandas as pd
 
-from .core import Percentage, Points, Deduction, Addition
+from .core import Percentage, Points
 
 def _fmt_as_pct(f):
     return f"{f * 100:0.2f}%"
@@ -399,7 +399,7 @@ class Redeem:
 
             second_points = second_points - d
 
-        points_marked = np.maximum(first_points, second_points)
+        points_earned = np.maximum(first_points, second_points)
 
         # used for messaging
         first_raw_score = gradebook.points_after_adjustments[first] / gradebook.points_possible[first]
@@ -411,7 +411,7 @@ class Redeem:
             else:
                 return _fmt_as_pct(score)
 
-        for pid in points_marked.index:
+        for pid in points_earned.index:
             first_score_string = _fmt_score(first_raw_score.loc[pid])
             second_score_string = _fmt_score(second_raw_score.loc[pid])
             pieces = [
@@ -424,7 +424,7 @@ class Redeem:
                 pieces.append(f"{second.title()} score used.")
             gradebook.add_note(pid, "redemption", " ".join(pieces))
 
-        return gradebook.with_assignment(new_name, points_marked, points_possible)
+        return gradebook.with_assignment(new_name, points_earned, points_possible)
 
     def _remove_parts(self, gradebook):
         for assignment_pair in self.selector.values():

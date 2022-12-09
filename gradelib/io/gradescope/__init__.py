@@ -102,20 +102,20 @@ def read(path, standardize_pids=True, standardize_assignments=True):
     starting_index = _find_index_of_first_assignment_column(table.columns)
 
     # extract the points
-    points_marked = table.iloc[:, starting_index::stride].astype(float)
-    points_marked.index = table.index
+    points_earned = table.iloc[:, starting_index::stride].astype(float)
+    points_earned.index = table.index
 
     if standardize_assignments:
-        points_marked.columns = [x.lower() for x in points_marked.columns]
+        points_earned.columns = [x.lower() for x in points_earned.columns]
 
     # the max_points are replicated on every row; we'll just use the first row
     points_possible = table.iloc[0, starting_index + 1 :: stride].astype(float)
-    points_possible.index = points_marked.columns
+    points_possible.index = points_earned.columns
     points_possible.name = "Max Points"
 
     # the csv contains time since late deadline
     lateness = table.iloc[:, starting_index + 3 :: stride]
-    lateness.columns = points_marked.columns
+    lateness.columns = points_earned.columns
     lateness = lateness.apply(_lateness_in_seconds)  # convert strings to seconds
 
-    return Gradebook(points_marked, points_possible, lateness)
+    return Gradebook(points_earned, points_possible, lateness)

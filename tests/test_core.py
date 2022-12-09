@@ -37,7 +37,6 @@ def assert_gradebook_is_sound(gradebook):
     assert (gradebook.points_marked.index == gradebook.dropped.index).all()
     assert (gradebook.points_marked.index == gradebook.lateness.index).all()
     assert (gradebook.points_marked.columns == gradebook.points_possible.index).all()
-    assert isinstance(gradebook.adjustments, dict)
 
 
 def as_gradebook_type(gb, gradebook_cls):
@@ -47,7 +46,6 @@ def as_gradebook_type(gb, gradebook_cls):
         points_possible=gb.points_possible,
         lateness=gb.lateness,
         dropped=gb.dropped,
-        adjustments=gb.adjustments,
         notes=gb.notes,
         opts=gb.opts,
     )
@@ -123,158 +121,6 @@ def test_lateness_fudge_can_be_changed():
 
     assert gradebook.late.loc["A1", "hw01"] == True
     assert gradebook.late.loc["A2", "hw02"] == True
-
-
-# points_after_adjustments
-# -----------------------------------------------------------------------------
-
-
-def test_points_after_adjustments_takes_deductions_into_account():
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
-    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
-
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([20, 50], index=columns)
-
-    gb = gradelib.Gradebook(points_marked, points_possible)
-
-    gb.adjustments = {
-        "A1": {
-            "hw01": [
-                gradelib.Deduction(gradelib.Points(5)),
-            ]
-        },
-        "A2": {
-            "hw02": [
-                gradelib.Deduction(gradelib.Percentage(0.3)),
-            ]
-        },
-    }
-
-    assert gb.points_after_adjustments.loc["A1", "hw01"] == 5
-    assert gb.points_after_adjustments.loc["A2", "hw02"] == 40 - 15
-
-
-def test_points_after_adjustments_takes_multiple_deductions_into_account():
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
-    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
-
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([20, 50], index=columns)
-
-    gb = gradelib.Gradebook(points_marked, points_possible)
-
-    gb.adjustments = {
-        "A1": {
-            "hw01": [
-                gradelib.Deduction(gradelib.Points(5)),
-                gradelib.Deduction(gradelib.Points(3)),
-            ]
-        },
-        "A2": {
-            "hw02": [
-                gradelib.Deduction(gradelib.Percentage(0.3)),
-                gradelib.Deduction(gradelib.Percentage(0.2)),
-            ]
-        },
-    }
-
-    assert gb.points_after_adjustments.loc["A1", "hw01"] == 2
-    assert np.isclose(gb.points_after_adjustments.loc["A2", "hw02"], 40 - 25)
-
-
-def test_points_after_adjustments_sets_floor_at_zero():
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
-    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
-
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([20, 50], index=columns)
-
-    gb = gradelib.Gradebook(points_marked, points_possible)
-
-    gb.adjustments = {
-        "A1": {
-            "hw01": [
-                gradelib.Deduction(gradelib.Points(50)),
-            ]
-        },
-    }
-
-    assert gb.points_after_adjustments.loc["A1", "hw01"] == 0
-
-
-def test_points_after_adjustments_takes_additions_into_account():
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
-    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
-
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([20, 50], index=columns)
-
-    gb = gradelib.Gradebook(points_marked, points_possible)
-
-    gb.adjustments = {
-        "A1": {
-            "hw01": [
-                gradelib.Addition(gradelib.Points(5)),
-            ]
-        },
-        "A2": {
-            "hw02": [
-                gradelib.Addition(gradelib.Percentage(0.3)),
-            ]
-        },
-    }
-
-    assert gb.points_after_adjustments.loc["A1", "hw01"] == 15
-    assert gb.points_after_adjustments.loc["A2", "hw02"] == 40 + 15
-
-
-def test_points_after_adjustments_does_not_set_ceiling():
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
-    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
-
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([20, 50], index=columns)
-
-    gb = gradelib.Gradebook(points_marked, points_possible)
-
-    gb.adjustments = {
-        "A1": {
-            "hw01": [
-                gradelib.Addition(gradelib.Points(50)),
-            ]
-        },
-    }
-
-    assert gb.points_after_adjustments.loc["A1", "hw01"] == 60
-
-
-def test_points_after_adjustments_respects_series_of_additions_and_deductions():
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
-    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
-
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([20, 50], index=columns)
-
-    gb = gradelib.Gradebook(points_marked, points_possible)
-
-    gb.adjustments = {
-        "A1": {
-            "hw01": [
-                gradelib.Deduction(gradelib.Points(3)),
-                gradelib.Addition(gradelib.Points(5)),
-                gradelib.Deduction(gradelib.Percentage(0.2)),
-            ]
-        },
-    }
-
-    assert gb.points_after_adjustments.loc["A1", "hw01"] == 8
 
 
 # weight
@@ -791,13 +637,11 @@ def test_restricted_to_pids_copies_all_attributes():
     # when
     original = GRADESCOPE_EXAMPLE.copy()
     original.notes = {"A100": {"drop": ["testing this"]}}
-    original.adjustments = {"A100": {"hw01": []}}
 
     actual = original.restricted_to_pids(ROSTER.index)
 
     # then
     assert actual.notes == original.notes
-    assert actual.adjustments == original.adjustments
 
 
 # restricted_to_assignments() and without_assignments()
@@ -828,24 +672,11 @@ def test_restricted_to_assignments_copies_all_attributes():
     # when
     original = GRADESCOPE_EXAMPLE.copy()
     original.notes = {"A100": {"drop": ["testing this"]}}
-    original.adjustments = {"A100": {"homework 01": []}}
 
     actual = original.restricted_to_assignments(["homework 01", "homework 02"])
 
     # then
     assert actual.notes == original.notes
-    assert actual.adjustments == original.adjustments
-
-
-def test_restricted_to_assignments_removes_adjustments_not_in_assignments():
-    # when
-    original = GRADESCOPE_EXAMPLE.copy()
-    original.adjustments = {"A100": {"homework 01": [1], "homework 03": [3]}}
-
-    actual = original.restricted_to_assignments(["homework 01", "homework 02"])
-
-    # then
-    assert actual.adjustments == {"A100": {"homework 01": [1]}}
 
 
 def test_restricted_to_assignments_updates_groups():
@@ -1020,31 +851,6 @@ def test_combine_gradebooks_raises_if_scales_do_not_match():
             [ex_1, ex_2],
             restricted_to_pids=ROSTER.index,
         )
-
-
-def test_combine_gradebooks_concatenates_adjustments():
-    # when
-    example_1 = GRADESCOPE_EXAMPLE.copy()
-    example_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
-
-    example_1.adjustments = {"A1": {"hw01": [1, 2, 3]}, "A2": {"hw02": [4]}}
-
-    example_2.adjustments = {
-        "A1": {"lab01": [5]},
-        "A2": {"lab02": [6]},
-        "A3": {"lab01": [7]},
-    }
-
-    combined = gradelib.combine_gradebooks(
-        [example_1, example_2], restricted_to_pids=ROSTER.index
-    )
-
-    # then
-    assert combined.adjustments == {
-        "A1": {"hw01": [1, 2, 3], "lab01": [5]},
-        "A2": {"hw02": [4], "lab02": [6]},
-        "A3": {"lab01": [7]},
-    }
 
 
 def test_combine_gradebooks_concatenates_notes():
@@ -1358,62 +1164,6 @@ def test_combine_assignments_raises_if_any_part_is_dropped():
         result = gradebook.with_assignments_combined({"hw01": HOMEWORK_01_PARTS})
 
 
-def test_combine_assignments_combines_adjustments():
-    # given
-    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-
-    gradebook.adjustments["A1"] = {
-        "hw01": [gradelib.Deduction(gradelib.Points(4))],
-        "hw01 - programming": [gradelib.Deduction(gradelib.Points(5))],
-    }
-
-    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
-
-    result = gradebook.with_assignments_combined({"hw01": HOMEWORK_01_PARTS})
-
-    assert result.adjustments == {
-        "A1": {
-            "hw01": [
-                gradelib.Deduction(gradelib.Points(4)),
-                gradelib.Deduction(gradelib.Points(5)),
-            ]
-        }
-    }
-
-
-def test_combine_assignments_converted_percentage_adjustments_to_points():
-    # given
-    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-
-    gradebook.adjustments["A1"] = {
-        "hw01": [gradelib.Deduction(gradelib.Points(4))],
-        "hw01 - programming": [gradelib.Deduction(gradelib.Percentage(0.3))],
-    }
-
-    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
-
-    result = gradebook.with_assignments_combined({"hw01": HOMEWORK_01_PARTS})
-
-    assert result.adjustments == {
-        "A1": {
-            "hw01": [
-                gradelib.Deduction(gradelib.Points(4)),
-                gradelib.Deduction(gradelib.Points(15)),
-            ]
-        }
-    }
-
-
 def test_combine_assignments_copies_attributes():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
@@ -1501,29 +1251,8 @@ def test_with_renamed_assignments_allows_swapping_names():
     assert_gradebook_is_sound(result)
 
 
-def test_with_renamed_assignments_updates_adjustments():
-    # given
-    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-    gradebook.notes = {"A1": ["ok"]}
-
-    gradebook.adjustments = {"A1": {"hw01": [1]}}
-
-    result = gradebook.with_renamed_assignments(
-        {"hw01": "homework 01"},
-    )
-
-    assert result.adjustments == {"A1": {"homework 01": [1]}}
-
-    assert_gradebook_is_sound(result)
-
-
 # Gradebook
-# ==================
+# =========
 
 # default_groups
 
@@ -1714,38 +1443,6 @@ def test_value_with_custom_assignment_weights():
 # -----------------------
 
 
-def test_group_points_respects_adjustments():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-
-    gradebook.adjustments = {
-        "A1": {"hw01": [gradelib.Deduction(gradelib.Percentage(1))]},
-        "A2": {"lab01": [gradelib.Deduction(gradelib.Percentage(0.5))]},
-    }
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        ("homeworks", HOMEWORKS, 0.5),
-        gradelib.Group("labs", ["lab01"], 0.5),
-    ]
-
-    # then
-
-    pd.testing.assert_frame_equal(
-        gradebook.group_points_possible_after_drops,
-        pd.DataFrame(
-            [[152, 20], [152, 20]],
-            index=gradebook.students,
-            columns=["homeworks", "labs"],
-        ),
-    )
-
 
 def test_group_points_respects_dropped_assignments():
     # given
@@ -1757,42 +1454,6 @@ def test_group_points_respects_dropped_assignments():
     gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        ("homeworks", HOMEWORKS, 0.5),
-        gradelib.Group("labs", ["lab01"], 0.5),
-    ]
-
-    # then
-
-    pd.testing.assert_frame_equal(
-        gradebook.group_points_possible_after_drops,
-        pd.DataFrame(
-            [[102, 20], [52, 20]],
-            index=gradebook.students,
-            columns=["homeworks", "labs"],
-        ),
-    )
-
-
-def test_group_points_respects_adjustments_and_dropped_assignments_simultaneously():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-    gradebook.dropped.loc["A1", "hw02"] = True
-    gradebook.dropped.loc["A2", "hw03"] = True
-    gradebook.adjustments = {
-        "A1": {
-            "hw02": [gradelib.Deduction(gradelib.Points(10))],
-            "hw03": [gradelib.Deduction(gradelib.Points(5))],
-        }
-    }
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
 
@@ -1861,38 +1522,6 @@ def test_group_scores_raises_if_all_assignments_in_a_group_are_dropped():
         gradebook.group_scores
 
 
-def test_group_scores_respects_adjustments():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-
-    gradebook.adjustments = {
-        "A1": {"hw01": [gradelib.Deduction(gradelib.Percentage(1))]},
-        "A2": {"lab01": [gradelib.Deduction(gradelib.Percentage(0.5))]},
-    }
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        ("homeworks", HOMEWORKS, 0.5),
-        gradelib.Group("labs", ["lab01"], 0.5),
-    ]
-
-    # then
-    pd.testing.assert_frame_equal(
-        gradebook.group_scores,
-        pd.DataFrame(
-            [[120 / 152, 20 / 20], [24 / 152, 10 / 20]],
-            index=gradebook.students,
-            columns=["homeworks", "labs"],
-        ),
-    )
-
-
 def test_group_scores_respects_dropped_assignments():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -1922,78 +1551,6 @@ def test_group_scores_respects_dropped_assignments():
     )
 
 
-def test_group_scores_respects_adjustments_and_dropped_assignments_simultaneously():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-    gradebook.dropped.loc["A1", "hw02"] = True
-    gradebook.dropped.loc["A2", "hw03"] = True
-    gradebook.adjustments = {
-        "A1": {
-            "hw02": [gradelib.Deduction(gradelib.Points(10))],
-            "hw03": [gradelib.Deduction(gradelib.Points(5))],
-        }
-    }
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        ("homeworks", HOMEWORKS, 0.5),
-        gradelib.Group("labs", ["lab01"], 0.5),
-    ]
-
-    # then
-    pd.testing.assert_frame_equal(
-        gradebook.group_scores,
-        pd.DataFrame(
-            [[86 / 102, 20 / 20], [9 / 52, 20 / 20]],
-            index=gradebook.students,
-            columns=["homeworks", "labs"],
-        ),
-    )
-
-
-def test_group_scores_respects_normalize_assignment_weights_and_drops_and_adjustments():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-    gradebook.dropped.loc["A1", "hw02"] = True
-    gradebook.dropped.loc["A2", "hw03"] = True
-    gradebook.adjustments = {
-        "A1": {
-            "hw02": [gradelib.Deduction(gradelib.Points(10))],
-            "hw03": [gradelib.Deduction(gradelib.Points(5))],
-        }
-    }
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        gradelib.Group("homeworks", gradelib.Normalized(HOMEWORKS), 0.5),
-        gradelib.Group("labs", ["lab01"], 0.5),
-    ]
-
-    # then
-    pd.testing.assert_frame_equal(
-        gradebook.group_scores,
-        pd.DataFrame(
-            [
-                [(1 / 2 + 0 / 50 + 85 / 100) / 2, 20 / 20],
-                [(2 / 2 + 7 / 50 + 0 / 100) / 2, 20 / 20],
-            ],
-            index=gradebook.students,
-            columns=["homeworks", "labs"],
-        ),
-    )
-
 
 # overall_score
 # -----------------------------------------------------------------------------
@@ -2020,37 +1577,6 @@ def test_overall_score_respects_group_weighting():
         gradebook.overall_score,
         pd.Series(
             [121 / 152 * 0.6 + 20 / 20 * 0.4, 24 / 152 * 0.6 + 20 / 20 * 0.4],
-            index=gradebook.students,
-        ),
-    )
-
-
-def test_overall_score_respects_adjustments():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-
-    gradebook.adjustments = {
-        "A1": {"hw01": [gradelib.Deduction(gradelib.Percentage(1))]},
-        "A2": {"lab01": [gradelib.Deduction(gradelib.Percentage(0.5))]},
-    }
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        ("homeworks", HOMEWORKS, 0.6),
-        gradelib.Group("labs", ["lab01"], 0.4),
-    ]
-
-    # then
-    pd.testing.assert_series_equal(
-        gradebook.overall_score,
-        pd.Series(
-            [120 / 152 * 0.6 + 20 / 20 * 0.4, 24 / 152 * 0.6 + 10 / 20 * 0.40],
             index=gradebook.students,
         ),
     )
@@ -2084,77 +1610,6 @@ def test_overall_score_respects_dropped_assignments():
     )
 
 
-def test_overall_score_respects_adjustments_and_dropped_assignments_simultaneously():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-    gradebook.dropped.loc["A1", "hw02"] = True
-    gradebook.dropped.loc["A2", "hw03"] = True
-    gradebook.adjustments = {
-        "A1": {
-            "hw02": [gradelib.Deduction(gradelib.Points(10))],
-            "hw03": [gradelib.Deduction(gradelib.Points(5))],
-        }
-    }
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        ("homeworks", HOMEWORKS, 0.6),
-        gradelib.Group("labs", ["lab01"], 0.4),
-    ]
-
-    # then
-    pd.testing.assert_series_equal(
-        gradebook.overall_score,
-        pd.Series(
-            [86 / 102 * 0.6 + 20 / 20 * 0.4, 9 / 52 * 0.6 + 20 / 20 * 0.40],
-            index=gradebook.students,
-        ),
-    )
-
-
-def test_overall_score_respects_normalize_assignment_weights_and_drops_and_adjustments():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_marked = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_marked, points_possible)
-    gradebook.dropped.loc["A1", "hw02"] = True
-    gradebook.dropped.loc["A2", "hw03"] = True
-    gradebook.adjustments = {
-        "A1": {
-            "hw02": [gradelib.Deduction(gradelib.Points(10))],
-            "hw03": [gradelib.Deduction(gradelib.Points(5))],
-        }
-    }
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        gradelib.Group("homeworks", gradelib.Normalized(HOMEWORKS), 0.6),
-        gradelib.Group("labs", ["lab01"], 0.4),
-    ]
-
-    # then
-    pd.testing.assert_series_equal(
-        gradebook.overall_score,
-        pd.Series(
-            [
-                (1 / 2 + 0 / 50 + 85 / 100) / 2 * 0.6 + 20 / 20 * 0.4,
-                (2 / 2 + 7 / 50 + 0 / 100) / 2 * 0.6 + 20 / 20 * 0.40,
-            ],
-            index=gradebook.students,
-        ),
-    )
-
-
 # letter_grades
 
 
@@ -2168,12 +1623,7 @@ def test_letter_grades_respects_scale():
     gradebook = gradelib.Gradebook(points_marked, points_possible)
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A2", "hw03"] = True
-    gradebook.adjustments = {
-        "A1": {
-            "hw02": [gradelib.Deduction(gradelib.Points(10))],
-            "hw03": [gradelib.Deduction(gradelib.Points(5))],
-        }
-    }
+
     gradebook.scale = {
         "A+": 0.9,
         "A": 0.8,

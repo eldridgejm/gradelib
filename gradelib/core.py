@@ -504,10 +504,6 @@ class Group:
 
 
 
-
-    
-
-
 class Gradebook:
     """Data structure which facilitates common grading operations.
 

@@ -1181,8 +1181,6 @@ class Gradebook:
         if len(resulting_names) != len(self.assignments):
             raise ValueError("Name clashes in renamed assignments.")
 
-        result = self.copy()
-
         def _update_key(key):
             if key in mapping:
                 return mapping[key]
@@ -1192,11 +1190,10 @@ class Gradebook:
         def _update_assignments_dct(assignments_dct):
             return {_update_key(k): v for k, v in assignments_dct.items()}
 
-        result.points_earned.rename(columns=mapping, inplace=True)
-        result.points_possible.rename(index=mapping, inplace=True)
-        result.lateness.rename(columns=mapping, inplace=True)
-        result.dropped.rename(columns=mapping, inplace=True)
-        return result
+        self.points_earned.rename(columns=mapping, inplace=True)
+        self.points_possible.rename(index=mapping, inplace=True)
+        self.lateness.rename(columns=mapping, inplace=True)
+        self.dropped.rename(columns=mapping, inplace=True)
 
     # notes ----------------------------------------------------------------------------
 

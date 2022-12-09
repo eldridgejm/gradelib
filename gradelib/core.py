@@ -295,7 +295,7 @@ def _combine_if_equal(gradebooks, attr):
     return obj
 
 
-def combine_gradebooks(gradebooks, restricted_to_pids=None):
+def combine_gradebooks(gradebooks, restrict_to_pids=None):
     """Create a gradebook by safely combining several existing gradebooks.
 
     It is crucial that the combined gradebooks have exactly the same
@@ -318,10 +318,10 @@ def combine_gradebooks(gradebooks, restricted_to_pids=None):
     gradebooks : Collection[Gradebook]
         The gradebooks to combine. Must have matching indices and unique
         column names.
-    restricted_to_pids : Collection[str] or None
-        If provided, each input gradebook will be restricted to the PIDs
+    restrict_to_pids : Collection[str] or None
+        If provided, each input gradebook will be restrict to the PIDs
         given before attempting to combine them. This is a convenience
-        option, and it simply calls :meth:`Gradebook.restricted_to_pids` on
+        option, and it simply calls :meth:`Gradebook.restrict_to_pids` on
         each of the inputs.  Default: None
 
     Returns
@@ -337,10 +337,11 @@ def combine_gradebooks(gradebooks, restricted_to_pids=None):
         scales do not match.
 
     """
-    gradebooks = list(gradebooks)
+    gradebooks = [g.copy() for g in gradebooks]
 
-    if restricted_to_pids is not None:
-        gradebooks = [g.restricted_to_pids(restricted_to_pids) for g in gradebooks]
+    if restrict_to_pids is not None:
+        for gradebook in gradebooks:
+            gradebook.restrict_to_pids(restrict_to_pids)
 
     # check that all gradebooks have the same PIDs
     reference_pids = gradebooks[0].pids
@@ -1045,18 +1046,13 @@ class Gradebook:
 
         return self.restrict_to_assignments(set(self.assignments) - set(assignments))
 
-    def restricted_to_pids(self, to):
+    def restrict_to_pids(self, to):
         """Restrict the gradebook to only the supplied PIDS.
 
         Parameters
         ----------
         to : Collection[str]
             A collection of PIDs. For instance, from the final course roster.
-
-        Returns
-        -------
-        Gradebook
-            A Gradebook with only these PIDs.
 
         Raises
         ------
@@ -1069,13 +1065,9 @@ class Gradebook:
         if extras:
             raise KeyError(f"These PIDs were not in the gradebook: {extras}.")
 
-        r_points = self.points_earned.loc[pids].copy()
-        r_lateness = self.lateness.loc[pids].copy()
-        r_dropped = self.dropped.loc[pids].copy()
-
-        return self._replace(
-            points_earned=r_points, lateness=r_lateness, dropped=r_dropped
-        )
+        self.points_earned = self.points_earned.loc[pids]
+        self.lateness = self.lateness.loc[pids]
+        self.dropped = self.dropped.loc[pids]
 
     def _combine_assignment(self, new_name, parts):
         """A helper function to combine assignments under the new name."""

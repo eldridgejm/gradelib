@@ -1113,7 +1113,7 @@ class Gradebook:
 
         return result.remove_assignments(set(parts) - {new_name})
 
-    def with_assignments_combined(self, selector):
+    def combine_assignment_parts(self, selector):
         """Combine the assignment parts into one single assignment with the new name.
 
         Sometimes assignments may have several parts which are recorded separately

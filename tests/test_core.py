@@ -644,56 +644,48 @@ def test_restricted_to_pids_copies_all_attributes():
     assert actual.notes == original.notes
 
 
-# restricted_to_assignments() and without_assignments()
+# restrict_to_assignments() and without_assignments()
 # -----------------------------------------------------------------------------
 
 
-def test_restricted_to_assignments():
+def test_restrict_to_assignments():
     # when
-    actual = GRADESCOPE_EXAMPLE.restricted_to_assignments(
+    example = GRADESCOPE_EXAMPLE.copy()
+    example.restrict_to_assignments(
         ["homework 01", "homework 02"]
     )
 
     # then
-    assert set(actual.assignments) == {"homework 01", "homework 02"}
-    assert_gradebook_is_sound(actual)
+    assert set(example.assignments) == {"homework 01", "homework 02"}
+    assert_gradebook_is_sound(example)
 
 
-def test_restricted_to_assignments_raises_if_assignment_does_not_exist():
+def test_restrict_to_assignments_raises_if_assignment_does_not_exist():
     # given
+    example = GRADESCOPE_EXAMPLE.copy()
     assignments = ["homework 01", "this aint an assignment"]
 
     # then
     with pytest.raises(KeyError):
-        GRADESCOPE_EXAMPLE.restricted_to_assignments(assignments)
+        example.restrict_to_assignments(assignments)
 
 
-def test_restricted_to_assignments_copies_all_attributes():
+def test_restrict_to_assignments_updates_groups():
     # when
-    original = GRADESCOPE_EXAMPLE.copy()
-    original.notes = {"A100": {"drop": ["testing this"]}}
-
-    actual = original.restricted_to_assignments(["homework 01", "homework 02"])
-
-    # then
-    assert actual.notes == original.notes
-
-
-def test_restricted_to_assignments_updates_groups():
-    # when
-    original = GRADESCOPE_EXAMPLE.copy()
-    original.groups = [
-        ("homeworks", original.assignments.starting_with("home"), 0.75),
-        ("labs", original.assignments.starting_with("lab"), 0.25),
+    example = GRADESCOPE_EXAMPLE.copy()
+    example.groups = [
+        ("homeworks", example.assignments.starting_with("home"), 0.75),
+        ("labs", example.assignments.starting_with("lab"), 0.25),
     ]
 
-    actual = original.restricted_to_assignments(["homework 01", "homework 02"])
+    example.restrict_to_assignments(["homework 01", "homework 02"])
 
     # then
-    assert actual.groups == (
+    assert example.groups == (
         gradelib.Group("homeworks", ["homework 01", "homework 02"], 0.75),
     )
 
+# without_assignments()
 
 def test_without_assignments():
     # when

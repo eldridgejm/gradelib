@@ -1167,7 +1167,7 @@ def test_combine_assignment_parts_copies_attributes():
 
 def test_combine_assignment_versions_removes_assignment_versions():
     # given
-    columns = ["midterm 01 - version a", "midterm 02 - version b"]
+    columns = ["mt - version a", "mt - version b"]
     p1 = pd.Series(data=[50, np.nan], index=columns, name="A1")
     p2 = pd.Series(data=[np.nan, 30], index=columns, name="A2")
     points_earned = pd.DataFrame([p1, p2])
@@ -1175,28 +1175,82 @@ def test_combine_assignment_versions_removes_assignment_versions():
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
     # when
-    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
-    gradebook.combine_assignment_versions({"midterm 01": columns})
+    PARTS = gradebook.assignments.starting_with("mt")
+    gradebook.combine_assignment_versions({"midterm": columns})
 
     # then
-    assert list(gradebook.assignments) == ["midterm 01"]
+    assert list(gradebook.assignments) == ["midterm"]
 
 def test_combine_assignment_versions_merges_points():
     # given
-    columns = ["midterm 01 - version a", "midterm 02 - version b"]
-    p1 = pd.Series(data=[50, np.nan], index=columns, name="A1")
-    p2 = pd.Series(data=[np.nan, 30], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([50, 50], index=columns)
+    columns = ["mt - version a", "mt - version b", "mt - version c"]
+    p1 = pd.Series(data=[50, np.nan, np.nan], index=columns, name="A1")
+    p2 = pd.Series(data=[np.nan, 30, np.nan], index=columns, name="A2")
+    p3 = pd.Series(data=[np.nan, np.nan, 40], index=columns, name="A3")
+    points_earned = pd.DataFrame([p1, p2, p3])
+    points_possible = pd.Series([50, 50, 40], index=columns)
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
     # when
-    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
-    gradebook.combine_assignment_versions({"midterm 01": columns})
+    PARTS = gradebook.assignments.starting_with("mt")
+    gradebook.combine_assignment_versions({"midterm": columns})
 
     # then
-    assert gradebook.points_earned.loc['A1', 'midterm 01'] == 50
-    assert gradebook.points_earned.loc['A2', 'midterm 01'] == 30
+    assert gradebook.points_earned.loc['A1', 'midterm'] == 50
+    assert gradebook.points_earned.loc['A2', 'midterm'] == 30
+    assert gradebook.points_earned.loc['A3', 'midterm'] == 40
+
+def test_combine_assignment_versions_raises_if_any_dropped():
+    # given
+    columns = ["mt - version a", "mt - version b", "mt - version c"]
+    p1 = pd.Series(data=[50, np.nan, np.nan], index=columns, name="A1")
+    p2 = pd.Series(data=[np.nan, 30, np.nan], index=columns, name="A2")
+    p3 = pd.Series(data=[np.nan, np.nan, 40], index=columns, name="A3")
+    points_earned = pd.DataFrame([p1, p2, p3])
+    points_possible = pd.Series([50, 50, 40], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.dropped.loc['A1', 'mt - version a'] = True
+
+    # when
+    PARTS = gradebook.assignments.starting_with("mt")
+
+    with pytest.raises(ValueError):
+        gradebook.combine_assignment_versions({"midterm": columns})
+
+def test_combine_assignment_versions_raises_if_points_earned_in_multiple_versions():
+    # given
+    columns = ["mt - version a", "mt - version b", "mt - version c"]
+    p1 = pd.Series(data=[50, 20, np.nan], index=columns, name="A1")
+    p2 = pd.Series(data=[np.nan, 30, np.nan], index=columns, name="A2")
+    p3 = pd.Series(data=[np.nan, np.nan, 40], index=columns, name="A3")
+    points_earned = pd.DataFrame([p1, p2, p3])
+    points_possible = pd.Series([50, 50, 40], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    # when
+    PARTS = gradebook.assignments.starting_with("mt")
+
+    with pytest.raises(ValueError):
+        gradebook.combine_assignment_versions({"midterm": columns})
+
+def test_combine_assignment_versions_raises_if_any_version_is_late():
+    # given
+    columns = ["mt - version a", "mt - version b", "mt - version c"]
+    p1 = pd.Series(data=[50, np.nan, np.nan], index=columns, name="A1")
+    p2 = pd.Series(data=[np.nan, 30, np.nan], index=columns, name="A2")
+    p3 = pd.Series(data=[np.nan, np.nan, 40], index=columns, name="A3")
+    points_earned = pd.DataFrame([p1, p2, p3])
+    points_possible = pd.Series([50, 50, 40], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.lateness.loc["A1", "mt - version a"] = pd.Timedelta(days=3)
+
+    # when
+    PARTS = gradebook.assignments.starting_with("mt")
+
+    with pytest.raises(ValueError):
+        gradebook.combine_assignment_versions({"midterm": columns})
 
 # rename_assignments
 # ------------------------

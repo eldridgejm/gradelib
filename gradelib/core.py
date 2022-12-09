@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 
 
-
 NORMALIZE = object()
 
 
@@ -189,7 +188,6 @@ class Assignments(collections.abc.Sequence):
         return {key: Assignments(value) for key, value in dct.items()}
 
 
-
 # GradeAmounts
 # ======================================================================================
 
@@ -221,6 +219,7 @@ class Percentage(_GradeAmount):
 # ======================================================================================
 
 # helpers ------------------------------------------------------------------------------
+
 
 def _normalize_selector(selector, assignments):
     if not callable(selector):
@@ -629,9 +628,7 @@ class Gradebook:
 
     @property
     def value(self):
-        return (
-            self.points_earned / self.points_possible
-        ) * self.overall_weight
+        return (self.points_earned / self.points_possible) * self.overall_weight
 
     # properties: scores ---------------------------------------------------------------
 
@@ -764,44 +761,41 @@ class Gradebook:
     @property
     def percentile(self):
         s = 1 - ((self.rank - 1) / len(self.rank))
-        s.name = 'percentile'
+        s.name = "percentile"
         return s
 
     # summaries ------------------------------------------------------------------------
 
     def _assignment_plot(self, pid):
-        data = self.score.loc[pid].to_frame(name='Score')
-        data['Notes'] = self.dropped.loc[pid].apply(lambda d: 'dropped' if d else '')
+        data = self.score.loc[pid].to_frame(name="Score")
+        data["Notes"] = self.dropped.loc[pid].apply(lambda d: "dropped" if d else "")
 
         data = (
-            data
-            .sort_index()
+            data.sort_index()
             .reset_index()
-            .rename(
-                columns={'index': 'Assignment'}
-            )
+            .rename(columns={"index": "Assignment"})
             .reset_index()
             .fillna(0)
         )
 
-        data['Formatted Score'] = data['Score'].apply(lambda s: f'{s * 100:0.2f}%')
+        data["Formatted Score"] = data["Score"].apply(lambda s: f"{s * 100:0.2f}%")
 
-        bars = altair.Chart(data).mark_bar().encode(
-            x='Score:Q',
-            y='Assignment:N',
-            tooltip='Formatted Score'
+        bars = (
+            altair.Chart(data)
+            .mark_bar()
+            .encode(x="Score:Q", y="Assignment:N", tooltip="Formatted Score")
         )
 
-        text = altair.Chart(data).mark_text(
-            align='left',
-            baseline='middle',
-            color='black',
-            fontWeight='bold',
-            dx=3  # Nudges text to right so it doesn't appear on top of the bar
-        ).encode(
-            x='Score:Q',
-            y='Assignment:N',
-            text='Notes:N'
+        text = (
+            altair.Chart(data)
+            .mark_text(
+                align="left",
+                baseline="middle",
+                color="black",
+                fontWeight="bold",
+                dx=3,  # Nudges text to right so it doesn't appear on top of the bar
+            )
+            .encode(x="Score:Q", y="Assignment:N", text="Notes:N")
         )
 
         return bars + text
@@ -1185,6 +1179,19 @@ class Gradebook:
         if self.dropped[versions].any(axis=None):
             raise ValueError("Cannot combine assignments with drops.")
 
+        # check that points are not earned in multiple versions
+        assignments_turned_in = (~pd.isna(self.points_earned)).sum(axis=1)
+        if (assignments_turned_in > 1).any():
+            students = assignments_turned_in[assignments_turned_in > 1].index
+            msg = f"{list(students)} turned in more than one version."
+            raise ValueError(msg)
+
+        # check that there's no lateness in any version
+        total_lateness = self.lateness[versions].sum(axis=1)
+        if total_lateness.any():
+            msg = "Cannot combine versions when some have been turned in late."
+            raise ValueError(msg)
+
         assignment_points = self.points_earned[versions].max(axis=1)
         assignment_max = self.points_possible[versions[0]]
         assignment_lateness = self.lateness[versions].max(axis=1)
@@ -1213,14 +1220,13 @@ class Gradebook:
         It is assumed that all assignment versions have the same number of
         points possible. If this is not the case, a `ValueError` is raised.
 
-        Similarly, it is assumed that no student earns points for more than one of the
-        versions, and that they have not turned in more than one of the versions late.
-        If these assumptions are violated, a `ValueError` is raised.
+        Similarly, it is assumed that no student earns points for more than one
+        of the versions. If this is not true, a `ValueError` is raised.
 
         It is unclear what the result should be if any of the assignments to be
-        unified has been dropped, but other parts have not. For this reason,
-        this method will raise a `ValueError` if *any* of the parts have been
-        dropped.
+        unified has been dropped or is late, but other parts have not. If
+        either of these assumptions are violated, this method will raise a
+        `ValueError`.
 
         Groups are updated so that the versions no longer appear in any group, but
         new groups are not created.

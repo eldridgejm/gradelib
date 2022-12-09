@@ -922,7 +922,7 @@ class Gradebook:
 
     # adding/removing assignments/students ---------------------------------------------
 
-    def with_assignment(
+    def add_assignment(
         self, name, points_earned, points_possible, lateness=None, dropped=None
     ):
         """Adds a single assignment to the gradebook.
@@ -947,11 +947,6 @@ class Gradebook:
             Whether the assignment should be dropped for any given student.
             Default: all False.
 
-        Returns
-        -------
-        Gradebook
-            A new Gradebook object with the new assignment in place.
-
         Raises
         ------
         ValueError
@@ -968,8 +963,6 @@ class Gradebook:
         if dropped is None:
             dropped = pd.Series(False, index=self.students)
 
-        result = self.copy()
-
         def _match_pids(pids, where):
             """Ensure that pids match."""
             theirs = set(pids)
@@ -983,12 +976,10 @@ class Gradebook:
         _match_pids(lateness.index, "late")
         _match_pids(dropped.index, "dropped")
 
-        result.points_earned[name] = points_earned
-        result.points_possible[name] = points_possible
-        result.lateness[name] = lateness
-        result.dropped[name] = dropped
-
-        return result
+        self.points_earned[name] = points_earned
+        self.points_possible[name] = points_possible
+        self.lateness[name] = lateness
+        self.dropped[name] = dropped
 
     def restricted_to_assignments(self, assignments):
         """Restrict the gradebook to only the supplied assignments.

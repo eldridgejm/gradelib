@@ -878,11 +878,11 @@ def test_combine_gradebooks_concatenates_notes():
     }
 
 
-# with_assignment()
+# add_assignment()
 # -----------------------------------------------------------------------------
 
 
-def test_with_assignment():
+def test_add_assignment():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -899,7 +899,7 @@ def test_with_assignment():
     assignment_dropped = pd.Series([False, True], index=["A1", "A2"])
 
     # when
-    result = gradebook.with_assignment(
+    gradebook.add_assignment(
         "new",
         assignment_points_earned,
         points_possible=20,
@@ -908,14 +908,14 @@ def test_with_assignment():
     )
 
     # then
-    assert len(result.assignments) == 5
-    assert result.points_earned.loc["A1", "new"] == 10
-    assert result.points_possible.loc["new"] == 20
-    assert isinstance(result.lateness.index[0], gradelib.Student)
-    assert isinstance(result.dropped.index[0], gradelib.Student)
+    assert len(gradebook.assignments) == 5
+    assert gradebook.points_earned.loc["A1", "new"] == 10
+    assert gradebook.points_possible.loc["new"] == 20
+    assert isinstance(gradebook.lateness.index[0], gradelib.Student)
+    assert isinstance(gradebook.dropped.index[0], gradelib.Student)
 
 
-def test_with_assignment_default_none_dropped_or_late():
+def test_add_assignment_default_none_dropped_or_late():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -928,18 +928,18 @@ def test_with_assignment_default_none_dropped_or_late():
     assignment_max = 20
 
     # when
-    result = gradebook.with_assignment(
+    gradebook.add_assignment(
         "new",
         assignment_points_earned,
         20,
     )
 
     # then
-    assert result.late.loc["A1", "new"] == False
-    assert result.dropped.loc["A1", "new"] == False
+    assert gradebook.late.loc["A1", "new"] == False
+    assert gradebook.dropped.loc["A1", "new"] == False
 
 
-def test_with_assignment_raises_on_missing_student():
+def test_add_assignment_raises_on_missing_student():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -954,14 +954,14 @@ def test_with_assignment_raises_on_missing_student():
 
     # when
     with pytest.raises(ValueError):
-        gradebook.with_assignment(
+        gradebook.add_assignment(
             "new",
             assignment_points_earned,
             20,
         )
 
 
-def test_with_assignment_raises_on_unknown_student():
+def test_add_assignment_raises_on_unknown_student():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -976,14 +976,14 @@ def test_with_assignment_raises_on_unknown_student():
 
     # when
     with pytest.raises(ValueError):
-        gradebook.with_assignment(
+        gradebook.add_assignment(
             "new",
             assignment_points_earned,
             20,
         )
 
 
-def test_with_assignment_raises_if_duplicate_name():
+def test_add_assignment_raises_if_duplicate_name():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -996,7 +996,7 @@ def test_with_assignment_raises_if_duplicate_name():
 
     # when
     with pytest.raises(ValueError):
-        gradebook.with_assignment(
+        gradebook.add_assignment(
             "hw01",
             assignment_points_earned,
             20,

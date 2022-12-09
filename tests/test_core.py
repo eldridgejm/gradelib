@@ -1230,7 +1230,7 @@ def test_with_renamed_assignments_allows_swapping_names():
     gradebook = gradelib.Gradebook(points_earned, points_possible)
     gradebook.notes = {"A1": ["ok"]}
 
-    gradebook.with_renamed_assignments(
+    result = gradebook.with_renamed_assignments(
         {
             "hw01": "hw02",
             "hw02": "hw01",

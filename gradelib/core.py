@@ -1091,27 +1091,16 @@ class Gradebook:
         assignment_max = self.points_possible[parts].sum()
         assignment_lateness = self.lateness[parts].max(axis=1)
 
-        new_points = self.points_earned.copy()
-        new_max = self.points_possible.copy()
-        new_lateness = self.lateness.copy()
-
-        new_points[new_name] = assignment_points
-        new_max[new_name] = assignment_max
-        new_lateness[new_name] = assignment_lateness
+        self.points_earned[new_name] = assignment_points
+        self.points_possible[new_name] = assignment_max
+        self.lateness[new_name] = assignment_lateness
 
         # we're assuming that dropped was not set; we need to provide an empy
         # mask here, else ._replace will use the existing larger dropped table
         # of self, which contains all parts
-        new_dropped = _empty_mask_like(new_points)
+        self.dropped = _empty_mask_like(self.points_earned)
 
-        result = self._replace(
-            points_earned=new_points,
-            points_possible=new_max,
-            dropped=new_dropped,
-            lateness=new_lateness,
-        )
-
-        return result.remove_assignments(set(parts) - {new_name})
+        self.remove_assignments(set(parts) - {new_name})
 
     def combine_assignment_parts(self, selector):
         """Combine the assignment parts into one single assignment with the new name.
@@ -1163,22 +1152,21 @@ class Gradebook:
         `homework 02`, `homework 02 - programming`, etc., the following will "combine" the
         assignments into `homework 01`, `homework 02`, etc:
 
-            >>> gradebook.with_assignments_combined(lambda s: s.split('-')[0].strip())
+            >>> gradebook.combine_assignment_parts(lambda s: s.split('-')[0].strip())
 
         Alternatively, you could write:
 
-            >>> gradebook.with_assignments_combined(["homework 01", "homework 02"])
+            >>> gradebook.combine_assignment_parts(["homework 01", "homework 02"])
 
         Or:
 
-            >>> gradebook.with_assignments_combined({
+            >>> gradebook.combine_assignment_parts({
                 'homework 01': {'homework 01', 'homework 01 - programming'},
                 'homework 02': {'homework 02', 'homework 02 - programming'}
                 })
 
 
         """
-
         if not callable(selector):
             if not isinstance(selector, dict):
                 dct = {}
@@ -1195,11 +1183,8 @@ class Gradebook:
                     dct[key] = []
                 dct[key].append(assignment)
 
-        result = self
         for key, value in dct.items():
-            result = result._combine_assignment(key, value)
-
-        return result
+            self._combine_assignment(key, value)
 
     def with_renamed_assignments(self, mapping):
         resulting_names = (set(self.assignments) - mapping.keys()) | set(

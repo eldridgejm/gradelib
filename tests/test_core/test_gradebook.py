@@ -10,7 +10,7 @@ import gradelib.io.gradescope
 import gradelib.io.canvas
 
 
-EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent / "examples"
+EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent.parent / "examples"
 GRADESCOPE_EXAMPLE = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 CANVAS_EXAMPLE = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 

@@ -644,7 +644,7 @@ def test_restricted_to_pids_copies_all_attributes():
     assert actual.notes == original.notes
 
 
-# restrict_to_assignments() and without_assignments()
+# restrict_to_assignments() and remove_assignments()
 # -----------------------------------------------------------------------------
 
 
@@ -685,16 +685,17 @@ def test_restrict_to_assignments_updates_groups():
         gradelib.Group("homeworks", ["homework 01", "homework 02"], 0.75),
     )
 
-# without_assignments()
+# remove_assignments() ----------------------------------------------------------------
 
-def test_without_assignments():
+def test_remove_assignments():
     # when
-    actual = GRADESCOPE_EXAMPLE.without_assignments(
-        GRADESCOPE_EXAMPLE.assignments.starting_with("lab")
+    example = GRADESCOPE_EXAMPLE.copy()
+    example.remove_assignments(
+        example.assignments.starting_with("lab")
     )
 
     # then
-    assert set(actual.assignments) == {
+    assert set(example.assignments) == {
         "homework 01",
         "homework 02",
         "homework 03",
@@ -705,16 +706,17 @@ def test_without_assignments():
         "project 01",
         "project 02",
     }
-    assert_gradebook_is_sound(actual)
+    assert_gradebook_is_sound(example)
 
 
-def test_without_assignments_raises_if_assignment_does_not_exist():
+def test_remove_assignments_raises_if_assignment_does_not_exist():
     # given
     assignments = ["homework 01", "this aint an assignment"]
+    example = GRADESCOPE_EXAMPLE.copy()
 
     # then
     with pytest.raises(KeyError):
-        GRADESCOPE_EXAMPLE.without_assignments(assignments)
+        example.remove_assignments(assignments)
 
 
 # combine_gradebooks()

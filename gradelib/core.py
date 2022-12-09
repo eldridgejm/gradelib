@@ -1022,7 +1022,7 @@ class Gradebook:
         self.dropped = r_dropped
         self.groups = _update_groups()
 
-    def without_assignments(self, assignments):
+    def remove_assignments(self, assignments):
         """Returns a new gradebook instance without the given assignments.
 
         Parameters
@@ -1111,7 +1111,7 @@ class Gradebook:
             lateness=new_lateness,
         )
 
-        return result.without_assignments(set(parts) - {new_name})
+        return result.remove_assignments(set(parts) - {new_name})
 
     def with_assignments_combined(self, selector):
         """Combine the assignment parts into one single assignment with the new name.

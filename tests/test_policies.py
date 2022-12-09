@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 import gradelib
-from gradelib import Percentage, Points, Deduction
+from gradelib import Percentage, Points
 
 EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent / "examples"
 GRADESCOPE_EXAMPLE = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")

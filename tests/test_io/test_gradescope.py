@@ -4,7 +4,7 @@ import pandas as pd
 
 import gradelib.io.gradescope
 
-EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent / "examples"
+EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent.parent / "examples"
 
 # read_gradescope
 # =============================================================================

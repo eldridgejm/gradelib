@@ -2,7 +2,7 @@ import pathlib
 
 import gradelib.io.canvas
 
-EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent / "examples"
+EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent.parent / "examples"
 
 
 def test_read_canvas_produces_assignments_in_order():

@@ -2,7 +2,7 @@ import pathlib
 
 import gradelib.io.ucsd
 
-EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent / "examples"
+EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent.parent / "examples"
 
 # read_egrades_roster
 # =============================================================================

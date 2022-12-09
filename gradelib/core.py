@@ -222,6 +222,26 @@ class Percentage(_GradeAmount):
 
 # helpers ------------------------------------------------------------------------------
 
+def _normalize_selector(selector, assignments):
+    if not callable(selector):
+        if not isinstance(selector, dict):
+            dct = {}
+            for prefix in selector:
+                dct[prefix] = {a for a in assignments if a.startswith(prefix)}
+        else:
+            dct = selector
+    else:
+        to_key = selector
+        dct = {}
+        for assignment in assignments:
+            key = to_key(assignment)
+            if key not in dct:
+                dct[key] = []
+            dct[key].append(assignment)
+
+    return dct
+
+
 def _empty_mask_like(table):
     """Given a dataframe, create another just like it with every entry False."""
     empty = table.copy()
@@ -408,7 +428,6 @@ class Group:
 
     def __eq__(self, other):
         return all(getattr(self, attr) == getattr(other, attr) for attr in self._attrs)
-
 
 
 class Gradebook:
@@ -1069,7 +1088,7 @@ class Gradebook:
         self.lateness = self.lateness.loc[pids]
         self.dropped = self.dropped.loc[pids]
 
-    def _combine_assignment(self, new_name, parts):
+    def _combine_assignment_parts(self, new_name, parts):
         """A helper function to combine assignments under the new name."""
         parts = list(parts)
         if self.dropped[parts].any(axis=None):
@@ -1155,24 +1174,96 @@ class Gradebook:
 
 
         """
-        if not callable(selector):
-            if not isinstance(selector, dict):
-                dct = {}
-                for prefix in selector:
-                    dct[prefix] = {a for a in self.assignments if a.startswith(prefix)}
-            else:
-                dct = selector
-        else:
-            to_key = selector
-            dct = {}
-            for assignment in self.assignments:
-                key = to_key(assignment)
-                if key not in dct:
-                    dct[key] = []
-                dct[key].append(assignment)
+        dct = _normalize_selector(selector, self.assignments)
 
         for key, value in dct.items():
-            self._combine_assignment(key, value)
+            self._combine_assignment_parts(key, value)
+
+    def _combine_assignment_versions(self, new_name, versions):
+        """A helper function to combine assignments under the new name."""
+        versions = list(versions)
+        if self.dropped[versions].any(axis=None):
+            raise ValueError("Cannot combine assignments with drops.")
+
+        assignment_points = self.points_earned[versions].max(axis=1)
+        assignment_max = self.points_possible[versions[0]]
+        assignment_lateness = self.lateness[versions].max(axis=1)
+
+        self.points_earned[new_name] = assignment_points
+        self.points_possible[new_name] = assignment_max
+        self.lateness[new_name] = assignment_lateness
+
+        # we're assuming that dropped was not set; we need to provide an empy
+        # mask here, else ._replace will use the existing larger dropped table
+        # of self, which contains all versions
+        self.dropped = _empty_mask_like(self.points_earned)
+
+        self.remove_assignments(set(versions) - {new_name})
+
+    def combine_assignment_versions(self, selector):
+        """Combine the assignment versions into one single assignment with the new name.
+
+        Sometimes assignments may have several versions which are recorded separately
+        in the grading software. For instance, multiple versions of a midterm may be
+        distributed to prevent cheating.
+
+        The individual assignment versions are removed from the gradebook and
+        are unified into a single new version.
+
+        It is assumed that all assignment versions have the same number of
+        points possible. If this is not the case, a `ValueError` is raised.
+
+        Similarly, it is assumed that no student earns points for more than one of the
+        versions, and that they have not turned in more than one of the versions late.
+        If these assumptions are violated, a `ValueError` is raised.
+
+        It is unclear what the result should be if any of the assignments to be
+        unified has been dropped, but other parts have not. For this reason,
+        this method will raise a `ValueError` if *any* of the parts have been
+        dropped.
+
+        Groups are updated so that the versions no longer appear in any group, but
+        new groups are not created.
+
+        Parameters
+        ----------
+        selector : Mapping[str, Collection[str]]
+            Either: 1) a mapping whose keys are new assignment names, and whose
+            values are collections of assignments that should be unified under
+            their common key; 2) a list of prefixes; each prefix defines a
+            group that should be combined; or 3) a callable which maps
+            assignment names to new assignment by which they should be grouped.
+
+        Raises
+        ------
+        ValueError
+            If any of the assumptions are violated. See above.
+
+        Example
+        -------
+
+        Assuming the gradebook has assignments named `midterm - version a`,
+        `midterm - version b`, `midterm - version c`, etc., the following will
+        "combine" the assignments into `midterm`:
+
+            >>> gradebook.combine_assignment_versions(lambda s: s.split('-')[0].strip())
+
+        Alternatively, you could write:
+
+            >>> gradebook.combine_assignment_versions(["midterm"])
+
+        Or:
+
+            >>> gradebook.combine_assignment_versions({
+                'midterm': {'midterm - version a', 'midterm - version b', 'midterm - 'version c'},
+                })
+
+
+        """
+        dct = _normalize_selector(selector, self.assignments)
+
+        for key, value in dct.items():
+            self._combine_assignment_versions(key, value)
 
     def rename_assignments(self, mapping):
         resulting_names = (set(self.assignments) - mapping.keys()) | set(

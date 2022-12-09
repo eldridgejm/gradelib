@@ -1163,6 +1163,40 @@ def test_combine_assignment_parts_copies_attributes():
 
     gradebook.combine_assignment_parts({"hw01": HOMEWORK_01_PARTS})
 
+# combine_assignment_versions ----------------------------------------------------------
+
+def test_combine_assignment_versions_removes_assignment_versions():
+    # given
+    columns = ["midterm 01 - version a", "midterm 02 - version b"]
+    p1 = pd.Series(data=[50, np.nan], index=columns, name="A1")
+    p2 = pd.Series(data=[np.nan, 30], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([50, 50], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    # when
+    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
+    gradebook.combine_assignment_versions({"midterm 01": columns})
+
+    # then
+    assert list(gradebook.assignments) == ["midterm 01"]
+
+def test_combine_assignment_versions_merges_points():
+    # given
+    columns = ["midterm 01 - version a", "midterm 02 - version b"]
+    p1 = pd.Series(data=[50, np.nan], index=columns, name="A1")
+    p2 = pd.Series(data=[np.nan, 30], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([50, 50], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    # when
+    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
+    gradebook.combine_assignment_versions({"midterm 01": columns})
+
+    # then
+    assert gradebook.points_earned.loc['A1', 'midterm 01'] == 50
+    assert gradebook.points_earned.loc['A2', 'midterm 01'] == 30
 
 # rename_assignments
 # ------------------------

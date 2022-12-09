@@ -981,7 +981,7 @@ class Gradebook:
         self.lateness[name] = lateness
         self.dropped[name] = dropped
 
-    def restricted_to_assignments(self, assignments):
+    def restrict_to_assignments(self, assignments):
         """Restrict the gradebook to only the supplied assignments.
 
         Groups are updated so that they reference only the assignments listed
@@ -991,11 +991,6 @@ class Gradebook:
         ----------
         assignments : Collection[str]
             A collection of assignment names.
-
-        Returns
-        -------
-        Gradebook
-            A Gradebook with only these assignments.
 
         Raises
         ------
@@ -1021,13 +1016,11 @@ class Gradebook:
             new_groups_with_empties = [_update_group(g) for g in self.groups]
             return [g for g in new_groups_with_empties if g.assignments]
 
-        return self._replace(
-            points_earned=r_points,
-            points_possible=r_maximums,
-            lateness=r_lateness,
-            dropped=r_dropped,
-            groups=_update_groups(),
-        )
+        self.points_earned = r_points
+        self.points_possible = r_maximums
+        self.lateness = r_lateness
+        self.dropped = r_dropped
+        self.groups = _update_groups()
 
     def without_assignments(self, assignments):
         """Returns a new gradebook instance without the given assignments.
@@ -1054,7 +1047,7 @@ class Gradebook:
         if extras:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
 
-        return self.restricted_to_assignments(set(self.assignments) - set(assignments))
+        return self.restrict_to_assignments(set(self.assignments) - set(assignments))
 
     def restricted_to_pids(self, to):
         """Restrict the gradebook to only the supplied PIDS.

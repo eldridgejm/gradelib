@@ -244,7 +244,13 @@ class PenalizeLates:
         else:
             d = self.deduction
 
-        gradebook.add_adjustment(pid, assignment, Deduction(d))
+        pts = gradebook.points_earned.loc[pid, assignment]
+        if isinstance(d, Points):
+            new_point_total = pts - d.amount
+        elif isinstance(d, Percentage):
+            new_point_total = pts - d.amount * pts
+
+        gradebook.points_earned.loc[pid, assignment] = new_point_total
 
 
 # DropLowest

@@ -6,6 +6,9 @@ import pandas as pd
 import pytest
 
 import gradelib
+import gradelib.io.gradescope
+import gradelib.io.canvas
+import gradelib.io.ucsd
 from gradelib import Percentage, Points
 
 EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent / "examples"
@@ -38,7 +41,7 @@ def assert_gradebook_is_sound(gradebook):
     assert isinstance(gradebook.adjustments, dict)
 
 
-# PenalizeLates()
+# PenalizeLates
 # -----------------------------------------------------------------------------
 
 
@@ -60,34 +63,8 @@ def test_penalize_lates_without_forgiveness_or_within_penalizes_all_lates():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates())
 
-    assert result.adjustments == {
-        "A1": {"lab01": [Deduction(Percentage(1))]},
-        "A2": {"hw01": [Deduction(Percentage(1))]},
-    }
-
-
-def test_penalize_lates_with_custom_flat_deduction():
-    # given
-    columns = ["hw01", "hw02", "lab01"]
-    p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([50, 100, 20], index=columns)
-    lateness = pd.DataFrame(
-        [pd.to_timedelta([0, 0, 5000], "s"), pd.to_timedelta([6000, 0, 0], "s")],
-        columns=columns,
-        index=points_earned.index,
-    )
-    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
-
-    HOMEWORK = gradebook.assignments.starting_with("hw")
-
-    result = gradebook.apply(gradelib.policies.PenalizeLates(deduction=Points(3)))
-
-    assert result.adjustments == {
-        "A1": {"lab01": [Deduction(Points(3))]},
-        "A2": {"hw01": [Deduction(Points(3))]},
-    }
+    assert result.points_earned.loc['A1', 'lab01'] == 0
+    assert result.points_earned.loc['A2', 'hw01'] == 0
 
 
 def test_penalize_lates_with_callable_deduction():
@@ -118,13 +95,9 @@ def test_penalize_lates_with_callable_deduction():
     # A2: hw01 hw02 lab01
     # so hw01 receives the greatest deduction
 
-    assert result.adjustments == {
-        "A1": {
-            "hw01": [Deduction(Points(3))],
-            "hw02": [Deduction(Points(2))],
-            "lab01": [Deduction(Points(1))],
-        },
-    }
+    assert result.points_earned.loc['A1', 'hw01'] == 27
+    assert result.points_earned.loc['A1', 'hw02'] == 88
+    assert result.points_earned.loc['A1', 'lab01'] == 19
 
 
 def test_penalize_lates_with_callable_deduction_does_not_count_forgiven():
@@ -157,9 +130,9 @@ def test_penalize_lates_with_callable_deduction_does_not_count_forgiven():
     # A2: hw01 hw02 lab01
     # so hw01 receives the greatest deduction, lab01 receives forgiveness
 
-    assert result.adjustments == {
-        "A1": {"hw02": [Deduction(Points(1))], "hw01": [Deduction(Points(2))]},
-    }
+    assert result.points_earned.loc['A1', 'hw02'] == 89
+    assert result.points_earned.loc['A1', 'hw01'] == 28
+    assert result.points_earned.loc['A1', 'lab01'] == 20
 
 
 def test_penalize_lates_respects_lateness_fudge():
@@ -182,9 +155,7 @@ def test_penalize_lates_respects_lateness_fudge():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates())
 
-    assert result.adjustments == {
-        "A2": {"hw01": [Deduction(Percentage(1))]},
-    }
+    assert result.points_earned.loc['A2', 'hw01'] == 0
 
 
 def test_penalize_lates_within_assignments():
@@ -205,9 +176,7 @@ def test_penalize_lates_within_assignments():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates(within=HOMEWORK))
 
-    assert result.adjustments == {
-        "A2": {"hw01": [Deduction(Percentage(1))]},
-    }
+    assert result.points_earned.loc['A2', 'hw01'] == 0
 
 
 def test_penalize_lates_within_accepts_callable():
@@ -228,9 +197,7 @@ def test_penalize_lates_within_accepts_callable():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates(within=HOMEWORK))
 
-    assert result.adjustments == {
-        "A2": {"hw01": [Deduction(Percentage(1))]},
-    }
+    assert result.points_earned.loc['A2', 'hw01'] == 0
 
 
 def test_penalize_lates_with_forgiveness():
@@ -255,9 +222,7 @@ def test_penalize_lates_with_forgiveness():
     # A1: hw01 hw02 lab01
     # A2: hw01 hw02 lab01
 
-    assert result.adjustments == {
-        "A1": {"hw01": [Deduction(Percentage(1))]},
-    }
+    assert result.points_earned.loc['A1', 'hw01'] == 0
 
 
 def test_penalize_lates_with_forgiveness_and_within():
@@ -283,9 +248,7 @@ def test_penalize_lates_with_forgiveness_and_within():
         ]
     )
 
-    assert result.adjustments == {
-        "A1": {"lab01": [Deduction(Percentage(1))]},
-    }
+    assert result.points_earned.loc['A1', 'lab01'] == 0
 
 
 def test_penalize_lates_with_forgiveness_forgives_most_valuable_assignments_first_by_default():
@@ -321,10 +284,8 @@ def test_penalize_lates_with_forgiveness_forgives_most_valuable_assignments_firs
     # for AI: hw01, lab01, hw02 -- penalize hw01
     # for A2: hw02, hw01, lab01 -- penalize hw02
 
-    assert result.adjustments == {
-        "A1": {"hw01": [Deduction(Percentage(1))]},
-        "A2": {"hw02": [Deduction(Percentage(1))]},
-    }
+    assert result.points_earned.loc['A1', 'hw01'] == 0
+    assert result.points_earned.loc['A2', 'hw02'] == 0
 
 
 def test_penalize_lates_forgives_the_first_n_lates_when_order_by_is_index():
@@ -355,10 +316,8 @@ def test_penalize_lates_forgives_the_first_n_lates_when_order_by_is_index():
         within=HOMEWORK + LABS, forgive=2, order_by="index"
     )(gradebook)
 
-    assert result.adjustments == {
-        "A1": {"lab01": [Deduction(Percentage(1))]},
-        "A2": {"lab01": [Deduction(Percentage(1))]},
-    }
+    assert result.points_earned.loc['A1', 'lab01'] == 0
+    assert result.points_earned.loc['A2', 'lab01'] == 0
 
 
 def test_penalize_lates_with_empty_assignment_list_raises():
@@ -397,12 +356,8 @@ def test_penalize_lates_by_default_takes_into_account_drops():
 
     result = gradebook.apply([gradelib.policies.PenalizeLates(forgive=1)])
 
-    assert result.adjustments == {
-        "A1": {
-            "lab01": [Deduction(Percentage(1))],
-            "lab02": [Deduction(Percentage(1))],
-        }
-    }
+    assert result.points_earned.loc['A1', 'lab01'] == 0
+    assert result.points_earned.loc['A1', 'lab02'] == 0
 
 
 def test_penalize_lates_with_forgiveness_adds_note_for_forgiven_assignments():

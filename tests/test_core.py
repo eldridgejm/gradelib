@@ -1164,11 +1164,11 @@ def test_combine_assignment_parts_copies_attributes():
     gradebook.combine_assignment_parts({"hw01": HOMEWORK_01_PARTS})
 
 
-# with_renamed_assignments
+# rename_assignments
 # ------------------------
 
 
-def test_with_renamed_assignments_simple_example():
+def test_rename_assignments_simple_example():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -1178,24 +1178,24 @@ def test_with_renamed_assignments_simple_example():
     gradebook = gradelib.Gradebook(points_earned, points_possible)
     gradebook.notes = {"A1": ["ok"]}
 
-    result = gradebook.with_renamed_assignments(
+    gradebook.rename_assignments(
         {
             "hw01": "homework 01",
             "hw01 - programming": "homework 01 - programming",
         }
     )
 
-    assert "homework 01" in result.assignments
-    assert "hw01" not in result.assignments
-    assert "homework 01 - programming" in result.assignments
-    assert "hw01 - programming" not in result.assignments
+    assert "homework 01" in gradebook.assignments
+    assert "hw01" not in gradebook.assignments
+    assert "homework 01 - programming" in gradebook.assignments
+    assert "hw01 - programming" not in gradebook.assignments
 
-    assert result.points_earned.loc["A1", "homework 01"] == 1
+    assert gradebook.points_earned.loc["A1", "homework 01"] == 1
 
-    assert_gradebook_is_sound(result)
+    assert_gradebook_is_sound(gradebook)
 
 
-def test_with_renamed_assignments_raises_error_on_name_clash():
+def test_rename_assignments_raises_error_on_name_clash():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -1206,12 +1206,12 @@ def test_with_renamed_assignments_raises_error_on_name_clash():
     gradebook.notes = {"A1": ["ok"]}
 
     with pytest.raises(ValueError):
-        gradebook.with_renamed_assignments(
+        gradebook.rename_assignments(
             {"hw01": "hw02"},
         )
 
 
-def test_with_renamed_assignments_allows_swapping_names():
+def test_rename_assignments_allows_swapping_names():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -1221,19 +1221,19 @@ def test_with_renamed_assignments_allows_swapping_names():
     gradebook = gradelib.Gradebook(points_earned, points_possible)
     gradebook.notes = {"A1": ["ok"]}
 
-    result = gradebook.with_renamed_assignments(
+    gradebook.rename_assignments(
         {
             "hw01": "hw02",
             "hw02": "hw01",
         }
     )
 
-    assert result.points_earned.loc["A1", "hw01"] == 90
-    assert result.points_earned.loc["A1", "hw02"] == 1
-    assert result.points_earned.loc["A2", "hw01"] == 15
-    assert result.points_earned.loc["A2", "hw02"] == 2
+    assert gradebook.points_earned.loc["A1", "hw01"] == 90
+    assert gradebook.points_earned.loc["A1", "hw02"] == 1
+    assert gradebook.points_earned.loc["A2", "hw01"] == 15
+    assert gradebook.points_earned.loc["A2", "hw02"] == 2
 
-    assert_gradebook_is_sound(result)
+    assert_gradebook_is_sound(gradebook)
 
 
 # Gradebook

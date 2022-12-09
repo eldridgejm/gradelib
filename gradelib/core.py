@@ -1174,7 +1174,7 @@ class Gradebook:
         for key, value in dct.items():
             self._combine_assignment(key, value)
 
-    def with_renamed_assignments(self, mapping):
+    def rename_assignments(self, mapping):
         resulting_names = (set(self.assignments) - mapping.keys()) | set(
             mapping.values()
         )

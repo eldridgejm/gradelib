@@ -1003,10 +1003,10 @@ class Gradebook:
         if extras:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
 
-        r_points = self.points_earned.loc[:, assignments].copy()
-        r_maximums = self.points_possible[assignments].copy()
-        r_lateness = self.lateness.loc[:, assignments].copy()
-        r_dropped = self.dropped.loc[:, assignments].copy()
+        self.points_earned = self.points_earned.loc[:, assignments]
+        self.points_possible = self.points_possible[assignments]
+        self.lateness = self.lateness.loc[:, assignments]
+        self.dropped = self.dropped.loc[:, assignments]
 
         def _update_groups():
             def _update_group(g):
@@ -1016,10 +1016,6 @@ class Gradebook:
             new_groups_with_empties = [_update_group(g) for g in self.groups]
             return [g for g in new_groups_with_empties if g.assignments]
 
-        self.points_earned = r_points
-        self.points_possible = r_maximums
-        self.lateness = r_lateness
-        self.dropped = r_dropped
         self.groups = _update_groups()
 
     def remove_assignments(self, assignments):

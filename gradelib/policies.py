@@ -250,6 +250,11 @@ class PenalizeLates:
         elif isinstance(d, Percentage):
             new_point_total = pts - d.amount * pts
 
+        message = (
+            f"{assignment.title()} late. Deduction: {d}. Points earned: {new_point_total}."
+        )
+        gradebook.add_note(pid, "lates", message)
+
         gradebook.points_earned.loc[pid, assignment] = new_point_total
 
 

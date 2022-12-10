@@ -359,6 +359,40 @@ def test_penalize_lates_by_default_takes_into_account_drops():
     assert result.points_earned.loc['A1', 'lab01'] == 0
     assert result.points_earned.loc['A1', 'lab02'] == 0
 
+def test_penalize_lates_adds_note_for_penalized_assignment():
+    # given
+    columns = ["hw01", "hw02", "hw03"]
+    p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([50, 100, 20], index=columns)
+    lateness = pd.DataFrame(
+        [pd.to_timedelta([5000, 5000, 5000], "s"), pd.to_timedelta([6000, 0, 0], "s")],
+        columns=columns,
+        index=points_earned.index,
+    )
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
+
+    HOMEWORK = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [("homeworks", HOMEWORK, 1)]
+
+    result = gradebook.apply(gradelib.policies.PenalizeLates())
+
+    assert result.notes == {
+        "A1": {
+            "lates": [
+                "Hw02 late. Deduction: 100%. Points earned: 0.",
+                "Hw01 late. Deduction: 100%. Points earned: 0.",
+                "Hw03 late. Deduction: 100%. Points earned: 0.",
+            ]
+        },
+        "A2": {
+            "lates": [
+                "Hw01 late. Deduction: 100%. Points earned: 0.",
+            ]
+        },
+    }
 
 def test_penalize_lates_with_forgiveness_adds_note_for_forgiven_assignments():
     # given
@@ -389,6 +423,7 @@ def test_penalize_lates_with_forgiveness_adds_note_for_forgiven_assignments():
             "lates": [
                 "Slip day #1 used on Hw02. Slip days remaining: 1.",
                 "Slip day #2 used on Hw01. Slip days remaining: 0.",
+                "Hw03 late. Deduction: 100%. Points earned: 0.",
             ]
         },
         "A2": {

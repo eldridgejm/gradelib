@@ -42,7 +42,7 @@ class Points(_GradeAmount):
 
 class Percentage(_GradeAmount):
     def __str__(self):
-        return f"{self.amount}%"
+        return f"{self.amount * 100}%"
 
 
 # Gradebook

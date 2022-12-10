@@ -39,8 +39,8 @@ class Assignments(collections.abc.Sequence[str]):
     """A sequence of assignments.
 
     Behaves essentially like a standard Python list of strings, but has some
-    additional methods which make it faster to create groups of assignments. In
-    particular, :meth:`starting_with`, :meth:`containing`, and :meth:`group_by`.
+    additional methods which make it faster to create groups of assignments.
+
     """
 
     def __init__(self, names):
@@ -78,7 +78,7 @@ class Assignments(collections.abc.Sequence[str]):
 
         Parameters
         ----------
-        prefix : str
+        prefix: str
             The prefix to search for.
 
         Returns

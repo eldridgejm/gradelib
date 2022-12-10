@@ -2,46 +2,44 @@
 API
 ***
 
+.. contents:: Table of Contents
+
 Core
 ====
 
 .. currentmodule:: gradelib
 
-.. contents:: Table of Contents
+.. autoclass:: Gradebook
+   :members:
 
-:class:`Gradebook`
-------------------
+.. autoclass:: AssignmentGroup
+   :members:
 
-.. autosummary::
-    :nosignatures:
+.. autoclass:: Assignments
+   :members:
 
-    Gradebook
-    Gradebook.assignments
-    Gradebook.pids
-    Gradebook.score
-    Gradebook.add_assignment
-    Gradebook.restrict_to_assignments
-    Gradebook.remove_assignments
-    Gradebook.combine_assignment_parts
-    Gradebook.combine_assignment_versions
-    Gradebook.restrict_to_pids
-
-:func:`combine_gradebooks`
---------------------------
+.. autoclass:: Student
+   :members:
 
 .. autofunction:: combine_gradebooks
-
-:func:`normalize`
---------------------------
 
 .. autofunction:: normalize
 
 
-.. autosummary::
-    Assignments
-    Assignments.starting_with
-    Assignments.containing
-    Assignments.group_by
+:mod:`io.gradescope`
+====================
 
-.. autosummary::
-    Student
+.. module:: io.gradescope
+
+   Functionality for reading grades exported from Gradescope.
+
+.. autofunction:: gradelib.io.gradescope.read
+
+:mod:`io.canvas`
+====================
+
+.. module:: io.canvas
+
+   Functionality for reading grades exported from Canvas.
+
+.. autofunction:: gradelib.io.canvas.read

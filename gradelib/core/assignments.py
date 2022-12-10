@@ -1,9 +1,10 @@
 import collections.abc
 
 
-class Normalized:
-    def __init__(self, assignments):
-        self.assignments = assignments
+def normalize(assignments):
+    """Creates a dictionary mapping assignment names to normalized weights."""
+    n = len(assignments)
+    return {a: 1/n for a in assignments}
 
 
 class Assignments(collections.abc.Sequence):

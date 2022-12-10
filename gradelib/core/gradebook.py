@@ -5,13 +5,10 @@ import dataclasses
 
 from ..scales import DEFAULT_SCALE, map_scores_to_letter_grades
 from .student import Student
-from .assignments import Assignments, Normalized
+from .assignments import Assignments
 
 import numpy as np
 import pandas as pd
-
-
-NORMALIZE = object()
 
 
 # helper functions ---------------------------------------------------------------------
@@ -190,6 +187,7 @@ def combine_gradebooks(gradebooks, restrict_to_pids=None):
         scale=_combine_if_equal(gradebooks, "scale"),
     )
 
+
 # GradebookOptions ---------------------------------------------------------------------
 
 @dataclasses.dataclass
@@ -199,6 +197,7 @@ class GradebookOptions:
     lateness_fudge: int = 5 * 60
 
 # Group --------------------------------------------------------------------------------
+
 
 class Group:
 
@@ -216,11 +215,7 @@ class Group:
     ):
 
         self.name = name
-        if isinstance(assignments, Normalized):
-            value = 1 / len(assignments.assignments)
-            self.assignments = {a: value for a in assignments.assignments}
-        else:
-            self.assignments = assignments
+        self.assignments = assignments
         self.weight = weight
 
     def __eq__(self, other):

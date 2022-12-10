@@ -11,6 +11,8 @@ import gradelib.io.canvas
 import gradelib.io.ucsd
 from gradelib import Percentage, Points
 
+# examples setup =======================================================================
+
 EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent / "examples"
 GRADESCOPE_EXAMPLE = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 CANVAS_EXAMPLE = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
@@ -27,6 +29,9 @@ CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.Gradebook(
 ROSTER = gradelib.io.ucsd.read_egrades_roster(EXAMPLES_DIRECTORY / "egrades.csv")
 
 
+# helper functions =====================================================================
+
+
 def assert_gradebook_is_sound(gradebook):
     assert (
         gradebook.points_earned.shape
@@ -40,8 +45,9 @@ def assert_gradebook_is_sound(gradebook):
     assert (gradebook.points_earned.columns == gradebook.points_possible.index).all()
 
 
-# PenalizeLates
-# -----------------------------------------------------------------------------
+# tests ================================================================================
+
+# PenalizeLates ------------------------------------------------------------------------
 
 
 def test_penalize_lates_without_forgiveness_or_within_penalizes_all_lates():
@@ -62,8 +68,8 @@ def test_penalize_lates_without_forgiveness_or_within_penalizes_all_lates():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates())
 
-    assert result.points_earned.loc['A1', 'lab01'] == 0
-    assert result.points_earned.loc['A2', 'hw01'] == 0
+    assert result.points_earned.loc["A1", "lab01"] == 0
+    assert result.points_earned.loc["A2", "hw01"] == 0
 
 
 def test_penalize_lates_with_callable_deduction():
@@ -94,9 +100,9 @@ def test_penalize_lates_with_callable_deduction():
     # A2: hw01 hw02 lab01
     # so hw01 receives the greatest deduction
 
-    assert result.points_earned.loc['A1', 'hw01'] == 27
-    assert result.points_earned.loc['A1', 'hw02'] == 88
-    assert result.points_earned.loc['A1', 'lab01'] == 19
+    assert result.points_earned.loc["A1", "hw01"] == 27
+    assert result.points_earned.loc["A1", "hw02"] == 88
+    assert result.points_earned.loc["A1", "lab01"] == 19
 
 
 def test_penalize_lates_with_callable_deduction_does_not_count_forgiven():
@@ -129,9 +135,9 @@ def test_penalize_lates_with_callable_deduction_does_not_count_forgiven():
     # A2: hw01 hw02 lab01
     # so hw01 receives the greatest deduction, lab01 receives forgiveness
 
-    assert result.points_earned.loc['A1', 'hw02'] == 89
-    assert result.points_earned.loc['A1', 'hw01'] == 28
-    assert result.points_earned.loc['A1', 'lab01'] == 20
+    assert result.points_earned.loc["A1", "hw02"] == 89
+    assert result.points_earned.loc["A1", "hw01"] == 28
+    assert result.points_earned.loc["A1", "lab01"] == 20
 
 
 def test_penalize_lates_respects_lateness_fudge():
@@ -154,7 +160,7 @@ def test_penalize_lates_respects_lateness_fudge():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates())
 
-    assert result.points_earned.loc['A2', 'hw01'] == 0
+    assert result.points_earned.loc["A2", "hw01"] == 0
 
 
 def test_penalize_lates_within_assignments():
@@ -175,7 +181,7 @@ def test_penalize_lates_within_assignments():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates(within=HOMEWORK))
 
-    assert result.points_earned.loc['A2', 'hw01'] == 0
+    assert result.points_earned.loc["A2", "hw01"] == 0
 
 
 def test_penalize_lates_within_accepts_callable():
@@ -196,7 +202,7 @@ def test_penalize_lates_within_accepts_callable():
 
     result = gradebook.apply(gradelib.policies.PenalizeLates(within=HOMEWORK))
 
-    assert result.points_earned.loc['A2', 'hw01'] == 0
+    assert result.points_earned.loc["A2", "hw01"] == 0
 
 
 def test_penalize_lates_with_forgiveness():
@@ -221,7 +227,7 @@ def test_penalize_lates_with_forgiveness():
     # A1: hw01 hw02 lab01
     # A2: hw01 hw02 lab01
 
-    assert result.points_earned.loc['A1', 'hw01'] == 0
+    assert result.points_earned.loc["A1", "hw01"] == 0
 
 
 def test_penalize_lates_with_forgiveness_and_within():
@@ -247,7 +253,7 @@ def test_penalize_lates_with_forgiveness_and_within():
         ]
     )
 
-    assert result.points_earned.loc['A1', 'lab01'] == 0
+    assert result.points_earned.loc["A1", "lab01"] == 0
 
 
 def test_penalize_lates_with_forgiveness_forgives_most_valuable_assignments_first_by_default():
@@ -283,8 +289,8 @@ def test_penalize_lates_with_forgiveness_forgives_most_valuable_assignments_firs
     # for AI: hw01, lab01, hw02 -- penalize hw01
     # for A2: hw02, hw01, lab01 -- penalize hw02
 
-    assert result.points_earned.loc['A1', 'hw01'] == 0
-    assert result.points_earned.loc['A2', 'hw02'] == 0
+    assert result.points_earned.loc["A1", "hw01"] == 0
+    assert result.points_earned.loc["A2", "hw02"] == 0
 
 
 def test_penalize_lates_forgives_the_first_n_lates_when_order_by_is_index():
@@ -315,8 +321,8 @@ def test_penalize_lates_forgives_the_first_n_lates_when_order_by_is_index():
         within=HOMEWORK + LABS, forgive=2, order_by="index"
     )(gradebook)
 
-    assert result.points_earned.loc['A1', 'lab01'] == 0
-    assert result.points_earned.loc['A2', 'lab01'] == 0
+    assert result.points_earned.loc["A1", "lab01"] == 0
+    assert result.points_earned.loc["A2", "lab01"] == 0
 
 
 def test_penalize_lates_with_empty_assignment_list_raises():
@@ -355,8 +361,9 @@ def test_penalize_lates_by_default_takes_into_account_drops():
 
     result = gradebook.apply([gradelib.policies.PenalizeLates(forgive=1)])
 
-    assert result.points_earned.loc['A1', 'lab01'] == 0
-    assert result.points_earned.loc['A1', 'lab02'] == 0
+    assert result.points_earned.loc["A1", "lab01"] == 0
+    assert result.points_earned.loc["A1", "lab02"] == 0
+
 
 def test_penalize_lates_adds_note_for_penalized_assignment():
     # given
@@ -392,6 +399,7 @@ def test_penalize_lates_adds_note_for_penalized_assignment():
             ]
         },
     }
+
 
 def test_penalize_lates_with_forgiveness_adds_note_for_forgiven_assignments():
     # given
@@ -433,8 +441,7 @@ def test_penalize_lates_with_forgiveness_adds_note_for_forgiven_assignments():
     }
 
 
-# DropLowest
-# -----------------------------------------------------------------------------
+# DropLowest ---------------------------------------------------------------------------
 
 
 def test_drop_lowest_with_callable_within():
@@ -563,8 +570,7 @@ def test_drop_lowest_with_multiple_dropped_adds_note():
     }
 
 
-# Redeem
-# ======================================================================================
+# Redeem -------------------------------------------------------------------------------
 
 
 def test_redemption_on_single_assignment_pair():
@@ -788,8 +794,7 @@ def test_redemption_with_nans():
     assert_gradebook_is_sound(actual)
 
 
-# MakeExceptions
-# --------------
+# MakeExceptions -----------------------------------------------------------------------
 
 
 def test_make_exceptions_with_forgive_lates():

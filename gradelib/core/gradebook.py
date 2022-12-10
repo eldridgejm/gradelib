@@ -258,7 +258,7 @@ class AssignmentGroup:
         self.group_weight = group_weight
 
     @property
-    def assignments(self):
+    def assignments(self) -> Assignments:
         """Returns the assignments in the group."""
         return Assignments(self.assignment_weights)
 

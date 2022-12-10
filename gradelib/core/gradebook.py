@@ -6,7 +6,7 @@ import typing
 
 from ..scales import DEFAULT_SCALE, map_scores_to_letter_grades
 from .student import Student
-from .assignments import Assignments
+from .assignments import Assignments, normalize
 
 import numpy as np
 import pandas as pd
@@ -253,6 +253,9 @@ class AssignmentGroup:
         group_weight,
     ):
 
+        if not isinstance(assignment_weights, dict):
+            raise ValueError("Must be a dct")
+
         self.name = name
         self.assignment_weights = assignment_weights
         self.group_weight = group_weight
@@ -410,9 +413,9 @@ class Gradebook:
 
     @property
     def default_groups(self):
-        weight = 1 / len(self.assignments)
+        group_weight = 1 / len(self.assignments)
         return tuple(
-            AssignmentGroup(assignment, Assignments([assignment]), weight)
+            AssignmentGroup(assignment, normalize([assignment]), group_weight)
             for assignment in self.assignments
         )
 
@@ -431,7 +434,7 @@ class Gradebook:
                 ]
             elif len(g) == 2:
                 # expecting a single assignment
-                args = (g[0], Assignments([g[0]]), g[1])
+                args = (g[0], {g[0]: 1}, g[1])
             elif len(g) == 3:
                 args = list(g)
             else:
@@ -439,6 +442,11 @@ class Gradebook:
 
             if callable(args[1]):
                 args[1] = args[1](self.assignments)
+
+            if not isinstance(args[1], dict):
+                # an iterable of assignments that we need to turn into a dict
+                total_points_possible = sum(self.points_possible[a] for a in args[1])
+                args[1] = {a: self.points_possible[a] / total_points_possible for a in args[1]}
 
             return AssignmentGroup(*args)
 
@@ -757,8 +765,8 @@ class Gradebook:
 
         def _update_groups():
             def _update_group(g):
-                kept_assignments = [a for a in g.assignments if a in assignments]
-                return AssignmentGroup(g.name, kept_assignments, g.group_weight)
+                kept_assignment_weights = {a:v for a,v in g.assignment_weights.items() if a in assignments}
+                return AssignmentGroup(g.name, kept_assignment_weights, g.group_weight)
 
             new_groups_with_empties = [_update_group(g) for g in self.groups]
             return [g for g in new_groups_with_empties if g.assignment_weights]

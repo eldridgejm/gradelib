@@ -396,8 +396,8 @@ class Redeem:
             points_possible / gradebook.points_possible[[first, second]]
         )
 
-        first_points = gradebook.points_after_adjustments[first] * first_scale
-        second_points = gradebook.points_after_adjustments[second] * second_scale
+        first_points = gradebook.points_earned[first] * first_scale
+        second_points = gradebook.points_earned[second] * second_scale
 
         first_points = first_points.fillna(0)
         second_points = second_points.fillna(0)
@@ -413,8 +413,8 @@ class Redeem:
         points_earned = np.maximum(first_points, second_points)
 
         # used for messaging
-        first_raw_score = gradebook.points_after_adjustments[first] / gradebook.points_possible[first]
-        second_raw_score = gradebook.points_after_adjustments[second] / gradebook.points_possible[second]
+        first_raw_score = gradebook.points_earned[first] / gradebook.points_possible[first]
+        second_raw_score = gradebook.points_earned[second] / gradebook.points_possible[second]
 
         def _fmt_score(score):
             if np.isnan(score):
@@ -435,9 +435,10 @@ class Redeem:
                 pieces.append(f"{second.title()} score used.")
             gradebook.add_note(pid, "redemption", " ".join(pieces))
 
-        return gradebook.with_assignment(new_name, points_earned, points_possible)
+        gradebook.add_assignment(new_name, points_earned, points_possible)
+        return gradebook
 
     def _remove_parts(self, gradebook):
         for assignment_pair in self.selector.values():
-            gradebook = gradebook.without_assignments(assignment_pair)
+            gradebook.remove_assignments(assignment_pair)
         return gradebook

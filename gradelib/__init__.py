@@ -4,11 +4,12 @@ from .core import (
     combine_gradebooks,
     normalize,
     Gradebook,
+    GradebookOptions,
     Assignments,
     Student,
     Points,
     Percentage,
-    Group,
+    AssignmentGroup,
 )
 
 from .scales import (

@@ -1,3 +1,6 @@
+"""A class representing a student."""
+
+
 class Student:
     """Represents a student.
 
@@ -14,6 +17,8 @@ class Student:
     which looks up the the number points marked for Homework 01 by student 'A1000234'.
     But when the table is printed, the student's name will appear instead of their pid.
 
+    If the name is not available, the `name` attribute will be `None`.
+
     """
 
     def __init__(self, pid, name=None):
@@ -21,6 +26,7 @@ class Student:
         self.name = name
 
     def __repr__(self):
+        """String representation uses name, if available; PID otherwise."""
         if self.name is not None:
             s = self.name
         else:
@@ -32,6 +38,7 @@ class Student:
         return hash(self.pid)
 
     def __eq__(self, other):
+        """Equality checks always use the pid."""
         if isinstance(other, Student):
             return other.pid == self.pid
         else:

@@ -1,7 +1,8 @@
-"""Core data types for managing grades."""
+"""Core type for managing a collection of grades."""
 
 import copy
 import dataclasses
+import typing
 
 from ..scales import DEFAULT_SCALE, map_scores_to_letter_grades
 from .student import Student
@@ -11,19 +12,39 @@ import numpy as np
 import pandas as pd
 
 
-# helper functions ---------------------------------------------------------------------
+# private helper functions ---------------------------------------------------------------------
 
 
-def _normalize_selector(selector, assignments):
-    if not callable(selector):
-        if not isinstance(selector, dict):
+def _resolve_assignment_grouper(grouper, assignments: typing.Collection[str]):
+    """Resolves an assignment grouper into a dictionary.
+
+    The resulting dictionary maps group names to lists of assignments.
+
+    A grouper can be any of the following:
+
+        - A dictionary mapping strings to lists of assignment names.
+
+        - A list of strings. These strings will be interpreted as prefixes, and
+          will becomes keys in the resulting dictionary. Every assignment that
+          starts with a given prefix will be an element of the list that the
+          key points to.
+
+        - A Callable[[str], str] which should produce a group key when called
+          on an assignment name.
+
+    """
+    if not callable(grouper):
+        if not isinstance(grouper, dict):
+            # should be a list of assignment prefixes
             dct = {}
-            for prefix in selector:
+            for prefix in grouper:
                 dct[prefix] = {a for a in assignments if a.startswith(prefix)}
         else:
-            dct = selector
+            # just a normal dictionary
+            dct = grouper
     else:
-        to_key = selector
+        # callable, should return the group name when called on an assignment
+        to_key = grouper
         dct = {}
         for assignment in assignments:
             key = to_key(assignment)
@@ -95,42 +116,47 @@ def _concatenate_groups(gradebooks):
     return groups
 
 
-def _combine_if_equal(gradebooks, attr):
+def _combine_if_equal(gradebooks: typing.Collection["Gradebook"], attr: str):
+    """Checks that the attribute is the same in all gradebooks.
+
+    If it is, the common attribute is returned. Otherwise, a `ValueError` is raised.
+
+    """
     obj = None
     for gradebook in gradebooks:
         if obj is None:
             obj = getattr(gradebook, attr)
         else:
             if getattr(gradebook, attr) != obj:
-                raise ValueError("Options do not match in all gradebooks.")
+                raise ValueError("Objects do not match in all gradebooks.")
 
     return obj
 
+# public functions ---------------------------------------------------------------------
 
-def combine_gradebooks(gradebooks, restrict_to_pids=None):
+def combine_gradebooks(gradebooks: typing.Collection["Gradebook"], restrict_to_pids=None):
     """Create a gradebook by safely combining several existing gradebooks.
 
-    It is crucial that the combined gradebooks have exactly the same
-    students -- we don't want students to have missing grades. This
-    function checks to make sure that the gradebooks have the same students
-    before combining them. Similarly, it verifies that each gradebook has
-    unique assignments and group names, so that no conflicts occur when
-    combining them.
+    It is crucial that the combined gradebooks have exactly the same students
+    -- we don't want students to have missing grades. This function checks to
+    make sure that the gradebooks have the same students before combining them.
+    Similarly, it verifies that each gradebook has unique assignments and group
+    names, so that no conflicts occur when combining them.
 
     The new gradebook's groups are a union of the groups, as are the notes.
 
     If the scales are the same, the new scale is set to be the same as the old.
-    If they are different, a ValueError is raised.
+    If they are different, a `ValueError` is raised.
 
     If the options are the same, the new options are set to be the same as the
-    old. If they are different, a ValueError is raised.
+    old. If they are different, a `ValueError` is raised.
 
     Parameters
     ----------
     gradebooks : Collection[Gradebook]
         The gradebooks to combine. Must have matching indices and unique
         column names.
-    restrict_to_pids : Collection[str] or None
+    restrict_to_pids : Optional[Collection[str]]
         If provided, each input gradebook will be restrict to the PIDs
         given before attempting to combine them. This is a convenience
         option, and it simply calls :meth:`Gradebook.restrict_to_pids` on
@@ -192,31 +218,49 @@ def combine_gradebooks(gradebooks, restrict_to_pids=None):
 
 @dataclasses.dataclass
 class GradebookOptions:
+    """Configures the behavior of a :class:`Gradebook`."""
 
     # number of seconds within which a late assignment is not considered late
     lateness_fudge: int = 5 * 60
 
-# Group --------------------------------------------------------------------------------
+# AssignmentGroup --------------------------------------------------------------------------------
 
 
-class Group:
+class AssignmentGroup:
+    """Represents a logical group of assignments.
+
+    Attributes
+    ----------
+    name: str
+        The group's name.
+    assignment_weights: dict[str, float]
+        A dictionary mapping the assignments to their weight within the group. Their
+        weights should add to one.
+    group_weight: float
+        The overall weight of the group.
+    """
 
     _attrs = [
         "name",
-        "assignments",
-        "weight",
+        "assignment_weights",
+        "group_weight",
     ]
 
     def __init__(
         self,
         name,
-        assignments,
-        weight,
+        assignment_weights,
+        group_weight,
     ):
 
         self.name = name
-        self.assignments = assignments
-        self.weight = weight
+        self.assignment_weights = assignment_weights
+        self.group_weight = group_weight
+
+    @property
+    def assignments(self):
+        """Returns the assignments in the group."""
+        return Assignments(self.assignment_weights)
 
     def __eq__(self, other):
         return all(getattr(self, attr) == getattr(other, attr) for attr in self._attrs)
@@ -229,16 +273,16 @@ class Gradebook:
     Parameters
     ----------
     points_earned : pandas.DataFrame
-        A dataframe with one row per student, and one column for each assignment.
-        Each entry should be the raw number of points earned by the student on the
-        given assignment. The index of the dataframe should consist of Student
-        objects.
+        A dataframe with one row per student, and one column for each
+        assignment. Each entry should be the raw number of points earned by the
+        student on the given assignment. The index of the dataframe should
+        consist of :class:`Student` objects.
     points_possible : pandas.Series
         A series containing the maximum number of points possible for each
         assignment. The index of the series should match the columns of the
         `points_earned` dataframe.
     lateness : Optional[pandas.DataFrame]
-        A dataframe of pd.Timedelta objects with the same columns/index as
+        A dataframe of `pd.Timedelta` objects with the same columns/index as
         `points_earned`. An entry in the dataframe tells how late a student
         turned in the assignment. If `None` is passed, a dataframe of zero
         second timedeltas is used by default.
@@ -254,6 +298,9 @@ class Gradebook:
         are signals to reporting code that help determine where to display
         notes. The values of the inner dictionary should be iterables of
         strings, each one a message.
+    opts : Optional[GradebookOptions]
+        An optional collection of options configuring the behavior of the
+        Gradebook.
 
     Notes
     -----
@@ -365,7 +412,7 @@ class Gradebook:
     def default_groups(self):
         weight = 1 / len(self.assignments)
         return tuple(
-            Group(assignment, Assignments([assignment]), weight)
+            AssignmentGroup(assignment, Assignments([assignment]), weight)
             for assignment in self.assignments
         )
 
@@ -376,11 +423,11 @@ class Gradebook:
     @groups.setter
     def groups(self, value):
         def _make_group(g):
-            if isinstance(g, Group):
+            if isinstance(g, AssignmentGroup):
                 args = [
                     g.name,
-                    g.assignments,
-                    g.weight,
+                    g.assignment_weights,
+                    g.group_weight,
                 ]
             elif len(g) == 2:
                 # expecting a single assignment
@@ -393,7 +440,7 @@ class Gradebook:
             if callable(args[1]):
                 args[1] = args[1](self.assignments)
 
-            return Group(*args)
+            return AssignmentGroup(*args)
 
         self._groups = [_make_group(g) for g in value]
 
@@ -406,19 +453,19 @@ class Gradebook:
         )
 
         for group in self.groups:
-            if isinstance(group.assignments, dict):
-                weights = pd.Series(group.assignments)
+            if isinstance(group.assignment_weights, dict):
+                weights = pd.Series(group.assignment_weights)
                 weights = self._everyone_to_per_student(weights)
-                weights = weights * ~self.dropped[list(group.assignments)]
+                weights = weights * ~self.dropped[list(group.assignment_weights)]
                 weights = (weights.T / weights.sum(axis=1)).T
-                result.loc[:, list(group.assignments)] = weights
+                result.loc[:, list(group.assignment_weights)] = weights
 
         return result * (~self.dropped)
 
     @property
     def overall_weight(self):
-        group_weights = pd.Series({group.name: group.weight for group in self.groups})
-        return self.weight * self._by_group_to_by_assignment(group_weights)
+        group_weight = pd.Series({group.name: group.group_weight for group in self.groups})
+        return self.weight * self._by_group_to_by_assignment(group_weight)
 
     @property
     def value(self):
@@ -432,14 +479,14 @@ class Gradebook:
         for group in self.groups:
             possible = pd.DataFrame(
                 np.tile(
-                    self.points_possible[list(group.assignments)],
+                    self.points_possible[list(group.assignment_weights)],
                     (self.points_earned.shape[0], 1),
                 ),
                 index=self.students,
-                columns=list(group.assignments),
+                columns=list(group.assignment_weights),
             )
 
-            possible[self.dropped[list(group.assignments)]] = 0
+            possible[self.dropped[list(group.assignment_weights)]] = 0
             possible = possible.sum(axis=1)
 
             if (possible == 0).any():
@@ -456,12 +503,12 @@ class Gradebook:
     def group_scores(self):
         group_values = pd.DataFrame(
             {
-                group.name: self.value[list(group.assignments)].sum(axis=1)
+                group.name: self.value[list(group.assignment_weights)].sum(axis=1)
                 for group in self.groups
             }
         )
-        group_weights = pd.Series({group.name: group.weight for group in self.groups})
-        return group_values / group_weights
+        group_weight = pd.Series({group.name: group.group_weight for group in self.groups})
+        return group_values / group_weight
 
     def _by_group_to_by_assignment(self, by_group):
         """Creates an (students, assignments) DataFrame by tiling.
@@ -492,7 +539,7 @@ class Gradebook:
         def _convert_df(df):
             new_columns = {}
             for group_name in df.columns:
-                for assignment in _get_group_by_name(group_name).assignments:
+                for assignment in _get_group_by_name(group_name).assignment_weights:
                     new_columns[assignment] = df[group_name]
             return pd.DataFrame(new_columns, index=self.students)
 
@@ -711,10 +758,10 @@ class Gradebook:
         def _update_groups():
             def _update_group(g):
                 kept_assignments = [a for a in g.assignments if a in assignments]
-                return Group(g.name, kept_assignments, g.weight)
+                return AssignmentGroup(g.name, kept_assignments, g.group_weight)
 
             new_groups_with_empties = [_update_group(g) for g in self.groups]
-            return [g for g in new_groups_with_empties if g.assignments]
+            return [g for g in new_groups_with_empties if g.assignment_weights]
 
         self.groups = _update_groups()
 
@@ -833,7 +880,7 @@ class Gradebook:
 
 
         """
-        dct = _normalize_selector(selector, self.assignments)
+        dct = _resolve_assignment_grouper(selector, self.assignments)
 
         for key, value in dct.items():
             self._combine_assignment_parts(key, value)
@@ -931,7 +978,7 @@ class Gradebook:
 
 
         """
-        dct = _normalize_selector(selector, self.assignments)
+        dct = _resolve_assignment_grouper(selector, self.assignments)
 
         for key, value in dct.items():
             self._combine_assignment_versions(key, value)

@@ -38,7 +38,7 @@ algorithm which finds "robust" thresholds for every letter grade.
     # is meant to account for this; see the documentation for more details.
     gradescope_grades = gradelib.Gradebook.from_gradescope('gradescope.csv')
 
-    # combine canvas and gradescope grades into a single gradebook, 
+    # combine canvas and gradescope grades into a single gradebook,
     # checking that all enrolled students are accounted for
     gradebook = gradelib.Gradebook.combine(
         [gradescope_grades, canvas_grades],
@@ -81,39 +81,29 @@ algorithm which finds "robust" thresholds for every letter grade.
 
     # assign letter grades
     letters = gradelib.map_scores_to_letter_grades(overall, robust_scale)
-    
-    # export letter grades in egrades format
-    gradelib.write_egrades('roster.csv', 'letter-grades.csv', letters) 
 
 
 API
 ===
 
-
 .. currentmodule:: gradelib
 
-**Gradebooks**
+**Gradebook**
 
 .. autosummary::
     :nosignatures:
 
     Gradebook
-    Gradebook.from_canvas
-    Gradebook.from_gradescope
-    Gradebook.combine
-    Gradebook.add_assignment
-    Gradebook.combine_assignments
     Gradebook.assignments
     Gradebook.pids
-    Gradebook.drop_lowest
-    Gradebook.forgive_lates
-    Gradebook.give_equal_weights
-    Gradebook.number_of_lates
+    Gradebook.score
+    Gradebook.add_assignment
     Gradebook.restrict_to_assignments
     Gradebook.remove_assignments
+    Gradebook.combine_assignment_parts
+    Gradebook.combine_assignment_versions
     Gradebook.restrict_to_pids
-    Gradebook.score
-    Gradebook.total
+    combine_gradebooks
 
 **Assignments**
 
@@ -123,7 +113,12 @@ API
     Assignments.containing
     Assignments.group_by
 
-**Grading Scales**
+**Student**
+
+.. autosummary::
+    Student
+
+:mod:`gradelib.scales` -- **grading scales**
 
 .. autosummary::
     :nosignatures:
@@ -141,11 +136,7 @@ API
 .. autosummary::
     :nosignatures:
 
-    read_gradescope
-    read_canvas
-    read_egrades_roster
-    write_canvas_grades
-    write_egrades
+    io.gradescope.read
 
 
 Gradebooks
@@ -154,12 +145,26 @@ Gradebooks
 .. autoclass:: gradelib.Gradebook
     :members:
 
+.. autoclass:: gradelib.GradebookOptions
+    :members:
+
+.. autoclass:: gradelib.AssignmentGroup
+    :members:
+
+.. autofunction:: gradelib.combine_gradebooks
+.. autofunction:: gradelib.normalize
+
 Assignments
 -----------
 
 .. autoclass:: gradelib.Assignments
     :members:
 
+Student
+-------
+
+.. autoclass:: gradelib.Student
+    :members:
 
 Grading Scales
 --------------
@@ -187,11 +192,7 @@ Grading Scales
 I/O
 ---
 
-.. autofunction:: gradelib.read_gradescope
-.. autofunction:: gradelib.read_canvas
-.. autofunction:: gradelib.read_egrades_roster
-.. autofunction:: gradelib.write_canvas_grades
-.. autofunction:: gradelib.write_egrades
+.. autofunction:: gradelib.io.gradescope.read
 
 
 

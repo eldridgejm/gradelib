@@ -1,18 +1,30 @@
+"""Class representing a collection of assignments."""
+
 import collections.abc
+import typing
 
 
-def normalize(assignments):
-    """Creates a dictionary mapping assignment names to normalized weights."""
+def normalize(assignments: typing.Collection[str]) -> typing.Dict[str, float]:
+    """Create an assignment weight dict. in which every assignment is weighed equally
+
+    Parameters
+    ----------
+
+    Example
+    -------
+
+
+    """
     n = len(assignments)
-    return {a: 1/n for a in assignments}
+    return {a: 1 / n for a in assignments}
 
 
-class Assignments(collections.abc.Sequence):
+class Assignments(collections.abc.Sequence[str]):
     """A sequence of assignments.
 
-    Behaves essentially like a standard Python list, but has some additional
-    methods which make it faster to create groups of assignments. In particular,
-    :meth:`starting_with` and :meth:`containing`.
+    Behaves essentially like a standard Python list of strings, but has some
+    additional methods which make it faster to create groups of assignments. In
+    particular, :meth:`starting_with`, :meth:`containing`, and :meth:`group_by`.
     """
 
     def __init__(self, names):
@@ -45,8 +57,8 @@ class Assignments(collections.abc.Sequence):
             p.text(f"  {name!r}\n")
         p.text("])")
 
-    def starting_with(self, prefix):
-        """Return only assignments starting with the prefix.
+    def starting_with(self, prefix: str) -> "Assignments":
+        """Return only those assignments starting with the prefix.
 
         Parameters
         ----------
@@ -61,8 +73,8 @@ class Assignments(collections.abc.Sequence):
         """
         return self.__class__(x for x in self._names if x.startswith(prefix))
 
-    def containing(self, substring):
-        """Return only assignments containing the substring.
+    def containing(self, substring: str) -> "Assignments":
+        """Return only those assignments containing the substring.
 
         Parameters
         ----------
@@ -77,14 +89,15 @@ class Assignments(collections.abc.Sequence):
         """
         return self.__class__(x for x in self._names if substring in x)
 
-    def group_by(self, to_key: callable):
+    def group_by(self, to_key: typing.Callable[[str], str]) -> dict[str, "Assignments"]:
         """Group the assignments according to a key function.
 
         Parameters
         ----------
-        to_key : callable
-            A function which accepts an assignment name and returns a string that will
-            be used as the assignment's key in the resulting dictionary.
+        to_key : Callable[[str], str]
+            A function which accepts an assignment name and returns a string
+            that will be used as the assignment's key in the resulting
+            dictionary.
 
         Returns
         -------
@@ -93,14 +106,13 @@ class Assignments(collections.abc.Sequence):
 
         Example
         -------
-
         Suppose that the gradebook has assignments
 
             >>> assignments = gradelib.Assignments([
-                "homework 01", "homework 01 - programming", "homework 02",
-                "homework 03", "homework 03 - programming", "lab 01", "lab 02"
-                ])
-            >>> assignments.group_by(lambda s: s.split('-')[0].strip()
+            ... "homework 01", "homework 01 - programming", "homework 02",
+            ... "homework 03", "homework 03 - programming", "lab 01", "lab 02"
+            ... ])
+            >>> assignments.group_by(lambda s: s.split('-')[0].strip())
             {'homework 01': Assignments(names=['homework 01', 'homework 01 - programming']),
              'homework 02': Assignments(names=['homework 02']),
              'homework 03': Assignments(names=['homework 03', 'homework 03 - programming']),
@@ -109,7 +121,8 @@ class Assignments(collections.abc.Sequence):
 
         See Also
         --------
-        :meth:`Gradebook.combine_assignments`
+        :meth:`Gradebook.combine_assignment_parts`
+        :meth:`Gradebook.combine_assignment_versions`
 
         """
         dct = {}
@@ -120,5 +133,3 @@ class Assignments(collections.abc.Sequence):
             dct[key].append(assignment)
 
         return {key: Assignments(value) for key, value in dct.items()}
-
-

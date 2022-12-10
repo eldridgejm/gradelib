@@ -1,3 +1,5 @@
+"""Read and write Canvas gradebooks."""
+
 import re
 
 import pandas as pd

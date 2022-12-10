@@ -5,13 +5,29 @@ import typing
 
 
 def normalize(assignments: typing.Collection[str]) -> typing.Dict[str, float]:
-    """Create an assignment weight dict. in which every assignment is weighed equally
+    """Create an assignment weight dict. in which every assignment is weighed equally.
+
+    Useful when creating assignment groups. For instance:
+
+        >>> gradebook.groups = (
+        ...     ('homework', normalize(gradebook.assignments.starting_with('home')), 0.5)
+        ...     ('labs', normalize(gradebook.assignments.starting_with('lab')), 0.5)
+        ... )
 
     Parameters
     ----------
+    assignments: Collection[str]
+        The assignments to normalize.
+
+    Returns
+    -------
+    dict[str, float]
+        An assignment weight dictionary in which each assignment is weighed equally.
 
     Example
     -------
+    >>> normalize(['foo', 'bar', 'baz', 'quux'])
+    {'foo': 0.25, 'bar': 0.25, 'baz': 0.25, 'quux': 0.25}
 
 
     """

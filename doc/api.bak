@@ -1,0 +1,107 @@
+.. currentmodule:: gradelib
+
+**Gradebook**
+
+**Assignments**
+
+:mod:`gradelib.scales` -- **grading scales**
+
+.. autosummary::
+    :nosignatures:
+
+    DEFAULT_SCALE
+    ROUNDED_DEFAULT_SCALE
+    map_scores_to_letter_grades
+    average_gpa
+    letter_grade_distribution
+    plot_grade_distribution
+    find_robust_scale
+
+**I/O**
+
+.. autosummary::
+    :nosignatures:
+
+    io.gradescope.read
+    io.canvas.read
+
+
+Core
+====
+
+.. autosummary::
+    :nosignatures:
+
+    Gradebook
+    Gradebook.assignments
+    Gradebook.pids
+    Gradebook.score
+    Gradebook.add_assignment
+    Gradebook.restrict_to_assignments
+    Gradebook.remove_assignments
+    Gradebook.combine_assignment_parts
+    Gradebook.combine_assignment_versions
+    Gradebook.restrict_to_pids
+    combine_gradebooks
+    normalize
+
+.. autosummary::
+    Assignments
+    Assignments.starting_with
+    Assignments.containing
+    Assignments.group_by
+
+.. autosummary::
+    Student
+
+Gradebook
+---------
+
+.. autoclass:: gradelib.Gradebook
+    :members:
+
+.. autoclass:: gradelib.GradebookOptions
+    :members:
+
+.. autoclass:: gradelib.AssignmentGroup
+    :members:
+
+.. autofunction:: gradelib.combine_gradebooks
+.. autofunction:: gradelib.normalize
+
+.. autoclass:: gradelib.Assignments
+    :members:
+
+.. autoclass:: gradelib.Student
+    :members:
+
+Grading Scales
+==============
+
+.. data:: DEFAULT_SCALE
+
+    The standard grading scale as an OrderedDict. E.g., 93+ is an A, [90, 93)
+    is an A-, etc.
+
+.. data:: ROUNDED_DEFAULT_SCALE
+
+    A rounded version of the default scale in which each threshold is one half point lower.
+
+.. autofunction:: map_scores_to_letter_grades
+.. autofunction:: average_gpa
+.. autofunction:: letter_grade_distribution
+.. autofunction:: plot_grade_distribution
+.. autofunction:: find_robust_scale
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+
+I/O
+===
+
+.. autofunction:: gradelib.io.gradescope.read
+.. autofunction:: gradelib.io.canvas.read
+
+

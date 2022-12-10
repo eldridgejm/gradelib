@@ -1,3 +1,5 @@
+"""Read grades exported from Gradescope."""
+
 import pandas as pd
 
 from gradelib import Gradebook, Student

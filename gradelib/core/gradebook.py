@@ -218,7 +218,15 @@ def combine_gradebooks(gradebooks: typing.Collection["Gradebook"], restrict_to_p
 
 @dataclasses.dataclass
 class GradebookOptions:
-    """Configures the behavior of a :class:`Gradebook`."""
+    """Configures the behavior of a :class:`Gradebook`.
+
+    Attributes
+    ----------
+    lateness_fudge: int
+        Number of seconds within which a late assignment is not considered late.
+        Default: 300.
+
+    """
 
     # number of seconds within which a late assignment is not considered late
     lateness_fudge: int = 5 * 60
@@ -254,7 +262,7 @@ class AssignmentGroup:
     ):
 
         if not isinstance(assignment_weights, dict):
-            raise ValueError("Must be a dct")
+            raise TypeError("Must be a dictionary.")
 
         self.name = name
         self.assignment_weights = assignment_weights
@@ -262,7 +270,7 @@ class AssignmentGroup:
 
     @property
     def assignments(self) -> Assignments:
-        """Returns the assignments in the group."""
+        """The assignments in the group."""
         return Assignments(self.assignment_weights)
 
     def __eq__(self, other):
@@ -734,7 +742,7 @@ class Gradebook:
         self.lateness[name] = lateness
         self.dropped[name] = dropped
 
-    
+
 
     def restrict_to_assignments(self, assignments):
         """Restrict the gradebook to only the supplied assignments.
@@ -800,7 +808,7 @@ class Gradebook:
 
         return self.restrict_to_assignments(set(self.assignments) - set(assignments))
 
-    
+
 
     def _combine_assignment_parts(self, new_name, parts):
         """A helper function to combine assignments under the new name."""

@@ -7,7 +7,6 @@ import pandas as pd
 import numpy as np
 
 import gradelib
-import gradelib.io.ucsd
 import gradelib.io.gradescope
 import gradelib.io.canvas
 
@@ -25,7 +24,7 @@ CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.Gradebook(
     dropped=CANVAS_EXAMPLE.dropped.drop(columns="lab 01"),
 )
 
-ROSTER = gradelib.io.ucsd.read_egrades_roster(EXAMPLES_DIRECTORY / "egrades.csv")
+ROSTER = pd.read_csv(EXAMPLES_DIRECTORY / "egrades.csv", delimiter='\t').set_index('Student ID')
 
 
 # helper functions ---------------------------------------------------------------------

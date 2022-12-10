@@ -2,7 +2,6 @@ import numpy as np
 
 from ..core import Percentage
 
-
 def _fmt_as_pct(f):
     return f"{f * 100:0.2f}%"
 

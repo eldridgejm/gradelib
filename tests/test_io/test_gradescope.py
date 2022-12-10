@@ -1,16 +1,18 @@
+"""Tests of gradescope I/O functionality."""
+
 import pathlib
 
 import pandas as pd
 
 import gradelib.io.gradescope
 
+# examples setup -----------------------------------------------------------------------
+
 EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent.parent / "examples"
 
-# read_gradescope
-# =============================================================================
+# tests: read_gradescope ================================================================================
 
-
-def test_read_gradescope_produces_assignments_in_order():
+def test_produces_assignments_in_order():
     # when
     gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 
@@ -19,7 +21,7 @@ def test_read_gradescope_produces_assignments_in_order():
     assert gb.points_earned.columns[1] == "homework 01"
 
 
-def test_read_gradescope_same_shapes_and_columns_in_all_tables():
+def test_same_shapes_and_columns_in_all_tables():
     # when
     gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 
@@ -29,7 +31,7 @@ def test_read_gradescope_same_shapes_and_columns_in_all_tables():
     assert (gb.points_earned.columns == gb.points_possible.index).all()
 
 
-def test_read_gradescope_standardizes_pids_by_default():
+def test_standardizes_pids_by_default():
     # when
     gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 
@@ -40,7 +42,7 @@ def test_read_gradescope_standardizes_pids_by_default():
     )
 
 
-def test_read_gradescope_standardizes_assignments_by_default():
+def test_standardizes_assignments_by_default():
     # when
     gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 
@@ -49,7 +51,7 @@ def test_read_gradescope_standardizes_assignments_by_default():
     assert "homework 02" in gb.points_earned.columns
 
 
-def test_read_gradescope_creates_index_of_student_objects_with_names():
+def test_creates_index_of_student_objects_with_names():
     # when
     gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 
@@ -65,7 +67,7 @@ def test_read_gradescope_creates_index_of_student_objects_with_names():
     )  # I got the order wrong in the example CSV
 
 
-def test_read_gradescope_without_canvas_link_produces_correct_assignments():
+def test_without_canvas_link_produces_correct_assignments():
     # when
     path = EXAMPLES_DIRECTORY / "gradescope_not_linked_with_canvas.csv"
     gb = gradelib.io.gradescope.read(path)
@@ -76,7 +78,7 @@ def test_read_gradescope_without_canvas_link_produces_correct_assignments():
     assert len(gb.points_earned.columns) == 2
 
 
-def test_read_gradescope_keeps_lateness_as_timedelta():
+def test_keeps_lateness_as_timedelta():
     gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope-with-5m-late.csv")
     # 22 hours, 37 minutes, 22 seconds
     assert gb.lateness.iloc[0]["lab 07"] == pd.Timedelta(

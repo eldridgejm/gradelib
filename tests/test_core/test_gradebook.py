@@ -1,3 +1,5 @@
+"""Tests of the Gradebook class."""
+
 import pathlib
 
 import pytest
@@ -9,6 +11,7 @@ import gradelib.io.ucsd
 import gradelib.io.gradescope
 import gradelib.io.canvas
 
+# examples setup -----------------------------------------------------------------------
 
 EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent.parent / "examples"
 GRADESCOPE_EXAMPLE = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
@@ -22,8 +25,10 @@ CANVAS_WITHOUT_LAB_EXAMPLE = gradelib.Gradebook(
     dropped=CANVAS_EXAMPLE.dropped.drop(columns="lab 01"),
 )
 
-# given
 ROSTER = gradelib.io.ucsd.read_egrades_roster(EXAMPLES_DIRECTORY / "egrades.csv")
+
+
+# helper functions ---------------------------------------------------------------------
 
 
 def assert_gradebook_is_sound(gradebook):
@@ -51,21 +56,9 @@ def as_gradebook_type(gb, gradebook_cls):
     )
 
 
-# assignments property
-# -----------------------------------------------------------------------------
+# tests: options =======================================================================
 
-
-def test_assignments_are_produced_in_order():
-    assert list(GRADESCOPE_EXAMPLE.assignments) == list(
-        GRADESCOPE_EXAMPLE.points_earned.columns
-    )
-
-
-# Gradebook
-# =============================================================================
-
-# lateness fudge
-# -----------------------------------------------------------------------------
+# lateness fudge -----------------------------------------------------------------------
 
 
 def test_lateness_fudge_defaults_to_5_minutes():
@@ -123,8 +116,10 @@ def test_lateness_fudge_can_be_changed():
     assert gradebook.late.loc["A2", "hw02"] == True
 
 
-# weight
-# ------
+# tests: properties ====================================================================
+
+
+# weight -------------------------------------------------------------------------------
 
 
 def test_weight_defaults_to_being_computed_from_points_possible():
@@ -325,8 +320,7 @@ def test_weight_with_custom_weights_and_drops():
     assert gb.weight.loc["A2", "hw02"] == 1.0
 
 
-# overall_weight
-# --------------
+# overall_weight -----------------------------------------------------------------------
 
 
 def test_overall_weight_defaults_to_being_computed_from_points_possible():
@@ -527,124 +521,408 @@ def test_overall_weight_with_custom_weights_and_drops():
     assert gb.overall_weight.loc["A2", "hw02"] == 1.0 * 0.75
 
 
-# find_student()
-# -----------------------------------------------------------------------------
+# value --------------------------------------------------------------------------------
 
 
-def test_find_student_is_case_insensitive():
+def test_value_with_default_weights():
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
+
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 30, 40], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    gb.groups = [
+        gradelib.Group("homeworks", gb.assignments.starting_with("hw"), 0.75),
+        gradelib.Group(
+            "labs",
+            gradelib.Normalized(gb.assignments.starting_with("lab")),
+            0.25,
+        ),
+    ]
+
+    assert gb.value.loc["A1", "hw01"] == 10 / 20 * 20 / 100 * 0.75
+    assert gb.value.loc["A1", "hw02"] == 30 / 50 * 50 / 100 * 0.75
+    assert gb.value.loc["A1", "lab01"] == 25 / 40 * 0.25
+
+
+def test_value_with_drops():
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
+
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 30, 40], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+    gb.dropped.loc["A1", "hw02"] = True
+    gb.dropped.loc["A2", "hw01"] = True
+    gb.dropped.loc["A2", "hw03"] = True
+
+    gb.groups = [
+        gradelib.Group("homeworks", gb.assignments.starting_with("hw"), 0.75),
+        gradelib.Group(
+            "labs",
+            gradelib.Normalized(gb.assignments.starting_with("lab")),
+            0.25,
+        ),
+    ]
+
+    assert gb.value.loc["A1", "hw01"] == 10 / 20 * 20 / 50 * 0.75
+    assert gb.value.loc["A1", "hw02"] == 0.0
+    assert gb.value.loc["A1", "lab01"] == 25 / 40 * 0.25
+
+
+def test_value_with_custom_assignment_weights():
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
+
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 30, 40], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    gb.groups = [
+        gradelib.Group(
+            "homeworks",
+            {
+                "hw01": 0.3,
+                "hw02": 0.5,
+                "hw03": 0.2,
+            },
+            0.75,
+        ),
+        gradelib.Group(
+            "labs",
+            gradelib.Normalized(gb.assignments.starting_with("lab")),
+            0.25,
+        ),
+    ]
+
+    assert gb.value.loc["A1", "hw01"] == 10 / 20 * 0.3 * 0.75
+    assert gb.value.loc["A1", "hw02"] == 30 / 50 * 0.5 * 0.75
+    assert gb.value.loc["A1", "lab01"] == 25 / 40 * 0.25
+
+
+# overall_score ------------------------------------------------------------------------
+
+
+def test_overall_score_respects_group_weighting():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    points_earned.index = [
-        gradelib.Student("A1", "Justin Eldridge"),
-        gradelib.Student("A2", "Barack Obama"),
-    ]
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
-    # when
-    s = gradebook.find_student("justin")
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        ("homeworks", HOMEWORKS, 0.6),
+        gradelib.Group("labs", ["lab01"], 0.4),
+    ]
 
     # then
-    assert s == points_earned.index[0]
+    pd.testing.assert_series_equal(
+        gradebook.overall_score,
+        pd.Series(
+            [121 / 152 * 0.6 + 20 / 20 * 0.4, 24 / 152 * 0.6 + 20 / 20 * 0.4],
+            index=gradebook.students,
+        ),
+    )
 
 
-def test_find_student_is_case_insensitive_with_capitalized_query():
+def test_overall_score_respects_dropped_assignments():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    points_earned.index = [
-        gradelib.Student("A1", "Justin Eldridge"),
-        gradelib.Student("A2", "Barack Obama"),
-    ]
     gradebook = gradelib.Gradebook(points_earned, points_possible)
+    gradebook.dropped.loc["A1", "hw02"] = True
+    gradebook.dropped.loc["A2", "hw03"] = True
 
-    # when
-    s = gradebook.find_student("Justin")
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        ("homeworks", HOMEWORKS, 0.6),
+        gradelib.Group("labs", ["lab01"], 0.4),
+    ]
 
     # then
-    assert s == points_earned.index[0]
+    pd.testing.assert_series_equal(
+        gradebook.overall_score,
+        pd.Series(
+            [91 / 102 * 0.6 + 20 / 20 * 0.4, 9 / 52 * 0.6 + 20 / 20 * 0.40],
+            index=gradebook.students,
+        ),
+    )
 
 
-def test_find_student_raises_on_multiple_matches():
+# letter_grades ------------------------------------------------------------------------
+
+
+def test_letter_grades_respects_scale():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    points_earned.index = [
-        gradelib.Student("A1", "Justin Eldridge"),
-        gradelib.Student("A2", "Justin Other"),
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+    gradebook.dropped.loc["A1", "hw02"] = True
+    gradebook.dropped.loc["A2", "hw03"] = True
+
+    gradebook.scale = {
+        "A+": 0.9,
+        "A": 0.8,
+        "A-": 0.7,
+        "B+": 0.6,
+        "B": 0.5,
+        "B-": 0.4,
+        "C+": 0.35,
+        "C": 0.3,
+        "C-": 0.2,
+        "D": 0.1,
+        "F": 0,
+    }
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        gradelib.Group("homeworks", gradelib.Normalized(HOMEWORKS), 0.6),
+        gradelib.Group("labs", ["lab01"], 0.4),
     ]
+
+    # then
+    # .805 and .742
+    pd.testing.assert_series_equal(
+        gradebook.letter_grades, pd.Series(["A", "A-"], index=gradebook.students)
+    )
+
+
+# tests: groups ========================================================================
+
+
+# default_groups -----------------------------------------------------------------------
+
+
+def test_default_groups_one_assignment_per_group_equally_weighted():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
-    # when
+    # then
+    assert gradebook.default_groups == (
+        gradelib.Group("hw01", gradelib.Assignments(["hw01"]), weight=0.25),
+        gradelib.Group("hw02", gradelib.Assignments(["hw02"]), weight=0.25),
+        gradelib.Group("hw03", gradelib.Assignments(["hw03"]), weight=0.25),
+        gradelib.Group("lab01", gradelib.Assignments(["lab01"]), weight=0.25),
+    )
+
+
+# groups -------------------------------------------------------------------------------
+
+
+def test_groups_setter_allows_three_tuple_form():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.groups = [
+        ("homeworks", ["hw01", "hw02", "hw03"], 0.5),
+        ("labs", ["lab01"], 0.5),
+    ]
+
+    # then
+    assert gradebook.groups == (
+        gradelib.Group(
+            "homeworks", gradelib.Assignments(["hw01", "hw02", "hw03"]), weight=0.5
+        ),
+        gradelib.Group("labs", gradelib.Assignments(["lab01"]), weight=0.5),
+    )
+
+
+def test_groups_setter_allows_two_tuple_form():
+    # given
+    columns = ["hw01", "hw02", "hw03", "midterm"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.groups = [
+        ("homeworks", ["hw01", "hw02", "hw03"], 0.5),
+        ("midterm", 0.5),
+    ]
+
+    # then
+    assert gradebook.groups == (
+        gradelib.Group(
+            "homeworks", gradelib.Assignments(["hw01", "hw02", "hw03"]), weight=0.5
+        ),
+        gradelib.Group("midterm", gradelib.Assignments(["midterm"]), weight=0.5),
+    )
+
+
+def test_groups_setter_allows_callable_for_assignments():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    HOMEWORKS_LAZY = lambda asmts: asmts.starting_with("hw")
+    LABS_LAZY = lambda asmts: asmts.starting_with("lab")
+
+    gradebook.groups = [
+        ("homeworks", HOMEWORKS_LAZY, 0.5),
+        gradelib.Group("labs", LABS_LAZY, 0.5),
+    ]
+
+    # then
+    assert gradebook.groups == (
+        gradelib.Group(
+            "homeworks", gradelib.Assignments(["hw01", "hw02", "hw03"]), weight=0.5
+        ),
+        gradelib.Group("labs", gradelib.Assignments(["lab01"]), weight=0.5),
+    )
+
+
+# group_points_possible_after_drops ----------------------------------------------------
+
+
+def test_group_points_respects_dropped_assignments():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+    gradebook.dropped.loc["A1", "hw02"] = True
+    gradebook.dropped.loc["A2", "hw03"] = True
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        ("homeworks", HOMEWORKS, 0.5),
+        gradelib.Group("labs", ["lab01"], 0.5),
+    ]
+
+    # then
+
+    pd.testing.assert_frame_equal(
+        gradebook.group_points_possible_after_drops,
+        pd.DataFrame(
+            [[102, 20], [52, 20]],
+            index=gradebook.students,
+            columns=["homeworks", "labs"],
+        ),
+    )
+
+
+def test_group_points_raises_if_all_assignments_in_a_group_are_dropped():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+    gradebook.dropped.loc["A1", "lab01"] = True
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        ("homeworks", HOMEWORKS, 0.5),
+        gradelib.Group("labs", ["lab01"], 0.5),
+    ]
+
+    # then
     with pytest.raises(ValueError):
-        gradebook.find_student("justin")
+        gradebook.group_points_possible_after_drops
 
 
-def test_find_student_raises_on_no_match():
+# group_scores -------------------------------------------------------------------------
+
+
+def test_group_scores_raises_if_all_assignments_in_a_group_are_dropped():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    points_earned.index = [
-        gradelib.Student("A1", "Justin Eldridge"),
-        gradelib.Student("A2", "Justin Other"),
-    ]
     gradebook = gradelib.Gradebook(points_earned, points_possible)
+    gradebook.dropped.loc["A1", "lab01"] = True
 
-    # when
-    with pytest.raises(ValueError):
-        gradebook.find_student("steve")
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
 
-
-# Gradebook
-# =============================================================================
-
-
-# restrict_to_pids()
-# -----------------------------------------------------------------------------
-
-
-def test_restrict_to_pids():
-    # when
-    example = GRADESCOPE_EXAMPLE.copy()
-    example.restrict_to_pids(ROSTER.index)
+    gradebook.groups = [
+        ("homeworks", HOMEWORKS, 0.5),
+        gradelib.Group("labs", ["lab01"], 0.5),
+    ]
 
     # then
-    assert len(example.pids) == 3
-    assert_gradebook_is_sound(example)
+    with pytest.raises(ValueError):
+        gradebook.group_scores
 
 
-def test_restrict_to_pids_raises_if_pid_does_not_exist():
+def test_group_scores_respects_dropped_assignments():
     # given
-    pids = ["A12345678", "ADNEDNE00"]
-    example = GRADESCOPE_EXAMPLE.copy()
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+    gradebook.dropped.loc["A1", "hw02"] = True
+    gradebook.dropped.loc["A2", "hw03"] = True
 
-    # when
-    with pytest.raises(KeyError):
-        example.restrict_to_pids(pids)
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.groups = [
+        ("homeworks", HOMEWORKS, 0.5),
+        gradelib.Group("labs", ["lab01"], 0.5),
+    ]
+
+    # then
+    pd.testing.assert_frame_equal(
+        gradebook.group_scores,
+        pd.DataFrame(
+            [[91 / 102, 20 / 20], [9 / 52, 20 / 20]],
+            index=gradebook.students,
+            columns=["homeworks", "labs"],
+        ),
+    )
 
 
-# restrict_to_assignments() and remove_assignments()
-# -----------------------------------------------------------------------------
+# tests: add/remove assignments ========================================================
+
+# restrict_to_assignments --------------------------------------------------------------
 
 
 def test_restrict_to_assignments():
     # when
     example = GRADESCOPE_EXAMPLE.copy()
-    example.restrict_to_assignments(
-        ["homework 01", "homework 02"]
-    )
+    example.restrict_to_assignments(["homework 01", "homework 02"])
 
     # then
     assert set(example.assignments) == {"homework 01", "homework 02"}
@@ -676,14 +954,14 @@ def test_restrict_to_assignments_updates_groups():
         gradelib.Group("homeworks", ["homework 01", "homework 02"], 0.75),
     )
 
-# remove_assignments() ----------------------------------------------------------------
+
+# remove_assignments -------------------------------------------------------------------
+
 
 def test_remove_assignments():
     # when
     example = GRADESCOPE_EXAMPLE.copy()
-    example.remove_assignments(
-        example.assignments.starting_with("lab")
-    )
+    example.remove_assignments(example.assignments.starting_with("lab"))
 
     # then
     assert set(example.assignments) == {
@@ -710,161 +988,7 @@ def test_remove_assignments_raises_if_assignment_does_not_exist():
         example.remove_assignments(assignments)
 
 
-# combine_gradebooks()
-# -----------------------------------------------------------------------------
-
-
-def test_combine_gradebooks_with_restrict_to_pids():
-    # when
-    combined = gradelib.combine_gradebooks(
-        [GRADESCOPE_EXAMPLE, CANVAS_WITHOUT_LAB_EXAMPLE],
-        restrict_to_pids=ROSTER.index,
-    )
-
-    # then
-    assert "homework 01" in combined.assignments
-    assert "midterm exam" in combined.assignments
-    assert_gradebook_is_sound(combined)
-
-
-def test_combine_gradebooks_raises_if_duplicate_assignments():
-    # the canvas example and the gradescope example both have lab 01.
-    # when
-    with pytest.raises(ValueError):
-        combined = gradelib.combine_gradebooks([GRADESCOPE_EXAMPLE, CANVAS_EXAMPLE])
-
-
-def test_combine_gradebooks_raises_if_indices_do_not_match():
-    # when
-    with pytest.raises(ValueError):
-        combined = gradelib.combine_gradebooks(
-            [CANVAS_WITHOUT_LAB_EXAMPLE, GRADESCOPE_EXAMPLE]
-        )
-
-
-def test_combine_gradebooks_concatenates_groups():
-    ex_1 = GRADESCOPE_EXAMPLE.copy()
-    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
-
-    ex_1.groups = [
-        ("homeworks", ex_1.assignments.starting_with("home"), 0.25),
-        ("labs", ex_1.assignments.starting_with("lab"), 0.25),
-    ]
-
-    ex_2.groups = [("exams", ["midterm exam", "final exam"], 0.5)]
-
-    combined = gradelib.combine_gradebooks(
-        [ex_1, ex_2],
-        restrict_to_pids=ROSTER.index,
-    )
-
-    assert combined.groups == ex_1.groups + ex_2.groups
-
-
-def test_combine_gradebooks_raises_if_group_names_conflict():
-    ex_1 = GRADESCOPE_EXAMPLE.copy()
-    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
-
-    ex_1.groups = [
-        ("homeworks", ex_1.assignments.starting_with("home"), 0.25),
-        ("labs", ex_1.assignments.starting_with("lab"), 0.25),
-    ]
-
-    ex_2.groups = [("homeworks", ["midterm exam", "final exam"], 0.5)]
-
-    with pytest.raises(ValueError):
-        combined = gradelib.combine_gradebooks(
-            [ex_1, ex_2],
-            restrict_to_pids=ROSTER.index,
-        )
-
-
-def test_combine_gradebooks_uses_existing_options_if_all_the_same():
-    ex_1 = GRADESCOPE_EXAMPLE.copy()
-    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
-
-    ex_1.opts.lateness_fudge = 789
-    ex_2.opts.lateness_fudge = 789
-
-    combined = gradelib.combine_gradebooks(
-        [ex_1, ex_2],
-        restrict_to_pids=ROSTER.index,
-    )
-
-    assert combined.opts.lateness_fudge == 789
-
-
-def test_combine_gradebooks_raises_if_options_do_not_match():
-    ex_1 = GRADESCOPE_EXAMPLE.copy()
-    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
-
-    ex_1.opts.lateness_fudge = 5000
-    ex_2.opts.lateness_fudge = 6000
-
-    with pytest.raises(ValueError):
-        combined = gradelib.combine_gradebooks(
-            [ex_1, ex_2],
-            restrict_to_pids=ROSTER.index,
-        )
-
-
-def test_combine_gradebooks_uses_existing_scales_if_all_the_same():
-    ex_1 = GRADESCOPE_EXAMPLE.copy()
-    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
-
-    import gradelib.scales
-
-    ex_1.scale = gradelib.scales.ROUNDED_DEFAULT_SCALE
-    ex_2.scale = gradelib.scales.ROUNDED_DEFAULT_SCALE
-
-    combined = gradelib.combine_gradebooks(
-        [ex_1, ex_2],
-        restrict_to_pids=ROSTER.index,
-    )
-
-    assert combined.scale == gradelib.scales.ROUNDED_DEFAULT_SCALE
-
-
-def test_combine_gradebooks_raises_if_scales_do_not_match():
-    ex_1 = GRADESCOPE_EXAMPLE.copy()
-    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
-
-    ex_2.scale = gradelib.scales.ROUNDED_DEFAULT_SCALE
-
-    with pytest.raises(ValueError):
-        combined = gradelib.combine_gradebooks(
-            [ex_1, ex_2],
-            restrict_to_pids=ROSTER.index,
-        )
-
-
-def test_combine_gradebooks_concatenates_notes():
-    # when
-    example_1 = GRADESCOPE_EXAMPLE.copy()
-    example_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
-
-    example_1.notes = {"A1": {"drop": ["foo", "bar"]}, "A2": {"misc": ["baz"]}}
-
-    example_2.notes = {
-        "A1": {"drop": ["baz", "quux"]},
-        "A2": {"late": ["ok"]},
-        "A3": {"late": ["message"]},
-    }
-
-    combined = gradelib.combine_gradebooks(
-        [example_1, example_2], restrict_to_pids=ROSTER.index
-    )
-
-    # then
-    assert combined.notes == {
-        "A1": {"drop": ["foo", "bar", "baz", "quux"]},
-        "A2": {"misc": ["baz"], "late": ["ok"]},
-        "A3": {"late": ["message"]},
-    }
-
-
-# add_assignment()
-# -----------------------------------------------------------------------------
+# add_assignment -----------------------------------------------------------------------
 
 
 def test_add_assignment():
@@ -988,8 +1112,7 @@ def test_add_assignment_raises_if_duplicate_name():
         )
 
 
-# combine_assignment_parts
-# -----------------------------------------------------------------------------
+# combine_assignment_parts -------------------------------------------------------------
 
 
 def test_combine_assignment_parts():
@@ -1163,7 +1286,9 @@ def test_combine_assignment_parts_copies_attributes():
 
     gradebook.combine_assignment_parts({"hw01": HOMEWORK_01_PARTS})
 
+
 # combine_assignment_versions ----------------------------------------------------------
+
 
 def test_combine_assignment_versions_removes_assignment_versions():
     # given
@@ -1181,6 +1306,7 @@ def test_combine_assignment_versions_removes_assignment_versions():
     # then
     assert list(gradebook.assignments) == ["midterm"]
 
+
 def test_combine_assignment_versions_merges_points():
     # given
     columns = ["mt - version a", "mt - version b", "mt - version c"]
@@ -1196,9 +1322,10 @@ def test_combine_assignment_versions_merges_points():
     gradebook.combine_assignment_versions({"midterm": columns})
 
     # then
-    assert gradebook.points_earned.loc['A1', 'midterm'] == 50
-    assert gradebook.points_earned.loc['A2', 'midterm'] == 30
-    assert gradebook.points_earned.loc['A3', 'midterm'] == 40
+    assert gradebook.points_earned.loc["A1", "midterm"] == 50
+    assert gradebook.points_earned.loc["A2", "midterm"] == 30
+    assert gradebook.points_earned.loc["A3", "midterm"] == 40
+
 
 def test_combine_assignment_versions_raises_if_any_dropped():
     # given
@@ -1210,13 +1337,14 @@ def test_combine_assignment_versions_raises_if_any_dropped():
     points_possible = pd.Series([50, 50, 40], index=columns)
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
-    gradebook.dropped.loc['A1', 'mt - version a'] = True
+    gradebook.dropped.loc["A1", "mt - version a"] = True
 
     # when
     PARTS = gradebook.assignments.starting_with("mt")
 
     with pytest.raises(ValueError):
         gradebook.combine_assignment_versions({"midterm": columns})
+
 
 def test_combine_assignment_versions_raises_if_points_earned_in_multiple_versions():
     # given
@@ -1233,6 +1361,7 @@ def test_combine_assignment_versions_raises_if_points_earned_in_multiple_version
 
     with pytest.raises(ValueError):
         gradebook.combine_assignment_versions({"midterm": columns})
+
 
 def test_combine_assignment_versions_raises_if_any_version_is_late():
     # given
@@ -1252,8 +1381,8 @@ def test_combine_assignment_versions_raises_if_any_version_is_late():
     with pytest.raises(ValueError):
         gradebook.combine_assignment_versions({"midterm": columns})
 
-# rename_assignments
-# ------------------------
+
+# rename_assignments -------------------------------------------------------------------
 
 
 def test_rename_assignments_simple_example():
@@ -1324,402 +1453,260 @@ def test_rename_assignments_allows_swapping_names():
     assert_gradebook_is_sound(gradebook)
 
 
-# Gradebook
-# =========
-
-# default_groups
+# test: misc. methods ==================================================================
 
 
-def test_default_groups_one_assignment_per_group_equally_weighted():
+# restrict_to_pids ---------------------------------------------------------------------
+
+
+def test_restrict_to_pids():
+    # when
+    example = GRADESCOPE_EXAMPLE.copy()
+    example.restrict_to_pids(ROSTER.index)
+
+    # then
+    assert len(example.pids) == 3
+    assert_gradebook_is_sound(example)
+
+
+def test_restrict_to_pids_raises_if_pid_does_not_exist():
+    # given
+    pids = ["A12345678", "ADNEDNE00"]
+    example = GRADESCOPE_EXAMPLE.copy()
+
+    # when
+    with pytest.raises(KeyError):
+        example.restrict_to_pids(pids)
+
+
+# find_student -------------------------------------------------------------------------
+
+
+def test_find_student_is_case_insensitive():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    points_earned.index = [
+        gradelib.Student("A1", "Justin Eldridge"),
+        gradelib.Student("A2", "Barack Obama"),
+    ]
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
+    # when
+    s = gradebook.find_student("justin")
+
     # then
-    assert gradebook.default_groups == (
-        gradelib.Group("hw01", gradelib.Assignments(["hw01"]), weight=0.25),
-        gradelib.Group("hw02", gradelib.Assignments(["hw02"]), weight=0.25),
-        gradelib.Group("hw03", gradelib.Assignments(["hw03"]), weight=0.25),
-        gradelib.Group("lab01", gradelib.Assignments(["lab01"]), weight=0.25),
-    )
+    assert s == points_earned.index[0]
 
 
-# groups
-
-# TODO .groups returns tuple
-
-
-def test_groups_setter_allows_three_tuple_form():
+def test_find_student_is_case_insensitive_with_capitalized_query():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    points_earned.index = [
+        gradelib.Student("A1", "Justin Eldridge"),
+        gradelib.Student("A2", "Barack Obama"),
+    ]
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
-    gradebook.groups = [
-        ("homeworks", ["hw01", "hw02", "hw03"], 0.5),
-        ("labs", ["lab01"], 0.5),
-    ]
+    # when
+    s = gradebook.find_student("Justin")
 
     # then
-    assert gradebook.groups == (
-        gradelib.Group(
-            "homeworks", gradelib.Assignments(["hw01", "hw02", "hw03"]), weight=0.5
-        ),
-        gradelib.Group("labs", gradelib.Assignments(["lab01"]), weight=0.5),
-    )
+    assert s == points_earned.index[0]
 
 
-def test_groups_setter_allows_two_tuple_form():
-    # given
-    columns = ["hw01", "hw02", "hw03", "midterm"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-
-    gradebook.groups = [
-        ("homeworks", ["hw01", "hw02", "hw03"], 0.5),
-        ("midterm", 0.5),
-    ]
-
-    # then
-    assert gradebook.groups == (
-        gradelib.Group(
-            "homeworks", gradelib.Assignments(["hw01", "hw02", "hw03"]), weight=0.5
-        ),
-        gradelib.Group("midterm", gradelib.Assignments(["midterm"]), weight=0.5),
-    )
-
-
-def test_groups_setter_allows_callable_for_assignments():
+def test_find_student_raises_on_multiple_matches():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    points_earned.index = [
+        gradelib.Student("A1", "Justin Eldridge"),
+        gradelib.Student("A2", "Justin Other"),
+    ]
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
-    HOMEWORKS_LAZY = lambda asmts: asmts.starting_with("hw")
-    LABS_LAZY = lambda asmts: asmts.starting_with("lab")
-
-    gradebook.groups = [
-        ("homeworks", HOMEWORKS_LAZY, 0.5),
-        gradelib.Group("labs", LABS_LAZY, 0.5),
-    ]
-
-    # then
-    assert gradebook.groups == (
-        gradelib.Group(
-            "homeworks", gradelib.Assignments(["hw01", "hw02", "hw03"]), weight=0.5
-        ),
-        gradelib.Group("labs", gradelib.Assignments(["lab01"]), weight=0.5),
-    )
-
-
-# .value
-# ---------------
-
-
-def test_value_with_default_weights():
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
-    p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
-
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([20, 50, 30, 40], index=columns)
-
-    gb = gradelib.Gradebook(points_earned, points_possible)
-
-    gb.groups = [
-        gradelib.Group("homeworks", gb.assignments.starting_with("hw"), 0.75),
-        gradelib.Group(
-            "labs",
-            gradelib.Normalized(gb.assignments.starting_with("lab")),
-            0.25,
-        ),
-    ]
-
-    assert gb.value.loc["A1", "hw01"] == 10 / 20 * 20 / 100 * 0.75
-    assert gb.value.loc["A1", "hw02"] == 30 / 50 * 50 / 100 * 0.75
-    assert gb.value.loc["A1", "lab01"] == 25 / 40 * 0.25
-
-
-def test_value_with_drops():
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
-    p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
-
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([20, 50, 30, 40], index=columns)
-
-    gb = gradelib.Gradebook(points_earned, points_possible)
-    gb.dropped.loc["A1", "hw02"] = True
-    gb.dropped.loc["A2", "hw01"] = True
-    gb.dropped.loc["A2", "hw03"] = True
-
-    gb.groups = [
-        gradelib.Group("homeworks", gb.assignments.starting_with("hw"), 0.75),
-        gradelib.Group(
-            "labs",
-            gradelib.Normalized(gb.assignments.starting_with("lab")),
-            0.25,
-        ),
-    ]
-
-    assert gb.value.loc["A1", "hw01"] == 10 / 20 * 20 / 50 * 0.75
-    assert gb.value.loc["A1", "hw02"] == 0.0
-    assert gb.value.loc["A1", "lab01"] == 25 / 40 * 0.25
-
-
-def test_value_with_custom_assignment_weights():
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
-    p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
-
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([20, 50, 30, 40], index=columns)
-
-    gb = gradelib.Gradebook(points_earned, points_possible)
-
-    gb.groups = [
-        gradelib.Group(
-            "homeworks",
-            {
-                "hw01": 0.3,
-                "hw02": 0.5,
-                "hw03": 0.2,
-            },
-            0.75,
-        ),
-        gradelib.Group(
-            "labs",
-            gradelib.Normalized(gb.assignments.starting_with("lab")),
-            0.25,
-        ),
-    ]
-
-    assert gb.value.loc["A1", "hw01"] == 10 / 20 * 0.3 * 0.75
-    assert gb.value.loc["A1", "hw02"] == 30 / 50 * 0.5 * 0.75
-    assert gb.value.loc["A1", "lab01"] == 25 / 40 * 0.25
-
-
-# .group_effective_points
-# -----------------------
-
-
-
-def test_group_points_respects_dropped_assignments():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-    gradebook.dropped.loc["A1", "hw02"] = True
-    gradebook.dropped.loc["A2", "hw03"] = True
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        ("homeworks", HOMEWORKS, 0.5),
-        gradelib.Group("labs", ["lab01"], 0.5),
-    ]
-
-    # then
-
-    pd.testing.assert_frame_equal(
-        gradebook.group_points_possible_after_drops,
-        pd.DataFrame(
-            [[102, 20], [52, 20]],
-            index=gradebook.students,
-            columns=["homeworks", "labs"],
-        ),
-    )
-
-
-def test_group_points_raises_if_all_assignments_in_a_group_are_dropped():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-    gradebook.dropped.loc["A1", "lab01"] = True
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        ("homeworks", HOMEWORKS, 0.5),
-        gradelib.Group("labs", ["lab01"], 0.5),
-    ]
-
-    # then
+    # when
     with pytest.raises(ValueError):
-        gradebook.group_points_possible_after_drops
+        gradebook.find_student("justin")
 
 
-# group_scores
-# ------------
-
-
-def test_group_scores_raises_if_all_assignments_in_a_group_are_dropped():
+def test_find_student_raises_on_no_match():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
     points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-    gradebook.dropped.loc["A1", "lab01"] = True
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        ("homeworks", HOMEWORKS, 0.5),
-        gradelib.Group("labs", ["lab01"], 0.5),
+    points_earned.index = [
+        gradelib.Student("A1", "Justin Eldridge"),
+        gradelib.Student("A2", "Justin Other"),
     ]
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
 
-    # then
+    # when
     with pytest.raises(ValueError):
-        gradebook.group_scores
+        gradebook.find_student("steve")
 
 
-def test_group_scores_respects_dropped_assignments():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-    gradebook.dropped.loc["A1", "hw02"] = True
-    gradebook.dropped.loc["A2", "hw03"] = True
+# tests: free functions ================================================================
 
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
+# combine_gradebooks -------------------------------------------------------------------
 
-    gradebook.groups = [
-        ("homeworks", HOMEWORKS, 0.5),
-        gradelib.Group("labs", ["lab01"], 0.5),
-    ]
 
-    # then
-    pd.testing.assert_frame_equal(
-        gradebook.group_scores,
-        pd.DataFrame(
-            [[91 / 102, 20 / 20], [9 / 52, 20 / 20]],
-            index=gradebook.students,
-            columns=["homeworks", "labs"],
-        ),
+def test_combine_gradebooks_with_restrict_to_pids():
+    # when
+    combined = gradelib.combine_gradebooks(
+        [GRADESCOPE_EXAMPLE, CANVAS_WITHOUT_LAB_EXAMPLE],
+        restrict_to_pids=ROSTER.index,
     )
 
+    # then
+    assert "homework 01" in combined.assignments
+    assert "midterm exam" in combined.assignments
+    assert_gradebook_is_sound(combined)
 
 
-# overall_score
-# -----------------------------------------------------------------------------
+def test_combine_gradebooks_raises_if_duplicate_assignments():
+    # the canvas example and the gradescope example both have lab 01.
+    # when
+    with pytest.raises(ValueError):
+        combined = gradelib.combine_gradebooks([GRADESCOPE_EXAMPLE, CANVAS_EXAMPLE])
 
 
-def test_overall_score_respects_group_weighting():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
+def test_combine_gradebooks_raises_if_indices_do_not_match():
+    # when
+    with pytest.raises(ValueError):
+        combined = gradelib.combine_gradebooks(
+            [CANVAS_WITHOUT_LAB_EXAMPLE, GRADESCOPE_EXAMPLE]
+        )
 
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
 
-    gradebook.groups = [
-        ("homeworks", HOMEWORKS, 0.6),
-        gradelib.Group("labs", ["lab01"], 0.4),
+def test_combine_gradebooks_concatenates_groups():
+    ex_1 = GRADESCOPE_EXAMPLE.copy()
+    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
+
+    ex_1.groups = [
+        ("homeworks", ex_1.assignments.starting_with("home"), 0.25),
+        ("labs", ex_1.assignments.starting_with("lab"), 0.25),
     ]
 
-    # then
-    pd.testing.assert_series_equal(
-        gradebook.overall_score,
-        pd.Series(
-            [121 / 152 * 0.6 + 20 / 20 * 0.4, 24 / 152 * 0.6 + 20 / 20 * 0.4],
-            index=gradebook.students,
-        ),
+    ex_2.groups = [("exams", ["midterm exam", "final exam"], 0.5)]
+
+    combined = gradelib.combine_gradebooks(
+        [ex_1, ex_2],
+        restrict_to_pids=ROSTER.index,
     )
 
+    assert combined.groups == ex_1.groups + ex_2.groups
 
-def test_overall_score_respects_dropped_assignments():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-    gradebook.dropped.loc["A1", "hw02"] = True
-    gradebook.dropped.loc["A2", "hw03"] = True
 
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
+def test_combine_gradebooks_raises_if_group_names_conflict():
+    ex_1 = GRADESCOPE_EXAMPLE.copy()
+    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
 
-    gradebook.groups = [
-        ("homeworks", HOMEWORKS, 0.6),
-        gradelib.Group("labs", ["lab01"], 0.4),
+    ex_1.groups = [
+        ("homeworks", ex_1.assignments.starting_with("home"), 0.25),
+        ("labs", ex_1.assignments.starting_with("lab"), 0.25),
     ]
 
-    # then
-    pd.testing.assert_series_equal(
-        gradebook.overall_score,
-        pd.Series(
-            [91 / 102 * 0.6 + 20 / 20 * 0.4, 9 / 52 * 0.6 + 20 / 20 * 0.40],
-            index=gradebook.students,
-        ),
+    ex_2.groups = [("homeworks", ["midterm exam", "final exam"], 0.5)]
+
+    with pytest.raises(ValueError):
+        combined = gradelib.combine_gradebooks(
+            [ex_1, ex_2],
+            restrict_to_pids=ROSTER.index,
+        )
+
+
+def test_combine_gradebooks_uses_existing_options_if_all_the_same():
+    ex_1 = GRADESCOPE_EXAMPLE.copy()
+    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
+
+    ex_1.opts.lateness_fudge = 789
+    ex_2.opts.lateness_fudge = 789
+
+    combined = gradelib.combine_gradebooks(
+        [ex_1, ex_2],
+        restrict_to_pids=ROSTER.index,
     )
 
+    assert combined.opts.lateness_fudge == 789
 
-# letter_grades
+
+def test_combine_gradebooks_raises_if_options_do_not_match():
+    ex_1 = GRADESCOPE_EXAMPLE.copy()
+    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
+
+    ex_1.opts.lateness_fudge = 5000
+    ex_2.opts.lateness_fudge = 6000
+
+    with pytest.raises(ValueError):
+        combined = gradelib.combine_gradebooks(
+            [ex_1, ex_2],
+            restrict_to_pids=ROSTER.index,
+        )
 
 
-def test_letter_grades_respects_scale():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-    gradebook.dropped.loc["A1", "hw02"] = True
-    gradebook.dropped.loc["A2", "hw03"] = True
+def test_combine_gradebooks_uses_existing_scales_if_all_the_same():
+    ex_1 = GRADESCOPE_EXAMPLE.copy()
+    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
 
-    gradebook.scale = {
-        "A+": 0.9,
-        "A": 0.8,
-        "A-": 0.7,
-        "B+": 0.6,
-        "B": 0.5,
-        "B-": 0.4,
-        "C+": 0.35,
-        "C": 0.3,
-        "C-": 0.2,
-        "D": 0.1,
-        "F": 0,
+    import gradelib.scales
+
+    ex_1.scale = gradelib.scales.ROUNDED_DEFAULT_SCALE
+    ex_2.scale = gradelib.scales.ROUNDED_DEFAULT_SCALE
+
+    combined = gradelib.combine_gradebooks(
+        [ex_1, ex_2],
+        restrict_to_pids=ROSTER.index,
+    )
+
+    assert combined.scale == gradelib.scales.ROUNDED_DEFAULT_SCALE
+
+
+def test_combine_gradebooks_raises_if_scales_do_not_match():
+    ex_1 = GRADESCOPE_EXAMPLE.copy()
+    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
+
+    ex_2.scale = gradelib.scales.ROUNDED_DEFAULT_SCALE
+
+    with pytest.raises(ValueError):
+        combined = gradelib.combine_gradebooks(
+            [ex_1, ex_2],
+            restrict_to_pids=ROSTER.index,
+        )
+
+
+def test_combine_gradebooks_concatenates_notes():
+    # when
+    example_1 = GRADESCOPE_EXAMPLE.copy()
+    example_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
+
+    example_1.notes = {"A1": {"drop": ["foo", "bar"]}, "A2": {"misc": ["baz"]}}
+
+    example_2.notes = {
+        "A1": {"drop": ["baz", "quux"]},
+        "A2": {"late": ["ok"]},
+        "A3": {"late": ["message"]},
     }
 
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.groups = [
-        gradelib.Group("homeworks", gradelib.Normalized(HOMEWORKS), 0.6),
-        gradelib.Group("labs", ["lab01"], 0.4),
-    ]
+    combined = gradelib.combine_gradebooks(
+        [example_1, example_2], restrict_to_pids=ROSTER.index
+    )
 
     # then
-    # .805 and .742
-    pd.testing.assert_series_equal(
-        gradebook.letter_grades, pd.Series(["A", "A-"], index=gradebook.students)
-    )
+    assert combined.notes == {
+        "A1": {"drop": ["foo", "bar", "baz", "quux"]},
+        "A2": {"misc": ["baz"], "late": ["ok"]},
+        "A3": {"late": ["message"]},
+    }

@@ -2,11 +2,11 @@ import pathlib
 
 import gradelib.io.ucsd
 
+# examples setup -----------------------------------------------------------------------
+
 EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent.parent / "examples"
 
-# read_egrades_roster
-# =============================================================================
-
+# tests: read_egrades_roster ===========================================================
 
 def test_read_egrades_roster():
     # when

@@ -2,10 +2,13 @@ import pathlib
 
 import gradelib.io.canvas
 
+# examples setup -----------------------------------------------------------------------
+
 EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent.parent / "examples"
 
+# tests: read_canvas ===================================================================
 
-def test_read_canvas_produces_assignments_in_order():
+def test_produces_assignments_in_order():
     # when
     gb = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 
@@ -14,7 +17,7 @@ def test_read_canvas_produces_assignments_in_order():
     assert gb.points_earned.columns[1] == "midterm exam"
 
 
-def test_read_canvas_same_shapes_and_columns_in_all_tables():
+def test_same_shapes_and_columns_in_all_tables():
     # when
     gb = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 
@@ -22,7 +25,7 @@ def test_read_canvas_same_shapes_and_columns_in_all_tables():
     assert (gb.points_earned.columns == gb.points_possible.index).all()
 
 
-def test_read_canvas_standardizes_pids_by_default():
+def test_standardizes_pids_by_default():
     # when
     gb = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 
@@ -33,7 +36,7 @@ def test_read_canvas_standardizes_pids_by_default():
     )
 
 
-def test_read_canvas_standardizes_assignments_by_default():
+def test_standardizes_assignments_by_default():
     # when
     gb = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 
@@ -42,7 +45,7 @@ def test_read_canvas_standardizes_assignments_by_default():
     assert "midterm exam" in gb.points_earned.columns
 
 
-def test_read_canvas_creates_index_of_student_objects_with_names():
+def test_creates_index_of_student_objects_with_names():
     # when
     gb = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 

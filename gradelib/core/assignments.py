@@ -1,8 +1,4 @@
-import collections
-
-
-# Assignments
-# ======================================================================================
+import collections.abc
 
 
 class Normalized:
@@ -20,8 +16,6 @@ class Assignments(collections.abc.Sequence):
 
     def __init__(self, names):
         self._names = list(names)
-
-    # dunder methods -------------------------------------------------------------------
 
     def __contains__(self, element):
         return element in self._names
@@ -49,8 +43,6 @@ class Assignments(collections.abc.Sequence):
         for name in self._names:
             p.text(f"  {name!r}\n")
         p.text("])")
-
-    # helper methods -------------------------------------------------------------------
 
     def starting_with(self, prefix):
         """Return only assignments starting with the prefix.

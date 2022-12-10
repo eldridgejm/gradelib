@@ -1,7 +1,3 @@
-# Student
-# ======================================================================================
-
-
 class Student:
     """Represents a student.
 
@@ -40,5 +36,3 @@ class Student:
             return other.pid == self.pid
         else:
             return self.pid == other
-
-

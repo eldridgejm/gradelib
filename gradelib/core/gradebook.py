@@ -1,16 +1,12 @@
 """Core data types for managing grades."""
 
-import collections.abc
 import copy
 import dataclasses
-import typing
 
-from ..scales import DEFAULT_SCALE, map_scores_to_letter_grades, average_gpa
-from .. import plot as _plot
+from ..scales import DEFAULT_SCALE, map_scores_to_letter_grades
 from .student import Student
 from .assignments import Assignments, Normalized
 
-import altair
 import numpy as np
 import pandas as pd
 
@@ -18,37 +14,7 @@ import pandas as pd
 NORMALIZE = object()
 
 
-# GradeAmounts
-# ======================================================================================
-
-
-class _GradeAmount:
-    def __init__(self, amount):
-        self.amount = amount
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
-        return self.amount == other.amount
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(amount={self.amount!r})"
-
-
-class Points(_GradeAmount):
-    def __str__(self):
-        return f"{self.amount} points"
-
-
-class Percentage(_GradeAmount):
-    def __str__(self):
-        return f"{self.amount * 100}%"
-
-
-# Gradebook
-# ======================================================================================
-
-# helpers ------------------------------------------------------------------------------
+# helper functions ---------------------------------------------------------------------
 
 
 def _normalize_selector(selector, assignments):
@@ -224,6 +190,7 @@ def combine_gradebooks(gradebooks, restrict_to_pids=None):
         scale=_combine_if_equal(gradebooks, "scale"),
     )
 
+# GradebookOptions ---------------------------------------------------------------------
 
 @dataclasses.dataclass
 class GradebookOptions:
@@ -231,6 +198,7 @@ class GradebookOptions:
     # number of seconds within which a late assignment is not considered late
     lateness_fudge: int = 5 * 60
 
+# Group --------------------------------------------------------------------------------
 
 class Group:
 
@@ -258,6 +226,7 @@ class Group:
     def __eq__(self, other):
         return all(getattr(self, attr) == getattr(other, attr) for attr in self._attrs)
 
+# Gradebook ============================================================================
 
 class Gradebook:
     """Data structure which facilitates common grading operations.
@@ -341,7 +310,7 @@ class Gradebook:
             f"and {len(self.pids)} students>"
         )
 
-    # properties -----------------------------------------------------------------------
+    # properties: assignments, students, lates -----------------------------------------
 
     @property
     def assignments(self):
@@ -594,116 +563,6 @@ class Gradebook:
         s.name = "percentile"
         return s
 
-    # summaries ------------------------------------------------------------------------
-
-    def _assignment_plot(self, pid):
-        data = self.score.loc[pid].to_frame(name="Score")
-        data["Notes"] = self.dropped.loc[pid].apply(lambda d: "dropped" if d else "")
-
-        data = (
-            data.sort_index()
-            .reset_index()
-            .rename(columns={"index": "Assignment"})
-            .reset_index()
-            .fillna(0)
-        )
-
-        data["Formatted Score"] = data["Score"].apply(lambda s: f"{s * 100:0.2f}%")
-
-        bars = (
-            altair.Chart(data)
-            .mark_bar()
-            .encode(x="Score:Q", y="Assignment:N", tooltip="Formatted Score")
-        )
-
-        text = (
-            altair.Chart(data)
-            .mark_text(
-                align="left",
-                baseline="middle",
-                color="black",
-                fontWeight="bold",
-                dx=3,  # Nudges text to right so it doesn't appear on top of the bar
-            )
-            .encode(x="Score:Q", y="Assignment:N", text="Notes:N")
-        )
-
-        return bars + text
-
-    def _student_summary(self, student):
-        from IPython.display import display, HTML
-
-        lines = []
-
-        def par(desc, msg):
-            lines.append(f"<p><b>{desc}:</b> {msg}</p>")
-
-        def li(desc, msg):
-            lines.append(f"<li><b>{desc}:</b> {msg}</li>")
-
-        def _fmt_as_pct(f):
-            return f"{f * 100:0.2f}%"
-
-        name = student.name
-        pid = student.pid
-
-        lines.append(f"<h1>Student Summary: {name} ({pid})</h1>")
-
-        par("Overall score", f"{_fmt_as_pct(self.overall_score.loc[pid])}")
-        par("Letter grade", self.letter_grades.loc[pid])
-        par("Rank", f"{self.rank.loc[pid]} out of {len(self.rank)}")
-        par("Percentile", f"{self.percentile.loc[pid]:0.2f}")
-
-        lines.append("<h2>Group Scores</h2>")
-        lines.append("<ul>")
-        for group in self.groups:
-            score = self.group_scores.loc[pid, group.name]
-            li(group.name, _fmt_as_pct(score))
-        lines.append("</ul>")
-
-        notes = self.notes.get(pid, None)
-        if notes is not None:
-            lines.append("<h2>Notes</h2>")
-            for channel in notes:
-                lines.append(f"<h3>{channel.capitalize()}</h3>")
-                lines.append("<ul>")
-                for note in notes[channel]:
-                    lines.append(f"<li>{note}</li>")
-                lines.append("</ul>")
-
-        display(HTML("\n".join(lines)))
-
-        display(self._assignment_plot(pid))
-
-    def _class_summary(self):
-        from IPython.display import display, HTML
-
-        lines = []
-
-        def item(desc, msg):
-            lines.append(f"<p><b>{desc}:</b> {msg}")
-
-        lines.append("<h1>Class Summary</h1>")
-
-        item("Number of students", len(self.students))
-
-        lines.append("<h2>Letter Grades</h2>")
-
-        lines.append(self.letter_grade_distribution.to_frame().T.to_html())
-
-        agpa = average_gpa(self.letter_grades)
-        lines.append(f"<p><b>Class GPA:</b> {agpa:0.2f}</p>")
-        lines.append("<h2>Distribution</h2>")
-
-        display(HTML("\n".join(lines)))
-
-        display(_plot.grade_distribution(self))
-
-    def summary(self, student=None):
-        if student is not None:
-            return self._student_summary(self.find_student(student))
-        else:
-            return self._class_summary()
 
     # copying / replacing --------------------------------------------------------------
 
@@ -740,7 +599,7 @@ class Gradebook:
         Returns
         -------
         Student
-            The matching student.
+            The matching student as a Student object contaning their PID and name.
 
         Raises
         ------
@@ -764,7 +623,7 @@ class Gradebook:
 
         return matches[0]
 
-    # adding/removing assignments/students ---------------------------------------------
+    # adding/removing assignments ------------------------------------------------------
 
     def add_assignment(
         self, name, points_earned, points_possible, lateness=None, dropped=None
@@ -824,6 +683,8 @@ class Gradebook:
         self.points_possible[name] = points_possible
         self.lateness[name] = lateness
         self.dropped[name] = dropped
+
+    
 
     def restrict_to_assignments(self, assignments):
         """Restrict the gradebook to only the supplied assignments.
@@ -889,28 +750,7 @@ class Gradebook:
 
         return self.restrict_to_assignments(set(self.assignments) - set(assignments))
 
-    def restrict_to_pids(self, to):
-        """Restrict the gradebook to only the supplied PIDS.
-
-        Parameters
-        ----------
-        to : Collection[str]
-            A collection of PIDs. For instance, from the final course roster.
-
-        Raises
-        ------
-        KeyError
-            If a PID was specified that is not in the gradebook.
-
-        """
-        pids = list(to)
-        extras = set(pids) - set(self.pids)
-        if extras:
-            raise KeyError(f"These PIDs were not in the gradebook: {extras}.")
-
-        self.points_earned = self.points_earned.loc[pids]
-        self.lateness = self.lateness.loc[pids]
-        self.dropped = self.dropped.loc[pids]
+    
 
     def _combine_assignment_parts(self, new_name, parts):
         """A helper function to combine assignments under the new name."""
@@ -1122,6 +962,31 @@ class Gradebook:
         self.lateness.rename(columns=mapping, inplace=True)
         self.dropped.rename(columns=mapping, inplace=True)
 
+    # adding/removing students ---------------------------------------------------------
+
+    def restrict_to_pids(self, to):
+        """Restrict the gradebook to only the supplied PIDS.
+
+        Parameters
+        ----------
+        to : Collection[str]
+            A collection of PIDs. For instance, from the final course roster.
+
+        Raises
+        ------
+        KeyError
+            If a PID was specified that is not in the gradebook.
+
+        """
+        pids = list(to)
+        extras = set(pids) - set(self.pids)
+        if extras:
+            raise KeyError(f"These PIDs were not in the gradebook: {extras}.")
+
+        self.points_earned = self.points_earned.loc[pids]
+        self.lateness = self.lateness.loc[pids]
+        self.dropped = self.dropped.loc[pids]
+
     # notes ----------------------------------------------------------------------------
 
     def add_note(self, pid, channel, message):
@@ -1135,7 +1000,10 @@ class Gradebook:
             The pid of the student for which the note should be added.
 
         channel : str
-            The channel that the note should be added to.
+            The channel that the note should be added to. Valid channels are:
+                - lates
+                - drops
+                - misc
 
         message : str
             The note's message.

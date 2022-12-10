@@ -38,7 +38,6 @@ def assert_gradebook_is_sound(gradebook):
     assert (gradebook.points_earned.index == gradebook.dropped.index).all()
     assert (gradebook.points_earned.index == gradebook.lateness.index).all()
     assert (gradebook.points_earned.columns == gradebook.points_possible.index).all()
-    assert isinstance(gradebook.adjustments, dict)
 
 
 # PenalizeLates
@@ -434,7 +433,7 @@ def test_penalize_lates_with_forgiveness_adds_note_for_forgiven_assignments():
     }
 
 
-# DropLowest()
+# DropLowest
 # -----------------------------------------------------------------------------
 
 
@@ -510,30 +509,6 @@ def test_drop_lowest_with_multiple_dropped():
     assert not actual.dropped.iloc[0, 2]
     assert not actual.dropped.iloc[1, 0]
     assert list(actual.dropped.sum(axis=1)) == [2, 2]
-    assert_gradebook_is_sound(actual)
-
-
-def test_drop_lowest_takes_adjustments_into_account():
-    # given
-    columns = ["hw01", "hw02"]
-    p1 = pd.Series(data=[10, 5], index=columns, name="A1")
-    p2 = pd.Series(data=[10, 10], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([10, 10], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    gradebook.adjustments = {"A1": {"hw01": [gradelib.Deduction(Percentage(1))]}}
-
-    gradebook.groups = (("homeworks", gradebook.assignments.starting_with("hw"), 0.75),)
-
-    # since A1's perfect homework has a 100% deduction, it should count as zero and be
-    # dropped
-
-    # when
-    actual = gradebook.apply(gradelib.policies.DropLowest(1))
-
-    # then
-    assert actual.dropped.iloc[0, 0]
-    assert list(actual.dropped.sum(axis=1)) == [1, 1]
     assert_gradebook_is_sound(actual)
 
 
@@ -743,31 +718,6 @@ def test_redemption_with_dropped_assignment_parts_raises():
                 {"mt01 with redemption": ("mt01", "mt01 - redemption")}
             )
         )
-
-
-def test_redemption_takes_adjustments_into_account():
-    # given
-    columns = ["mt01", "mt01 - redemption"]
-    p1 = pd.Series(data=[95, 100], index=columns, name="A1")
-    p2 = pd.Series(data=[92, 60], index=columns, name="A2")
-    points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([100, 100], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-    gradebook.adjustments = {
-        "A1": {"mt01 - redemption": [gradelib.Deduction(Percentage(0.5))]}
-    }
-
-    # when
-    actual = gradebook.apply(
-        gradelib.policies.Redeem(
-            {"mt01 with redemption": ("mt01", "mt01 - redemption")}
-        )
-    )
-
-    # then
-    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 95
-    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 92
-    assert_gradebook_is_sound(actual)
 
 
 def test_redemption_with_unequal_points_possible_scales_to_the_maximum_of_the_two():

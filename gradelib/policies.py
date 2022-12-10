@@ -44,7 +44,6 @@ class MakeExceptions:
             gradebook = exception(gradebook, self.student)
         return gradebook
 
-
 class ForgiveLate:
     def __init__(self, assignment):
         self.assignment = assignment
@@ -85,18 +84,19 @@ class Replace:
 
     def __call__(self, gradebook, student):
         pid = gradebook.find_student(student)
-        current_points = gradebook.points_after_adjustments.loc[pid, self.assignment]
+        current_points = gradebook.points_earned.loc[pid, self.assignment]
         other_assignment_score = (
-            gradebook.points_after_adjustments.loc[pid, self.with_]
+            gradebook.points_earned.loc[pid, self.with_]
             / gradebook.points_possible.loc[self.with_]
         )
         new_points = (
             other_assignment_score * gradebook.points_possible.loc[self.assignment]
         )
-        difference = new_points - current_points
-        adjustment = _adjustment_from_difference(difference)
-        adjustment.reason = f"Replacing {self.assignment.title()} with {self.with_.title()}."
-        gradebook.add_adjustment(pid, self.assignment, adjustment)
+
+        gradebook.points_earned.loc[pid, self.assignment] = new_points
+        gradebook.add_note(pid, "misc", 
+                           f"Replacing {self.assignment.title()} with {self.with_.title()}."
+                           )
         return gradebook
 
 
@@ -115,13 +115,13 @@ class Override:
 
     def __call__(self, gradebook, student):
         pid = gradebook.find_student(student)
-        current_points = gradebook.points_after_adjustments.loc[pid, self.assignment]
+        current_points = gradebook.points_earned.loc[pid, self.assignment]
         new_points = _convert_amount_to_absolute_points(
             self.amount, gradebook, self.assignment
         )
-        adjustment = _adjustment_from_difference(new_points - current_points)
-        adjustment.reason = "Manually set points as part of an exception."
-        gradebook.add_adjustment(pid, self.assignment, adjustment)
+        gradebook.points_earned.loc[pid, self.assignment] = new_points
+        gradebook.add_note(pid, "misc", 
+                    f"Manually set {self.assignment} to {new_points} points as part of an exception.")
         return gradebook
 
 

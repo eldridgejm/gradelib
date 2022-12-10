@@ -901,17 +901,8 @@ def test_make_exceptions_with_replace():
     )(gradebook)
 
     # then
-    assert actual.adjustments == {
-        "A1": {
-            "hw02": [
-                gradelib.Addition(
-                    gradelib.Points(9), reason="Replacing Hw02 with Hw01."
-                )
-            ],
-        }
-    }
-    assert actual.points_after_adjustments.loc["A1", "hw01"] == 9
-    assert actual.points_after_adjustments.loc["A1", "hw02"] == 9
+    assert actual.points_earned.loc["A1", "hw01"] == 9
+    assert actual.points_earned.loc["A1", "hw02"] == 9
     assert_gradebook_is_sound(actual)
 
 
@@ -933,18 +924,8 @@ def test_make_exceptions_with_replace_scales_using_points_possible():
     )(gradebook)
 
     # then
-    expected = {
-        "A1": {
-            "hw01": [
-                gradelib.Deduction(
-                    gradelib.Points(1.5), reason="Replacing Hw01 with Hw02."
-                )
-            ],
-        }
-    }
-    assert actual.adjustments == expected
-    assert actual.points_after_adjustments.loc["A1", "hw01"] == 7.5
-    assert actual.points_after_adjustments.loc["A1", "hw02"] == 15
+    assert actual.points_earned.loc["A1", "hw01"] == 7.5
+    assert actual.points_earned.loc["A1", "hw02"] == 15
     assert_gradebook_is_sound(actual)
 
 
@@ -970,12 +951,6 @@ def test_make_exceptions_with_override():
     )(gradebook)
 
     # then
-    assert actual.adjustments == {
-        "A1": {
-            "hw02": [gradelib.Addition(gradelib.Points(8), reason="Manually set points as part of an exception.")],
-            "hw01": [gradelib.Deduction(gradelib.Points(4), reason="Manually set points as part of an exception.")],
-        }
-    }
-    assert actual.points_after_adjustments.loc["A1", "hw01"] == 5
-    assert actual.points_after_adjustments.loc["A1", "hw02"] == 8
+    assert actual.points_earned.loc["A1", "hw01"] == 5
+    assert actual.points_earned.loc["A1", "hw02"] == 8
     assert_gradebook_is_sound(actual)

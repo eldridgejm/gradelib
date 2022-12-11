@@ -9,7 +9,7 @@ def normalize(assignments: typing.Collection[str]) -> typing.Dict[str, float]:
 
     Useful when creating assignment groups. For instance:
 
-        >>> gradebook.groups = (
+        >>> gradebook.assignment_groups = (
         ...     ('homework', normalize(gradebook.assignments.starting_with('home')), 0.5)
         ...     ('labs', normalize(gradebook.assignments.starting_with('lab')), 0.5)
         ... )

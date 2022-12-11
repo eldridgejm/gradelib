@@ -106,7 +106,7 @@ def _concatenate_groups(gradebooks):
     """Concatenates the groups from a sequence of gradebooks."""
     new_groups = {}
     for gradebook in gradebooks:
-        for group_name, group in gradebook.groups.items():
+        for group_name, group in gradebook.assignment_groups.items():
             if group_name in new_groups:
                 raise ValueError(f"Duplicate group names seen: {group_name}.")
             new_groups[group_name] = group
@@ -209,7 +209,7 @@ def combine_gradebooks(
         lateness=concat_attr("lateness"),
         dropped=concat_attr("dropped"),
         notes=_concatenate_notes(gradebooks),
-        groups=_concatenate_groups(gradebooks),
+        assignment_groups=_concatenate_groups(gradebooks),
         opts=_combine_if_equal(gradebooks, "opts"),
         scale=_combine_if_equal(gradebooks, "scale"),
     )
@@ -327,7 +327,7 @@ class Gradebook:
         "lateness",
         "dropped",
         "notes",
-        "groups",
+        "assignment_groups",
         "scale",
         "opts",
     ]
@@ -339,7 +339,7 @@ class Gradebook:
         lateness=None,
         dropped=None,
         notes=None,
-        groups=None,
+        assignment_groups=None,
         scale=None,
         opts=None,
     ):
@@ -352,7 +352,7 @@ class Gradebook:
             dropped if dropped is not None else _empty_mask_like(points_earned)
         )
         self.notes = {} if notes is None else notes
-        self.groups = self.default_groups if groups is None else groups
+        self.assignment_groups = self.default_groups if assignment_groups is None else assignment_groups
         self.scale = DEFAULT_SCALE if scale is None else scale
         self.opts = opts if opts is not None else GradebookOptions()
 
@@ -428,12 +428,12 @@ class Gradebook:
         }
 
     @property
-    def groups(self):
+    def assignment_groups(self):
         return dict(self._groups)
 
-    @groups.setter
-    def groups(self, value):
-        """.groups setter that accepts several difference convenience formats.
+    @assignment_groups.setter
+    def assignment_groups(self, value):
+        """.assignment_groups setter that accepts several difference convenience formats.
 
         The value should be a dict mapping group names to *group definitions*. A group
         definition can be any of the following:
@@ -481,7 +481,7 @@ class Gradebook:
             self.group_points_possible_after_drops
         )
 
-        for group_name, group in self.groups.items():
+        for group_name, group in self.assignment_groups.items():
             if isinstance(group.assignment_weights, dict):
                 weights = pd.Series(group.assignment_weights)
                 weights = self._everyone_to_per_student(weights)
@@ -494,7 +494,7 @@ class Gradebook:
     @property
     def overall_weight(self):
         group_weight = pd.Series(
-            {group_name: assignment_group.group_weight for group_name, assignment_group in self.groups.items()}
+            {group_name: assignment_group.group_weight for group_name, assignment_group in self.assignment_groups.items()}
         )
         return self.weight * self._by_group_to_by_assignment(group_weight)
 
@@ -507,7 +507,7 @@ class Gradebook:
     @property
     def group_points_possible_after_drops(self):
         result = {}
-        for group_name, group in self.groups.items():
+        for group_name, group in self.assignment_groups.items():
             possible = pd.DataFrame(
                 np.tile(
                     self.points_possible[list(group.assignment_weights)],
@@ -535,11 +535,11 @@ class Gradebook:
         group_values = pd.DataFrame(
             {
                 group_name: self.value[list(group.assignment_weights)].sum(axis=1)
-                for group_name, group in self.groups.items()
+                for group_name, group in self.assignment_groups.items()
             }
         )
         group_weight = pd.Series(
-            {group_name: group.group_weight for group_name, group in self.groups.items()}
+            {group_name: group.group_weight for group_name, group in self.assignment_groups.items()}
         )
         return group_values / group_weight
 
@@ -565,7 +565,7 @@ class Gradebook:
         """
 
         def _get_group_by_name(name):
-            for group_name, group in self.groups.items():
+            for group_name, group in self.assignment_groups.items():
                 if group_name == name:
                     return group
 
@@ -792,10 +792,10 @@ class Gradebook:
                 }
                 return AssignmentGroup(kept_assignment_weights, g.group_weight)
 
-            new_groups_with_empties = {name: _update_group(g) for name, g in self.groups.items()}
+            new_groups_with_empties = {name: _update_group(g) for name, g in self.assignment_groups.items()}
             return {name: g for name, g in new_groups_with_empties.items() if g.assignment_weights}
 
-        self.groups = _update_groups()
+        self.assignment_groups = _update_groups()
 
     def remove_assignments(self, assignments):
         """Returns a new gradebook instance without the given assignments.

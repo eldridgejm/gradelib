@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..core import Percentage
+from .._common import resolve_assignment_grouper
 
 
 def _fmt_as_pct(f):
@@ -10,7 +11,7 @@ def _fmt_as_pct(f):
 
 
 def redeem(
-        gradebook: Gradebook, assignments, remove_parts=False,
+        gradebook: Gradebook, assignments: AssignmentGrouper, remove_parts=False,
         deduction=None, suffix=" with redemption"
 ):
     """Replace assignment scores with later assignment scores, if higher.
@@ -26,19 +27,18 @@ def redeem(
         group); or 3) a callable which takes an assignment name as input and
         returns a group name. Groups must have exactly two elements, else an
         exception is raised.
+    remove_parts : bool
+        Whether the indidividual assignment parts should be removed. Default: `False`.
 
     """
-    if isinstance(assignments, dict):
-        assignment_pairs = assignments
-    else:
-        assignment_pairs = {}
-        for prefix in assignments:
-            pair = [a for a in gradebook.assignments if a.startswith(prefix)]
-            if len(pair) != 2:
-                raise ValueError(
-                    f'Prefix "{prefix}" does not match a pair of assignments.'
-                )
-            assignment_pairs[prefix + suffix] = pair
+    is_prefix_selector = not isinstance(assignments, dict) and not callable(assignments)
+    assignment_pairs = resolve_assignment_grouper(assignments, gradebook.assignments)
+    if is_prefix_selector:
+        assignment_pairs = {k + suffix: v for k, v in assignment_pairs.items()}
+
+    for value in assignment_pairs.values():
+        if len(value) != 2:
+            raise ValueError("Assignments must be given in pairs.")
 
     for new_name, assignment_pair in assignment_pairs.items():
         gradebook = _redeem(gradebook, new_name, assignment_pair, deduction)

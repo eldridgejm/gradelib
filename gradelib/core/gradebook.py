@@ -3,6 +3,7 @@
 import copy
 import dataclasses
 import typing
+import collections.abc
 
 from ..scales import DEFAULT_SCALE, map_scores_to_letter_grades
 from .student import Student
@@ -103,17 +104,13 @@ def _concatenate_notes(gradebooks):
 
 def _concatenate_groups(gradebooks):
     """Concatenates the groups from a sequence of gradebooks."""
-    groups = []
-    seen_group_names = set()
+    new_groups = {}
     for gradebook in gradebooks:
-        groups.extend(gradebook.groups)
-        current_group_names = set(g.name for g in gradebook.groups)
-        names_seen_twice = seen_group_names & current_group_names
-        if names_seen_twice:
-            raise ValueError(f"Duplicate group names seen: {names_seen_twice}.")
-        seen_group_names.update(current_group_names)
-
-    return groups
+        for group_name, group in gradebook.groups.items():
+            if group_name in new_groups:
+                raise ValueError(f"Duplicate group names seen: {group_name}.")
+            new_groups[group_name] = group
+    return new_groups
 
 
 def _combine_if_equal(gradebooks: typing.Collection["Gradebook"], attr: str):
@@ -132,9 +129,13 @@ def _combine_if_equal(gradebooks: typing.Collection["Gradebook"], attr: str):
 
     return obj
 
+
 # public functions ---------------------------------------------------------------------
 
-def combine_gradebooks(gradebooks: typing.Collection["Gradebook"], restrict_to_pids=None):
+
+def combine_gradebooks(
+    gradebooks: typing.Collection["Gradebook"], restrict_to_pids=None
+):
     """Create a gradebook by safely combining several existing gradebooks.
 
     It is crucial that the combined gradebooks have exactly the same students
@@ -216,6 +217,7 @@ def combine_gradebooks(gradebooks: typing.Collection["Gradebook"], restrict_to_p
 
 # GradebookOptions ---------------------------------------------------------------------
 
+
 @dataclasses.dataclass
 class GradebookOptions:
     """Configures the behavior of a :class:`Gradebook`.
@@ -231,6 +233,7 @@ class GradebookOptions:
     # number of seconds within which a late assignment is not considered late
     lateness_fudge: int = 5 * 60
 
+
 # AssignmentGroup --------------------------------------------------------------------------------
 
 
@@ -239,8 +242,6 @@ class AssignmentGroup:
 
     Attributes
     ----------
-    name: str
-        The group's name.
     assignment_weights: dict[str, float]
         A dictionary mapping the assignments to their weight within the group. Their
         weights should add to one.
@@ -249,14 +250,12 @@ class AssignmentGroup:
     """
 
     _attrs = [
-        "name",
         "assignment_weights",
         "group_weight",
     ]
 
     def __init__(
         self,
-        name,
         assignment_weights,
         group_weight,
     ):
@@ -264,7 +263,6 @@ class AssignmentGroup:
         if not isinstance(assignment_weights, dict):
             raise TypeError("Must be a dictionary.")
 
-        self.name = name
         self.assignment_weights = assignment_weights
         self.group_weight = group_weight
 
@@ -276,7 +274,9 @@ class AssignmentGroup:
     def __eq__(self, other):
         return all(getattr(self, attr) == getattr(other, attr) for attr in self._attrs)
 
+
 # Gradebook ============================================================================
+
 
 class Gradebook:
     """Data structure which facilitates common grading operations.
@@ -422,43 +422,56 @@ class Gradebook:
     @property
     def default_groups(self):
         group_weight = 1 / len(self.assignments)
-        return tuple(
-            AssignmentGroup(assignment, normalize([assignment]), group_weight)
+        return {
+            assignment: AssignmentGroup(normalize([assignment]), group_weight)
             for assignment in self.assignments
-        )
+        }
 
     @property
     def groups(self):
-        return tuple(self._groups)
+        return dict(self._groups)
 
     @groups.setter
     def groups(self, value):
-        def _make_group(g):
+        """.groups setter that accepts several difference convenience formats.
+
+        The value should be a dict mapping group names to *group definitions*. A group
+        definition can be any of the following:
+
+            - A single float representing a group weight. In this case, the group name
+              is treated as an assignment name.
+
+        """
+        if not isinstance(value, dict):
+            raise ValueError("Groups must be provided as a dictionary.")
+
+        def _make_group(g, name):
             if isinstance(g, AssignmentGroup):
-                args = [
-                    g.name,
-                    g.assignment_weights,
-                    g.group_weight,
-                ]
-            elif len(g) == 2:
-                # expecting a single assignment
-                args = (g[0], {g[0]: 1}, g[1])
-            elif len(g) == 3:
-                args = list(g)
+                return g
+
+            if isinstance(g, float):
+                # should be a number. this form defines a group with a single assignment
+                assignment_weights = [name]
+                group_weight = g
+            elif isinstance(g, collections.abc.Collection) and len(g) == 2:
+                assignment_weights = g[0]
+                group_weight = g[1]
             else:
                 raise TypeError("Unexpected type for groups.")
 
-            if callable(args[1]):
-                args[1] = args[1](self.assignments)
+            if callable(assignment_weights):
+                assignment_weights = assignment_weights(self.assignments)
 
-            if not isinstance(args[1], dict):
+            if not isinstance(assignment_weights, dict):
                 # an iterable of assignments that we need to turn into a dict
-                total_points_possible = sum(self.points_possible[a] for a in args[1])
-                args[1] = {a: self.points_possible[a] / total_points_possible for a in args[1]}
+                total_points_possible = sum(self.points_possible[a] for a in assignment_weights)
+                assignment_weights = {
+                    a: self.points_possible[a] / total_points_possible for a in assignment_weights
+                }
 
-            return AssignmentGroup(*args)
+            return AssignmentGroup(assignment_weights, group_weight)
 
-        self._groups = [_make_group(g) for g in value]
+        self._groups = {name: _make_group(g, name) for name, g in value.items()}
 
     # properties: weights and values ---------------------------------------------------
 
@@ -468,7 +481,7 @@ class Gradebook:
             self.group_points_possible_after_drops
         )
 
-        for group in self.groups:
+        for group_name, group in self.groups.items():
             if isinstance(group.assignment_weights, dict):
                 weights = pd.Series(group.assignment_weights)
                 weights = self._everyone_to_per_student(weights)
@@ -480,7 +493,9 @@ class Gradebook:
 
     @property
     def overall_weight(self):
-        group_weight = pd.Series({group.name: group.group_weight for group in self.groups})
+        group_weight = pd.Series(
+            {group_name: assignment_group.group_weight for group_name, assignment_group in self.groups.items()}
+        )
         return self.weight * self._by_group_to_by_assignment(group_weight)
 
     @property
@@ -492,7 +507,7 @@ class Gradebook:
     @property
     def group_points_possible_after_drops(self):
         result = {}
-        for group in self.groups:
+        for group_name, group in self.groups.items():
             possible = pd.DataFrame(
                 np.tile(
                     self.points_possible[list(group.assignment_weights)],
@@ -508,10 +523,10 @@ class Gradebook:
             if (possible == 0).any():
                 problematic_pids = list(possible.index[possible == 0])
                 raise ValueError(
-                    f"All assignments are dropped for {problematic_pids} in group '{group.name}'."
+                    f"All assignments are dropped for {problematic_pids} in group '{group_name}'."
                 )
 
-            result[group.name] = possible
+            result[group_name] = possible
 
         return pd.DataFrame(result, index=self.students)
 
@@ -519,11 +534,13 @@ class Gradebook:
     def group_scores(self):
         group_values = pd.DataFrame(
             {
-                group.name: self.value[list(group.assignment_weights)].sum(axis=1)
-                for group in self.groups
+                group_name: self.value[list(group.assignment_weights)].sum(axis=1)
+                for group_name, group in self.groups.items()
             }
         )
-        group_weight = pd.Series({group.name: group.group_weight for group in self.groups})
+        group_weight = pd.Series(
+            {group_name: group.group_weight for group_name, group in self.groups.items()}
+        )
         return group_values / group_weight
 
     def _by_group_to_by_assignment(self, by_group):
@@ -548,8 +565,8 @@ class Gradebook:
         """
 
         def _get_group_by_name(name):
-            for group in self.groups:
-                if group.name == name:
+            for group_name, group in self.groups.items():
+                if group_name == name:
                     return group
 
         def _convert_df(df):
@@ -620,7 +637,6 @@ class Gradebook:
         s = 1 - ((self.rank - 1) / len(self.rank))
         s.name = "percentile"
         return s
-
 
     # copying / replacing --------------------------------------------------------------
 
@@ -742,8 +758,6 @@ class Gradebook:
         self.lateness[name] = lateness
         self.dropped[name] = dropped
 
-
-
     def restrict_to_assignments(self, assignments):
         """Restrict the gradebook to only the supplied assignments.
 
@@ -773,11 +787,13 @@ class Gradebook:
 
         def _update_groups():
             def _update_group(g):
-                kept_assignment_weights = {a:v for a,v in g.assignment_weights.items() if a in assignments}
-                return AssignmentGroup(g.name, kept_assignment_weights, g.group_weight)
+                kept_assignment_weights = {
+                    a: v for a, v in g.assignment_weights.items() if a in assignments
+                }
+                return AssignmentGroup(kept_assignment_weights, g.group_weight)
 
-            new_groups_with_empties = [_update_group(g) for g in self.groups]
-            return [g for g in new_groups_with_empties if g.assignment_weights]
+            new_groups_with_empties = {name: _update_group(g) for name, g in self.groups.items()}
+            return {name: g for name, g in new_groups_with_empties.items() if g.assignment_weights}
 
         self.groups = _update_groups()
 
@@ -807,8 +823,6 @@ class Gradebook:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
 
         return self.restrict_to_assignments(set(self.assignments) - set(assignments))
-
-
 
     def _combine_assignment_parts(self, new_name, parts):
         """A helper function to combine assignments under the new name."""

@@ -232,10 +232,10 @@ def test_penalize_lates_with_forgiveness_forgives_most_valuable_assignments_firs
     HOMEWORK = gradebook.assignments.starting_with("hw")
     LABS = gradebook.assignments.starting_with("lab")
 
-    gradebook.groups = (
-        ("homeworks", HOMEWORK, 0.75),
-        ("labs", LABS, 0.25),
-    )
+    gradebook.groups = {
+        "homeworks": (HOMEWORK, 0.75),
+        "labs": (LABS, 0.25),
+    }
 
     result = gradelib.policies.PenalizeLates(within=HOMEWORK + LABS, forgive=2)(
         gradebook
@@ -268,10 +268,10 @@ def test_penalize_lates_forgives_the_first_n_lates_when_order_by_is_index():
     HOMEWORK = gradebook.assignments.starting_with("hw")
     LABS = gradebook.assignments.starting_with("lab")
 
-    gradebook.groups = (
-        ("homeworks", HOMEWORK, 0.75),
-        ("labs", LABS, 0.25),
-    )
+    gradebook.groups = {
+        "homeworks": (HOMEWORK, 0.75),
+        "labs": (LABS, 0.25),
+        }
 
     result = gradelib.policies.PenalizeLates(
         within=HOMEWORK + LABS, forgive=2, order_by="index"
@@ -319,10 +319,10 @@ def test_penalize_lates_by_default_takes_into_account_drops():
     )
 
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
-    gradebook.groups = [
-        ("homeworks", gradebook.assignments.starting_with("hw"), 0.75),
-        ("labs", gradebook.assignments.starting_with("lab"), 0.75),
-    ]
+    gradebook.groups = {
+        "homeworks": (gradebook.assignments.starting_with("hw"), 0.75),
+        "labs": (gradebook.assignments.starting_with("lab"), 0.75),
+        }
 
     gradebook.dropped.loc["A1", "hw02"] = True
 
@@ -353,7 +353,9 @@ def test_penalize_lates_adds_note_for_penalized_assignment():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradebook.groups = [("homeworks", HOMEWORK, 1)]
+    gradebook.groups = {
+            "homeworks": (HOMEWORK, 1)
+            }
 
     result = gradebook.apply(gradelib.policies.PenalizeLates())
 
@@ -389,7 +391,8 @@ def test_penalize_lates_with_forgiveness_adds_note_for_forgiven_assignments():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradebook.groups = [("homeworks", HOMEWORK, 1)]
+    gradebook.groups = { 
+                        "homeworks": (HOMEWORK, 1) }
 
     result = gradebook.apply(gradelib.policies.PenalizeLates(forgive=2))
 

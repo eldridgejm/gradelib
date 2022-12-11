@@ -62,7 +62,7 @@ def _student_summary(self, student):
     lines.append("<h2>Group Scores</h2>")
     lines.append("<ul>")
     for group in self.assignment_groups:
-        score = self.group_scores.loc[pid, group.name]
+        score = self.assignment_group_scores.loc[pid, group.name]
         li(group.name, _fmt_as_pct(score))
     lines.append("</ul>")
 
@@ -109,3 +109,50 @@ def summary(self, student=None):
         return self._student_summary(self.find_student(student))
     else:
         return self._class_summary()
+
+# properties: ranks and percentiles
+
+@property
+def rank(self) -> pd.Series:
+    """A series containing the rank of each student according to overall score.
+
+    A pandas Series with an entry for each student in the Gradebook. The
+    index is the same as the series returned by the :attr:`students`
+    attribute. Each entry is the rank in the class, taking drops into
+    account, and calculated using the value of the :attr:`overall_score`
+    attribute.
+
+    This is a dynamically-computed property; it should not be modified.
+
+    Raises
+    ------
+    ValueError
+        If :attr:`assignment_groups` has not yet been set.
+
+    """
+    sorted_scores = self.overall_score.sort_values(ascending=False).to_frame()
+    sorted_scores["rank"] = np.arange(1, len(sorted_scores) + 1)
+    return sorted_scores["rank"]
+
+@property
+def percentile(self) -> pd.Series:
+    """A series containing the percentile of each student according to overall score.
+
+    A pandas Series with an entry for each student in the Gradebook. The
+    index is the same as the series returned by the :attr:`students`
+    attribute. Each entry is the percentile in the class, taking drops into
+    account, and calculated using the value of the :attr:`overall_score`
+    attribute.
+
+    This is a dynamically-computed property; it should not be modified.
+
+    Raises
+    ------
+    ValueError
+        If :attr:`assignment_groups` has not yet been set.
+
+    """
+    s = 1 - ((self.rank - 1) / len(self.rank))
+    s.name = "percentile"
+    return s
+

@@ -122,6 +122,20 @@ def test_lateness_fudge_can_be_changed():
 
 # weight -------------------------------------------------------------------------------
 
+def test_weight_without_assignment_groups_is_nan():
+    columns = ["hw01", "hw02", "lab01", "lab02"]
+    p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
+
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 30, 40], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    assert np.isnan(gb.weight.loc["A1", "hw01"])
+    assert np.isnan(gb.weight.loc["A1", "hw02"])
+    assert np.isnan(gb.weight.loc["A2", "hw01"])
+    assert np.isnan(gb.weight.loc["A2", "hw02"])
 
 def test_weight_defaults_to_being_computed_from_points_possible():
     columns = ["hw01", "hw02", "lab01", "lab02"]
@@ -168,7 +182,7 @@ def test_weight_assignments_not_in_a_group_are_nan():
     assert np.isnan(gb.weight.loc["A2", "lab02"])
 
 
-def test_weight_takes_drops_into_account():
+def test_weight_takes_drops_into_account_by_renormalizing():
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
     p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
@@ -186,11 +200,36 @@ def test_weight_takes_drops_into_account():
         "labs": (gb.assignments.starting_with("lab"), 0.25),
     }
 
+    # then
+    # - dropped assignments have a weight of zero
+    # - all other assignments have a renormalized weight
     assert gb.weight.loc["A1", "hw01"] == 0.0
     assert gb.weight.loc["A1", "hw02"] == 50 / 80
     assert gb.weight.loc["A2", "hw01"] == 0.0
     assert gb.weight.loc["A2", "hw02"] == 1.0
 
+
+def test_weight_with_all_dropped_in_group_raises():
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
+
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 30, 40], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+    gb.dropped.loc["A1", "hw01"] = True
+    gb.dropped.loc["A1", "hw02"] = True
+    gb.dropped.loc["A1", "hw03"] = True
+
+    gb.assignment_groups = {
+        "homeworks": (gb.assignments.starting_with("hw"), 0.75),
+        "labs": (gb.assignments.starting_with("lab"), 0.25),
+    }
+
+    # then
+    with pytest.raises(ValueError):
+        gb.weight.loc["A1", "hw01"]
 
 def test_weight_with_normalization():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -616,6 +655,20 @@ def test_overall_score_respects_group_weighting():
         ),
     )
 
+def test_overall_score_raises_if_groups_not_set():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    with pytest.raises(ValueError):
+        gradebook.overall_score
+
 
 def test_overall_score_respects_dropped_assignments():
     # given
@@ -686,6 +739,36 @@ def test_letter_grades_respects_scale():
         gradebook.letter_grades, pd.Series(["A", "A-"], index=gradebook.students)
     )
 
+
+def test_letter_grades_raises_if_groups_not_set():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+    gradebook.dropped.loc["A1", "hw02"] = True
+    gradebook.dropped.loc["A2", "hw03"] = True
+
+    gradebook.scale = {
+        "A+": 0.9,
+        "A": 0.8,
+        "A-": 0.7,
+        "B+": 0.6,
+        "B": 0.5,
+        "B-": 0.4,
+        "C+": 0.35,
+        "C": 0.3,
+        "C-": 0.2,
+        "D": 0.1,
+        "F": 0,
+    }
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    with pytest.raises(ValueError):
+        gradebook.letter_grades
 
 # tests: groups ========================================================================
 
@@ -782,61 +865,6 @@ def test_groups_setter_raises_if_group_weights_do_not_sum_to_one():
             "labs": (LABS_LAZY, 0.5),
         }
 
-# group_points_possible_after_drops ----------------------------------------------------
-
-
-def test_group_points_respects_dropped_assignments():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-    gradebook.dropped.loc["A1", "hw02"] = True
-    gradebook.dropped.loc["A2", "hw03"] = True
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.assignment_groups = {
-        "homeworks": (HOMEWORKS, 0.5),
-        "labs": (["lab01"], 0.5),
-    }
-
-    # then
-
-    pd.testing.assert_frame_equal(
-        gradebook.group_points_possible_after_drops,
-        pd.DataFrame(
-            [[102, 20], [52, 20]],
-            index=gradebook.students,
-            columns=["homeworks", "labs"],
-        ),
-    )
-
-
-def test_group_points_raises_if_all_assignments_in_a_group_are_dropped():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-    gradebook.dropped.loc["A1", "lab01"] = True
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
-    gradebook.assignment_groups = {
-        "homeworks": (HOMEWORKS, 0.5),
-        "labs": (["lab01"], 0.5),
-    }
-
-    # then
-    with pytest.raises(ValueError):
-        gradebook.group_points_possible_after_drops
-
-
 # group_scores -------------------------------------------------------------------------
 
 
@@ -859,7 +887,7 @@ def test_group_scores_raises_if_all_assignments_in_a_group_are_dropped():
 
     # then
     with pytest.raises(ValueError):
-        gradebook.group_scores
+        gradebook.assignment_group_scores
 
 
 def test_group_scores_respects_dropped_assignments():
@@ -882,7 +910,7 @@ def test_group_scores_respects_dropped_assignments():
 
     # then
     pd.testing.assert_frame_equal(
-        gradebook.group_scores,
+        gradebook.assignment_group_scores,
         pd.DataFrame(
             [[91 / 102, 20 / 20], [9 / 52, 20 / 20]],
             index=gradebook.students,
@@ -909,7 +937,7 @@ def test_group_scores_with_assignment_weights():
 
     # then
     pd.testing.assert_frame_equal(
-        gradebook.group_scores,
+        gradebook.assignment_group_scores,
         pd.DataFrame(
             [[0.125 + 0.25, 1], [0, 20 / 20]],
             index=gradebook.students,

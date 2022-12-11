@@ -376,7 +376,7 @@ class Gradebook:
             dropped if dropped is not None else _empty_mask_like(points_earned)
         )
         self.notes = {} if notes is None else notes
-        self.assignment_groups = self.default_groups if assignment_groups is None else assignment_groups
+        self.assignment_groups = {} if assignment_groups is None else assignment_groups
         self.scale = DEFAULT_SCALE if scale is None else scale
         self.opts = opts if opts is not None else GradebookOptions()
 
@@ -390,10 +390,10 @@ class Gradebook:
     # properties: assignments, students, lates -----------------------------------------
 
     @property
-    def assignments(self):
+    def assignments(self) -> Assignments:
         """All assignments in the gradebook.
 
-        Do not modify.
+        This is a dynamically-computed property; it should not be modified.
 
         Returns
         -------
@@ -403,8 +403,10 @@ class Gradebook:
         return Assignments(self.points_earned.columns)
 
     @property
-    def pids(self):
+    def pids(self) -> set[str]:
         """All student PIDs.
+
+        This is a dynamically-computed property; it should not be modified.
 
         Returns
         -------
@@ -414,11 +416,13 @@ class Gradebook:
         return set(self.points_earned.index)
 
     @property
-    def students(self):
+    def students(self) -> list[Student]:
         """All students as Student objects.
 
         Returned in the order they appear in the indices of the `points_earned`
         attribute.
+
+        This is a dynamically-computed property; it should not be modified.
 
         Returns
         -------
@@ -428,7 +432,7 @@ class Gradebook:
         return [s for s in self.points_earned.index]
 
     @property
-    def late(self):
+    def late(self) -> pd.DataFrame:
         """A boolean dataframe telling which assignments were turned in late.
 
         Will have the same index and columns as the `points_earned` attribute.
@@ -439,6 +443,8 @@ class Gradebook:
         considered late. This can be useful to work around grade sources whose
         reported lateness is not always reliable, such as Gradescope.
 
+        This is a dynamically-computed property; it should not be modified.
+
         """
         fudge = self.opts.lateness_fudge
         return self.lateness > pd.Timedelta(fudge, unit="s")
@@ -446,11 +452,7 @@ class Gradebook:
     # properties: groups ---------------------------------------------------------------
 
     @property
-    def default_groups(self):
-        return {}
-
-    @property
-    def assignment_groups(self):
+    def assignment_groups(self) -> dict[str, AssignmentGroup]:
         return dict(self._groups)
 
     @assignment_groups.setter
@@ -504,9 +506,36 @@ class Gradebook:
     # properties: weights and values ---------------------------------------------------
 
     @property
-    def weight(self):
+    def weight(self) -> pd.DataFrame:
+        """A table of assignment weights relative to their assignment group.
+
+        If :attr:`assignment_groups` is set, this computes a table of the same
+        size as :attr:`points_earned` containing for each student and
+        assignment, the weight of that assignment relative to the assignment
+        group.
+
+        If an assignment is not in an assignment group, the weight for that
+        assignment is `NaN`. If no assignment groups have been defined, all
+        weights are `Nan`.
+
+        If the assignment is dropped for that student, the weight is zero.
+        If *all* assignments in a group have been dropped, `ValueError` is
+        raised.
+
+        Note that this is **not** the overall weight towards to the overall
+        score. That is computed in :attr:`overall_weight`.
+
+        This is a dynamically-computed property; it should not be modified.
+
+        Raises
+        ------
+        ValueError
+            If all assignments in a group have been dropped for a student,
+            the weights are undefined.
+
+        """
         result = self.points_possible / self._by_group_to_by_assignment(
-            self.group_points_possible_after_drops
+            self._group_points_possible_after_drops
         )
 
         for group_name, group in self.assignment_groups.items():
@@ -520,7 +549,35 @@ class Gradebook:
         return result * (~self.dropped)
 
     @property
-    def overall_weight(self):
+    def overall_weight(self) -> pd.DataFrame:
+        """A table of assignment weights relative to all other assignments.
+
+        If :attr:`assignment_groups` is set, this computes a table of the same
+        size as :attr:`points_earned` containing for each student and
+        assignment, the overall weight of that assignment relative to all other
+        assignments.
+
+        If an assignment is not in an assignment group, the weight for that
+        assignment is `NaN`. If no assignment groups have been defined, all
+        weights are `Nan`.
+
+        If the assignment is dropped for that student, the weight is zero. If
+        *all* assignments in a group have been dropped, `ValueError` is raised.
+
+        Note that this is **not** the weight of the assignment relative to the
+        total weight of the assignment group it is in. That is That is computed
+        in :attr:`weight`.
+
+        This is a dynamically-computed property; it should not be modified.
+
+        Raises
+        ------
+        ValueError
+            If all assignments in a group have been dropped for a student,
+            the weights are undefined.
+
+        """
+
         group_weight = pd.Series(
             {group_name: assignment_group.group_weight for group_name, assignment_group in self.assignment_groups.items()}, 
             dtype=float
@@ -528,13 +585,49 @@ class Gradebook:
         return self.weight * self._by_group_to_by_assignment(group_weight)
 
     @property
-    def value(self):
+    def value(self) -> pd.DataFrame:
+        """A table containing the value of each assignment for each student.
+
+        This produces a table of the same size as :attr:`points_earned` where
+        each entry contains the value of an assignment for a given student. The
+        "value" of an assignment is the amount that it contributes to the
+        student's overall score in the class. In short, it is the product of
+        that assignment's score with its overall weight.
+
+        If :attr:`assignment_groups` is not set, all entries are `NaN`.
+
+        The total of a student's assignment values equals their score in the
+        class.
+
+        This is a dynamically-computed property; it should not be modified.
+
+        Raises
+        ------
+        ValueError
+            If all assignments in a group have been dropped for a student,
+            the weights are undefined.
+
+        """
         return (self.points_earned / self.points_possible) * self.overall_weight
 
     # properties: scores ---------------------------------------------------------------
 
     @property
-    def group_points_possible_after_drops(self):
+    def _group_points_possible_after_drops(self) -> pd.DataFrame:
+        """A table of the number of points possible in an assignment group, after drops.
+
+        Produces a table with one row per student, and one column per assignment group,
+        containing the number of points possible in that group after dropped assignments
+        have been removed.
+
+        This is a dynamically-computed property; it should not be modified.
+
+        Raises
+        ------
+        ValueError
+            If all assignments in an assignment group have been dropped for a student.
+
+        """
         result = {}
         for group_name, group in self.assignment_groups.items():
             possible = pd.DataFrame(
@@ -560,7 +653,20 @@ class Gradebook:
         return pd.DataFrame(result, index=self.students)
 
     @property
-    def group_scores(self):
+    def assignment_group_scores(self) -> pd.DataFrame:
+        """A table of the scores earned in each assignment group.
+
+        Produces a DataFrame with a row for each student and a column for each
+        assignment group in which each entry is the student's score within that
+        assignment group.
+
+        This takes into account dropped assignments.
+
+        If :attr:`assignment_groups` has not yet been set, all entries are `NaN`.
+
+        This is a dynamically-computed property; it should not be modified.
+
+        """
         group_values = pd.DataFrame(
             {
                 group_name: self.value[list(group.assignment_weights)].sum(axis=1)
@@ -628,44 +734,65 @@ class Gradebook:
         )
 
     @property
-    def score(self):
-        return self.points / self.points_possible
+    def score(self) -> pd.DataFrame:
+        """A table of scores on each assignment.
+
+        Produces a DataFrame with a row for each student and a column for each assignment
+        containing the number of points earned on that assignment as a proportion of
+        the number of points possible on that assignment.
+
+        Does not take into account drops.
+
+        This is a dynamically-computed property; it should not be modified.
+
+        """
+        return self.points_earned / self.points_possible
 
     @property
-    def overall_score(self):
+    def overall_score(self) -> pd.Series:
+        """A series containing the overall score earned by each student.
+
+        A pandas Series with an entry for each student in the Gradebook. The
+        index is the same as the series returned by the :attr:`students`
+        attribute. Each entry is the overall score in the class, taking drops
+        into account.
+
+        This is a dynamically-computed property; it should not be modified.
+
+        Raises
+        ------
+        ValueError
+            If :attr:`assignment_groups` has not yet been set.
+
+        """
+        if not self.assignment_groups:
+            raise ValueError("Assignment groups should be set before calculating letter grades.")
+
         return self.value.sum(axis=1)
 
     # properties: letter grades --------------------------------------------------------
 
     @property
-    def letter_grades(self):
+    def letter_grades(self) -> pd.Series:
+        """A series containing the letter grade earned by each student.
+
+        A pandas Series with an entry for each student in the Gradebook. The
+        index is the same as the series returned by the :attr:`students`
+        attribute. Each entry is the letter grade the class, taking drops into
+        account, and calculated using the value of the :attr:`scale` attribute.
+
+        This is a dynamically-computed property; it should not be modified.
+
+        Raises
+        ------
+        ValueError
+            If :attr:`assignment_groups` has not yet been set.
+
+        """
+        if not self.assignment_groups:
+            raise ValueError("Assignment groups should be set before calculating letter grades.")
+
         return map_scores_to_letter_grades(self.overall_score, scale=self.scale)
-
-    @property
-    def letter_grade_distribution(self):
-        counts = self.letter_grades.value_counts()
-        distribution = {}
-        for letter in self.scale:
-            if letter in counts:
-                distribution[letter] = counts.loc[letter]
-            else:
-                distribution[letter] = 0
-
-        return pd.Series(distribution, name="Count")
-
-    # properties: ranks and percentiles
-
-    @property
-    def rank(self):
-        sorted_scores = self.overall_score.sort_values(ascending=False).to_frame()
-        sorted_scores["rank"] = np.arange(1, len(sorted_scores) + 1)
-        return sorted_scores["rank"]
-
-    @property
-    def percentile(self):
-        s = 1 - ((self.rank - 1) / len(self.rank))
-        s.name = "percentile"
-        return s
 
     # copying / replacing --------------------------------------------------------------
 
@@ -690,6 +817,14 @@ class Gradebook:
         return self.__class__(**new_kwargs)
 
     def copy(self):
+        """Copy the gradebook.
+
+        Returns
+        -------
+        Gradebook
+            A new gradebook with all attributes copied.
+
+        """
         return self._replace()
 
     # find student ---------------------------------------------------------------------
@@ -872,7 +1007,7 @@ class Gradebook:
     # adding/removing students ---------------------------------------------------------
 
     def restrict_to_students(self, to):
-        """Restrict the gradebook to only the supplied PIDS.
+        """Restrict the gradebook to only the supplied PIDs.
 
         Parameters
         ----------

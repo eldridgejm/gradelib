@@ -145,6 +145,7 @@ def combine_assignment_parts(gb, selector):
 
     gb.assignment_groups = {}
 
+
 def _combine_assignment_versions(gb, new_name, versions):
     """A helper function to combine assignments under the new name."""
     versions = list(versions)
@@ -178,6 +179,7 @@ def _combine_assignment_versions(gb, new_name, versions):
     gb.dropped = _empty_mask_like(gb.points_earned)
 
     gb.remove_assignments(set(versions) - {new_name})
+
 
 def combine_assignment_versions(gb, selector):
     """Combine the assignment versions into one single assignment with the new name.

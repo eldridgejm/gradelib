@@ -2,12 +2,14 @@ import numpy as np
 
 from ..core import Percentage
 
+
 def _fmt_as_pct(f):
     return f"{f * 100:0.2f}%"
 
 
-
-def redeem(gradebook, selector, remove_parts=False, deduction=None, suffix=" with redemption"):
+def redeem(
+    gradebook, selector, remove_parts=False, deduction=None, suffix=" with redemption"
+):
 
     if isinstance(selector, dict):
         assignment_pairs = selector
@@ -28,6 +30,7 @@ def redeem(gradebook, selector, remove_parts=False, deduction=None, suffix=" wit
         gradebook = _remove_parts(gradebook, selector)
 
     return gradebook
+
 
 def _redeem(gradebook, new_name, assignment_pair, deduction):
     first, second = assignment_pair
@@ -59,11 +62,13 @@ def _redeem(gradebook, new_name, assignment_pair, deduction):
 
     # used for messaging
     first_raw_score = gradebook.points_earned[first] / gradebook.points_possible[first]
-    second_raw_score = gradebook.points_earned[second] / gradebook.points_possible[second]
+    second_raw_score = (
+        gradebook.points_earned[second] / gradebook.points_possible[second]
+    )
 
     def _fmt_score(score):
         if np.isnan(score):
-            return 'n/a'
+            return "n/a"
         else:
             return _fmt_as_pct(score)
 
@@ -72,7 +77,7 @@ def _redeem(gradebook, new_name, assignment_pair, deduction):
         second_score_string = _fmt_score(second_raw_score.loc[pid])
         pieces = [
             f"{first.title()} score: {first_score_string}.",
-            f"{second.title()} score: {second_score_string}."
+            f"{second.title()} score: {second_score_string}.",
         ]
         if first_points.loc[pid] >= second_points.loc[pid]:
             pieces.append(f"{first.title()} score used.")
@@ -82,6 +87,7 @@ def _redeem(gradebook, new_name, assignment_pair, deduction):
 
     gradebook.add_assignment(new_name, points_earned, points_possible)
     return gradebook
+
 
 def _remove_parts(gradebook, selector):
     for assignment_pair in selector.values():

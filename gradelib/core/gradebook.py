@@ -7,7 +7,7 @@ import math
 import collections.abc
 
 from ..scales import DEFAULT_SCALE, map_scores_to_letter_grades
-from .student import Student
+from .student import Student, Students
 from .assignments import Assignments, normalize
 
 import numpy as np
@@ -252,8 +252,8 @@ class AssignmentGroup:
 
     def __repr__(self):
         return (
-                f'AssignmentGroup(assignment_weights={self.assignment_weights!r}, '
-                f'group_weight={self.group_weight!r})'
+            f"AssignmentGroup(assignment_weights={self.assignment_weights!r}, "
+            f"group_weight={self.group_weight!r})"
         )
 
     @property
@@ -313,23 +313,24 @@ class Gradebook:
     ----------
     points_earned : pandas.DataFrame
         A dataframe with one row per student, and one column for each
-        assignment. Each entry should be the raw number of points earned by the
+        assignment. Each entry is the raw number of points earned by the
         student on the given assignment. The index of the dataframe should
-        consist of :class:`Student` objects.
+        consist of :class:`Student` objects. This dataframe can be modified.
     points_possible : pandas.Series
         A series containing the maximum number of points possible for each
         assignment. The index of the series should match the columns of the
-        `points_earned` dataframe.
+        `points_earned` dataframe. This Series can be modified.
     lateness : Optional[pandas.DataFrame]
         A dataframe of `pd.Timedelta` objects with the same columns/index as
         `points_earned`. An entry in the dataframe records how late a student
         turned in the assignment. If `None` is passed, a dataframe of zero
         second timedeltas is used by default. See :attr:`late` for a Boolean
-        version of the lateness.
+        version of the lateness. This dataframe can be modified.
     dropped : Optional[pandas.DataFrame]
         A Boolean dataframe with the same columns/index as `points_earned`. An
         entry that is `True` indicates that the assignment should be dropped.
         If `None` is passed, a dataframe of all `False` is used by default.
+        This dataframe can be modified.
     notes : Optional[dict]
         A nested dictionary of notes, possibly used by report generating code.
         The keys of the outer dictionary should be student PIDs, and the values
@@ -337,11 +338,42 @@ class Gradebook:
         a note "channel", and can be either "late", "drop", or "misc"; these
         are signals to reporting code that help determine where to display
         notes. The values of the inner dictionary should be iterables of
-        strings, each one a message.
+        strings, each one a message. Can be modified.
     opts : Optional[GradebookOptions]
         An optional collection of options configuring the behavior of the
         Gradebook.
     assignment_groups : dict[str, AssignmentGroup]
+        A mapping from assignment group names (strings) to :class:`AssignmentGroup`
+        objects representing a group of assignments. The default is simply ``{}``.
+
+        To prevent unintentional errors, the assignment groups must be set before
+        accessive summative attributes, such as :attr:`overall_score`.
+
+        While the dictionary returned by this attribute has
+        :class:`AssignmentGroup` instances as values, the attribute can be
+        *set* in several ways, as the example shows.
+
+        Example
+        -------
+
+        >>> gradebook.assignment_groups = {
+        ...     # list of assignments, followed by group weight. assignment weights
+        ...     # are inferred to be proportional to points possible
+        ...     "homeworks": (['hw 01', 'hw 02', 'hw 03'], 0.5),
+        ...
+        ...     # dictionary of assignment weights, followed by group weight.
+        ...     "labs": ({"lab 01": .25, "lab 02": .75}, 0.25),
+        ...
+        ...     # group weight only. the key is interpreted as an assignment name,
+        ...     # and an assignment group consisting only of that assignment is
+        ...     # created.
+        ...     "exam": 0.25
+        ... }
+
+    scale : Optional[OrderedMapping]
+        An ordered mapping from letter grades to score thresholds used to
+        determine overall letter grades. If not provided,
+        :mod:`gradelib.scales.DEFAULT_SCALE` is used.
 
     """
 
@@ -416,7 +448,7 @@ class Gradebook:
         return set(self.points_earned.index)
 
     @property
-    def students(self) -> list[Student]:
+    def students(self) -> Students:
         """All students as Student objects.
 
         Returned in the order they appear in the indices of the `points_earned`
@@ -426,10 +458,10 @@ class Gradebook:
 
         Returns
         -------
-        List[Student]
+        Students
 
         """
-        return [s for s in self.points_earned.index]
+        return Students([s for s in self.points_earned.index])
 
     @property
     def late(self) -> pd.DataFrame:
@@ -488,9 +520,12 @@ class Gradebook:
 
             if not isinstance(assignment_weights, dict):
                 # an iterable of assignments that we need to turn into a dict
-                total_points_possible = sum(self.points_possible[a] for a in assignment_weights)
+                total_points_possible = sum(
+                    self.points_possible[a] for a in assignment_weights
+                )
                 assignment_weights = {
-                    a: self.points_possible[a] / total_points_possible for a in assignment_weights
+                    a: self.points_possible[a] / total_points_possible
+                    for a in assignment_weights
                 }
 
             return AssignmentGroup(assignment_weights, group_weight)
@@ -579,8 +614,11 @@ class Gradebook:
         """
 
         group_weight = pd.Series(
-            {group_name: assignment_group.group_weight for group_name, assignment_group in self.assignment_groups.items()}, 
-            dtype=float
+            {
+                group_name: assignment_group.group_weight
+                for group_name, assignment_group in self.assignment_groups.items()
+            },
+            dtype=float,
         )
         return self.weight * self._by_group_to_by_assignment(group_weight)
 
@@ -674,7 +712,10 @@ class Gradebook:
             }
         )
         group_weight = pd.Series(
-            {group_name: group.group_weight for group_name, group in self.assignment_groups.items()}
+            {
+                group_name: group.group_weight
+                for group_name, group in self.assignment_groups.items()
+            }
         )
         return group_values / group_weight
 
@@ -766,7 +807,9 @@ class Gradebook:
 
         """
         if not self.assignment_groups:
-            raise ValueError("Assignment groups should be set before calculating letter grades.")
+            raise ValueError(
+                "Assignment groups should be set before calculating letter grades."
+            )
 
         return self.value.sum(axis=1)
 
@@ -790,7 +833,9 @@ class Gradebook:
 
         """
         if not self.assignment_groups:
-            raise ValueError("Assignment groups should be set before calculating letter grades.")
+            raise ValueError(
+                "Assignment groups should be set before calculating letter grades."
+            )
 
         return map_scores_to_letter_grades(self.overall_score, scale=self.scale)
 
@@ -827,44 +872,15 @@ class Gradebook:
         """
         return self._replace()
 
-    # find student ---------------------------------------------------------------------
-
-    def find_student(self, name_query):
-        """Finds a student from a fragment of their name.
-
-        The search is case-insensitive.
-
-        Returns
-        -------
-        Student
-            The matching student as a Student object contaning their PID and name.
-
-        Raises
-        ------
-        ValueError
-            If no student matches, or if more than one student matches.
-
-        """
-
-        def is_match(student):
-            if student.name is None:
-                return False
-            return name_query.lower() in student.name.lower()
-
-        matches = [s for s in self.students if is_match(s)]
-
-        if len(matches) == 0:
-            raise ValueError(f"No names matched {name_query}.")
-
-        if len(matches) > 1:
-            raise ValueError(f'Too many names matched "{name_query}": {matches}')
-
-        return matches[0]
-
     # adding/removing assignments ------------------------------------------------------
 
     def add_assignment(
-        self, name, points_earned, points_possible, lateness=None, dropped=None
+        self,
+        name: str,
+        points_earned: pd.Series,
+        points_possible: pd.Series,
+        lateness: typing.Optional[pd.Series] = None,
+        dropped: typing.Optional[pd.Series] = None,
     ):
         """Adds a single assignment to the gradebook, mutating it.
 
@@ -922,7 +938,7 @@ class Gradebook:
         self.lateness[name] = lateness
         self.dropped[name] = dropped
 
-    def restrict_to_assignments(self, assignments):
+    def restrict_to_assignments(self, assignments: typing.Collection[str]):
         """Restrict the gradebook to only the supplied assignments.
 
         If the :attr:`assignment_groups` attribute been set, it is reset to
@@ -951,7 +967,7 @@ class Gradebook:
 
         self.assignment_groups = {}
 
-    def remove_assignments(self, assignments):
+    def remove_assignments(self, assignments: typing.Collection[str]):
         """Removes assignments, mutating the gradebook.
 
         If the :attr:`assignment_groups` attribute been set, it is reset to
@@ -976,7 +992,7 @@ class Gradebook:
 
         return self.restrict_to_assignments(set(self.assignments) - set(assignments))
 
-    def rename_assignments(self, mapping):
+    def rename_assignments(self, mapping: typing.Mapping[str, str]):
         """Renames assignments.
 
         If the :attr:`assignment_groups` attribute been set, it is reset to
@@ -1006,7 +1022,7 @@ class Gradebook:
 
     # adding/removing students ---------------------------------------------------------
 
-    def restrict_to_students(self, to):
+    def restrict_to_students(self, to: typing.Collection[str]):
         """Restrict the gradebook to only the supplied PIDs.
 
         Parameters
@@ -1031,7 +1047,7 @@ class Gradebook:
 
     # notes ----------------------------------------------------------------------------
 
-    def add_note(self, pid, channel, message):
+    def add_note(self, pid: str, channel: str, message: str):
         """Convenience method for adding a note.
 
         Mutates the gradebook.
@@ -1061,7 +1077,12 @@ class Gradebook:
 
     # apply ----------------------------------------------------------------------------
 
-    def apply(self, transformations):
+    def apply(
+        self,
+        transformations: typing.Union[
+            typing.Sequence[typing.Callable], typing.Callable
+        ],
+    ) -> "Gradebook":
         """Apply transformation(s) to the gradebook.
 
         A transformation is a callable that takes in a gradebook object and

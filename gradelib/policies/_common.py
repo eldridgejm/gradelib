@@ -1,4 +1,3 @@
-
 def resolve_within(gradebook, within):
     if within is None:
         within = gradebook.assignments

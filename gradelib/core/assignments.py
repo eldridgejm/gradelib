@@ -43,7 +43,7 @@ class Assignments(collections.abc.Sequence[str]):
 
     """
 
-    def __init__(self, names):
+    def __init__(self, names: typing.Sequence[str]):
         self._names = list(names)
 
     def __contains__(self, element):
@@ -59,6 +59,7 @@ class Assignments(collections.abc.Sequence[str]):
         return list(self) == list(other)
 
     def __add__(self, other):
+        """Unions :class:`Assignments`."""
         return Assignments(self._names + other._names)
 
     def __getitem__(self, index):
@@ -149,3 +150,106 @@ class Assignments(collections.abc.Sequence[str]):
             dct[key].append(assignment)
 
         return {key: Assignments(value) for key, value in dct.items()}
+
+
+class LazyAssignments:
+    """A group of assignments that is lazily evaluated.
+
+    This can be useful when working with a gradebook whose assignments are
+    changing; for example, one in which there are multiple midterm versions
+    that will be combined into one midterm. This can be used to create one
+    assignment selector that is evaluated with the most up-to-date set of
+    assignments, and therefore works to select assignments both before and
+    after preprocessing.
+
+    Parameters
+    ----------
+    f : Callable[[Assignments], Assignments]
+        A "filter" function which, given assignments, selects and returns some
+        of them.
+
+    Attributes
+    ----------
+    f : Callable[[Assignments], Assignments]
+        The filter function.
+
+    Example
+    -------
+    >>> assignments = Assignments(['hw01', 'hw02', 'lab01'])
+    >>> homeworks = LazyAssignments(lambda asmts: asmts.starting_with('hw'))
+    >>> homeworks(assignments)
+    Assignments(['hw01', 'hw02'])
+
+    """
+
+    def __init__(self, f: typing.Callable[[Assignments], Assignments]):
+        self.f = f
+
+    def __call__(self, asmts: Assignments) -> Assignments:
+        """Apply the filter, returning :class:`Assignments`.
+
+        Parameters
+        ----------
+        asmts : Assignments
+            The input to the filter.
+
+        Returns
+        -------
+        Assignments
+            The filtered assignments.
+
+        """
+        return self.f(asmts)
+
+    def __add__(self, other: "LazyAssignments") -> "LazyAssignments":
+        """Produces a :class:`LazyAssignments` that lazily unions the operands.
+
+        Example
+        -------
+        >>> homeworks = gradelib.LazyAssignments(lambda a: a.starting_with('hw'))
+        >>> labs = gradelib.LazyAssignments(lambda a: a.starting_with('lab'))
+        >>> assignments = gradelib.Assignments(['hw01', 'hw02', 'lab01', 'lab02', 'exam'])
+        >>> (homeworks + labs)(assignments)
+        Assignments(['hw01', 'hw02', 'lab01', 'lab02'])
+
+        """
+        def closure(asmts):
+            return self(asmts) + other(asmts)
+        return LazyAssignments(closure)
+
+    def starting_with(self, prefix: str) -> "LazyAssignments":
+        """A lazy version of :meth:`Assignments.starting_with`.
+
+        Example
+        -------
+        >>> assignments = gradelib.Assignments( ["hw 01", "hw 02", "hw 03", "lab 01"])
+        >>> homeworks = gradelib.LazyAssignments(lambda asmts: asmts.starting_with('home'))
+        >>> homeworks(assignments)
+        Assignments(["hw 01", "hw 02", "hw 03"])
+
+        """
+        def closure(asmts):
+            return self(asmts).starting_with(prefix)
+        return LazyAssignments(closure)
+
+    def containing(self, substring: str) -> "LazyAssignments":
+        """A lazy version of :meth:`Assignments.containing`."""
+        def closure(asmts):
+            return self(asmts).containing(substring)
+        return LazyAssignments(closure)
+
+    def group_by(self, to_key: typing.Callable[[str], str]):
+        """A lazy version of :meth:`Assignments.group_by`.
+
+        Example
+        -------
+        >>> key = lambda s: s.split('-')[0]
+        >>> hw_groups = LazyAssignments(lambda asmts: asmts.starting_with('hw')).group_by(key)
+        >>> assignments = Assignments(['hw 01 - a', 'hw 01 - b', 'hw 02', 'lab 01'])
+        >>> hw_groups(assignments)
+        {'hw 01': {'hw 01 - a', 'hw 01 - b'}, 'hw 02'}
+
+        """
+        def closure(asmts):
+            return self(asmts).group_by(to_key)
+        return closure

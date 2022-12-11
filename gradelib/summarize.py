@@ -1,5 +1,5 @@
-
 # summaries ------------------------------------------------------------------------
+
 
 def _assignment_plot(self, pid):
     data = self.score.loc[pid].to_frame(name="Score")
@@ -34,6 +34,7 @@ def _assignment_plot(self, pid):
     )
 
     return bars + text
+
 
 def _student_summary(self, student):
     from IPython.display import display, HTML
@@ -80,6 +81,7 @@ def _student_summary(self, student):
 
     display(self._assignment_plot(pid))
 
+
 def _class_summary(self):
     from IPython.display import display, HTML
 
@@ -104,13 +106,16 @@ def _class_summary(self):
 
     display(_plot.grade_distribution(self))
 
+
 def summary(self, student=None):
     if student is not None:
         return self._student_summary(self.find_student(student))
     else:
         return self._class_summary()
 
+
 # properties: ranks and percentiles
+
 
 @property
 def rank(self) -> pd.Series:
@@ -134,6 +139,7 @@ def rank(self) -> pd.Series:
     sorted_scores["rank"] = np.arange(1, len(sorted_scores) + 1)
     return sorted_scores["rank"]
 
+
 @property
 def percentile(self) -> pd.Series:
     """A series containing the percentile of each student according to overall score.
@@ -155,4 +161,3 @@ def percentile(self) -> pd.Series:
     s = 1 - ((self.rank - 1) / len(self.rank))
     s.name = "percentile"
     return s
-

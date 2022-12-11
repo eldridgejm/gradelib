@@ -20,6 +20,11 @@ Core
 
 .. autoclass:: Assignments
    :members:
+   :special-members: __add__
+
+.. autoclass:: LazyAssignments
+   :members:
+   :special-members: __add__,__call__
 
 .. autoclass:: Student
    :members:

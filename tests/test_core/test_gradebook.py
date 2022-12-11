@@ -120,6 +120,20 @@ def test_lateness_fudge_can_be_changed():
 # tests: properties ====================================================================
 
 
+# students -----------------------------------------------------------------------------
+
+def test_students_attribute_returns_students_objects():
+    columns = ["hw01", "hw02", "lab01", "lab02"]
+    p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
+
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 30, 40], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    assert isinstance(gb.students, gradelib.Students)
+
 # weight -------------------------------------------------------------------------------
 
 def test_weight_without_assignment_groups_is_nan():
@@ -1255,85 +1269,6 @@ def test_restrict_to_students_raises_if_pid_does_not_exist():
     # when
     with pytest.raises(KeyError):
         example.restrict_to_students(pids)
-
-
-# find_student -------------------------------------------------------------------------
-
-
-def test_find_student_is_case_insensitive():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    points_earned.index = [
-        gradelib.Student("A1", "Justin Eldridge"),
-        gradelib.Student("A2", "Barack Obama"),
-    ]
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-
-    # when
-    s = gradebook.find_student("justin")
-
-    # then
-    assert s == points_earned.index[0]
-
-
-def test_find_student_is_case_insensitive_with_capitalized_query():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    points_earned.index = [
-        gradelib.Student("A1", "Justin Eldridge"),
-        gradelib.Student("A2", "Barack Obama"),
-    ]
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-
-    # when
-    s = gradebook.find_student("Justin")
-
-    # then
-    assert s == points_earned.index[0]
-
-
-def test_find_student_raises_on_multiple_matches():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    points_earned.index = [
-        gradelib.Student("A1", "Justin Eldridge"),
-        gradelib.Student("A2", "Justin Other"),
-    ]
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-
-    # when
-    with pytest.raises(ValueError):
-        gradebook.find_student("justin")
-
-
-def test_find_student_raises_on_no_match():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    points_earned.index = [
-        gradelib.Student("A1", "Justin Eldridge"),
-        gradelib.Student("A2", "Justin Other"),
-    ]
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-
-    # when
-    with pytest.raises(ValueError):
-        gradebook.find_student("steve")
 
 
 # tests: free functions ================================================================

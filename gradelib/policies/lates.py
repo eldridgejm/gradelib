@@ -6,9 +6,13 @@ from ._common import resolve_within
 _LateInfo = collections.namedtuple("LateInfo", "gradebook pid assignment number")
 
 
-def penalize_lates(gradebook: "Gradebook", within=None, forgive=0,
-                   deduction=Percentage(1), order_by="value"
-                   ):
+def penalize_lates(
+    gradebook: "Gradebook",
+    within=None,
+    forgive=0,
+    deduction=Percentage(1),
+    order_by="value",
+):
     """Penalize late assignments.
 
     Adds deductions to the gradebook by modifying it.
@@ -75,9 +79,7 @@ def penalize_lates(gradebook: "Gradebook", within=None, forgive=0,
         # since forgiveness will be given to most valuable assignments first
         if order_by == "value":
             value = gradebook.value[within].loc[pid]
-            sorted_assignments = sorted(
-                within, key=lambda a: value[a], reverse=True
-            )
+            sorted_assignments = sorted(within, key=lambda a: value[a], reverse=True)
         else:
             sorted_assignments = within
 
@@ -102,6 +104,7 @@ def penalize_lates(gradebook: "Gradebook", within=None, forgive=0,
         _penalize_lates_for(student)
 
     return gradebook
+
 
 def _deduct(gradebook, pid, assignment, number, deduction):
     if callable(deduction):

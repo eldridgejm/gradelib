@@ -7,6 +7,7 @@ import pandas as pd
 from ..core import Percentage, Points
 from ._common import resolve_within
 
+
 def _empty_mask_like(table):
     """Given a dataframe, create another just like it with every entry False."""
     empty = table.copy()
@@ -28,10 +29,12 @@ class ForgiveLate:
         self.assignment = assignment
 
     def __call__(self, gradebook, student):
-        pid = gradebook.find_student(student)
+        pid = gradebook.students.find(student)
         gradebook.lateness.loc[pid, self.assignment] = pd.Timedelta(0, "s")
         gradebook.add_note(
-            pid, "lates", f"Exception applied: late {self.assignment.title()} is forgiven."
+            pid,
+            "lates",
+            f"Exception applied: late {self.assignment.title()} is forgiven.",
         )
         return gradebook
 
@@ -41,7 +44,7 @@ class Drop:
         self.assignment = assignment
 
     def __call__(self, gradebook, student):
-        pid = gradebook.find_student(student)
+        pid = gradebook.students.find(student)
         gradebook.dropped.loc[pid, self.assignment] = True
         gradebook.add_note(
             pid, "drops", f"Exception applied: {self.assignment.title()} dropped."
@@ -62,7 +65,7 @@ class Replace:
         self.with_ = with_
 
     def __call__(self, gradebook, student):
-        pid = gradebook.find_student(student)
+        pid = gradebook.students.find(student)
         current_points = gradebook.points_earned.loc[pid, self.assignment]
         other_assignment_score = (
             gradebook.points_earned.loc[pid, self.with_]
@@ -73,9 +76,11 @@ class Replace:
         )
 
         gradebook.points_earned.loc[pid, self.assignment] = new_points
-        gradebook.add_note(pid, "misc", 
-                           f"Replacing {self.assignment.title()} with {self.with_.title()}."
-                           )
+        gradebook.add_note(
+            pid,
+            "misc",
+            f"Replacing {self.assignment.title()} with {self.with_.title()}.",
+        )
         return gradebook
 
 
@@ -93,12 +98,15 @@ class Override:
         self.amount = amount
 
     def __call__(self, gradebook, student):
-        pid = gradebook.find_student(student)
+        pid = gradebook.students.find(student)
         current_points = gradebook.points_earned.loc[pid, self.assignment]
         new_points = _convert_amount_to_absolute_points(
             self.amount, gradebook, self.assignment
         )
         gradebook.points_earned.loc[pid, self.assignment] = new_points
-        gradebook.add_note(pid, "misc", 
-                    f"Manually set {self.assignment} to {new_points} points as part of an exception.")
+        gradebook.add_note(
+            pid,
+            "misc",
+            f"Manually set {self.assignment} to {new_points} points as part of an exception.",
+        )
         return gradebook

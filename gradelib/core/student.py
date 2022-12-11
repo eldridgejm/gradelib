@@ -1,5 +1,7 @@
 """A class representing a student."""
 
+import typing
+
 
 class Student:
     """Represents a student.
@@ -43,3 +45,53 @@ class Student:
             return other.pid == self.pid
         else:
             return self.pid == other
+
+
+class Students(typing.Sequence[Student]):
+    """A sequence of students."""
+
+    def __init__(self, students: typing.Sequence[Student]):
+        self._students = students
+
+    def __getitem__(self, ix):
+        return self._students[ix]
+
+    def __len__(self):
+        return len(self._students)
+
+    def find(self, name_query: str):
+        """Finds a student from a fragment of their name.
+
+        The search is case-insensitive.
+
+        Paramters
+        ---------
+        name_query : str
+            A string used to search for a student.
+
+        Returns
+        -------
+        Student
+            The matching student as a Student object contaning their PID and name.
+
+        Raises
+        ------
+        ValueError
+            If no student matches, or if more than one student matches.
+
+        """
+
+        def is_match(student):
+            if student.name is None:
+                return False
+            return name_query.lower() in student.name.lower()
+
+        matches = [s for s in self._students if is_match(s)]
+
+        if len(matches) == 0:
+            raise ValueError(f"No names matched {name_query}.")
+
+        if len(matches) > 1:
+            raise ValueError(f'Too many names matched "{name_query}": {matches}')
+
+        return matches[0]

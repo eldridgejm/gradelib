@@ -64,6 +64,14 @@ Core
 
    Functionality for implementing grading policies on Gradebooks.
 
-.. autofunction:: gradelib.grading.drop_lowest
-.. autofunction:: gradelib.grading.penalize_lates
-.. autofunction:: gradelib.grading.redeem
+.. autofunction:: gradelib.policies.drop_lowest
+.. autofunction:: gradelib.policies.penalize_lates
+.. autofunction:: gradelib.policies.redeem
+.. autofunction:: gradelib.policies.make_exceptions
+
+:mod:`scales`
+==============
+
+.. module:: scales
+
+   Grading scales.

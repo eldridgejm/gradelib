@@ -48,7 +48,7 @@ class Student:
 
 
 class Students(typing.Sequence[Student]):
-    """A sequence of students."""
+    """A sequence of students. Behaves like a list of :class:`Student` instances."""
 
     def __init__(self, students: typing.Sequence[Student]):
         self._students = students
@@ -64,15 +64,15 @@ class Students(typing.Sequence[Student]):
 
         The search is case-insensitive.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
         name_query : str
             A string used to search for a student.
 
         Returns
         -------
         Student
-            The matching student as a Student object contaning their PID and name.
+            The matching student.
 
         Raises
         ------

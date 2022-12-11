@@ -12,10 +12,14 @@ class _GradeAmount:
 
 
 class Points(_GradeAmount):
+    """Represents an absolute number of points."""
+
     def __str__(self):
         return f"{self.amount} points"
 
 
 class Percentage(_GradeAmount):
+    """Represents a percentage."""
+
     def __str__(self):
         return f"{self.amount * 100}%"

@@ -22,13 +22,6 @@ def read(
 ):
     """Read a CSV exported from Canvas.
 
-    Warning
-    -------
-
-    This is a low-level function which returns a pandas DataFrame. A
-    higher-level convenience function for reading a canvas CSV directly into
-    a :class:`Gradebook` is provided by :meth:`Gradebook.from_canvas`.
-
     Parameters
     ----------
     path : str or pathlib.Path
@@ -45,10 +38,7 @@ def read(
 
     Returns
     -------
-    points : pd.DataFrame
-        Points table, one row per student.
-    maximums : pd.Series
-        Maximum points for each assignment.
+    Gradebook
 
     """
     table = pd.read_csv(path).set_index("SIS User ID")

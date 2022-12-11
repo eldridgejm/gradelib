@@ -1,40 +1,24 @@
+from __future__ import annotations
+
 import collections
+import typing
 
 from ..core import Percentage, Points
-from ._common import resolve_within
+from ..core.assignments import AssignmentSelector
+from .._common import resolve_assignment_selector
 
 _LateInfo = collections.namedtuple("LateInfo", "gradebook pid assignment number")
 
 
 def penalize_lates(
-    gradebook: "Gradebook",
-    within=None,
+    gradebook: Gradebook,
+    within: typing.Optional[AssignmentSelector]=None,
     forgive=0,
     deduction=Percentage(1),
     order_by="value",
 ):
     """Penalize late assignments.
 
-    Adds deductions to the gradebook by modifying it.
-
-    Parameters
-    ----------
-    forgive : Optional[int]
-        The number of lates to forgive. Default: 0
-    within : Optional[Within]
-        A sequence of assignments within which lates will be forgiven, or a
-        callable producing such a sequence of assignments. If None, all
-        assignments will be used. Default: None
-    deduction : Optional[Union[Points, Percentage, Callable]]
-        The amount that should be deducted. See the Notes for instructions
-        on using a callable. If None, 100% is deducted.
-    order_by : str
-        One of {'value', 'index'}. If 'value', highly-valued assignments are
-        forgiven first. If 'index', assignments are forgiven in the order they
-        appear in `within`. Default: 'value'.
-
-    Notes
-    -----
     The first `forgive` late assignments are forgiven. By "first", we mean with
     respect to the order specified by the `within` argument. As such, the
     `within` argument must be an ordered *sequence*. If not, a ValueError will
@@ -54,9 +38,29 @@ def penalize_lates(
         - `number`: the number of late assignments seen so far that have not
           been forgiven, including the current assignment
 
-    It should return either a Points or Percentage object. This is a very
-    general scheme, and allows penalizing based on the lateness of the
-    assignment, for example.
+    It should return either a :class:`gradelib.Points` or
+    :class:`gradelib.Percentage` object. This is a very general scheme, and
+    allows penalizing based on the lateness of the assignment, for example.
+
+    Modifies the gradebook given as input.
+
+    Parameters
+    ----------
+    gradebook : Gradebook
+        The gradebook that will be modified.
+    forgive : Optional[int]
+        The number of lates to forgive. Default: 0
+    within : Optional[AssignmentSelector]
+        A sequence of assignments within which lates will be forgiven, or a
+        callable producing such a sequence of assignments. If None, all
+        assignments will be used. Default: None
+    deduction : Optional[Union[Points, Percentage, Callable]]
+        The amount that should be deducted. See the Notes for instructions
+        on using a callable. If None, 100% is deducted.
+    order_by : str
+        One of ``{'value', 'index'}``. If `value`, highly-valued assignments
+        are forgiven first. If `index`, assignments are forgiven in the order
+        they appear in `within`. Default: `value`.
 
     Raises
     ------
@@ -69,7 +73,7 @@ def penalize_lates(
     if forgive < 0:
         raise ValueError("Must forgive a non-negative number of lates.")
 
-    within = resolve_within(gradebook, within)
+    within = resolve_assignment_selector(within, gradebook.assignments)
 
     def _penalize_lates_for(pid):
         forgiveness_left = forgive

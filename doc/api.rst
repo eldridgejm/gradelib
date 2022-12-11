@@ -26,7 +26,57 @@ Core
    :members:
    :special-members: __add__,__call__
 
+.. class:: AssignmentSelector
+
+   A type alias defining a way of selecting a collection of assignments. In
+   words, an assignment selector is one of:
+
+   1. An :class:`Assignments` object.
+   2. A sequence of strings, each being an assignment name.
+   3. A callable that takes in an instance of :class:`Assignments` and returns
+      an instance of :class:`Assignments`.
+
+   The formal definition is:
+
+   .. code:: python
+
+        AssignmentSelector = typing.Union[
+                typing.Callable[["Assignments"], "Assignments"],
+                "Assignments",
+                typing.Sequence[str]
+        ]
+
+.. class:: AssignmentGrouper
+
+   A type alias defining a way of grouping a collection of assignments. In
+   words, an assignment selector is one of:
+
+   1. An mapping of group names (strings) to collections of assignment names.
+   2. A collection of strings; each is interpreted as a prefix, and all assignments
+      with that prefix are grouped together.
+   3. A callable that takes in an assignment name (a string) and returns the name of the
+      group that the assignment should be placed into.
+
+   The formal definition is:
+
+   .. code:: python
+
+        AssignmentGrouper = typing.Union[
+            typing.Mapping[str, typing.Collection[str]],
+            typing.Collection[str],
+            typing.Callable[[str], str],
+        ]
+
+.. autoclass:: Points
+   :members:
+
+.. autoclass:: Percentage
+   :members:
+
 .. autoclass:: Student
+   :members:
+
+.. autoclass:: Students
    :members:
 
 .. autofunction:: combine_gradebooks

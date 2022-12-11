@@ -974,6 +974,14 @@ def test_restrict_to_assignments():
     assert set(example.assignments) == {"homework 01", "homework 02"}
     assert_gradebook_is_sound(example)
 
+def test_restrict_to_assignments_accepts_function_assignment_selector():
+    # when
+    example = GRADESCOPE_EXAMPLE.copy()
+    example.restrict_to_assignments(lambda asmts: ['homework 01', 'homework 02'])
+
+    # then
+    assert set(example.assignments) == {"homework 01", "homework 02"}
+    assert_gradebook_is_sound(example)
 
 def test_restrict_to_assignments_raises_if_assignment_does_not_exist():
     # given
@@ -1013,6 +1021,27 @@ def test_remove_assignments():
     # when
     example = GRADESCOPE_EXAMPLE.copy()
     example.remove_assignments(example.assignments.starting_with("lab"))
+
+    # then
+    assert set(example.assignments) == {
+        "homework 01",
+        "homework 02",
+        "homework 03",
+        "homework 04",
+        "homework 05",
+        "homework 06",
+        "homework 07",
+        "project 01",
+        "project 02",
+    }
+    assert_gradebook_is_sound(example)
+
+def test_remove_assignments_accepts_function_assignment_selector():
+    # given
+    example = GRADESCOPE_EXAMPLE.copy()
+
+    #when
+    example.remove_assignments(lambda asmts: asmts.starting_with("lab"))
 
     # then
     assert set(example.assignments) == {

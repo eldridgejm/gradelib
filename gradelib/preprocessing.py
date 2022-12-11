@@ -1,6 +1,15 @@
+"""Tools for preprocessing Gradebooks before grading."""
+
+from __future__ import annotations
+
 import typing
 
 import pandas as pd
+
+from .core import AssignmentGrouper
+from ._common import resolve_assignment_grouper
+
+# private helper functions =============================================================
 
 
 def _empty_mask_like(table):
@@ -10,44 +19,9 @@ def _empty_mask_like(table):
     return empty.astype(bool)
 
 
-def _resolve_assignment_grouper(grouper, assignments: typing.Collection[str]):
-    """Resolves an assignment grouper into a dictionary.
+# public functions =====================================================================
 
-    The resulting dictionary maps group names to lists of assignments.
-
-    A grouper can be any of the following:
-
-        - A dictionary mapping strings to lists of assignment names.
-
-        - A list of strings. These strings will be interpreted as prefixes, and
-          will becomes keys in the resulting dictionary. Every assignment that
-          starts with a given prefix will be an element of the list that the
-          key points to.
-
-        - A Callable[[str], str] which should produce a group key when called
-          on an assignment name.
-
-    """
-    if not callable(grouper):
-        if not isinstance(grouper, dict):
-            # should be a list of assignment prefixes
-            dct = {}
-            for prefix in grouper:
-                dct[prefix] = {a for a in assignments if a.startswith(prefix)}
-        else:
-            # just a normal dictionary
-            dct = grouper
-    else:
-        # callable, should return the group name when called on an assignment
-        to_key = grouper
-        dct = {}
-        for assignment in assignments:
-            key = to_key(assignment)
-            if key not in dct:
-                dct[key] = []
-            dct[key].append(assignment)
-
-    return dct
+# combine_assignment_parts -------------------------------------------------------------
 
 
 def _combine_assignment_parts(gb, new_name, parts):
@@ -72,7 +46,7 @@ def _combine_assignment_parts(gb, new_name, parts):
     gb.remove_assignments(set(parts) - {new_name})
 
 
-def combine_assignment_parts(gb, selector):
+def combine_assignment_parts(gb, grouper: AssignmentGrouper):
     """Combine the assignment parts into one assignment with the new name.
 
     Sometimes assignments may have several parts which are recorded
@@ -86,12 +60,6 @@ def combine_assignment_parts(gb, selector):
     The lateness of the new assignment is the *maximum* lateness of any of
     its parts.
 
-    Points are propagated unchanged, but Percentage objects are converted
-    to Points according to the ratio of the part's value to the total
-    points possible. For example, if the first part is worth 70 points, and
-    the second part is worth 30 points, and a 25% Percentage is applied to
-    the second part, it is converted to a 25% * 30 = 7.5 point Points.
-
     It is unclear what the result should be if any of the assignments to be
     unified has been dropped, but other parts have not. For this reason,
     this method will raise a `ValueError` if *any* of the parts have been
@@ -103,7 +71,7 @@ def combine_assignment_parts(gb, selector):
 
     Parameters
     ----------
-    selector : Mapping[str, Collection[str]]
+    grouper : AssignmentGrouper
         Either: 1) a mapping whose keys are new assignment names, and whose
         values are collections of assignments that should be unified under
         their common key; 2) a list of prefixes; each prefix defines a
@@ -119,31 +87,36 @@ def combine_assignment_parts(gb, selector):
     Example
     -------
 
-    Assuming the gradebook has assignments named `homework 01`, `homework 01 - programming`,
-    `homework 02`, `homework 02 - programming`, etc., the following will "combine" the
-    assignments into `homework 01`, `homework 02`, etc:
+    Assume the gradebook has assignments named `homework 01`, `homework 01 -
+    programming`, `homework 02`, `homework 02 - programming`, etc., the
+    following will "combine" the assignments into `homework 01`, `homework 02`,
+    etc. In order to unify the programming parts with the rest of the homework,
+    we can write:
 
-        >>> gradebook.combine_assignment_parts(lambda s: s.split('-')[0].strip())
+    >>> gradebook.combine_assignment_parts(lambda s: s.split('-')[0].strip())
 
-    Alternatively, you could write:
+    This used a callable grouper. Alternatively, one could use a list of prefixes:
 
-        >>> gradebook.combine_assignment_parts(["homework 01", "homework 02"])
+    >>> gradebook.combine_assignment_parts(["homework 01", "homework 02"])
 
-    Or:
+    Or a dictionary mapping new assignment names to their parts:
 
-        >>> gradebook.combine_assignment_parts({
-            'homework 01': {'homework 01', 'homework 01 - programming'},
-            'homework 02': {'homework 02', 'homework 02 - programming'}
-            })
+    >>> gradebook.combine_assignment_parts({
+    ... 'homework 01': {'homework 01', 'homework 01 - programming'},
+    ... 'homework 02': {'homework 02', 'homework 02 - programming'}
+    ... })
 
 
     """
-    dct = _resolve_assignment_grouper(selector, gb.assignments)
+    dct = resolve_assignment_grouper(grouper, gb.assignments)
 
     for key, value in dct.items():
         _combine_assignment_parts(gb, key, value)
 
     gb.assignment_groups = {}
+
+
+# combine_assignment_versions ----------------------------------------------------------
 
 
 def _combine_assignment_versions(gb, new_name, versions):
@@ -181,12 +154,12 @@ def _combine_assignment_versions(gb, new_name, versions):
     gb.remove_assignments(set(versions) - {new_name})
 
 
-def combine_assignment_versions(gb, selector):
+def combine_assignment_versions(gb, grouper: AssignmentGrouper):
     """Combine the assignment versions into one single assignment with the new name.
 
     Sometimes assignments may have several versions which are recorded separately
     in the grading software. For instance, multiple versions of a midterm may be
-    distributed to prevent cheating.
+    distributed to mitigate cheating.
 
     The individual assignment versions are removed from the gradebook and
     are unified into a single new version.
@@ -198,16 +171,16 @@ def combine_assignment_versions(gb, selector):
     of the versions. If this is not true, a `ValueError` is raised.
 
     It is unclear what the result should be if any of the assignments to be
-    unified has been dropped or is late, but other parts have not. If
-    either of these assumptions are violated, this method will raise a
-    `ValueError`.
+    unified is dropped or is late, but other parts are not. If either of these
+    assumptions are violated, this method will raise a `ValueError`.
 
-    Groups are updated so that the versions no longer appear in any group, but
-    new groups are not created.
+    Assignment groups are automatically reset to prevent errors. It is
+    suggested that the gradebook's assignments be finalized before setting
+    the assignment groups.
 
     Parameters
     ----------
-    selector : Mapping[str, Collection[str]]
+    grouper : AssignmentGrouper
         Either: 1) a mapping whose keys are new assignment names, and whose
         values are collections of assignments that should be unified under
         their common key; 2) a list of prefixes; each prefix defines a
@@ -240,7 +213,7 @@ def combine_assignment_versions(gb, selector):
 
 
     """
-    dct = _resolve_assignment_grouper(selector, gb.assignments)
+    dct = resolve_assignment_grouper(grouper, gb.assignments)
 
     for key, value in dct.items():
         _combine_assignment_versions(gb, key, value)

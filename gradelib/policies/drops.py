@@ -1,26 +1,17 @@
+from __future__ import annotations
+
 import itertools
+import typing
 
 import pandas as pd
 
-from ._common import resolve_within
+from .._common import resolve_assignment_selector
+from ..core.assignments import AssignmentSelector
 
 
-def drop_lowest(gradebook, n, within=None):
-    """Drop the lowest n grades within a group of assignments.
+def drop_lowest(gradebook, n: int, within: typing.Optional[AssignmentSelector] = None):
+    """Drop the lowest `n` grades within a group of assignments.
 
-    Modifies the input gradebook.
-
-    Parameters
-    ----------
-    n : int
-        The number of grades to drop.
-    within : Optional[Within]
-        A collection of assignments; the lowest among them will be dropped. If
-        a callable, it will be called on the gradebook's assignments to produce
-        such a collection. If None, all assignments will be used. Default: None
-
-    Notes
-    -----
     If all assignments are worth the same number of points, dropping the
     assignment with the lowest score is most advantageous to the student.
     However, if the assignments are not worth the same number of points, the
@@ -29,22 +20,29 @@ def drop_lowest(gradebook, n, within=None):
     set of assignments to drop in order to maximize the overall score is
     non-trivial.
 
-    In this implementation, dropping assignments is performed via a
-    brute-force algorithm: each possible combination of kept assignments is
-    tested, and the one which yields the largest total_points /
-    maximum_points_possible is used. The time complexity of this approach
-    is combinatorial, and therefore it is not recommended beyond small
-    problem sizes. For a better algorithm, see:
-    http://cseweb.ucsd.edu/~dakane/droplowest.pdf
+    In this implementation, dropping assignments is performed via a brute-force
+    algorithm: each possible combination of kept assignments is tested, and the
+    one which yields the largest total_points / maximum_points_possible is
+    used. The time complexity of this approach is combinatorial, and therefore
+    it is not recommended beyond small problem sizes. For a better algorithm,
+    see: http://cseweb.ucsd.edu/~dakane/droplowest.pdf
 
-    If an assignment has deductions for whatever reason, those deductions will
-    be applied before calculating which assignments to drop. For that reason,
-    it is usually best to apply whatever deductions are needed before using
-    this.
+    If an assignment has already been marked as dropped, it won't be considered
+    for dropping. This is useful, for instance, when a student's assignment is
+    dropped due to an external circumstance.
 
-    If an assignment has already been marked as dropped, it won't be
-    considered for dropping. This is useful, for instance, when a student's
-    assignment is dropped due to an external circumstance.
+    Modifies the input gradebook.
+
+    Parameters
+    ----------
+    gradebook : Gradebook
+        The gradebook that will be modified.
+    n : int
+        The number of grades to drop.
+    within : Optional[AssignmentSelector]
+        A collection of assignments; the lowest among them will be dropped. If
+        a callable, it will be called on the gradebook's assignments to produce
+        such a collection. If None, all assignments will be used. Default: None
 
     Raises
     ------
@@ -53,7 +51,7 @@ def drop_lowest(gradebook, n, within=None):
 
     """
     # number of kept assignments
-    within = resolve_within(gradebook, within)
+    within = resolve_assignment_selector(within, gradebook.assignments)
 
     # the combinations of assignments to drop
     combinations = list(itertools.combinations(within, n))

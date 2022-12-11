@@ -32,14 +32,7 @@ def _lateness_in_seconds(lateness):
 
 
 def read(path, standardize_pids=True, standardize_assignments=True):
-    """Read a CSV exported from Gradescope.
-
-    Warning
-    -------
-
-    This is a low-level function which returns a pandas DataFrame. A
-    higher-level convenience function for reading a gradescope CSV directly into
-    a :class:`Gradebook` is provided by :meth:`Gradebook.from_gradescope`.
+    """Read a CSV exported from Gradescope into a :class:`gradelib.Gradebook`.
 
     Parameters
     ----------
@@ -55,26 +48,7 @@ def read(path, standardize_pids=True, standardize_assignments=True):
 
     Returns
     -------
-    points : pd.DataFrame
-        Points table, one row per student.
-    maximums : pd.Series
-        Maximum points for each assignment.
-    lateness : pd.DataFrame
-        The lateness of each submission, as a string.
-
-        Read a gradescope CSV into a gradebook.
-
-        Parameters
-        ----------
-        path : str or pathlib.Path
-            Path to the CSV file that will be read.
-        standardize_pids : bool
-            Whether to standardize PIDs so that they are all uppercased. This can be
-            useful when students who manually join gradescope enter their own PID
-            without uppercasing it. Default: True.
-        standardize_assignments : bool
-            Whether to standardize assignment names so that they are all lowercased.
-            Default: True.
+    Gradebook
 
     """
     table = pd.read_csv(path, dtype={"SID": str}).set_index("SID")

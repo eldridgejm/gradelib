@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 
 from ..core import Percentage
@@ -8,14 +10,29 @@ def _fmt_as_pct(f):
 
 
 def redeem(
-    gradebook, selector, remove_parts=False, deduction=None, suffix=" with redemption"
+        gradebook: Gradebook, assignments, remove_parts=False,
+        deduction=None, suffix=" with redemption"
 ):
+    """Replace assignment scores with later assignment scores, if higher.
 
-    if isinstance(selector, dict):
-        assignment_pairs = selector
+    Parameters
+    ----------
+    gradebook : Gradebook
+        The gradebook that will be modified.
+    assignments : AssignmentGrouper
+        Pairs of assignments to be redeemed. This can be either 1) a dictionary
+        mapping a group name to a pair of assignments; 2) a list of string
+        prefixes (each asssignment with that prefix is placed in the same
+        group); or 3) a callable which takes an assignment name as input and
+        returns a group name. Groups must have exactly two elements, else an
+        exception is raised.
+
+    """
+    if isinstance(assignments, dict):
+        assignment_pairs = assignments
     else:
         assignment_pairs = {}
-        for prefix in selector:
+        for prefix in assignments:
             pair = [a for a in gradebook.assignments if a.startswith(prefix)]
             if len(pair) != 2:
                 raise ValueError(
@@ -27,7 +44,7 @@ def redeem(
         gradebook = _redeem(gradebook, new_name, assignment_pair, deduction)
 
     if remove_parts:
-        gradebook = _remove_parts(gradebook, selector)
+        gradebook = _remove_parts(gradebook, assignments)
 
     return gradebook
 

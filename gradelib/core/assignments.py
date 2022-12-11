@@ -3,6 +3,16 @@
 import collections.abc
 import typing
 
+AssignmentSelector = typing.Union[
+    typing.Callable[["Assignments"], "Assignments"], "Assignments", typing.Sequence[str]
+]
+
+AssignmentGrouper = typing.Union[
+    typing.Mapping[str, typing.Collection[str]],
+    typing.Collection[str],
+    typing.Callable[[str], str],
+]
+
 
 def normalize(assignments: typing.Collection[str]) -> typing.Dict[str, float]:
     """Create an assignment weight dict. in which every assignment is weighed equally.
@@ -213,8 +223,10 @@ class LazyAssignments:
         Assignments(['hw01', 'hw02', 'lab01', 'lab02'])
 
         """
+
         def closure(asmts):
             return self(asmts) + other(asmts)
+
         return LazyAssignments(closure)
 
     def starting_with(self, prefix: str) -> "LazyAssignments":
@@ -228,14 +240,18 @@ class LazyAssignments:
         Assignments(["hw 01", "hw 02", "hw 03"])
 
         """
+
         def closure(asmts):
             return self(asmts).starting_with(prefix)
+
         return LazyAssignments(closure)
 
     def containing(self, substring: str) -> "LazyAssignments":
         """A lazy version of :meth:`Assignments.containing`."""
+
         def closure(asmts):
             return self(asmts).containing(substring)
+
         return LazyAssignments(closure)
 
     def group_by(self, to_key: typing.Callable[[str], str]):
@@ -250,6 +266,8 @@ class LazyAssignments:
         {'hw 01': {'hw 01 - a', 'hw 01 - b'}, 'hw 02'}
 
         """
+
         def closure(asmts):
             return self(asmts).group_by(to_key)
+
         return closure

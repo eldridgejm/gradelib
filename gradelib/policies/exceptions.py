@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from ..core import Percentage, Points
-from ._common import resolve_within
+from .._common import resolve_assignment_grouper
 
 
 def _empty_mask_like(table):

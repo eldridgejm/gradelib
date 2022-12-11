@@ -1,5 +1,7 @@
 """Core type for managing a collection of grades."""
 
+from __future__ import annotations
+
 import copy
 import dataclasses
 import typing
@@ -8,7 +10,7 @@ import collections.abc
 
 from ..scales import DEFAULT_SCALE, map_scores_to_letter_grades
 from .student import Student, Students
-from .assignments import Assignments, normalize
+from .assignments import Assignments, AssignmentSelector, normalize
 
 import numpy as np
 import pandas as pd
@@ -271,6 +273,11 @@ class AssignmentGroup:
 class Gradebook:
     """Data structure which facilitates common grading operations.
 
+    Typically a Gradebook is not created manually, but is instead produced by
+    reading grades exported from Gradescope or Canvas, using
+    :func:`gradelib.io.gradescope.read` or :func:`gradelib.io.canvas.read`.
+
+
     Parameters
     ----------
     points_earned : pandas.DataFrame
@@ -302,12 +309,6 @@ class Gradebook:
     opts : Optional[GradebookOptions]
         An optional collection of options configuring the behavior of the
         Gradebook.
-
-    Notes
-    -----
-    Typically a Gradebook is not created manually, but is instead produced
-    by reading grades exported from Gradescope or Canvas, using
-    :func:`gradelib.io.gradescope.read` or :func:`gradelib.io.canvas.read`.
 
     Attributes
     ----------
@@ -938,7 +939,7 @@ class Gradebook:
         self.lateness[name] = lateness
         self.dropped[name] = dropped
 
-    def restrict_to_assignments(self, assignments: typing.Collection[str]):
+    def restrict_to_assignments(self, assignments: AssignmentSelector):
         """Restrict the gradebook to only the supplied assignments.
 
         If the :attr:`assignment_groups` attribute been set, it is reset to
@@ -946,7 +947,7 @@ class Gradebook:
 
         Parameters
         ----------
-        assignments : Collection[str]
+        assignments : AssignmentSelector
             A collection of assignment names.
 
         Raises
@@ -955,7 +956,10 @@ class Gradebook:
             If an assignment was specified that was not in the gradebook.
 
         """
-        assignments = list(assignments)
+        if callable(assignments):
+            assignments = assignments(self.assignments)
+        else:
+            assignments = list(assignments)
         extras = set(assignments) - set(self.assignments)
         if extras:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
@@ -967,7 +971,7 @@ class Gradebook:
 
         self.assignment_groups = {}
 
-    def remove_assignments(self, assignments: typing.Collection[str]):
+    def remove_assignments(self, assignments: AssignmentSelector):
         """Removes assignments, mutating the gradebook.
 
         If the :attr:`assignment_groups` attribute been set, it is reset to
@@ -975,7 +979,7 @@ class Gradebook:
 
         Parameters
         ----------
-        assignments : Collection[str]
+        assignments : AssignmentSelector
             A collection of assignments names that will be removed.
 
         Raises
@@ -985,7 +989,10 @@ class Gradebook:
 
         """
         # TODO: preserve order better
-        assignments = list(assignments)
+        if callable(assignments):
+            assignments = assignments(self.assignments)
+        else:
+            assignments = list(assignments)
         extras = set(assignments) - set(self.assignments)
         if extras:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")

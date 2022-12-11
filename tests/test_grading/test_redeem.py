@@ -10,7 +10,7 @@ from util import assert_gradebook_is_sound
 
 
 
-# Redeem -------------------------------------------------------------------------------
+# redeem -------------------------------------------------------------------------------
 
 
 def test_redemption_on_single_assignment_pair():
@@ -23,18 +23,14 @@ def test_redemption_on_single_assignment_pair():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    actual = gradebook.apply(
-        gradelib.grading.Redeem(
-            {"mt01 with redemption": ("mt01", "mt01 - redemption")}
-        )
-    )
+    gradelib.grading.redeem(gradebook, {"mt01 with redemption": ("mt01", "mt01 - redemption")})
 
     # then
-    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 100
-    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 92
-    assert "mt01" in actual.assignments
-    assert "mt01 - redemption" in actual.assignments
-    assert_gradebook_is_sound(actual)
+    assert gradebook.points_earned.loc["A1", "mt01 with redemption"] == 100
+    assert gradebook.points_earned.loc["A2", "mt01 with redemption"] == 92
+    assert "mt01" in gradebook.assignments
+    assert "mt01 - redemption" in gradebook.assignments
+    assert_gradebook_is_sound(gradebook)
 
 
 def test_redemption_adds_note():
@@ -47,14 +43,10 @@ def test_redemption_adds_note():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    actual = gradebook.apply(
-        gradelib.grading.Redeem(
-            {"mt01 with redemption": ("mt01", "mt01 - redemption")}
-        )
-    )
+    gradelib.grading.redeem(gradebook, {"mt01 with redemption": ("mt01", "mt01 - redemption")})
 
     # then
-    assert actual.notes == {
+    assert gradebook.notes == {
         "A1": {
             "redemption": [
                 "Mt01 score: 95.00%. Mt01 - Redemption score: 100.00%. Mt01 - Redemption score used.",
@@ -78,25 +70,18 @@ def test_redemption_on_multiple_assignment_pairs():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    actual = gradebook.apply(
-        gradelib.grading.Redeem(
-            {
-                "mt01 with redemption": ("mt01", "mt01 - redemption"),
-                "mt02 with redemption": ("mt02", "mt02 - redemption"),
-            }
-        )
-    )
+    gradelib.grading.redeem(gradebook, { "mt01 with redemption": ("mt01", "mt01 - redemption"), "mt02 with redemption": ("mt02", "mt02 - redemption"), })
 
     # then
-    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 100
-    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 92
-    assert actual.points_earned.loc["A1", "mt02 with redemption"] == 50
-    assert actual.points_earned.loc["A2", "mt02 with redemption"] == 40
-    assert "mt01" in actual.assignments
-    assert "mt01 - redemption" in actual.assignments
-    assert "mt02" in actual.assignments
-    assert "mt02 - redemption" in actual.assignments
-    assert_gradebook_is_sound(actual)
+    assert gradebook.points_earned.loc["A1", "mt01 with redemption"] == 100
+    assert gradebook.points_earned.loc["A2", "mt01 with redemption"] == 92
+    assert gradebook.points_earned.loc["A1", "mt02 with redemption"] == 50
+    assert gradebook.points_earned.loc["A2", "mt02 with redemption"] == 40
+    assert "mt01" in gradebook.assignments
+    assert "mt01 - redemption" in gradebook.assignments
+    assert "mt02" in gradebook.assignments
+    assert "mt02 - redemption" in gradebook.assignments
+    assert_gradebook_is_sound(gradebook)
 
 
 def test_redemption_with_prefix_selector():
@@ -109,18 +94,18 @@ def test_redemption_with_prefix_selector():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    actual = gradebook.apply(gradelib.grading.Redeem(["mt01", "mt02"]))
+    gradelib.grading.redeem(gradebook, ["mt01", "mt02"])
 
     # then
-    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 100
-    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 92
-    assert actual.points_earned.loc["A1", "mt02 with redemption"] == 50
-    assert actual.points_earned.loc["A2", "mt02 with redemption"] == 40
-    assert "mt01" in actual.assignments
-    assert "mt01 - redemption" in actual.assignments
-    assert "mt02" in actual.assignments
-    assert "mt02 - redemption" in actual.assignments
-    assert_gradebook_is_sound(actual)
+    assert gradebook.points_earned.loc["A1", "mt01 with redemption"] == 100
+    assert gradebook.points_earned.loc["A2", "mt01 with redemption"] == 92
+    assert gradebook.points_earned.loc["A1", "mt02 with redemption"] == 50
+    assert gradebook.points_earned.loc["A2", "mt02 with redemption"] == 40
+    assert "mt01" in gradebook.assignments
+    assert "mt01 - redemption" in gradebook.assignments
+    assert "mt02" in gradebook.assignments
+    assert "mt02 - redemption" in gradebook.assignments
+    assert_gradebook_is_sound(gradebook)
 
 
 def test_redemption_with_remove_parts():
@@ -133,18 +118,14 @@ def test_redemption_with_remove_parts():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    actual = gradebook.apply(
-        gradelib.grading.Redeem(
-            {"mt01 with redemption": ("mt01", "mt01 - redemption")}, remove_parts=True
-        )
-    )
+    gradelib.grading.redeem(gradebook, {"mt01 with redemption": ("mt01", "mt01 - redemption")}, remove_parts=True)
 
     # then
-    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 100
-    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 92
-    assert "mt01" not in actual.assignments
-    assert "mt01 - redemption" not in actual.assignments
-    assert_gradebook_is_sound(actual)
+    assert gradebook.points_earned.loc["A1", "mt01 with redemption"] == 100
+    assert gradebook.points_earned.loc["A2", "mt01 with redemption"] == 92
+    assert "mt01" not in gradebook.assignments
+    assert "mt01 - redemption" not in gradebook.assignments
+    assert_gradebook_is_sound(gradebook)
 
 
 def test_redemption_with_dropped_assignment_parts_raises():
@@ -159,11 +140,7 @@ def test_redemption_with_dropped_assignment_parts_raises():
 
     # when
     with pytest.raises(ValueError):
-        actual = gradebook.apply(
-            gradelib.grading.Redeem(
-                {"mt01 with redemption": ("mt01", "mt01 - redemption")}
-            )
-        )
+        gradelib.grading.redeem(gradebook, {"mt01 with redemption": ("mt01", "mt01 - redemption")})
 
 
 def test_redemption_with_unequal_points_possible_scales_to_the_maximum_of_the_two():
@@ -176,17 +153,13 @@ def test_redemption_with_unequal_points_possible_scales_to_the_maximum_of_the_tw
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    actual = gradebook.apply(
-        gradelib.grading.Redeem(
-            {"mt01 with redemption": ("mt01", "mt01 - redemption")}
-        )
-    )
+    gradelib.grading.redeem(gradebook, {"mt01 with redemption": ("mt01", "mt01 - redemption")})
 
     # then
-    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 100
-    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 92
-    assert actual.points_possible["mt01 with redemption"] == 100
-    assert_gradebook_is_sound(actual)
+    assert gradebook.points_earned.loc["A1", "mt01 with redemption"] == 100
+    assert gradebook.points_earned.loc["A2", "mt01 with redemption"] == 92
+    assert gradebook.points_possible["mt01 with redemption"] == 100
+    assert_gradebook_is_sound(gradebook)
 
 
 def test_redemption_with_deduction():
@@ -199,19 +172,14 @@ def test_redemption_with_deduction():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    actual = gradebook.apply(
-        gradelib.grading.Redeem(
-            {"mt01 with redemption": ("mt01", "mt01 - redemption")},
-            deduction=Percentage(0.25),
-        )
-    )
+    gradelib.grading.redeem(gradebook, {"mt01 with redemption": ("mt01", "mt01 - redemption")}, deduction=Percentage(0.25),)
 
     # then
-    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 95
-    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 75
-    assert "mt01" in actual.assignments
-    assert "mt01 - redemption" in actual.assignments
-    assert_gradebook_is_sound(actual)
+    assert gradebook.points_earned.loc["A1", "mt01 with redemption"] == 95
+    assert gradebook.points_earned.loc["A2", "mt01 with redemption"] == 75
+    assert "mt01" in gradebook.assignments
+    assert "mt01 - redemption" in gradebook.assignments
+    assert_gradebook_is_sound(gradebook)
 
 
 def test_redemption_with_nans():
@@ -224,12 +192,12 @@ def test_redemption_with_nans():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    actual = gradelib.grading.Redeem(
+    gradelib.grading.redeem(gradebook, 
         {"mt01 with redemption": ("mt01", "mt01 - redemption")}
-    )(gradebook)
+    )
 
     # then
-    assert actual.points_earned.loc["A1", "mt01 with redemption"] == 100
-    assert actual.points_earned.loc["A2", "mt01 with redemption"] == 50
-    assert_gradebook_is_sound(actual)
+    assert gradebook.points_earned.loc["A1", "mt01 with redemption"] == 100
+    assert gradebook.points_earned.loc["A2", "mt01 with redemption"] == 50
+    assert_gradebook_is_sound(gradebook)
 

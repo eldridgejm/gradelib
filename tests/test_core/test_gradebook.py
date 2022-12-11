@@ -785,6 +785,24 @@ def test_groups_setter_allows_callable_for_assignments():
     }
 
 
+def test_groups_setter_raises_if_group_weights_do_not_sum_to_one():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    HOMEWORKS_LAZY = lambda asmts: asmts.starting_with("hw")
+    LABS_LAZY = lambda asmts: asmts.starting_with("lab")
+
+    with pytest.raises(ValueError):
+        gradebook.assignment_groups = {
+            "homeworks": (HOMEWORKS_LAZY, 0.25),
+            "labs": (LABS_LAZY, 0.5),
+        }
+
 # group_points_possible_after_drops ----------------------------------------------------
 
 

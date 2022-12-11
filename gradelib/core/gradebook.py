@@ -451,11 +451,7 @@ class Gradebook:
 
     @property
     def default_groups(self):
-        group_weight = 1 / len(self.assignments)
-        return {
-            assignment: AssignmentGroup(normalize([assignment]), group_weight)
-            for assignment in self.assignments
-        }
+        return {}
 
     @property
     def assignment_groups(self):
@@ -530,7 +526,8 @@ class Gradebook:
     @property
     def overall_weight(self):
         group_weight = pd.Series(
-            {group_name: assignment_group.group_weight for group_name, assignment_group in self.assignment_groups.items()}
+            {group_name: assignment_group.group_weight for group_name, assignment_group in self.assignment_groups.items()}, 
+            dtype=float
         )
         return self.weight * self._by_group_to_by_assignment(group_weight)
 
@@ -877,6 +874,13 @@ class Gradebook:
 
         return self.restrict_to_assignments(set(self.assignments) - set(assignments))
 
+    def _group_name_of(self, assignment):
+        """Finds the group containing the assignment, if any."""
+        for group_name, group in self.assignment_groups.items():
+            if assignment in group.assignments:
+                return group_name
+        return None
+
     def _combine_assignment_parts(self, new_name, parts):
         """A helper function to combine assignments under the new name."""
         parts = list(parts)
@@ -899,12 +903,12 @@ class Gradebook:
         self.remove_assignments(set(parts) - {new_name})
 
     def combine_assignment_parts(self, selector):
-        """Combine the assignment parts into one single assignment with the new name.
+        """Combine the assignment parts into one assignment with the new name.
 
-        Sometimes assignments may have several parts which are recorded separately
-        in the grading software. For instance, a homework might
-        have a written part and a programming part. This method makes it easy
-        to combine these parts into a single assignment.
+        Sometimes assignments may have several parts which are recorded
+        separately in the grading software. For instance, a homework might have
+        a written part and a programming part. This method makes it easy to
+        combine these parts into a single assignment.
 
         The individual assignment parts are removed from the gradebook.
 
@@ -923,8 +927,9 @@ class Gradebook:
         this method will raise a `ValueError` if *any* of the parts have been
         dropped.
 
-        Groups updated so that the parts no longer appear in any group, but new
-        groups are not created.
+        Assignment groups are automatically reset to prevent errors. It is
+        suggested that the gradebook's assignments be finalized before setting
+        the assignment groups.
 
         Parameters
         ----------
@@ -967,6 +972,8 @@ class Gradebook:
 
         for key, value in dct.items():
             self._combine_assignment_parts(key, value)
+
+        self.assignment_groups = {}
 
     def _combine_assignment_versions(self, new_name, versions):
         """A helper function to combine assignments under the new name."""

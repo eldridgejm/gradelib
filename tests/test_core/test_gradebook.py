@@ -690,27 +690,6 @@ def test_letter_grades_respects_scale():
 # tests: groups ========================================================================
 
 
-# default_groups -----------------------------------------------------------------------
-
-
-def test_default_groups_one_assignment_per_group_equally_weighted():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-
-    # then
-    assert gradebook.default_groups == {
-        "hw01": gradelib.AssignmentGroup({"hw01": 1}, group_weight=0.25),
-        "hw02": gradelib.AssignmentGroup({"hw02": 1}, group_weight=0.25),
-        "hw03": gradelib.AssignmentGroup({"hw03": 1}, group_weight=0.25),
-        "lab01": gradelib.AssignmentGroup({"lab01": 1}, group_weight=0.25),
-    }
-
-
 # groups -------------------------------------------------------------------------------
 
 
@@ -1328,6 +1307,26 @@ def test_combine_assignment_parts_copies_attributes():
 
     gradebook.combine_assignment_parts({"hw01": HOMEWORK_01_PARTS})
 
+def test_combine_assignment_parts_resets_groups():
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+    gradebook.assignment_groups = {
+            "homeworks": ({'hw01': 0.25, 'hw01 - programming': 0.25, 'hw02': 0.5}, 0.5),
+            "labs": ({'lab01': 1}, 0.5),
+    }
+
+    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
+
+    # when
+    gradebook.combine_assignment_parts({"hw01": HOMEWORK_01_PARTS})
+
+    # then
+    assert gradebook.assignment_groups == {}
 
 # combine_assignment_versions ----------------------------------------------------------
 

@@ -141,4 +141,3 @@ def test_drop_lowest_with_multiple_dropped_adds_note():
         "A1": {"drops": ["hw01 dropped.", "hw02 dropped."]},
         "A2": {"drops": ["hw02 dropped.", "hw03 dropped."]},
     }
-

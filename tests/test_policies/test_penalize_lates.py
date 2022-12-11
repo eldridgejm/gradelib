@@ -41,6 +41,10 @@ def test_with_callable_deduction():
         index=points_earned.index,
     )
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
+    gradebook.assignment_groups = {
+        'homeworks': (['hw01', 'hw02'], .75),
+        'labs': (['lab01'], .25),
+    }
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
@@ -52,13 +56,13 @@ def test_with_callable_deduction():
     result = gradebook.apply(gradelib.policies.PenalizeLates(deduction=deduction))
 
     # least to most valuable:
-    # A1: hw01 hw02 lab01
+    # A1: hw01 lab01 hw02
     # A2: hw01 hw02 lab01
     # so hw01 receives the greatest deduction
 
     assert result.points_earned.loc["A1", "hw01"] == 27
-    assert result.points_earned.loc["A1", "hw02"] == 88
-    assert result.points_earned.loc["A1", "lab01"] == 19
+    assert result.points_earned.loc["A1", "hw02"] == 89
+    assert result.points_earned.loc["A1", "lab01"] == 18
 
 
 def test_with_callable_deduction_does_not_count_forgiven():
@@ -75,6 +79,11 @@ def test_with_callable_deduction_does_not_count_forgiven():
     )
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
+    gradebook.assignment_groups = {
+        'homeworks': (['hw01', 'hw02'], .75),
+        'labs': (['lab01'], .25),
+    }
+
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
     gradebook.opts.lateness_fudge = 60 * 5
@@ -87,13 +96,13 @@ def test_with_callable_deduction_does_not_count_forgiven():
     )
 
     # least to most valuable:
-    # A1: hw01 hw02 lab01
-    # A2: hw01 hw02 lab01
-    # so hw01 receives the greatest deduction, lab01 receives forgiveness
+    # A1: hw01, lab01, hw02
+    # A2: hw01, hw02, lab01
+    # so lab01 receives the greatest deduction, hw02 receives forgiveness
 
-    assert result.points_earned.loc["A1", "hw02"] == 89
+    assert result.points_earned.loc["A1", "hw02"] == 90
     assert result.points_earned.loc["A1", "hw01"] == 28
-    assert result.points_earned.loc["A1", "lab01"] == 20
+    assert result.points_earned.loc["A1", "lab01"] == 19
 
 
 def test_respects_lateness_fudge():
@@ -174,6 +183,11 @@ def test_with_forgiveness():
         index=points_earned.index,
     )
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
+
+    gradebook.assignment_groups = {
+        'homeworks': (['hw01', 'hw02'], .75),
+        'labs': (['lab01'], .25),
+    }
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 

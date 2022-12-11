@@ -95,7 +95,7 @@ def _combine_if_equal(gradebooks: typing.Collection["Gradebook"], attr: str):
 
 
 def combine_gradebooks(
-    gradebooks: typing.Collection["Gradebook"], restrict_to_pids=None
+    gradebooks: typing.Collection["Gradebook"], restrict_to_students=None
 ):
     """Create a gradebook by safely combining several existing gradebooks.
 
@@ -118,10 +118,10 @@ def combine_gradebooks(
     gradebooks : Collection[Gradebook]
         The gradebooks to combine. Must have matching indices and unique
         column names.
-    restrict_to_pids : Optional[Collection[str]]
+    restrict_to_students : Optional[Collection[str]]
         If provided, each input gradebook will be restrict to the PIDs
         given before attempting to combine them. This is a convenience
-        option, and it simply calls :meth:`Gradebook.restrict_to_pids` on
+        option, and it simply calls :meth:`Gradebook.restrict_to_students` on
         each of the inputs.  Default: None
 
     Returns
@@ -139,9 +139,9 @@ def combine_gradebooks(
     """
     gradebooks = [g.copy() for g in gradebooks]
 
-    if restrict_to_pids is not None:
+    if restrict_to_students is not None:
         for gradebook in gradebooks:
-            gradebook.restrict_to_pids(restrict_to_pids)
+            gradebook.restrict_to_students(restrict_to_students)
 
     # check that all gradebooks have the same PIDs
     reference_pids = gradebooks[0].pids
@@ -284,13 +284,13 @@ class Gradebook:
         `points_earned` dataframe.
     lateness : Optional[pandas.DataFrame]
         A dataframe of `pd.Timedelta` objects with the same columns/index as
-        `points_earned`. An entry in the dataframe tells how late a student
+        `points_earned`. An entry in the dataframe records how late a student
         turned in the assignment. If `None` is passed, a dataframe of zero
         second timedeltas is used by default.
     dropped : Optional[pandas.DataFrame]
         A Boolean dataframe with the same columns/index as `points_earned`. An
         entry that is `True` indicates that the assignment should be dropped.
-        If `None` is passed, a dataframe of all `False`s is used by default.
+        If `None` is passed, a dataframe of all `False` is used by default.
     notes : Optional[dict]
         A nested dictionary of notes, possibly used by report generating code.
         The keys of the outer dictionary should be student PIDs, and the values
@@ -308,6 +308,40 @@ class Gradebook:
     Typically a Gradebook is not created manually, but is instead produced
     by reading grades exported from Gradescope or Canvas, using
     :func:`gradelib.io.gradescope.read` or :func:`gradelib.io.canvas.read`.
+
+    Attributes
+    ----------
+    points_earned : pandas.DataFrame
+        A dataframe with one row per student, and one column for each
+        assignment. Each entry should be the raw number of points earned by the
+        student on the given assignment. The index of the dataframe should
+        consist of :class:`Student` objects.
+    points_possible : pandas.Series
+        A series containing the maximum number of points possible for each
+        assignment. The index of the series should match the columns of the
+        `points_earned` dataframe.
+    lateness : Optional[pandas.DataFrame]
+        A dataframe of `pd.Timedelta` objects with the same columns/index as
+        `points_earned`. An entry in the dataframe records how late a student
+        turned in the assignment. If `None` is passed, a dataframe of zero
+        second timedeltas is used by default. See :attr:`late` for a Boolean
+        version of the lateness.
+    dropped : Optional[pandas.DataFrame]
+        A Boolean dataframe with the same columns/index as `points_earned`. An
+        entry that is `True` indicates that the assignment should be dropped.
+        If `None` is passed, a dataframe of all `False` is used by default.
+    notes : Optional[dict]
+        A nested dictionary of notes, possibly used by report generating code.
+        The keys of the outer dictionary should be student PIDs, and the values
+        should be dictionaries. The keys of the inner dictionary should specify
+        a note "channel", and can be either "late", "drop", or "misc"; these
+        are signals to reporting code that help determine where to display
+        notes. The values of the inner dictionary should be iterables of
+        strings, each one a message.
+    opts : Optional[GradebookOptions]
+        An optional collection of options configuring the behavior of the
+        Gradebook.
+    assignment_groups : dict[str, AssignmentGroup]
 
     """
 
@@ -359,6 +393,8 @@ class Gradebook:
     def assignments(self):
         """All assignments in the gradebook.
 
+        Do not modify.
+
         Returns
         -------
         Assignments
@@ -397,11 +433,11 @@ class Gradebook:
 
         Will have the same index and columns as the `points_earned` attribute.
 
-        This is computed from the `.lateness` using the `.opts.lateness_fudge`
-        option. If the lateness is less than the lateness fudge, the assignment
-        is considered on-time; otherwise, it is considered late. This can be
-        useful to work around grade sources whose reported lateness is not
-        always reliable, such as Gradescope.
+        This is computed from the :attr:`lateness` attribute using the
+        :attr:`GradebookOptions.lateness_fudge` option. If the lateness is less than the
+        lateness fudge, the assignment is considered on-time; otherwise, it is
+        considered late. This can be useful to work around grade sources whose
+        reported lateness is not always reliable, such as Gradescope.
 
         """
         fudge = self.opts.lateness_fudge
@@ -435,10 +471,10 @@ class Gradebook:
             if isinstance(g, AssignmentGroup):
                 return g
 
-            if isinstance(g, float):
+            if isinstance(g, (float, int)):
                 # should be a number. this form defines a group with a single assignment
                 assignment_weights = [name]
-                group_weight = g
+                group_weight = float(g)
             elif isinstance(g, collections.abc.Collection) and len(g) == 2:
                 assignment_weights = g[0]
                 group_weight = g[1]
@@ -695,7 +731,7 @@ class Gradebook:
     def add_assignment(
         self, name, points_earned, points_possible, lateness=None, dropped=None
     ):
-        """Adds a single assignment to the gradebook.
+        """Adds a single assignment to the gradebook, mutating it.
 
         Usually gradebooks do not need to have individual assignments added to them.
         Instead, gradebooks are read from Canvas, Gradescope, etc. In some instances,
@@ -754,8 +790,8 @@ class Gradebook:
     def restrict_to_assignments(self, assignments):
         """Restrict the gradebook to only the supplied assignments.
 
-        Groups are updated so that they reference only the assignments listed
-        in `assignments`. Assignment weights are recomputed to sum to one.
+        If the :attr:`assignment_groups` attribute been set, it is reset to
+        ``{}`` by this operation.
 
         Parameters
         ----------
@@ -778,47 +814,18 @@ class Gradebook:
         self.lateness = self.lateness.loc[:, assignments]
         self.dropped = self.dropped.loc[:, assignments]
 
-        def _update_groups():
-            def _update_group(g):
-                kept_assignment_weights = {
-                    a: v for a, v in g.assignment_weights.items() if a in assignments
-                }
-
-                # renormalize their weights
-                new_total_weight = sum(v for v in kept_assignment_weights.values())
-                kept_assignment_weights = {k: v / new_total_weight for k, v in kept_assignment_weights.items()}
-
-                # if there are no remaining assignments, return None
-                if kept_assignment_weights:
-                    return AssignmentGroup(kept_assignment_weights, g.group_weight)
-                else:
-                    return None
-
-            updated_groups = {name: _update_group(g) for name, g in self.assignment_groups.items()}
-            # filter out groups that are empty (they are set to None by _update_group)
-            updated_groups = {name: g for name, g in updated_groups.items() if g is not None}
-
-            # renormalize group weights
-            new_total_group_weight = sum(g.group_weight for g in updated_groups.values())
-            for group in updated_groups.values():
-                group.group_weight /= new_total_group_weight
-
-            return updated_groups
-
-        self.assignment_groups = _update_groups()
+        self.assignment_groups = {}
 
     def remove_assignments(self, assignments):
-        """Returns a new gradebook instance without the given assignments.
+        """Removes assignments, mutating the gradebook.
+
+        If the :attr:`assignment_groups` attribute been set, it is reset to
+        ``{}`` by this operation.
 
         Parameters
         ----------
         assignments : Collection[str]
-            A collection of assignment names.
-
-        Returns
-        -------
-        Gradebook
-            A Gradebook without these assignments.
+            A collection of assignments names that will be removed.
 
         Raises
         ------
@@ -826,7 +833,7 @@ class Gradebook:
             If an assignment was specified that was not in the gradebook.
 
         """
-        # TODO preserve order better
+        # TODO: preserve order better
         assignments = list(assignments)
         extras = set(assignments) - set(self.assignments)
         if extras:
@@ -835,20 +842,27 @@ class Gradebook:
         return self.restrict_to_assignments(set(self.assignments) - set(assignments))
 
     def rename_assignments(self, mapping):
+        """Renames assignments.
+
+        If the :attr:`assignment_groups` attribute been set, it is reset to
+        ``{}`` by this operation.
+
+        Parameters
+        ----------
+        mapping : dict[str, str]
+            A mapping from existing column names to new names.
+
+        Raises
+        ------
+        ValueError
+            If a new name clashes with an existing name.
+
+        """
         resulting_names = (set(self.assignments) - mapping.keys()) | set(
             mapping.values()
         )
         if len(resulting_names) != len(self.assignments):
             raise ValueError("Name clashes in renamed assignments.")
-
-        def _update_key(key):
-            if key in mapping:
-                return mapping[key]
-            else:
-                return key
-
-        def _update_assignments_dct(assignments_dct):
-            return {_update_key(k): v for k, v in assignments_dct.items()}
 
         self.points_earned.rename(columns=mapping, inplace=True)
         self.points_possible.rename(index=mapping, inplace=True)
@@ -857,7 +871,7 @@ class Gradebook:
 
     # adding/removing students ---------------------------------------------------------
 
-    def restrict_to_pids(self, to):
+    def restrict_to_students(self, to):
         """Restrict the gradebook to only the supplied PIDS.
 
         Parameters
@@ -924,10 +938,10 @@ class Gradebook:
         transformation is used as the input to the next transformation in the
         sequence.
 
-        The gradebook is copied before handing to the first transformation, so
-        self is guaranteed to be unmodified. This allows transformations which
-        mutate for performance reasons while still guaranteeing that the overall
-        application does not mutate this gradebook.
+        The gradebook is copied before handing it to the first transformation,
+        so self is guaranteed to be unmodified. This allows transformations
+        which mutate for performance reasons while still guaranteeing that the
+        overall application does not mutate this gradebook.
 
         Parameters
         ----------

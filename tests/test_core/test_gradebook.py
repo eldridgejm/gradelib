@@ -943,7 +943,7 @@ def test_restrict_to_assignments_raises_if_assignment_does_not_exist():
         example.restrict_to_assignments(assignments)
 
 
-def test_restrict_to_assignments_updates_groups_and_renormalizes_weights():
+def test_restrict_to_assignments_resets_groups():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01", "midterm"]
     p1 = pd.Series(data=[1, 30, 90, 20, 30], index=columns, name="A1")
@@ -962,19 +962,7 @@ def test_restrict_to_assignments_updates_groups_and_renormalizes_weights():
     gradebook.restrict_to_assignments(["hw01", "hw02", "midterm"])
 
     # then
-    # - removes labs
-    # - renormalizes homework group assignment weights
-    # - renormalizes group weights, too
-    assert gradebook.assignment_groups == {
-        "homeworks": gradelib.AssignmentGroup(
-            # assignment weights are renormalized to one
-            {"hw01": 0.25/0.75, "hw02": 0.5/0.75}, 0.5/0.75
-        ),
-        "midterm": gradelib.AssignmentGroup(
-            # assignment weights are renormalized to one
-            {"midterm": 1}, 0.25/0.75
-        ),
-    }
+    assert gradebook.assignment_groups == {}
 
 # remove_assignments -------------------------------------------------------------------
 
@@ -998,6 +986,17 @@ def test_remove_assignments():
     }
     assert_gradebook_is_sound(example)
 
+def test_remove_assignments_resets_groups():
+    # when
+    example = GRADESCOPE_EXAMPLE.copy()
+    example.assignment_groups = {
+        'homework 01': 1
+    }
+
+    example.remove_assignments(example.assignments.starting_with("lab"))
+
+    # then
+    assert example.assignment_groups == {}
 
 def test_remove_assignments_raises_if_assignment_does_not_exist():
     # given
@@ -1207,27 +1206,27 @@ def test_rename_assignments_allows_swapping_names():
 # test: misc. methods ==================================================================
 
 
-# restrict_to_pids ---------------------------------------------------------------------
+# restrict_to_students ---------------------------------------------------------------------
 
 
-def test_restrict_to_pids():
+def test_restrict_to_students():
     # when
     example = GRADESCOPE_EXAMPLE.copy()
-    example.restrict_to_pids(ROSTER.index)
+    example.restrict_to_students(ROSTER.index)
 
     # then
     assert len(example.pids) == 3
     assert_gradebook_is_sound(example)
 
 
-def test_restrict_to_pids_raises_if_pid_does_not_exist():
+def test_restrict_to_students_raises_if_pid_does_not_exist():
     # given
     pids = ["A12345678", "ADNEDNE00"]
     example = GRADESCOPE_EXAMPLE.copy()
 
     # when
     with pytest.raises(KeyError):
-        example.restrict_to_pids(pids)
+        example.restrict_to_students(pids)
 
 
 # find_student -------------------------------------------------------------------------
@@ -1314,11 +1313,11 @@ def test_find_student_raises_on_no_match():
 # combine_gradebooks -------------------------------------------------------------------
 
 
-def test_combine_gradebooks_with_restrict_to_pids():
+def test_combine_gradebooks_with_restrict_to_students():
     # when
     combined = gradelib.combine_gradebooks(
         [GRADESCOPE_EXAMPLE, CANVAS_WITHOUT_LAB_EXAMPLE],
-        restrict_to_pids=ROSTER.index,
+        restrict_to_students=ROSTER.index,
     )
 
     # then
@@ -1355,7 +1354,7 @@ def test_combine_gradebooks_resets_groups():
 
     combined = gradelib.combine_gradebooks(
         [ex_1, ex_2],
-        restrict_to_pids=ROSTER.index,
+        restrict_to_students=ROSTER.index,
     )
 
     assert combined.assignment_groups == {}
@@ -1370,7 +1369,7 @@ def test_combine_gradebooks_uses_existing_options_if_all_the_same():
 
     combined = gradelib.combine_gradebooks(
         [ex_1, ex_2],
-        restrict_to_pids=ROSTER.index,
+        restrict_to_students=ROSTER.index,
     )
 
     assert combined.opts.lateness_fudge == 789
@@ -1386,7 +1385,7 @@ def test_combine_gradebooks_raises_if_options_do_not_match():
     with pytest.raises(ValueError):
         combined = gradelib.combine_gradebooks(
             [ex_1, ex_2],
-            restrict_to_pids=ROSTER.index,
+            restrict_to_students=ROSTER.index,
         )
 
 
@@ -1401,7 +1400,7 @@ def test_combine_gradebooks_uses_existing_scales_if_all_the_same():
 
     combined = gradelib.combine_gradebooks(
         [ex_1, ex_2],
-        restrict_to_pids=ROSTER.index,
+        restrict_to_students=ROSTER.index,
     )
 
     assert combined.scale == gradelib.scales.ROUNDED_DEFAULT_SCALE
@@ -1416,7 +1415,7 @@ def test_combine_gradebooks_raises_if_scales_do_not_match():
     with pytest.raises(ValueError):
         combined = gradelib.combine_gradebooks(
             [ex_1, ex_2],
-            restrict_to_pids=ROSTER.index,
+            restrict_to_students=ROSTER.index,
         )
 
 
@@ -1434,7 +1433,7 @@ def test_combine_gradebooks_concatenates_notes():
     }
 
     combined = gradelib.combine_gradebooks(
-        [example_1, example_2], restrict_to_pids=ROSTER.index
+        [example_1, example_2], restrict_to_students=ROSTER.index
     )
 
     # then

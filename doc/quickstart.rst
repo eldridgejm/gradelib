@@ -30,7 +30,7 @@ algorithm which finds "robust" thresholds for every letter grade.
     # checking that all enrolled students are accounted for
     gradebook = gradelib.Gradebook.combine(
         [gradescope_grades, canvas_grades],
-        restrict_to_pids=roster.index
+        restrict_to_students=roster.index
     )
 
     # define assignment groups

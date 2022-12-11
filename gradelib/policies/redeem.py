@@ -29,10 +29,15 @@ def redeem(
         exception is raised.
     remove_parts : bool
         Whether the indidividual assignment parts should be removed. Default: `False`.
+    deduction : Optional[Union[Points, Percentage]]
+        A deduction that will optionally be applied to the second assignment in
+        the redemption pair. Default: `None`.
 
     """
     is_prefix_selector = not isinstance(assignments, dict) and not callable(assignments)
+
     assignment_pairs = resolve_assignment_grouper(assignments, gradebook.assignments)
+
     if is_prefix_selector:
         assignment_pairs = {k + suffix: v for k, v in assignment_pairs.items()}
 

@@ -43,8 +43,8 @@ def test_with_callable_deduction():
     )
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
     gradebook.assignment_groups = {
-        'homeworks': (['hw01', 'hw02'], .75),
-        'labs': (['lab01'], .25),
+        "homeworks": (["hw01", "hw02"], 0.75),
+        "labs": (["lab01"], 0.25),
     }
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
@@ -81,8 +81,8 @@ def test_with_callable_deduction_does_not_count_forgiven():
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     gradebook.assignment_groups = {
-        'homeworks': (['hw01', 'hw02'], .75),
-        'labs': (['lab01'], .25),
+        "homeworks": (["hw01", "hw02"], 0.75),
+        "labs": (["lab01"], 0.25),
     }
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
@@ -184,8 +184,8 @@ def test_with_forgiveness():
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     gradebook.assignment_groups = {
-        'homeworks': (['hw01', 'hw02'], .75),
-        'labs': (['lab01'], .25),
+        "homeworks": (["hw01", "hw02"], 0.75),
+        "labs": (["lab01"], 0.25),
     }
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
@@ -280,7 +280,9 @@ def test_forgives_the_first_n_lates_when_order_by_is_index():
         "labs": (LABS, 0.25),
     }
 
-    gradelib.policies.penalize_lates(gradebook, within=HOMEWORK + LABS, forgive=2, order_by="index")
+    gradelib.policies.penalize_lates(
+        gradebook, within=HOMEWORK + LABS, forgive=2, order_by="index"
+    )
 
     assert gradebook.points_earned.loc["A1", "lab01"] == 0
     assert gradebook.points_earned.loc["A2", "lab01"] == 0

@@ -2,6 +2,7 @@ import gradelib
 
 # Assignments --------------------------------------------------------------------------
 
+
 def test_starting_with():
     # given
     assignments = gradelib.Assignments(
@@ -69,7 +70,6 @@ def test_group_by():
     assert isinstance(actual["homework 01"], gradelib.Assignments)
 
 
-
 # LazyAssignments ----------------------------------------------------------------------
 
 
@@ -78,7 +78,7 @@ def test_lazy_starting_with():
     assignments = gradelib.Assignments(
         ["homework 01", "homework 02", "homework 03", "lab 01", "lab 02"]
     )
-    homeworks = gradelib.LazyAssignments(lambda asmts: asmts.starting_with('home'))
+    homeworks = gradelib.LazyAssignments(lambda asmts: asmts.starting_with("home"))
 
     # when
     actual = homeworks(assignments)
@@ -89,8 +89,8 @@ def test_lazy_starting_with():
 
 def test_lazy_containing():
     # given
-    homeworks = gradelib.LazyAssignments(lambda a: a.containing('work'))
-    assignments = gradelib.Assignments(['homework 01', 'homework 02', 'lab 01'])
+    homeworks = gradelib.LazyAssignments(lambda a: a.containing("work"))
+    assignments = gradelib.Assignments(["homework 01", "homework 02", "lab 01"])
 
     # when
     actual = homeworks(assignments)
@@ -101,30 +101,32 @@ def test_lazy_containing():
 
 def test_lazy_add():
     # given
-    homeworks = gradelib.LazyAssignments(lambda a: a.starting_with('hw'))
-    labs = gradelib.LazyAssignments(lambda a: a.starting_with('lab'))
-    assignments = gradelib.Assignments(['hw01', 'hw02', 'lab01', 'lab02', 'exam'])
+    homeworks = gradelib.LazyAssignments(lambda a: a.starting_with("hw"))
+    labs = gradelib.LazyAssignments(lambda a: a.starting_with("lab"))
+    assignments = gradelib.Assignments(["hw01", "hw02", "lab01", "lab02", "exam"])
 
     # when
     actual = (homeworks + labs)(assignments)
 
     # then
-    assert set(actual) == {'hw01', 'hw02', 'lab01', 'lab02'}
+    assert set(actual) == {"hw01", "hw02", "lab01", "lab02"}
 
 
 def test_lazy_group_by():
     # given
     assignments = gradelib.Assignments(
         [
-            'hw 01 - a',
-            'hw 01 - b',
-            'hw 02',
+            "hw 01 - a",
+            "hw 01 - b",
+            "hw 02",
             "lab 01",
         ]
     )
 
     key = lambda s: s.split("-")[0].strip()
-    grouped_hw = gradelib.LazyAssignments(lambda asmts: asmts.starting_with('hw')).group_by(key)
+    grouped_hw = gradelib.LazyAssignments(
+        lambda asmts: asmts.starting_with("hw")
+    ).group_by(key)
 
     # when
     actual = grouped_hw(assignments)

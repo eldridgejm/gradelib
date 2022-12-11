@@ -19,9 +19,10 @@ def _empty_mask_like(table):
 # ======================================================================================
 
 
-def make_exceptions(gradebook, student, exceptions):
-    for exception in exceptions:
-        exception(gradebook, student)
+def make_exceptions(gradebook, students):
+    for student, exceptions in students.items():
+        for exception in exceptions:
+            exception(gradebook, student)
 
 
 class ForgiveLate:

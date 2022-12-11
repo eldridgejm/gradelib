@@ -122,6 +122,7 @@ def test_lateness_fudge_can_be_changed():
 
 # students -----------------------------------------------------------------------------
 
+
 def test_students_attribute_returns_students_objects():
     columns = ["hw01", "hw02", "lab01", "lab02"]
     p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
@@ -134,7 +135,9 @@ def test_students_attribute_returns_students_objects():
 
     assert isinstance(gb.students, gradelib.Students)
 
+
 # weight -------------------------------------------------------------------------------
+
 
 def test_weight_without_assignment_groups_is_nan():
     columns = ["hw01", "hw02", "lab01", "lab02"]
@@ -150,6 +153,7 @@ def test_weight_without_assignment_groups_is_nan():
     assert np.isnan(gb.weight.loc["A1", "hw02"])
     assert np.isnan(gb.weight.loc["A2", "hw01"])
     assert np.isnan(gb.weight.loc["A2", "hw02"])
+
 
 def test_weight_defaults_to_being_computed_from_points_possible():
     columns = ["hw01", "hw02", "lab01", "lab02"]
@@ -244,6 +248,7 @@ def test_weight_with_all_dropped_in_group_raises():
     # then
     with pytest.raises(ValueError):
         gb.weight.loc["A1", "hw01"]
+
 
 def test_weight_with_normalization():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -669,6 +674,7 @@ def test_overall_score_respects_group_weighting():
         ),
     )
 
+
 def test_overall_score_raises_if_groups_not_set():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -784,6 +790,7 @@ def test_letter_grades_raises_if_groups_not_set():
     with pytest.raises(ValueError):
         gradebook.letter_grades
 
+
 # tests: groups ========================================================================
 
 
@@ -878,6 +885,7 @@ def test_groups_setter_raises_if_group_weights_do_not_sum_to_one():
             "homeworks": (HOMEWORKS_LAZY, 0.25),
             "labs": (LABS_LAZY, 0.5),
         }
+
 
 # group_scores -------------------------------------------------------------------------
 
@@ -974,14 +982,16 @@ def test_restrict_to_assignments():
     assert set(example.assignments) == {"homework 01", "homework 02"}
     assert_gradebook_is_sound(example)
 
+
 def test_restrict_to_assignments_accepts_function_assignment_selector():
     # when
     example = GRADESCOPE_EXAMPLE.copy()
-    example.restrict_to_assignments(lambda asmts: ['homework 01', 'homework 02'])
+    example.restrict_to_assignments(lambda asmts: ["homework 01", "homework 02"])
 
     # then
     assert set(example.assignments) == {"homework 01", "homework 02"}
     assert_gradebook_is_sound(example)
+
 
 def test_restrict_to_assignments_raises_if_assignment_does_not_exist():
     # given
@@ -1005,7 +1015,7 @@ def test_restrict_to_assignments_resets_groups():
     gradebook.assignment_groups = {
         "homeworks": ({"hw01": 0.25, "hw02": 0.5, "hw03": 0.25}, 0.5),
         "labs": (gradebook.assignments.starting_with("lab"), 0.25),
-        "midterm": 0.25
+        "midterm": 0.25,
     }
 
     # when
@@ -1013,6 +1023,7 @@ def test_restrict_to_assignments_resets_groups():
 
     # then
     assert gradebook.assignment_groups == {}
+
 
 # remove_assignments -------------------------------------------------------------------
 
@@ -1036,11 +1047,12 @@ def test_remove_assignments():
     }
     assert_gradebook_is_sound(example)
 
+
 def test_remove_assignments_accepts_function_assignment_selector():
     # given
     example = GRADESCOPE_EXAMPLE.copy()
 
-    #when
+    # when
     example.remove_assignments(lambda asmts: asmts.starting_with("lab"))
 
     # then
@@ -1057,17 +1069,17 @@ def test_remove_assignments_accepts_function_assignment_selector():
     }
     assert_gradebook_is_sound(example)
 
+
 def test_remove_assignments_resets_groups():
     # when
     example = GRADESCOPE_EXAMPLE.copy()
-    example.assignment_groups = {
-        'homework 01': 1
-    }
+    example.assignment_groups = {"homework 01": 1}
 
     example.remove_assignments(example.assignments.starting_with("lab"))
 
     # then
     assert example.assignment_groups == {}
+
 
 def test_remove_assignments_raises_if_assignment_does_not_exist():
     # given

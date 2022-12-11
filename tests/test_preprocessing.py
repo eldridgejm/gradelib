@@ -50,8 +50,8 @@ def test_combine_assignment_parts_with_multiple_in_dictionary():
     HOMEWORK_02_PARTS = gradebook.assignments.starting_with("hw02")
 
     # when
-    preprocessing.combine_assignment_parts(gradebook, 
-        {"hw01": HOMEWORK_01_PARTS, "hw02": HOMEWORK_02_PARTS}
+    preprocessing.combine_assignment_parts(
+        gradebook, {"hw01": HOMEWORK_01_PARTS, "hw02": HOMEWORK_02_PARTS}
     )
 
     # then
@@ -181,6 +181,7 @@ def test_combine_assignment_parts_copies_attributes():
 
     preprocessing.combine_assignment_parts(gradebook, {"hw01": HOMEWORK_01_PARTS})
 
+
 def test_combine_assignment_parts_resets_groups():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
@@ -190,8 +191,8 @@ def test_combine_assignment_parts_resets_groups():
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points_earned, points_possible)
     gradebook.assignment_groups = {
-            "homeworks": ({'hw01': 0.25, 'hw01 - programming': 0.25, 'hw02': 0.5}, 0.5),
-            "labs": ({'lab01': 1}, 0.5),
+        "homeworks": ({"hw01": 0.25, "hw01 - programming": 0.25, "hw02": 0.5}, 0.5),
+        "labs": ({"lab01": 1}, 0.5),
     }
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
@@ -201,6 +202,7 @@ def test_combine_assignment_parts_resets_groups():
 
     # then
     assert gradebook.assignment_groups == {}
+
 
 # combine_assignment_versions ----------------------------------------------------------
 
@@ -295,5 +297,3 @@ def test_combine_assignment_versions_raises_if_any_version_is_late():
 
     with pytest.raises(ValueError):
         preprocessing.combine_assignment_versions(gradebook, {"midterm": columns})
-
-

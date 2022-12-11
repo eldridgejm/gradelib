@@ -12,6 +12,7 @@ EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent.parent / "examples"
 
 # tests: read_gradescope ================================================================================
 
+
 def test_produces_assignments_in_order():
     # when
     gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")

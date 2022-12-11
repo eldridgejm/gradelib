@@ -16,10 +16,7 @@ def test_drop_lowest_with_callable_within():
     gradebook = gradelib.Gradebook(points, maximums)
     homeworks = lambda asmts: asmts.starting_with("hw")
 
-    gradebook.assignment_groups = {
-            "homeworks": (homeworks, 0.75), 
-            "lab01": 0.25
-            }
+    gradebook.assignment_groups = {"homeworks": (homeworks, 0.75), "lab01": 0.25}
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
@@ -44,9 +41,7 @@ def test_drop_lowest_maximizes_overall_score():
     gradebook = gradelib.Gradebook(points, maximums)
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
-    gradebook.assignment_groups = {
-            "homeworks": (HOMEWORKS, 0.75),
-            "lab01": 0.25 }
+    gradebook.assignment_groups = {"homeworks": (HOMEWORKS, 0.75), "lab01": 0.25}
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
@@ -71,9 +66,7 @@ def test_drop_lowest_with_multiple_dropped():
     gradebook = gradelib.Gradebook(points, maximums)
     homeworks = gradebook.assignments.starting_with("hw")
 
-    gradebook.assignment_groups = {
-            "homeworks": (homeworks, 0.75),
-            "lab01": 0.25 }
+    gradebook.assignment_groups = {"homeworks": (homeworks, 0.75), "lab01": 0.25}
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
@@ -99,9 +92,9 @@ def test_drop_lowest_ignores_assignments_already_dropped():
     gradebook.dropped.loc["A1", "hw02"] = True
     gradebook.dropped.loc["A1", "hw04"] = True
 
-    gradebook.assignment_groups = { 
-                        "homeworks": (gradebook.assignments.starting_with("hw"), 1), 
-                        }
+    gradebook.assignment_groups = {
+        "homeworks": (gradebook.assignments.starting_with("hw"), 1),
+    }
 
     # since A1's perfect homeworks are already dropped, we should drop a third
     # homework, too: this will be HW03
@@ -127,9 +120,7 @@ def test_drop_lowest_with_multiple_dropped_adds_note():
     gradebook = gradelib.Gradebook(points, maximums)
     homeworks = gradebook.assignments.starting_with("hw")
 
-    gradebook.assignment_groups = {
-            "homeworks": (homeworks, 0.75),
-            "lab01": 0.25 }
+    gradebook.assignment_groups = {"homeworks": (homeworks, 0.75), "lab01": 0.25}
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2

@@ -8,6 +8,7 @@ EXAMPLES_DIRECTORY = pathlib.Path(__file__).parent.parent / "examples"
 
 # tests: read_canvas ===================================================================
 
+
 def test_produces_assignments_in_order():
     # when
     gb = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")

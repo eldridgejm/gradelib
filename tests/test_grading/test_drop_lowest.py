@@ -25,13 +25,13 @@ def test_drop_lowest_with_callable_within():
     # for A1 and to drop the 100 point homework for A2
 
     # when
-    actual = gradebook.apply(gradelib.grading.DropLowest(1, within=homeworks))
+    gradelib.grading.drop_lowest(gradebook, 1, within=homeworks)
 
     # then
-    assert actual.dropped.iloc[0, 1]
-    assert actual.dropped.iloc[1, 2]
-    assert list(actual.dropped.sum(axis=1)) == [1, 1]
-    assert_gradebook_is_sound(actual)
+    assert gradebook.dropped.iloc[0, 1]
+    assert gradebook.dropped.iloc[1, 2]
+    assert list(gradebook.dropped.sum(axis=1)) == [1, 1]
+    assert_gradebook_is_sound(gradebook)
 
 
 def test_drop_lowest_maximizes_overall_score():
@@ -52,13 +52,13 @@ def test_drop_lowest_maximizes_overall_score():
     # for A1 and to drop the 100 point homework for A2
 
     # when
-    actual = gradebook.apply(gradelib.grading.DropLowest(1, within=HOMEWORKS))
+    gradelib.grading.drop_lowest(gradebook, 1, within=HOMEWORKS)
 
     # then
-    assert actual.dropped.iloc[0, 1]
-    assert actual.dropped.iloc[1, 2]
-    assert list(actual.dropped.sum(axis=1)) == [1, 1]
-    assert_gradebook_is_sound(actual)
+    assert gradebook.dropped.iloc[0, 1]
+    assert gradebook.dropped.iloc[1, 2]
+    assert list(gradebook.dropped.sum(axis=1)) == [1, 1]
+    assert_gradebook_is_sound(gradebook)
 
 
 def test_drop_lowest_with_multiple_dropped():
@@ -79,13 +79,13 @@ def test_drop_lowest_with_multiple_dropped():
     # for A1 and to drop the 100 point homework for A2
 
     # when
-    actual = gradebook.apply(gradelib.grading.DropLowest(2, within=homeworks))
+    gradelib.grading.drop_lowest(gradebook, 2, within=homeworks)
 
     # then
-    assert not actual.dropped.iloc[0, 2]
-    assert not actual.dropped.iloc[1, 0]
-    assert list(actual.dropped.sum(axis=1)) == [2, 2]
-    assert_gradebook_is_sound(actual)
+    assert not gradebook.dropped.iloc[0, 2]
+    assert not gradebook.dropped.iloc[1, 0]
+    assert list(gradebook.dropped.sum(axis=1)) == [2, 2]
+    assert_gradebook_is_sound(gradebook)
 
 
 def test_drop_lowest_ignores_assignments_already_dropped():
@@ -107,14 +107,14 @@ def test_drop_lowest_ignores_assignments_already_dropped():
     # homework, too: this will be HW03
 
     # when
-    actual = gradebook.apply(gradelib.grading.DropLowest(1))
+    gradelib.grading.drop_lowest(gradebook, 1)
 
     # then
-    assert actual.dropped.loc["A1", "hw04"]
-    assert actual.dropped.loc["A1", "hw02"]
-    assert actual.dropped.loc["A1", "hw03"]
-    assert list(actual.dropped.sum(axis=1)) == [3, 1]
-    assert_gradebook_is_sound(actual)
+    assert gradebook.dropped.loc["A1", "hw04"]
+    assert gradebook.dropped.loc["A1", "hw02"]
+    assert gradebook.dropped.loc["A1", "hw03"]
+    assert list(gradebook.dropped.sum(axis=1)) == [3, 1]
+    assert_gradebook_is_sound(gradebook)
 
 
 def test_drop_lowest_with_multiple_dropped_adds_note():
@@ -135,9 +135,9 @@ def test_drop_lowest_with_multiple_dropped_adds_note():
     # for A1 and to drop the 100 point homework for A2
 
     # when
-    actual = gradebook.apply(gradelib.grading.DropLowest(2, within=homeworks))
+    gradelib.grading.drop_lowest(gradebook, 2, within=homeworks)
 
-    assert actual.notes == {
+    assert gradebook.notes == {
         "A1": {"drops": ["hw01 dropped.", "hw02 dropped."]},
         "A2": {"drops": ["hw02 dropped.", "hw03 dropped."]},
     }

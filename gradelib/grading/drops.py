@@ -5,7 +5,7 @@ import pandas as pd
 from ._common import resolve_within
 
 
-class DropLowest:
+def drop_lowest(gradebook, n, within=None):
     """Drop the lowest n grades within a group of assignments.
 
     Modifies the input gradebook.
@@ -52,43 +52,36 @@ class DropLowest:
         If `within` is empty, or if n is not a positive integer.
 
     """
+    # number of kept assignments
+    within = resolve_within(gradebook, within)
 
-    def __init__(self, n, within=None):
-        self.n = n
-        self.within = within
+    # the combinations of assignments to drop
+    combinations = list(itertools.combinations(within, n))
 
-    def __call__(self, gradebook):
-        # number of kept assignments
-        within = resolve_within(gradebook, self.within)
+    # we'll repeatedly replace this gradebook's dropped attribute
+    testbed = gradebook.copy()
 
-        # the combinations of assignments to drop
-        combinations = list(itertools.combinations(within, self.n))
+    # we will try each combination and compute the resulting score for each student
+    scores = []
+    for possibly_dropped in combinations:
+        testbed.dropped = gradebook.dropped.copy()
+        testbed.dropped.loc[:, possibly_dropped] = True
+        scores.append(testbed.overall_score)
 
-        # we'll repeatedly replace this gradebook's dropped attribute
-        testbed = gradebook.copy()
+    # now we put the scores into a table and find the index of the best
+    # score for each student
+    all_scores = pd.concat(scores, axis=1)
+    index_of_best_score = all_scores.idxmax(axis=1)
 
-        # we will try each combination and compute the resulting score for each student
-        scores = []
-        for possibly_dropped in combinations:
-            testbed.dropped = gradebook.dropped.copy()
-            testbed.dropped.loc[:, possibly_dropped] = True
-            scores.append(testbed.overall_score)
+    # loop through the students and mark the assignments which should be
+    # dropped
+    new_dropped = gradebook.dropped.copy()
+    for pid in gradebook.pids:
+        best_combo_ix = index_of_best_score.loc[pid]
+        tossed = list(combinations[best_combo_ix])
+        new_dropped.loc[pid, tossed] = True
 
-        # now we put the scores into a table and find the index of the best
-        # score for each student
-        all_scores = pd.concat(scores, axis=1)
-        index_of_best_score = all_scores.idxmax(axis=1)
+        for assignment in tossed:
+            gradebook.add_note(pid, "drops", f"{assignment} dropped.")
 
-        # loop through the students and mark the assignments which should be
-        # dropped
-        new_dropped = gradebook.dropped.copy()
-        for pid in gradebook.pids:
-            best_combo_ix = index_of_best_score.loc[pid]
-            tossed = list(combinations[best_combo_ix])
-            new_dropped.loc[pid, tossed] = True
-
-            for assignment in tossed:
-                gradebook.add_note(pid, "drops", f"{assignment} dropped.")
-
-        return gradebook._replace(dropped=new_dropped)
-
+    gradebook.dropped = new_dropped

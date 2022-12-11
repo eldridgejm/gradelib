@@ -12,6 +12,9 @@ Core
 .. autoclass:: Gradebook
    :members:
 
+.. autoclass:: GradebookOptions
+   :members:
+
 .. autoclass:: AssignmentGroup
    :members:
 

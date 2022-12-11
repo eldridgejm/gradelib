@@ -3,6 +3,7 @@
 import copy
 import dataclasses
 import typing
+import math
 import collections.abc
 
 from ..scales import DEFAULT_SCALE, map_scores_to_letter_grades
@@ -225,7 +226,9 @@ class GradebookOptions:
     Attributes
     ----------
     lateness_fudge: int
-        Number of seconds within which a late assignment is not considered late.
+        Number of seconds within which a late assignment is not considered late
+        by :meth:`Gradebook.late`. This can be useful to work around grade
+        sources where the lateness may not be reliable, such as Gradescope.
         Default: 300.
 
     """
@@ -238,15 +241,24 @@ class GradebookOptions:
 
 
 class AssignmentGroup:
-    """Represents a logical group of assignments.
+    """Represents a logical group of assignments and their weights.
 
     Attributes
     ----------
     assignment_weights: dict[str, float]
-        A dictionary mapping the assignments to their weight within the group. Their
-        weights should add to one.
+        A dictionary mapping assignment names (strings) to their weight within
+        the group (as a float between 0 and 1). Their weights should add to
+        one.
     group_weight: float
         The overall weight of the group.
+
+    Raises
+    ------
+    ValueError
+        If the assignment weights are not between 0 and 1, they do not add to
+        one, or if the group weight is not between 0 and 1.
+    TypeError
+        If the assignment weights are not in the form of a dictionary.
     """
 
     _attrs = [
@@ -263,8 +275,26 @@ class AssignmentGroup:
         if not isinstance(assignment_weights, dict):
             raise TypeError("Must be a dictionary.")
 
+        if not assignment_weights:
+            raise ValueError("Assignment weights cannot be empty.")
+
+        if not math.isclose(sum(assignment_weights.values()), 1):
+            raise ValueError("Assignment weights must sum to one.")
+
+        if not all(0 <= w <= 1 for w in assignment_weights.values()):
+            raise ValueError("Assignment weights must be between 0 and 1.")
+
+        if not 0 <= group_weight <= 1:
+            raise ValueError("Group weight must be between 0 and 1.")
+
         self.assignment_weights = assignment_weights
         self.group_weight = group_weight
+
+    def __repr__(self):
+        return (
+                f'AssignmentGroup(assignment_weights={self.assignment_weights!r}, '
+                f'group_weight={self.group_weight!r})'
+        )
 
     @property
     def assignments(self) -> Assignments:
@@ -762,7 +792,7 @@ class Gradebook:
         """Restrict the gradebook to only the supplied assignments.
 
         Groups are updated so that they reference only the assignments listed
-        in `assignments`.
+        in `assignments`. Assignment weights are recomputed to sum to one.
 
         Parameters
         ----------
@@ -790,10 +820,27 @@ class Gradebook:
                 kept_assignment_weights = {
                     a: v for a, v in g.assignment_weights.items() if a in assignments
                 }
-                return AssignmentGroup(kept_assignment_weights, g.group_weight)
 
-            new_groups_with_empties = {name: _update_group(g) for name, g in self.assignment_groups.items()}
-            return {name: g for name, g in new_groups_with_empties.items() if g.assignment_weights}
+                # renormalize their weights
+                new_total_weight = sum(v for v in kept_assignment_weights.values())
+                kept_assignment_weights = {k: v / new_total_weight for k, v in kept_assignment_weights.items()}
+
+                # if there are no remaining assignments, return None
+                if kept_assignment_weights:
+                    return AssignmentGroup(kept_assignment_weights, g.group_weight)
+                else:
+                    return None
+
+            updated_groups = {name: _update_group(g) for name, g in self.assignment_groups.items()}
+            # filter out groups that are empty (they are set to None by _update_group)
+            updated_groups = {name: g for name, g in updated_groups.items() if g is not None}
+
+            # renormalize group weights
+            new_total_group_weight = sum(g.group_weight for g in updated_groups.values())
+            for group in updated_groups.values():
+                group.group_weight /= new_total_group_weight
+
+            return updated_groups
 
         self.assignment_groups = _update_groups()
 

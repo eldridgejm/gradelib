@@ -127,6 +127,24 @@ Core
 :mod:`scales`
 ==============
 
-.. module:: scales
+.. module:: gradelib.scales
 
-   Grading scales.
+   Common grading scales and tools for working with them.
+
+.. autodata:: DEFAULT_SCALE
+.. autodata:: ROUNDED_DEFAULT_SCALE
+.. autofunction:: map_scores_to_letter_grades
+.. autofunction:: find_robust_scale
+
+:mod:`summarize`
+================
+
+.. module:: gradelib.summarize
+
+   Functions for summarizing gradebooks.
+
+.. autofunction:: rank
+.. autofunction:: percentile
+.. autofunction:: average_gpa
+.. autofunction:: letter_grade_distribution
+.. autofunction:: outcomes

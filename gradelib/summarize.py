@@ -1,163 +1,135 @@
-# summaries ------------------------------------------------------------------------
+import pandas as pd
+import numpy as np
 
+from .core import Gradebook
 
-def _assignment_plot(self, pid):
-    data = self.score.loc[pid].to_frame(name="Score")
-    data["Notes"] = self.dropped.loc[pid].apply(lambda d: "dropped" if d else "")
+def rank(scores) -> pd.Series:
+    """The rank of each student according to score.
 
-    data = (
-        data.sort_index()
-        .reset_index()
-        .rename(columns={"index": "Assignment"})
-        .reset_index()
-        .fillna(0)
-    )
+    Parameters
+    ----------
+    scores : pd.Series
+        A series containing overall scores.
 
-    data["Formatted Score"] = data["Score"].apply(lambda s: f"{s * 100:0.2f}%")
-
-    bars = (
-        altair.Chart(data)
-        .mark_bar()
-        .encode(x="Score:Q", y="Assignment:N", tooltip="Formatted Score")
-    )
-
-    text = (
-        altair.Chart(data)
-        .mark_text(
-            align="left",
-            baseline="middle",
-            color="black",
-            fontWeight="bold",
-            dx=3,  # Nudges text to right so it doesn't appear on top of the bar
-        )
-        .encode(x="Score:Q", y="Assignment:N", text="Notes:N")
-    )
-
-    return bars + text
-
-
-def _student_summary(self, student):
-    from IPython.display import display, HTML
-
-    lines = []
-
-    def par(desc, msg):
-        lines.append(f"<p><b>{desc}:</b> {msg}</p>")
-
-    def li(desc, msg):
-        lines.append(f"<li><b>{desc}:</b> {msg}</li>")
-
-    def _fmt_as_pct(f):
-        return f"{f * 100:0.2f}%"
-
-    name = student.name
-    pid = student.pid
-
-    lines.append(f"<h1>Student Summary: {name} ({pid})</h1>")
-
-    par("Overall score", f"{_fmt_as_pct(self.overall_score.loc[pid])}")
-    par("Letter grade", self.letter_grades.loc[pid])
-    par("Rank", f"{self.rank.loc[pid]} out of {len(self.rank)}")
-    par("Percentile", f"{self.percentile.loc[pid]:0.2f}")
-
-    lines.append("<h2>Group Scores</h2>")
-    lines.append("<ul>")
-    for group in self.assignment_groups:
-        score = self.assignment_group_scores.loc[pid, group.name]
-        li(group.name, _fmt_as_pct(score))
-    lines.append("</ul>")
-
-    notes = self.notes.get(pid, None)
-    if notes is not None:
-        lines.append("<h2>Notes</h2>")
-        for channel in notes:
-            lines.append(f"<h3>{channel.capitalize()}</h3>")
-            lines.append("<ul>")
-            for note in notes[channel]:
-                lines.append(f"<li>{note}</li>")
-            lines.append("</ul>")
-
-    display(HTML("\n".join(lines)))
-
-    display(self._assignment_plot(pid))
-
-
-def _class_summary(self):
-    from IPython.display import display, HTML
-
-    lines = []
-
-    def item(desc, msg):
-        lines.append(f"<p><b>{desc}:</b> {msg}")
-
-    lines.append("<h1>Class Summary</h1>")
-
-    item("Number of students", len(self.students))
-
-    lines.append("<h2>Letter Grades</h2>")
-
-    lines.append(self.letter_grade_distribution.to_frame().T.to_html())
-
-    agpa = average_gpa(self.letter_grades)
-    lines.append(f"<p><b>Class GPA:</b> {agpa:0.2f}</p>")
-    lines.append("<h2>Distribution</h2>")
-
-    display(HTML("\n".join(lines)))
-
-    display(_plot.grade_distribution(self))
-
-
-def summary(self, student=None):
-    if student is not None:
-        return self._student_summary(self.find_student(student))
-    else:
-        return self._class_summary()
-
-
-# properties: ranks and percentiles
-
-
-@property
-def rank(self) -> pd.Series:
-    """A series containing the rank of each student according to overall score.
-
-    A pandas Series with an entry for each student in the Gradebook. The
-    index is the same as the series returned by the :attr:`students`
-    attribute. Each entry is the rank in the class, taking drops into
-    account, and calculated using the value of the :attr:`overall_score`
-    attribute.
-
-    This is a dynamically-computed property; it should not be modified.
-
-    Raises
-    ------
-    ValueError
-        If :attr:`assignment_groups` has not yet been set.
+    Returns
+    -------
+    pd.Series
+        A Series of the same size as `scores` containing the integer rank of
+        each student in the class.
 
     """
-    sorted_scores = self.overall_score.sort_values(ascending=False).to_frame()
+    sorted_scores = scores.sort_values(ascending=False).to_frame()
     sorted_scores["rank"] = np.arange(1, len(sorted_scores) + 1)
     return sorted_scores["rank"]
 
 
-@property
-def percentile(self) -> pd.Series:
-    """A series containing the percentile of each student according to overall score.
+def percentile(scores) -> pd.Series:
+    """The percentile of each student according to score.
 
-    A pandas Series with an entry for each student in the Gradebook. The
-    index is the same as the series returned by the :attr:`students`
-    attribute. Each entry is the percentile in the class, taking drops into
-    account, and calculated using the value of the :attr:`overall_score`
-    attribute.
+    Parameters
+    ----------
+    scores : pd.Series
+        The scores used to compute the percentile.
 
-    This is a dynamically-computed property; it should not be modified.
-
-    Raises
-    ------
-    ValueError
-        If :attr:`assignment_groups` has not yet been set.
+    Returns
+    -------
+    pd.Series
+        A Series of the same size as `scores` in which each entry is the
+        student's percentile in the class, as a number between 0 and 1.
 
     """
-    s = 1 - ((self.rank - 1) / len(self.rank))
+    s = 1 - ((rank(scores) - 1) / len(rank(scores)))
     s.name = "percentile"
     return s
+
+def average_gpa(letter_grades, include_failing=False):
+    """Compute the average GPA.
+
+    Parameters
+    ----------
+    letter_grades
+        A Series containing the letter grades.
+    include_failing : Bool
+        Whether or not to include failing grades in the calculation.
+        Default: False.
+
+    Returns
+    -------
+    float
+        The average GPA.
+
+    """
+    if not include_failing:
+        letter_grades = letter_grades[letter_grades != "F"]
+
+    letter_grade_values = pd.Series(
+        {
+            "A+": 4,
+            "A": 4,
+            "A-": 3.7,
+            "B+": 3.3,
+            "B": 3,
+            "B-": 2.7,
+            "C+": 2.3,
+            "C": 2,
+            "C-": 1.7,
+            "D": 1,
+            "F": 0,
+        }
+    )
+
+    counts = letter_grades.value_counts()
+    return (counts * letter_grade_values).sum() / counts.sum()
+
+VALID_LETTERS = ('A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D', 'F')
+
+def letter_grade_distribution(letters, valid_letters=VALID_LETTERS):
+    """Counts the frequency of each letter grade.
+
+    Parameters
+    ----------
+    letters : pd.Series
+        The letter grades.
+
+    valid_letters : Sequence[str]
+        The possible letter grades.
+
+    Returns
+    -------
+    pd.Series
+        The count of each letter grade. The letters are guaranteed to be in
+        order, from highest to lowest.
+
+    """
+    counts = letters.value_counts().reindex(valid_letters)
+    return counts.fillna(0).astype(int)
+
+def outcomes(gradebook: Gradebook):
+    """Compute a table summarizing student outcomes.
+
+    Parameters
+    ----------
+    gradebook : Gradebook
+        The gradebook used to compute outcomes.
+
+    Returns
+    -------
+    pd.DataFrame
+        A table with one row per student, and columns for grades in each
+        assignment group, as well as overall score, letter grade, rank, and
+        percentile. Sorted by score, from highest to lowest.
+
+    """
+    statistics = pd.DataFrame({
+        'overall score': gradebook.overall_score,
+        'letter': gradebook.letter_grades,
+        'rank': rank(gradebook.overall_score),
+        'percentile': percentile(gradebook.overall_score),
+    })
+
+    outcomes = pd.concat([
+        gradebook.assignment_group_scores,
+        statistics
+    ], axis=1)
+
+    return outcomes.sort_values(by='overall score', ascending=False)

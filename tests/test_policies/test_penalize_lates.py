@@ -6,7 +6,7 @@ import gradelib
 from gradelib import Points, Percentage
 
 
-def test_penalize_lates_without_forgiveness_or_within_penalizes_all_lates():
+def test_without_forgiveness_or_within_penalizes_all_lates():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -28,7 +28,7 @@ def test_penalize_lates_without_forgiveness_or_within_penalizes_all_lates():
     assert result.points_earned.loc["A2", "hw01"] == 0
 
 
-def test_penalize_lates_with_callable_deduction():
+def test_with_callable_deduction():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -61,7 +61,7 @@ def test_penalize_lates_with_callable_deduction():
     assert result.points_earned.loc["A1", "lab01"] == 19
 
 
-def test_penalize_lates_with_callable_deduction_does_not_count_forgiven():
+def test_with_callable_deduction_does_not_count_forgiven():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -96,7 +96,7 @@ def test_penalize_lates_with_callable_deduction_does_not_count_forgiven():
     assert result.points_earned.loc["A1", "lab01"] == 20
 
 
-def test_penalize_lates_respects_lateness_fudge():
+def test_respects_lateness_fudge():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -119,7 +119,7 @@ def test_penalize_lates_respects_lateness_fudge():
     assert result.points_earned.loc["A2", "hw01"] == 0
 
 
-def test_penalize_lates_within_assignments():
+def test_within_assignments():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -140,7 +140,7 @@ def test_penalize_lates_within_assignments():
     assert result.points_earned.loc["A2", "hw01"] == 0
 
 
-def test_penalize_lates_within_accepts_callable():
+def test_within_accepts_callable():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -161,7 +161,7 @@ def test_penalize_lates_within_accepts_callable():
     assert result.points_earned.loc["A2", "hw01"] == 0
 
 
-def test_penalize_lates_with_forgiveness():
+def test_with_forgiveness():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -186,7 +186,7 @@ def test_penalize_lates_with_forgiveness():
     assert result.points_earned.loc["A1", "hw01"] == 0
 
 
-def test_penalize_lates_with_forgiveness_and_within():
+def test_with_forgiveness_and_within():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -212,7 +212,7 @@ def test_penalize_lates_with_forgiveness_and_within():
     assert result.points_earned.loc["A1", "lab01"] == 0
 
 
-def test_penalize_lates_with_forgiveness_forgives_most_valuable_assignments_first_by_default():
+def test_with_forgiveness_forgives_most_valuable_assignments_first_by_default():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -249,7 +249,7 @@ def test_penalize_lates_with_forgiveness_forgives_most_valuable_assignments_firs
     assert result.points_earned.loc["A2", "hw02"] == 0
 
 
-def test_penalize_lates_forgives_the_first_n_lates_when_order_by_is_index():
+def test_forgives_the_first_n_lates_when_order_by_is_index():
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[45, 15, 20], index=columns, name="A2")
@@ -281,7 +281,7 @@ def test_penalize_lates_forgives_the_first_n_lates_when_order_by_is_index():
     assert result.points_earned.loc["A2", "lab01"] == 0
 
 
-def test_penalize_lates_with_empty_assignment_list_raises():
+def test_with_empty_assignment_list_raises():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -303,7 +303,7 @@ def test_penalize_lates_with_empty_assignment_list_raises():
         gradebook.apply(gradelib.policies.PenalizeLates(within=[]))
 
 
-def test_penalize_lates_by_default_takes_into_account_drops():
+def test_by_default_takes_into_account_drops():
     columns = ["hw01", "hw02", "lab01", "lab02"]
     p1 = pd.Series(data=[30, 90, 20, 1], index=columns, name="A1")
     p2 = pd.Series(data=[7, 15, 20, 1], index=columns, name="A2")
@@ -321,7 +321,7 @@ def test_penalize_lates_by_default_takes_into_account_drops():
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
     gradebook.assignment_groups = {
         "homeworks": (gradebook.assignments.starting_with("hw"), 0.75),
-        "labs": (gradebook.assignments.starting_with("lab"), 0.75),
+        "labs": (gradebook.assignments.starting_with("lab"), 0.25),
     }
 
     gradebook.dropped.loc["A1", "hw02"] = True
@@ -337,7 +337,7 @@ def test_penalize_lates_by_default_takes_into_account_drops():
     assert result.points_earned.loc["A1", "lab02"] == 0
 
 
-def test_penalize_lates_adds_note_for_penalized_assignment():
+def test_adds_note_for_penalized_assignment():
     # given
     columns = ["hw01", "hw02", "hw03"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -373,7 +373,7 @@ def test_penalize_lates_adds_note_for_penalized_assignment():
     }
 
 
-def test_penalize_lates_with_forgiveness_adds_note_for_forgiven_assignments():
+def test_with_forgiveness_adds_note_for_forgiven_assignments():
     # given
     columns = ["hw01", "hw02", "hw03"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")

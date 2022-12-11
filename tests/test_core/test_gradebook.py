@@ -155,7 +155,7 @@ def test_weight_assignments_not_in_a_group_are_nan():
     gb = gradelib.Gradebook(points_earned, points_possible)
 
     gb.assignment_groups = {
-        "homeworks": (gb.assignments.starting_with("hw"), 0.75),
+        "homeworks": (gb.assignments.starting_with("hw"), 1),
     }
 
     assert gb.weight.loc["A1", "hw01"] == 20 / 70
@@ -348,13 +348,13 @@ def test_overall_weight_assignments_not_in_a_group_are_nan():
     gb = gradelib.Gradebook(points_earned, points_possible)
 
     gb.assignment_groups = {
-        "homeworks": (gb.assignments.starting_with("hw"), 0.75),
+        "homeworks": (gb.assignments.starting_with("hw"), 1),
     }
 
-    assert gb.overall_weight.loc["A1", "hw01"] == 20 / 70 * 0.75
-    assert gb.overall_weight.loc["A1", "hw02"] == 50 / 70 * 0.75
-    assert gb.overall_weight.loc["A2", "hw01"] == 20 / 70 * 0.75
-    assert gb.overall_weight.loc["A2", "hw02"] == 50 / 70 * 0.75
+    assert gb.overall_weight.loc["A1", "hw01"] == 20 / 70 * 1
+    assert gb.overall_weight.loc["A1", "hw02"] == 50 / 70 * 1
+    assert gb.overall_weight.loc["A2", "hw01"] == 20 / 70 * 1
+    assert gb.overall_weight.loc["A2", "hw02"] == 50 / 70 * 1
     assert np.isnan(gb.overall_weight.loc["A1", "lab01"])
     assert np.isnan(gb.overall_weight.loc["A1", "lab02"])
     assert np.isnan(gb.overall_weight.loc["A2", "lab01"])
@@ -1633,44 +1633,23 @@ def test_combine_gradebooks_raises_if_indices_do_not_match():
         )
 
 
-def test_combine_gradebooks_concatenates_groups():
+def test_combine_gradebooks_resets_groups():
     ex_1 = GRADESCOPE_EXAMPLE.copy()
     ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
 
     ex_1.assignment_groups = {
-        "homeworks": (ex_1.assignments.starting_with("home"), 0.25),
-        "labs": (ex_1.assignments.starting_with("lab"), 0.25),
+        "homeworks": (ex_1.assignments.starting_with("home"), 0.5),
+        "labs": (ex_1.assignments.starting_with("lab"), 0.5),
     }
 
-    ex_2.assignment_groups = {"exams": (["midterm exam", "final exam"], 0.5)}
+    ex_2.assignment_groups = {"exams": (["midterm exam", "final exam"], 1)}
 
     combined = gradelib.combine_gradebooks(
         [ex_1, ex_2],
         restrict_to_pids=ROSTER.index,
     )
 
-    assert combined.assignment_groups == {
-        **ex_1.assignment_groups,
-        **ex_2.assignment_groups,
-    }
-
-
-def test_combine_gradebooks_raises_if_group_names_conflict():
-    ex_1 = GRADESCOPE_EXAMPLE.copy()
-    ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
-
-    ex_1.assignment_groups = {
-        "homeworks": (ex_1.assignments.starting_with("home"), 0.25),
-        "labs": (ex_1.assignments.starting_with("lab"), 0.25),
-    }
-
-    ex_2.assignment_groups = {"homeworks": (["midterm exam", "final exam"], 0.5)}
-
-    with pytest.raises(ValueError):
-        combined = gradelib.combine_gradebooks(
-            [ex_1, ex_2],
-            restrict_to_pids=ROSTER.index,
-        )
+    assert combined.assignment_groups == {}
 
 
 def test_combine_gradebooks_uses_existing_options_if_all_the_same():

@@ -145,7 +145,7 @@ def combine_gradebooks(
     Similarly, it verifies that each gradebook has unique assignments and group
     names, so that no conflicts occur when combining them.
 
-    The new gradebook's groups are a union of the groups, as are the notes.
+    The new gradebook's assignments groups are reset; there are no groups.
 
     If the scales are the same, the new scale is set to be the same as the old.
     If they are different, a `ValueError` is raised.
@@ -210,7 +210,7 @@ def combine_gradebooks(
         lateness=concat_attr("lateness"),
         dropped=concat_attr("dropped"),
         notes=_concatenate_notes(gradebooks),
-        assignment_groups=_concatenate_groups(gradebooks),
+        assignment_groups={},
         opts=_combine_if_equal(gradebooks, "opts"),
         scale=_combine_if_equal(gradebooks, "scale"),
     )
@@ -501,7 +501,13 @@ class Gradebook:
 
             return AssignmentGroup(assignment_weights, group_weight)
 
-        self._groups = {name: _make_group(g, name) for name, g in value.items()}
+        new_groups = {name: _make_group(g, name) for name, g in value.items()}
+
+        if new_groups:
+            if not math.isclose(sum(g.group_weight for g in new_groups.values()), 1):
+                raise ValueError("Group weights must sum to one.")
+
+        self._groups = new_groups
 
     # properties: weights and values ---------------------------------------------------
 

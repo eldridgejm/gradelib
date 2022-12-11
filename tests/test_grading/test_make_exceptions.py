@@ -19,13 +19,11 @@ def test_make_exceptions_with_forgive_lates():
     gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(5000, "s")
 
     # when
-    actual = gradelib.grading.MakeExceptions(
-        "Justin", [gradelib.grading.ForgiveLate("hw01")]
-    )(gradebook)
+    gradelib.grading.make_exceptions(gradebook, "Justin", [gradelib.grading.ForgiveLate("hw01")])
 
     # then
-    assert actual.lateness.loc["A1", "hw01"] == pd.Timedelta(0, "s")
-    assert_gradebook_is_sound(actual)
+    assert gradebook.lateness.loc["A1", "hw01"] == pd.Timedelta(0, "s")
+    assert_gradebook_is_sound(gradebook)
 
 
 def test_make_exceptions_with_forgive_lates_adds_note():
@@ -42,12 +40,10 @@ def test_make_exceptions_with_forgive_lates_adds_note():
     gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(5000, "s")
 
     # when
-    actual = gradelib.grading.MakeExceptions(
-        "Justin", [gradelib.grading.ForgiveLate("hw01")]
-    )(gradebook)
+    gradelib.grading.make_exceptions(gradebook, "Justin", [gradelib.grading.ForgiveLate("hw01")])
 
     # then
-    assert actual.notes == {
+    assert gradebook.notes == {
         "A1": {"lates": ["Exception applied: late Hw01 is forgiven."]}
     }
 
@@ -65,13 +61,11 @@ def test_make_exceptions_with_drop():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    actual = gradelib.grading.MakeExceptions(
-        "Justin", [gradelib.grading.Drop("hw01")]
-    )(gradebook)
+    gradelib.grading.make_exceptions(gradebook, "Justin", [gradelib.grading.Drop("hw01")])
 
     # then
-    assert actual.dropped.loc["A1", "hw01"] == True
-    assert_gradebook_is_sound(actual)
+    assert gradebook.dropped.loc["A1", "hw01"] == True
+    assert_gradebook_is_sound(gradebook)
 
 
 def test_make_exceptions_with_drop_adds_note():
@@ -87,13 +81,11 @@ def test_make_exceptions_with_drop_adds_note():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    actual = gradelib.grading.MakeExceptions(
-        "Justin", [gradelib.grading.Drop("hw01")]
-    )(gradebook)
+    gradelib.grading.make_exceptions(gradebook, "Justin", [gradelib.grading.Drop("hw01")])
 
     # then
-    assert actual.dropped.loc["A1", "hw01"] == True
-    assert actual.notes == {"A1": {"drops": ["Exception applied: Hw01 dropped."]}}
+    assert gradebook.dropped.loc["A1", "hw01"] == True
+    assert gradebook.notes == {"A1": {"drops": ["Exception applied: Hw01 dropped."]}}
 
 
 def test_make_exceptions_with_replace():
@@ -109,14 +101,12 @@ def test_make_exceptions_with_replace():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    actual = gradelib.grading.MakeExceptions(
-        "Justin", [gradelib.grading.Replace("hw02", with_="hw01")]
-    )(gradebook)
+    gradelib.grading.make_exceptions(gradebook, "Justin", [gradelib.grading.Replace("hw02", with_="hw01")])
 
     # then
-    assert actual.points_earned.loc["A1", "hw01"] == 9
-    assert actual.points_earned.loc["A1", "hw02"] == 9
-    assert_gradebook_is_sound(actual)
+    assert gradebook.points_earned.loc["A1", "hw01"] == 9
+    assert gradebook.points_earned.loc["A1", "hw02"] == 9
+    assert_gradebook_is_sound(gradebook)
 
 
 def test_make_exceptions_with_replace_scales_using_points_possible():
@@ -132,14 +122,12 @@ def test_make_exceptions_with_replace_scales_using_points_possible():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    actual = gradelib.grading.MakeExceptions(
-        "Justin", [gradelib.grading.Replace("hw01", with_="hw02")]
-    )(gradebook)
+    gradelib.grading.make_exceptions(gradebook, "Justin", [gradelib.grading.Replace("hw01", with_="hw02")])
 
     # then
-    assert actual.points_earned.loc["A1", "hw01"] == 7.5
-    assert actual.points_earned.loc["A1", "hw02"] == 15
-    assert_gradebook_is_sound(actual)
+    assert gradebook.points_earned.loc["A1", "hw01"] == 7.5
+    assert gradebook.points_earned.loc["A1", "hw02"] == 15
+    assert_gradebook_is_sound(gradebook)
 
 
 def test_make_exceptions_with_override():
@@ -155,15 +143,9 @@ def test_make_exceptions_with_override():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    actual = gradelib.grading.MakeExceptions(
-        "Justin",
-        [
-            gradelib.grading.Override("hw01", gradelib.Percentage(0.5)),
-            gradelib.grading.Override("hw02", gradelib.Points(8)),
-        ],
-    )(gradebook)
+    gradelib.grading.make_exceptions(gradebook, "Justin", [ gradelib.grading.Override("hw01", gradelib.Percentage(0.5)), gradelib.grading.Override("hw02", gradelib.Points(8)), ],)
 
     # then
-    assert actual.points_earned.loc["A1", "hw01"] == 5
-    assert actual.points_earned.loc["A1", "hw02"] == 8
-    assert_gradebook_is_sound(actual)
+    assert gradebook.points_earned.loc["A1", "hw01"] == 5
+    assert gradebook.points_earned.loc["A1", "hw02"] == 8
+    assert_gradebook_is_sound(gradebook)

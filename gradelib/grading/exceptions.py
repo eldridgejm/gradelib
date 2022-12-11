@@ -18,16 +18,10 @@ def _empty_mask_like(table):
 # ======================================================================================
 
 
-class MakeExceptions:
-    def __init__(self, student, exceptions):
-        self.student = student
-        self.exceptions = exceptions
+def make_exceptions(gradebook, student, exceptions):
+    for exception in exceptions:
+        exception(gradebook, student)
 
-    def __call__(self, gradebook):
-        gradebook = gradebook.copy()
-        for exception in self.exceptions:
-            gradebook = exception(gradebook, self.student)
-        return gradebook
 
 class ForgiveLate:
     def __init__(self, assignment):

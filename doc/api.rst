@@ -46,3 +46,24 @@ Core
    Functionality for reading grades exported from Canvas.
 
 .. autofunction:: gradelib.io.canvas.read
+
+:mod:`preprocessing`
+====================
+
+.. module:: preprocessing
+
+   Functionality for preprocessing Gradebooks.
+
+.. autofunction:: gradelib.preprocessing.combine_assignment_parts
+.. autofunction:: gradelib.preprocessing.combine_assignment_versions
+
+:mod:`grading`
+==============
+
+.. module:: grading
+
+   Functionality for implementing grading policies on Gradebooks.
+
+.. autofunction:: gradelib.grading.drop_lowest
+.. autofunction:: gradelib.grading.penalize_lates
+.. autofunction:: gradelib.grading.redeem

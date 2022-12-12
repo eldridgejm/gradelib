@@ -174,14 +174,15 @@ class LazyAssignments:
 
     Parameters
     ----------
-    f : Callable[[Assignments], Assignments]
+    f : Optional[Callable[[Assignments], Assignments]]
         A "filter" function which, given assignments, selects and returns some
-        of them.
+        of them. If `None`, when called the assignments are returned
+        immediately.
 
     Attributes
     ----------
-    f : Callable[[Assignments], Assignments]
-        The filter function.
+    f : Optional[Callable[[Assignments], Assignments]]
+        The filter function, or `None`.
 
     Example
     -------

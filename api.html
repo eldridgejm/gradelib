@@ -1116,8 +1116,14 @@ each of the inputs.  Default: None</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="gradelib.normalize">
-<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assignments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Collection</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#gradelib.normalize" title="Permalink to this definition"></a></dt>
-<dd><p>Create an assignment weight dict. in which every assignment is weighed equally.</p>
+<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assignments</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.normalize" title="Permalink to this definition"></a></dt>
+<dd><p>Normalize assignment weights.</p>
+<p>If the input is iterable, such as a list of assignment names or a
+dictionary mapping names to weights, the return value is a dictionary
+mapping assignment names to the same, normalized weight.</p>
+<p>If the input is a callable, the return value is also a callable which wraps
+the input callable and transforms its output into a dictionary of
+assignment weights.</p>
 <p>Useful when creating grading groups. For instance:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gradebook</span><span class="o">.</span><span class="n">grading_groups</span> <span class="o">=</span> <span class="p">(</span>
 <span class="gp">... </span>    <span class="p">(</span><span class="s1">&#39;homework&#39;</span><span class="p">,</span> <span class="n">normalize</span><span class="p">(</span><span class="n">gradebook</span><span class="o">.</span><span class="n">assignments</span><span class="o">.</span><span class="n">starting_with</span><span class="p">(</span><span class="s1">&#39;home&#39;</span><span class="p">)),</span> <span class="mf">0.5</span><span class="p">)</span>

@@ -192,7 +192,7 @@ class LazyAssignments:
 
     """
 
-    def __init__(self, f: typing.Callable[[Assignments], Assignments]):
+    def __init__(self, f: typing.Callable[[Assignments], Assignments]=None):
         self.f = f
 
     def __call__(self, asmts: Assignments) -> Assignments:
@@ -209,7 +209,10 @@ class LazyAssignments:
             The filtered assignments.
 
         """
-        return self.f(asmts)
+        if self.f is None:
+            return asmts
+        else:
+            return self.f(asmts)
 
     def __add__(self, other: "LazyAssignments") -> "LazyAssignments":
         """Produces a :class:`LazyAssignments` that lazily unions the operands.

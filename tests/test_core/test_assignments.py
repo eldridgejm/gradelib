@@ -137,3 +137,43 @@ def test_lazy_group_by():
         "hw 01": {"hw 01 - a", "hw 01 - b"},
         "hw 02": {"hw 02"},
     }
+
+
+def test_lazy_without_a_filter_returns_assignments():
+    # given
+    assignments = gradelib.Assignments(
+        [
+            "hw 01 - a",
+            "hw 01 - b",
+            "hw 02",
+            "lab 01",
+        ]
+    )
+
+    nop = gradelib.LazyAssignments()
+
+    # when
+    actual = nop(assignments)
+
+    # then
+    assert actual == assignments
+
+
+def test_lazy_without_filter_plus_starting_with():
+    # given
+    assignments = gradelib.Assignments(
+        [
+            "hw 01 - a",
+            "hw 01 - b",
+            "hw 02",
+            "lab 01",
+        ]
+    )
+
+    homeworks = gradelib.LazyAssignments().starting_with('hw')
+
+    # when
+    actual = homeworks(assignments)
+
+    # then
+    assert actual == gradelib.Assignments(['hw 01 - a', 'hw 01 - b', 'hw 02'])

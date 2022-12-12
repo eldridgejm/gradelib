@@ -360,10 +360,13 @@ class Gradebook:
         >>> gradebook.grading_groups = {
         ...     # list of assignments, followed by group weight. assignment weights
         ...     # are inferred to be proportional to points possible
-        ...     "homeworks": (['hw 01', 'hw 02', 'hw 03'], 0.5),
-        ...
+        ...     "homeworks": (['hw 01', 'hw 02', 'hw 03'], 0.25),
+
         ...     # dictionary of assignment weights, followed by group weight.
         ...     "labs": ({"lab 01": .25, "lab 02": .75}, 0.25),
+        ...
+        ...     # callable that produces assignment names or an assignment weight dict.
+        ...     "projects": (func, 0.25),
         ...
         ...     # group weight only. the key is interpreted as an assignment name,
         ...     # and an assignment group consisting only of that assignment is

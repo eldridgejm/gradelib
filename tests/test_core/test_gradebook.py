@@ -842,7 +842,7 @@ def test_groups_setter_allows_two_tuple_form():
     }
 
 
-def test_groups_setter_allows_callable_for_assignments():
+def test_groups_setter_allows_callable_returning_list_for_assignments():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -861,6 +861,35 @@ def test_groups_setter_allows_callable_for_assignments():
 
     # then
     hw_weights = {"hw01": 2 / 152, "hw02": 50 / 152, "hw03": 100 / 152}
+    lab_weights = {"lab01": 1}
+    assert gradebook.grading_groups == {
+        "homeworks": gradelib.GradingGroup(hw_weights, group_weight=0.5),
+        "labs": gradelib.GradingGroup(lab_weights, group_weight=0.5),
+    }
+
+def test_groups_setter_allows_callable_returning_dict_for_assignments():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    def homeworks(asmts):
+        return {
+            'hw01': 0.1,
+            'hw02': 0.7,
+            'hw03': 0.2,
+        }
+
+    gradebook.grading_groups = {
+        "homeworks": (homeworks, 0.5),
+        "labs": (['lab01'], 0.5),
+    }
+
+    # then
+    hw_weights = {"hw01": .1, "hw02": .7, "hw03": .2}
     lab_weights = {"lab01": 1}
     assert gradebook.grading_groups == {
         "homeworks": gradelib.GradingGroup(hw_weights, group_weight=0.5),

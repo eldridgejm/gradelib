@@ -347,7 +347,7 @@ class Gradebook:
         A mapping from assignment group names (strings) to :class:`AssignmentGroup`
         objects representing a group of assignments. The default is simply ``{}``.
 
-        To prevent unintentional errors, the assignment groups must be set before
+        To prevent unintentional errors, the grading groups must be set before
         accessive summative attributes, such as :attr:`overall_score`.
 
         While the dictionary returned by this attribute has
@@ -551,7 +551,7 @@ class Gradebook:
         group.
 
         If an assignment is not in an assignment group, the weight for that
-        assignment is `NaN`. If no assignment groups have been defined, all
+        assignment is `NaN`. If no grading groups have been defined, all
         weights are `Nan`.
 
         If the assignment is dropped for that student, the weight is zero.
@@ -594,7 +594,7 @@ class Gradebook:
         assignments.
 
         If an assignment is not in an assignment group, the weight for that
-        assignment is `NaN`. If no assignment groups have been defined, all
+        assignment is `NaN`. If no grading groups have been defined, all
         weights are `Nan`.
 
         If the assignment is dropped for that student, the weight is zero. If
@@ -809,7 +809,7 @@ class Gradebook:
         """
         if not self.grading_groups:
             raise ValueError(
-                "Assignment groups should be set before calculating letter grades."
+                "Grading groups should be set before calculating letter grades."
             )
 
         return self.value.sum(axis=1)
@@ -835,7 +835,7 @@ class Gradebook:
         """
         if not self.grading_groups:
             raise ValueError(
-                "Assignment groups should be set before calculating letter grades."
+                "Grading groups should be set before calculating letter grades."
             )
 
         return map_scores_to_letter_grades(self.overall_score, scale=self.scale)

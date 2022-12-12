@@ -17,7 +17,7 @@ AssignmentGrouper = typing.Union[
 def normalize(assignments: typing.Collection[str]) -> typing.Dict[str, float]:
     """Create an assignment weight dict. in which every assignment is weighed equally.
 
-    Useful when creating assignment groups. For instance:
+    Useful when creating grading groups. For instance:
 
         >>> gradebook.grading_groups = (
         ...     ('homework', normalize(gradebook.assignments.starting_with('home')), 0.5)

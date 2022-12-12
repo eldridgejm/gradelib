@@ -3,6 +3,7 @@ import numpy as np
 
 from .core import Gradebook
 
+
 def rank(scores) -> pd.Series:
     """The rank of each student according to score.
 
@@ -41,6 +42,7 @@ def percentile(scores) -> pd.Series:
     s = 1 - ((rank(scores) - 1) / len(rank(scores)))
     s.name = "percentile"
     return s
+
 
 def average_gpa(letter_grades, include_failing=False):
     """Compute the average GPA.
@@ -81,7 +83,9 @@ def average_gpa(letter_grades, include_failing=False):
     counts = letter_grades.value_counts()
     return (counts * letter_grade_values).sum() / counts.sum()
 
-VALID_LETTERS = ('A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D', 'F')
+
+VALID_LETTERS = ("A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F")
+
 
 def letter_grade_distribution(letters, valid_letters=VALID_LETTERS):
     """Counts the frequency of each letter grade.
@@ -102,7 +106,17 @@ def letter_grade_distribution(letters, valid_letters=VALID_LETTERS):
 
     """
     counts = letters.value_counts().reindex(valid_letters)
+    counts.index.name = "Letter"
+    counts.name = "Frequency"
     return counts.fillna(0).astype(int)
+
+
+def lates(gradebook):
+    late = gradebook.late.sum(axis=1).value_counts().to_frame()
+    late.index.name = 'Number of Lates'
+    late.columns = ['Frequency']
+    return late.sort_index()
+
 
 def outcomes(gradebook: Gradebook):
     """Compute a table summarizing student outcomes.
@@ -120,16 +134,15 @@ def outcomes(gradebook: Gradebook):
         percentile. Sorted by score, from highest to lowest.
 
     """
-    statistics = pd.DataFrame({
-        'overall score': gradebook.overall_score,
-        'letter': gradebook.letter_grades,
-        'rank': rank(gradebook.overall_score),
-        'percentile': percentile(gradebook.overall_score),
-    })
+    statistics = pd.DataFrame(
+        {
+            "overall score": gradebook.overall_score,
+            "letter": gradebook.letter_grades,
+            "rank": rank(gradebook.overall_score),
+            "percentile": percentile(gradebook.overall_score),
+        }
+    )
 
-    outcomes = pd.concat([
-        gradebook.assignment_group_scores,
-        statistics
-    ], axis=1)
+    outcomes = pd.concat([gradebook.assignment_group_scores, statistics], axis=1)
 
-    return outcomes.sort_values(by='overall score', ascending=False)
+    return outcomes.sort_values(by="overall score", ascending=False)

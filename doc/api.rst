@@ -148,3 +148,8 @@ Core
 .. autofunction:: average_gpa
 .. autofunction:: letter_grade_distribution
 .. autofunction:: outcomes
+
+Jupyter notebook :func:`overview`
+=================================
+
+.. autofunction:: gradelib.jupyter.overview

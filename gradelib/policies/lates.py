@@ -12,7 +12,7 @@ _LateInfo = collections.namedtuple("LateInfo", "gradebook pid assignment number"
 
 def penalize_lates(
     gradebook: Gradebook,
-    within: typing.Optional[AssignmentSelector]=None,
+    within: typing.Optional[AssignmentSelector] = None,
     forgive=0,
     deduction=Percentage(1),
     order_by="value",

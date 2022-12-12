@@ -8,13 +8,13 @@ import numpy as np
 
 # helper functions =====================================================================
 
+
 def _check_that_scale_monotonically_decreases(scale):
     prev = float("inf")
     for threshold in scale.values():
         if threshold >= prev:
             raise ValueError("Scale is not monotonically decreasing.")
         prev = threshold
-
 
 
 # common scales ========================================================================
@@ -45,6 +45,7 @@ ROUNDED_DEFAULT_SCALE["F"] = 0
 
 
 # public functions =====================================================================
+
 
 def map_scores_to_letter_grades(scores, scale=None):
     """Map each raw score to a letter grade.

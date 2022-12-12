@@ -14,8 +14,16 @@ AssignmentGrouper = typing.Union[
 ]
 
 
-def normalize(assignments: typing.Collection[str]) -> typing.Dict[str, float]:
-    """Create an assignment weight dict. in which every assignment is weighed equally.
+def normalize(assignments):
+    """Normalize assignment weights.
+
+    If the input is iterable, such as a list of assignment names or a
+    dictionary mapping names to weights, the return value is a dictionary
+    mapping assignment names to the same, normalized weight.
+
+    If the input is a callable, the return value is also a callable which wraps
+    the input callable and transforms its output into a dictionary of
+    assignment weights.
 
     Useful when creating grading groups. For instance:
 
@@ -41,8 +49,20 @@ def normalize(assignments: typing.Collection[str]) -> typing.Dict[str, float]:
 
 
     """
-    n = len(assignments)
-    return {a: 1 / n for a in assignments}
+
+    def _normalize_iterable(assignments):
+        n = len(assignments)
+        return {a: 1 / n for a in assignments}
+
+    if callable(assignments):
+
+        def wrapper(asmts):
+            result = assignments(asmts)
+            return _normalize_iterable(result)
+
+        return wrapper
+    else:
+        return _normalize_iterable(assignments)
 
 
 class Assignments(collections.abc.Sequence[str]):

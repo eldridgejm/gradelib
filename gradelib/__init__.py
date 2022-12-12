@@ -32,4 +32,4 @@ from . import io
 from . import _common
 
 if _common.in_jupyter_notebook():
-    from .jupyter import overview
+    from .overview import overview

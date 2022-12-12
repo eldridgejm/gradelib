@@ -149,7 +149,16 @@ Core
 .. autofunction:: letter_grade_distribution
 .. autofunction:: outcomes
 
-Jupyter notebook :func:`overview`
-=================================
+:mod:`overview`
+===============
 
-.. autofunction:: gradelib.jupyter.overview
+.. module:: overview
+
+.. function:: overview
+
+:mod:`pipeline`
+===============
+
+.. module:: gradelib.pipeline
+
+.. autoclass:: GradingPipeline

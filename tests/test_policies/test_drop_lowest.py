@@ -129,6 +129,6 @@ def test_drop_lowest_with_multiple_dropped_adds_note():
     gradelib.policies.drop_lowest(gradebook, 2, within=homeworks)
 
     assert gradebook.notes == {
-        "A1": {"drops": ["hw01 dropped.", "hw02 dropped."]},
-        "A2": {"drops": ["hw02 dropped.", "hw03 dropped."]},
+        "A1": {"drops": ["Hw01 dropped.", "Hw02 dropped."]},
+        "A2": {"drops": ["Hw02 dropped.", "Hw03 dropped."]},
     }

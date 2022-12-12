@@ -9,6 +9,7 @@ from ._common import in_jupyter_notebook
 
 # grade_distribution -------------------------------------------------------------------
 
+
 def _plot_grade_distribution_histogram(p, x_hist, y_hist):
     p.quad(top=y_hist, bottom=0, left=x_hist[:-1], right=x_hist[1:], fill_alpha=0.7)
 
@@ -29,6 +30,7 @@ def _plot_grade_distribution_students(p, gb):
         marker="triangle",
     )
 
+
 def _plot_grade_distribution_hover_tool(p, r):
     p.hover.tooltips = [
         ("student", "@student"),
@@ -38,6 +40,7 @@ def _plot_grade_distribution_hover_tool(p, r):
         ("percentile", "@{percentile}"),
     ]
     p.hover.renderers = [r]
+
 
 def _plot_grade_distribution_thresholds(p, gb, y_max):
     # plot threshold lines
@@ -52,25 +55,19 @@ def _plot_grade_distribution_thresholds(p, gb, y_max):
     for letter, threshold in gb.scale.items():
         count = f"({lgd[letter]})"
         pct = f"{threshold * 100:0.1f}%"
-        p.xaxis.major_label_overrides[threshold] = f'{pct}\n{letter}\n{count}'
+        p.xaxis.major_label_overrides[threshold] = f"{pct}\n{letter}\n{count}"
 
     p.xaxis.major_label_text_font_size = "14px"
     p.grid.visible = False
 
 
-def grade_distribution(
-    gb,
-    scale=None,
-    x_min=0.6,
-    x_max=1,
-    bin_size=0.025
-):
+def grade_distribution(gb, scale=None, x_min=0.6, x_max=1, bin_width=0.025):
     """Visualize the grade distribution with respect to a scale.
 
-    This will plot a histogram of the grade distribution, with each individual
-    grade marked as a dot. Furthermore, if a gradine scale is provided,
-    the letter grade thresholds are marked on the histogram as vertical lines,
-    and the frequency of each letter grade is shown.
+    This will plot an interactive histogram of the grade distribution, with
+    each individual grade marked as a dot. Furthermore, if a gradine scale is
+    provided, the letter grade thresholds are marked on the histogram as
+    vertical lines, and the frequency of each letter grade is shown.
 
     Parameters
     ----------
@@ -79,15 +76,17 @@ def grade_distribution(
         The smallest extent of the axis containing scores. Default: 0.6
     x_max : float
         The greatest extent of the axis containing scores. Default: 1.02
-    bins
-        What to pass as the `bins` argument to `np.hist`. Default: "auto"
+    bin_width
+        How wide each bin should be. Default: 0.025.
 
     """
     if in_jupyter_notebook():
         output_notebook()
 
     # compute a histogram of overall scores
-    y_hist, x_hist = np.histogram(gb.overall_score, bins=np.arange(x_min, x_max, bin_size))
+    y_hist, x_hist = np.histogram(
+        gb.overall_score, bins=np.arange(x_min, x_max, bin_width)
+    )
 
     # give a little headroom above the plot
     y_max = max(y_hist) * 1.1

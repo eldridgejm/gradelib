@@ -197,7 +197,7 @@ class LazyAssignments:
 
     """
 
-    def __init__(self, f: typing.Callable[[Assignments], Assignments]=None):
+    def __init__(self, f: typing.Callable[[Assignments], Assignments] = None):
         self.f = f
 
     def __call__(self, asmts: Assignments) -> Assignments:

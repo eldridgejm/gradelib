@@ -867,6 +867,7 @@ def test_groups_setter_allows_callable_returning_list_for_assignments():
         "labs": gradelib.GradingGroup(lab_weights, group_weight=0.5),
     }
 
+
 def test_groups_setter_allows_callable_returning_dict_for_assignments():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -878,18 +879,18 @@ def test_groups_setter_allows_callable_returning_dict_for_assignments():
 
     def homeworks(asmts):
         return {
-            'hw01': 0.1,
-            'hw02': 0.7,
-            'hw03': 0.2,
+            "hw01": 0.1,
+            "hw02": 0.7,
+            "hw03": 0.2,
         }
 
     gradebook.grading_groups = {
         "homeworks": (homeworks, 0.5),
-        "labs": (['lab01'], 0.5),
+        "labs": (["lab01"], 0.5),
     }
 
     # then
-    hw_weights = {"hw01": .1, "hw02": .7, "hw03": .2}
+    hw_weights = {"hw01": 0.1, "hw02": 0.7, "hw03": 0.2}
     lab_weights = {"lab01": 1}
     assert gradebook.grading_groups == {
         "homeworks": gradelib.GradingGroup(hw_weights, group_weight=0.5),
@@ -914,6 +915,7 @@ def test_groups_setter_raises_if_group_weights_do_not_sum_to_one():
             "homeworks": (HOMEWORKS_LAZY, 0.25),
             "labs": (LABS_LAZY, 0.5),
         }
+
 
 # group_scores -------------------------------------------------------------------------
 

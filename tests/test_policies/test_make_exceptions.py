@@ -141,6 +141,7 @@ def test_make_exceptions_with_replace_scales_using_points_possible():
     assert gradebook.points_earned.loc["A1", "hw02"] == 15
     assert_gradebook_is_sound(gradebook)
 
+
 def test_make_exceptions_with_replace_using_points():
     # given
     columns = ["hw01", "hw02", "hw03", "hw04"]
@@ -155,13 +156,15 @@ def test_make_exceptions_with_replace_using_points():
 
     # when
     gradelib.policies.make_exceptions(
-        gradebook, {"Justin": [gradelib.policies.Replace("hw02", with_=gradelib.Points(12))]}
+        gradebook,
+        {"Justin": [gradelib.policies.Replace("hw02", with_=gradelib.Points(12))]},
     )
 
     # then
     assert gradebook.points_earned.loc["A1", "hw01"] == 9
     assert gradebook.points_earned.loc["A1", "hw02"] == 12
     assert_gradebook_is_sound(gradebook)
+
 
 def test_make_exceptions_with_replace_using_percentage_of_points_possible():
     # given
@@ -177,13 +180,15 @@ def test_make_exceptions_with_replace_using_percentage_of_points_possible():
 
     # when
     gradelib.policies.make_exceptions(
-        gradebook, {"Justin": [gradelib.policies.Replace("hw02", with_=gradelib.Percentage(.5))]}
+        gradebook,
+        {"Justin": [gradelib.policies.Replace("hw02", with_=gradelib.Percentage(0.5))]},
     )
 
     # then
     assert gradebook.points_earned.loc["A1", "hw01"] == 9
     assert gradebook.points_earned.loc["A1", "hw02"] == 5
     assert_gradebook_is_sound(gradebook)
+
 
 def test_make_exceptions_works_with_multiple_students():
     # given

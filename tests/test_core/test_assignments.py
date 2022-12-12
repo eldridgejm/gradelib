@@ -170,10 +170,10 @@ def test_lazy_without_filter_plus_starting_with():
         ]
     )
 
-    homeworks = gradelib.LazyAssignments().starting_with('hw')
+    homeworks = gradelib.LazyAssignments().starting_with("hw")
 
     # when
     actual = homeworks(assignments)
 
     # then
-    assert actual == gradelib.Assignments(['hw 01 - a', 'hw 01 - b', 'hw 02'])
+    assert actual == gradelib.Assignments(["hw 01 - a", "hw 01 - b", "hw 02"])

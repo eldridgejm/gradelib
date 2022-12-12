@@ -8,7 +8,7 @@ from ..core import Percentage, Points
 from .._common import resolve_assignment_grouper
 
 
-# private helpers ----------------------------------------------------------------------
+# private helpers ======================================================================
 
 
 def _empty_mask_like(table):
@@ -20,7 +20,7 @@ def _empty_mask_like(table):
 
 def _add_reason_to_message(message, reason):
     if reason is not None:
-        message += ' Reason: ' + reason
+        message += " Reason: " + reason
     return message
 
 
@@ -33,6 +33,8 @@ def _convert_amount_to_absolute_points(amount, gradebook, assignment):
 
 
 # public functions and classes =========================================================
+
+# make_exceptions ----------------------------------------------------------------------
 
 
 def make_exceptions(gradebook, students):
@@ -54,6 +56,9 @@ def make_exceptions(gradebook, students):
             exception(gradebook, student)
 
 
+# ForgiveLate --------------------------------------------------------------------------
+
+
 class ForgiveLate:
     """Forgive a student's late assignment. To be used with :func:`make_exceptions`.
 
@@ -66,6 +71,7 @@ class ForgiveLate:
         An optional reason for the exception.
 
     """
+
     def __init__(self, assignment, reason=None):
         self.assignment = assignment
         self.reason = reason
@@ -77,12 +83,11 @@ class ForgiveLate:
         msg = f"Exception applied: late {self.assignment.title()} is forgiven."
         msg = _add_reason_to_message(msg, self.reason)
 
-        gradebook.add_note(
-            pid,
-            "lates",
-            msg
-        )
+        gradebook.add_note(pid, "lates", msg)
         return gradebook
+
+
+# Drop ---------------------------------------------------------------------------------
 
 
 class Drop:
@@ -97,6 +102,7 @@ class Drop:
         An optional reason for the exception.
 
     """
+
     def __init__(self, assignment, reason=None):
         self.assignment = assignment
         self.reason = reason
@@ -107,10 +113,11 @@ class Drop:
 
         msg = f"Exception applied: {self.assignment.title()} dropped."
         msg = _add_reason_to_message(msg, self.reason)
-        gradebook.add_note(
-            pid, "drops", msg
-        )
+        gradebook.add_note(pid, "drops", msg)
         return gradebook
+
+
+# Replace ------------------------------------------------------------------------------
 
 
 class Replace:
@@ -132,6 +139,7 @@ class Replace:
         An optional reason for the exception.
 
     """
+
     def __init__(self, assignment, with_, reason=None):
         self.assignment = assignment
         self.with_ = with_
@@ -150,7 +158,7 @@ class Replace:
         else:
             # the amount has been explicitly given
             amount = self.with_
-            msg = f'Overriding score on {self.assignment.title()} to be {amount}.'
+            msg = f"Overriding score on {self.assignment.title()} to be {amount}."
 
         new_points = _convert_amount_to_absolute_points(
             amount, gradebook, self.assignment
@@ -159,9 +167,5 @@ class Replace:
         gradebook.points_earned.loc[pid, self.assignment] = new_points
 
         msg = _add_reason_to_message(msg, self.reason)
-        gradebook.add_note(
-            pid,
-            "misc",
-            msg
-        )
+        gradebook.add_note(pid, "misc", msg)
         return gradebook

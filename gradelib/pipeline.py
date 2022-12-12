@@ -71,6 +71,7 @@ class GradingPipeline:
 
     def step(self, number):
         """Decorator for defining a grading step."""
+
         def decorator(func):
             self.steps[number] = func
             return func

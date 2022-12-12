@@ -28,6 +28,8 @@ from .pipeline import GradingPipeline
 from . import policies
 from . import summarize
 from . import io
+from . import plot
+from . import reports
 
 from . import _common
 

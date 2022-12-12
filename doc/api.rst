@@ -123,6 +123,9 @@ Core
 .. autofunction:: gradelib.policies.penalize_lates
 .. autofunction:: gradelib.policies.redeem
 .. autofunction:: gradelib.policies.make_exceptions
+.. autoclass:: gradelib.policies.Drop
+.. autoclass:: gradelib.policies.ForgiveLate
+.. autoclass:: gradelib.policies.Replace
 
 :mod:`scales`
 ==============
@@ -147,14 +150,36 @@ Core
 .. autofunction:: percentile
 .. autofunction:: average_gpa
 .. autofunction:: letter_grade_distribution
+.. autofunction:: lates
 .. autofunction:: outcomes
+
+:mod:`plot`
+================
+
+.. module:: gradelib.plot
+
+   Functions for plotting.
+
+.. autofunction:: grade_distribution
 
 :mod:`overview`
 ===============
 
 .. module:: overview
 
-.. function:: overview
+.. function:: overview(gradebook: Gradebook, student: Optional[str])
+
+   Display an overview of a gradebook. Only available if in a Jupyter Notebook.
+
+   By default, a class overview is displayed. If a student's name is provided
+   as the optional second argument, a student summary is displayed.
+
+:mod:`reports`
+==============
+
+.. module:: gradelib.reports
+
+.. autofunction:: generate_latex
 
 :mod:`pipeline`
 ===============

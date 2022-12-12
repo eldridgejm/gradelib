@@ -112,9 +112,10 @@ def letter_grade_distribution(letters, valid_letters=VALID_LETTERS):
 
 
 def lates(gradebook):
+    """A table summarizing the number of late assignments."""
     late = gradebook.late.sum(axis=1).value_counts().to_frame()
-    late.index.name = 'Number of Lates'
-    late.columns = ['Frequency']
+    late.index.name = "Number of Lates"
+    late.columns = ["Frequency"]
     return late.sort_index()
 
 

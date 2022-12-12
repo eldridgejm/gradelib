@@ -80,6 +80,6 @@ def drop_lowest(gradebook, n: int, within: typing.Optional[AssignmentSelector] =
         new_dropped.loc[pid, tossed] = True
 
         for assignment in tossed:
-            gradebook.add_note(pid, "drops", f"{assignment} dropped.")
+            gradebook.add_note(pid, "drops", f"{assignment.title()} dropped.")
 
     gradebook.dropped = new_dropped

@@ -55,6 +55,7 @@ def test_distribution():
 
     assert (distribution == expected).all()
 
+
 def test_rank():
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -74,9 +75,10 @@ def test_rank():
     ranks = gradelib.summarize.rank(gradebook.overall_score)
 
     # then
-    assert ranks.loc['A1'] == 2
-    assert ranks.loc['A2'] == 3
-    assert ranks.loc['A3'] == 1
+    assert ranks.loc["A1"] == 2
+    assert ranks.loc["A2"] == 3
+    assert ranks.loc["A3"] == 1
+
 
 def test_percentile():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -97,9 +99,10 @@ def test_percentile():
     percentiles = gradelib.summarize.percentile(gradebook.overall_score)
 
     # then
-    assert math.isclose(percentiles.loc['A1'], 2/3)
-    assert math.isclose(percentiles.loc['A2'], 1/3)
-    assert math.isclose(percentiles.loc['A3'], 1)
+    assert math.isclose(percentiles.loc["A1"], 2 / 3)
+    assert math.isclose(percentiles.loc["A2"], 1 / 3)
+    assert math.isclose(percentiles.loc["A3"], 1)
+
 
 def test_outcomes():
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -119,4 +122,4 @@ def test_outcomes():
     # when
     outcomes = gradelib.summarize.outcomes(gradebook)
 
-    assert outcomes.iloc[0]['rank'] == 1
+    assert outcomes.iloc[0]["rank"] == 1

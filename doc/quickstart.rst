@@ -13,59 +13,66 @@ algorithm which finds "robust" thresholds for every letter grade.
 
     import gradelib
 
-    # read the egrades roster
-    roster = gradelib.read_egrades_roster('roster.csv')
-
-    # read grades from canvas
-    canvas_grades = gradelib.Gradebook.from_canvas('canvas.csv')
-
-    # read grades from gradescope
-    # note: Gradescope is inconsistent with time of submission, sometimes showing
-    # that an assignment is on-time in the web interface, but a minute or so late
-    # in the exported CSV. `from_gradescope` has a default fudge-factor that
-    # is meant to account for this; see the documentation for more details.
-    gradescope_grades = gradelib.Gradebook.from_gradescope('gradescope.csv')
-
-    # combine canvas and gradescope grades into a single gradebook,
-    # checking that all enrolled students are accounted for
-    gradebook = gradelib.Gradebook.combine(
-        [gradescope_grades, canvas_grades],
-        restrict_to_students=roster.index
-    )
+    gb = gradelib.combine_gradebooks([
+        gradelib.io.gradescope.read('./gradescope.csv'),
+        gradelib.io.canvas.read('./canvas.csv')
+    ])
 
     # define assignment groups
-    HOMEWORKS = gradebook.assignments.starting_with('home')
-    LABS = gradebook.assignments.starting_with('lab')
+    HOMEWORKS = gradelib.LazyAssignments().starting_with('home')
+    LABS = gradelib.LazyAssignments().starting_with('lab')
 
-    # apply grading policy
-    gradebook = (
-        gradebook
-        .forgive_lates(4, within=HOMEWORKS + LABS)
-        .drop_lowest(1, within=HOMEWORKS)
-        .drop_lowest(1, within=LABS)
+    # merge assignment versions
+    gradelib.preprocessing.combine_assignment_versions(['midterm 01', 'midterm 02'])
+
+    # unify assignments that have multiple parts, such as "homework 01" and
+    # "homework 01 - programming problem"
+    gradelib.preprocessing.combine_assignment_parts(
+        lambda a: a.split('-')[0].strip(),
+        within=HOMEWORKS
     )
 
-    # calculate overall grades according to weighted grading
-    # scheme; 25% homeworks, 20% labs, etc.
-    overall = (
-        .25 * gradebook.score(HOMEWORKS)
-        +
-        .20 * gradebook.score(LABS)
-        +
-        .05 * gradebook.score('project 01')
-        +
-        .10 * gradebook.score('project 02')
-        +
-        .10 * gradebook.score('midterm exam')
-        +
-        .30 * gradebook.score('final exam')
-    )
+    # handle exceptions
+    gradelib.policies.make_exceptions({
+        'me': [
+            gradelib.policies.Drop("homework 01", reason="illness"),
+            gradelib.policies.Replace("homework 02", with_=gradelib.Percentage(.75))
+        ],
+        'you': [
+            gradelib.policies.ForgiveLate("homework 01", reason="illness"),
+        ],
+    })
+
+    # apply grading policies
+    gradelib.policies.penalize_lates(gb, forgive=4, within=HOMEWORKS+LABS)
+    gradelib.policies.drop_lowest(gb, 1, within=HOMEWORKS)
+    gradelib.policies.drop_lowest(gb, 1, within=LABS)
+    gradelib.policies.redeem({
+        'midterm 01 - with redemption': ['midterm 01', 'redemption midterm 01'],
+        'midterm 02 - with redemption': ['midterm 02', 'redemption midterm 02']
+    })
+
+    gb.grading_groups = {
+        'homeworks': (HOMEWORKS, .25),
+        'labs': (LABS, .25),
+        'project 01': .05,
+        'project 02': .10,
+        'midterm exam': .1,
+        'final exam': .1
+    }
 
     # find robust letter grade cutoffs by clustering grades
-    robust_scale = gradelib.find_robust_scale(overall)
+    gb.scale = gradelib.scales.find_robust_scale(gb.overall_scores)
 
     # visualize the grade distribution
-    gradelib.plot_grade_distribution(overall, robust_scale)
+    gradelib.plot.grade_distribution(gb)
 
-    # assign letter grades
-    letters = gradelib.map_scores_to_letter_grades(overall, robust_scale)
+    # view an interactive overview of the class's performance
+    gradelib.overview(gb)
+
+    # view a single student's performance and grading notes
+    gradelib.overview(gb, student='me')
+
+    # generate student reports, complete with auto-generated grading notes about which
+    # assignments were dropped, penalized for being late, etc.
+    gradelib.reports.generate_latex(gb)

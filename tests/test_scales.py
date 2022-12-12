@@ -14,5 +14,3 @@ def test_map_score_to_letter_grade_on_example():
     letters.iloc[0] = "B"
     letters.iloc[1] = "A"
     letters.iloc[2] = "F"
-
-

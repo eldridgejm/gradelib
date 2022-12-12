@@ -186,9 +186,13 @@ class LazyAssignments:
     Example
     -------
     >>> assignments = Assignments(['hw01', 'hw02', 'lab01'])
-    >>> homeworks = LazyAssignments(lambda asmts: asmts.starting_with('hw'))
+    >>> homeworks = LazyAssignments().starting_with('hw')
     >>> homeworks(assignments)
     Assignments(['hw01', 'hw02'])
+    >>> # alternatively, give a function
+    >>> labs = LazyAssignments(lambda asmts: asmts.starting_with('lab'))
+    >>> labs(assignments)
+    Assignments(['lab01'])
 
     """
 

@@ -27,7 +27,6 @@ from .pipeline import GradingPipeline
 
 from . import policies
 from . import summarize
-from . import jupyter
 from . import io
 
 from . import _common

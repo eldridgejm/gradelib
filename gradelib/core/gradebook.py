@@ -199,10 +199,10 @@ class GradebookOptions:
     lateness_fudge: int = 5 * 60
 
 
-# AssignmentGroup --------------------------------------------------------------------------------
+# GradingGroup --------------------------------------------------------------------------------
 
 
-class AssignmentGroup:
+class GradingGroup:
     """Represents a logical group of assignments and their weights.
 
     Attributes
@@ -254,7 +254,7 @@ class AssignmentGroup:
 
     def __repr__(self):
         return (
-            f"AssignmentGroup(assignment_weights={self.assignment_weights!r}, "
+            f"GradingGroup(assignment_weights={self.assignment_weights!r}, "
             f"group_weight={self.group_weight!r})"
         )
 
@@ -343,15 +343,15 @@ class Gradebook:
     opts : Optional[GradebookOptions]
         An optional collection of options configuring the behavior of the
         Gradebook.
-    grading_groups : dict[str, AssignmentGroup]
-        A mapping from assignment group names (strings) to :class:`AssignmentGroup`
+    grading_groups : dict[str, GradingGroup]
+        A mapping from assignment group names (strings) to :class:`GradingGroup`
         objects representing a group of assignments. The default is simply ``{}``.
 
         To prevent unintentional errors, the grading groups must be set before
         accessive summative attributes, such as :attr:`overall_score`.
 
         While the dictionary returned by this attribute has
-        :class:`AssignmentGroup` instances as values, the attribute can be
+        :class:`GradingGroup` instances as values, the attribute can be
         *set* in several ways, as the example shows.
 
         Example
@@ -485,7 +485,7 @@ class Gradebook:
     # properties: groups ---------------------------------------------------------------
 
     @property
-    def grading_groups(self) -> dict[str, AssignmentGroup]:
+    def grading_groups(self) -> dict[str, GradingGroup]:
         return dict(self._groups)
 
     @grading_groups.setter
@@ -503,7 +503,7 @@ class Gradebook:
             raise ValueError("Groups must be provided as a dictionary.")
 
         def _make_group(g, name):
-            if isinstance(g, AssignmentGroup):
+            if isinstance(g, GradingGroup):
                 return g
 
             if isinstance(g, (float, int)):
@@ -529,7 +529,7 @@ class Gradebook:
                     for a in assignment_weights
                 }
 
-            return AssignmentGroup(assignment_weights, group_weight)
+            return GradingGroup(assignment_weights, group_weight)
 
         new_groups = {name: _make_group(g, name) for name, g in value.items()}
 

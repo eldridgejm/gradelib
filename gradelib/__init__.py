@@ -13,7 +13,7 @@ from .core import (
     Students,
     Points,
     Percentage,
-    AssignmentGroup,
+    GradingGroup,
 )
 
 from .scales import (

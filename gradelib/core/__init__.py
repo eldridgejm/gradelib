@@ -1,4 +1,4 @@
-from .gradebook import Gradebook, GradebookOptions, AssignmentGroup, combine_gradebooks
+from .gradebook import Gradebook, GradebookOptions, GradingGroup, combine_gradebooks
 from .assignments import (
     normalize,
     Assignments,

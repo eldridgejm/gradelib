@@ -69,7 +69,7 @@ def _concatenate_groups(gradebooks):
     """Concatenates the groups from a sequence of gradebooks."""
     new_groups = {}
     for gradebook in gradebooks:
-        for group_name, group in gradebook.assignment_groups.items():
+        for group_name, group in gradebook.grading_groups.items():
             if group_name in new_groups:
                 raise ValueError(f"Duplicate group names seen: {group_name}.")
             new_groups[group_name] = group
@@ -172,7 +172,7 @@ def combine_gradebooks(
         lateness=concat_attr("lateness"),
         dropped=concat_attr("dropped"),
         notes=_concatenate_notes(gradebooks),
-        assignment_groups={},
+        grading_groups={},
         opts=_combine_if_equal(gradebooks, "opts"),
         scale=_combine_if_equal(gradebooks, "scale"),
     )
@@ -343,7 +343,7 @@ class Gradebook:
     opts : Optional[GradebookOptions]
         An optional collection of options configuring the behavior of the
         Gradebook.
-    assignment_groups : dict[str, AssignmentGroup]
+    grading_groups : dict[str, AssignmentGroup]
         A mapping from assignment group names (strings) to :class:`AssignmentGroup`
         objects representing a group of assignments. The default is simply ``{}``.
 
@@ -357,7 +357,7 @@ class Gradebook:
         Example
         -------
 
-        >>> gradebook.assignment_groups = {
+        >>> gradebook.grading_groups = {
         ...     # list of assignments, followed by group weight. assignment weights
         ...     # are inferred to be proportional to points possible
         ...     "homeworks": (['hw 01', 'hw 02', 'hw 03'], 0.5),
@@ -384,7 +384,7 @@ class Gradebook:
         "lateness",
         "dropped",
         "notes",
-        "assignment_groups",
+        "grading_groups",
         "scale",
         "opts",
     ]
@@ -396,7 +396,7 @@ class Gradebook:
         lateness=None,
         dropped=None,
         notes=None,
-        assignment_groups=None,
+        grading_groups=None,
         scale=None,
         opts=None,
     ):
@@ -409,7 +409,7 @@ class Gradebook:
             dropped if dropped is not None else _empty_mask_like(points_earned)
         )
         self.notes = {} if notes is None else notes
-        self.assignment_groups = {} if assignment_groups is None else assignment_groups
+        self.grading_groups = {} if grading_groups is None else grading_groups
         self.scale = DEFAULT_SCALE if scale is None else scale
         self.opts = opts if opts is not None else GradebookOptions()
 
@@ -485,12 +485,12 @@ class Gradebook:
     # properties: groups ---------------------------------------------------------------
 
     @property
-    def assignment_groups(self) -> dict[str, AssignmentGroup]:
+    def grading_groups(self) -> dict[str, AssignmentGroup]:
         return dict(self._groups)
 
-    @assignment_groups.setter
-    def assignment_groups(self, value):
-        """.assignment_groups setter that accepts several difference convenience formats.
+    @grading_groups.setter
+    def grading_groups(self, value):
+        """.grading_groups setter that accepts several difference convenience formats.
 
         The value should be a dict mapping group names to *group definitions*. A group
         definition can be any of the following:
@@ -545,7 +545,7 @@ class Gradebook:
     def weight(self) -> pd.DataFrame:
         """A table of assignment weights relative to their assignment group.
 
-        If :attr:`assignment_groups` is set, this computes a table of the same
+        If :attr:`grading_groups` is set, this computes a table of the same
         size as :attr:`points_earned` containing for each student and
         assignment, the weight of that assignment relative to the assignment
         group.
@@ -574,7 +574,7 @@ class Gradebook:
             self._group_points_possible_after_drops
         )
 
-        for group_name, group in self.assignment_groups.items():
+        for group_name, group in self.grading_groups.items():
             if isinstance(group.assignment_weights, dict):
                 weights = pd.Series(group.assignment_weights)
                 weights = self._everyone_to_per_student(weights)
@@ -588,7 +588,7 @@ class Gradebook:
     def overall_weight(self) -> pd.DataFrame:
         """A table of assignment weights relative to all other assignments.
 
-        If :attr:`assignment_groups` is set, this computes a table of the same
+        If :attr:`grading_groups` is set, this computes a table of the same
         size as :attr:`points_earned` containing for each student and
         assignment, the overall weight of that assignment relative to all other
         assignments.
@@ -617,7 +617,7 @@ class Gradebook:
         group_weight = pd.Series(
             {
                 group_name: assignment_group.group_weight
-                for group_name, assignment_group in self.assignment_groups.items()
+                for group_name, assignment_group in self.grading_groups.items()
             },
             dtype=float,
         )
@@ -633,7 +633,7 @@ class Gradebook:
         student's overall score in the class. In short, it is the product of
         that assignment's score with its overall weight.
 
-        If :attr:`assignment_groups` is not set, all entries are `NaN`.
+        If :attr:`grading_groups` is not set, all entries are `NaN`.
 
         The total of a student's assignment values equals their score in the
         class.
@@ -668,7 +668,7 @@ class Gradebook:
 
         """
         result = {}
-        for group_name, group in self.assignment_groups.items():
+        for group_name, group in self.grading_groups.items():
             possible = pd.DataFrame(
                 np.tile(
                     self.points_possible[list(group.assignment_weights)],
@@ -701,7 +701,7 @@ class Gradebook:
 
         This takes into account dropped assignments.
 
-        If :attr:`assignment_groups` has not yet been set, all entries are `NaN`.
+        If :attr:`grading_groups` has not yet been set, all entries are `NaN`.
 
         This is a dynamically-computed property; it should not be modified.
 
@@ -709,13 +709,13 @@ class Gradebook:
         group_values = pd.DataFrame(
             {
                 group_name: self.value[list(group.assignment_weights)].sum(axis=1)
-                for group_name, group in self.assignment_groups.items()
+                for group_name, group in self.grading_groups.items()
             }
         )
         group_weight = pd.Series(
             {
                 group_name: group.group_weight
-                for group_name, group in self.assignment_groups.items()
+                for group_name, group in self.grading_groups.items()
             }
         )
         return group_values / group_weight
@@ -742,7 +742,7 @@ class Gradebook:
         """
 
         def _get_group_by_name(name):
-            for group_name, group in self.assignment_groups.items():
+            for group_name, group in self.grading_groups.items():
                 if group_name == name:
                     return group
 
@@ -804,10 +804,10 @@ class Gradebook:
         Raises
         ------
         ValueError
-            If :attr:`assignment_groups` has not yet been set.
+            If :attr:`grading_groups` has not yet been set.
 
         """
-        if not self.assignment_groups:
+        if not self.grading_groups:
             raise ValueError(
                 "Assignment groups should be set before calculating letter grades."
             )
@@ -830,10 +830,10 @@ class Gradebook:
         Raises
         ------
         ValueError
-            If :attr:`assignment_groups` has not yet been set.
+            If :attr:`grading_groups` has not yet been set.
 
         """
-        if not self.assignment_groups:
+        if not self.grading_groups:
             raise ValueError(
                 "Assignment groups should be set before calculating letter grades."
             )
@@ -942,7 +942,7 @@ class Gradebook:
     def restrict_to_assignments(self, assignments: AssignmentSelector):
         """Restrict the gradebook to only the supplied assignments.
 
-        If the :attr:`assignment_groups` attribute been set, it is reset to
+        If the :attr:`grading_groups` attribute been set, it is reset to
         ``{}`` by this operation.
 
         Parameters
@@ -969,12 +969,12 @@ class Gradebook:
         self.lateness = self.lateness.loc[:, assignments]
         self.dropped = self.dropped.loc[:, assignments]
 
-        self.assignment_groups = {}
+        self.grading_groups = {}
 
     def remove_assignments(self, assignments: AssignmentSelector):
         """Removes assignments, mutating the gradebook.
 
-        If the :attr:`assignment_groups` attribute been set, it is reset to
+        If the :attr:`grading_groups` attribute been set, it is reset to
         ``{}`` by this operation.
 
         Parameters
@@ -1002,7 +1002,7 @@ class Gradebook:
     def rename_assignments(self, mapping: typing.Mapping[str, str]):
         """Renames assignments.
 
-        If the :attr:`assignment_groups` attribute been set, it is reset to
+        If the :attr:`grading_groups` attribute been set, it is reset to
         ``{}`` by this operation.
 
         Parameters

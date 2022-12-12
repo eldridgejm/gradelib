@@ -52,7 +52,7 @@ class GradingPipeline:
                     gb, lambda a: a.plit('-')[0], within=['midterm - a', 'midterm - b']
             )
 
-            gb.assignment_groups = {
+            gb.grading_groups = {
                 'homeworks': (homeworks, 0.5),
                 'labs': (labs, 0.25),
                 'midterm': 0.25

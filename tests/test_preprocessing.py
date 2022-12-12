@@ -190,7 +190,7 @@ def test_combine_assignment_parts_resets_groups():
     points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points_earned, points_possible)
-    gradebook.assignment_groups = {
+    gradebook.grading_groups = {
         "homeworks": ({"hw01": 0.25, "hw01 - programming": 0.25, "hw02": 0.5}, 0.5),
         "labs": ({"lab01": 1}, 0.5),
     }
@@ -201,7 +201,7 @@ def test_combine_assignment_parts_resets_groups():
     preprocessing.combine_assignment_parts(gradebook, {"hw01": HOMEWORK_01_PARTS})
 
     # then
-    assert gradebook.assignment_groups == {}
+    assert gradebook.grading_groups == {}
 
 
 # combine_assignment_versions ----------------------------------------------------------

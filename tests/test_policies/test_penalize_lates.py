@@ -42,7 +42,7 @@ def test_with_callable_deduction():
         index=points_earned.index,
     )
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
-    gradebook.assignment_groups = {
+    gradebook.grading_groups = {
         "homeworks": (["hw01", "hw02"], 0.75),
         "labs": (["lab01"], 0.25),
     }
@@ -80,7 +80,7 @@ def test_with_callable_deduction_does_not_count_forgiven():
     )
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
-    gradebook.assignment_groups = {
+    gradebook.grading_groups = {
         "homeworks": (["hw01", "hw02"], 0.75),
         "labs": (["lab01"], 0.25),
     }
@@ -183,7 +183,7 @@ def test_with_forgiveness():
     )
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
-    gradebook.assignment_groups = {
+    gradebook.grading_groups = {
         "homeworks": (["hw01", "hw02"], 0.75),
         "labs": (["lab01"], 0.25),
     }
@@ -241,7 +241,7 @@ def test_with_forgiveness_forgives_most_valuable_assignments_first_by_default():
     HOMEWORK = gradebook.assignments.starting_with("hw")
     LABS = gradebook.assignments.starting_with("lab")
 
-    gradebook.assignment_groups = {
+    gradebook.grading_groups = {
         "homeworks": (HOMEWORK, 0.75),
         "labs": (LABS, 0.25),
     }
@@ -275,7 +275,7 @@ def test_forgives_the_first_n_lates_when_order_by_is_index():
     HOMEWORK = gradebook.assignments.starting_with("hw")
     LABS = gradebook.assignments.starting_with("lab")
 
-    gradebook.assignment_groups = {
+    gradebook.grading_groups = {
         "homeworks": (HOMEWORK, 0.75),
         "labs": (LABS, 0.25),
     }
@@ -326,7 +326,7 @@ def test_by_default_takes_into_account_drops():
     )
 
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
-    gradebook.assignment_groups = {
+    gradebook.grading_groups = {
         "homeworks": (gradebook.assignments.starting_with("hw"), 0.75),
         "labs": (gradebook.assignments.starting_with("lab"), 0.25),
     }
@@ -360,7 +360,7 @@ def test_adds_note_for_penalized_assignment():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradebook.assignment_groups = {"homeworks": (HOMEWORK, 1)}
+    gradebook.grading_groups = {"homeworks": (HOMEWORK, 1)}
 
     gradelib.policies.penalize_lates(gradebook)
 
@@ -396,7 +396,7 @@ def test_with_forgiveness_adds_note_for_forgiven_assignments():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradebook.assignment_groups = {"homeworks": (HOMEWORK, 1)}
+    gradebook.grading_groups = {"homeworks": (HOMEWORK, 1)}
 
     gradelib.policies.penalize_lates(gradebook, forgive=2)
 

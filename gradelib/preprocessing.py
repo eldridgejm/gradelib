@@ -113,7 +113,7 @@ def combine_assignment_parts(gb, grouper: AssignmentGrouper):
     for key, value in dct.items():
         _combine_assignment_parts(gb, key, value)
 
-    gb.assignment_groups = {}
+    gb.grading_groups = {}
 
 
 # combine_assignment_versions ----------------------------------------------------------

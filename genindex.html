@@ -15,6 +15,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -35,8 +36,37 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <!-- Local TOC -->
-              <div class="local-toc"></div>
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#core">Core</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#gradelib.AssignmentSelector"><code class="docutils literal notranslate"><span class="pre">AssignmentSelector</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#gradelib.AssignmentGrouper"><code class="docutils literal notranslate"><span class="pre">AssignmentGrouper</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-io.gradescope"><code class="xref py py-mod docutils literal notranslate"><span class="pre">io.gradescope</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-io.canvas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">io.canvas</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-preprocessing"><code class="xref py py-mod docutils literal notranslate"><span class="pre">preprocessing</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-policies"><code class="xref py py-mod docutils literal notranslate"><span class="pre">policies</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-gradelib.scales"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scales</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#gradelib.scales.DEFAULT_SCALE"><code class="docutils literal notranslate"><span class="pre">DEFAULT_SCALE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#gradelib.scales.ROUNDED_DEFAULT_SCALE"><code class="docutils literal notranslate"><span class="pre">ROUNDED_DEFAULT_SCALE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#gradelib.scales.map_scores_to_letter_grades"><code class="docutils literal notranslate"><span class="pre">map_scores_to_letter_grades()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#gradelib.scales.find_robust_scale"><code class="docutils literal notranslate"><span class="pre">find_robust_scale()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-gradelib.summarize"><code class="xref py py-mod docutils literal notranslate"><span class="pre">summarize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-gradelib.plot"><code class="xref py py-mod docutils literal notranslate"><span class="pre">plot</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-overview"><code class="xref py py-mod docutils literal notranslate"><span class="pre">overview</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#overview.overview"><code class="docutils literal notranslate"><span class="pre">overview()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-gradelib.reports"><code class="xref py py-mod docutils literal notranslate"><span class="pre">reports</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-gradelib.pipeline"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pipeline</span></code></a></li>
+</ul>
+</li>
+</ul>
+
         </div>
       </div>
     </nav>
@@ -50,8 +80,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Index</li>
+      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Index</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -65,46 +95,24 @@
 
 <div class="genindex-jumpbox">
  <a href="#A"><strong>A</strong></a>
- | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
- | <a href="#K"><strong>K</strong></a>
- | <a href="#L"><strong>L</strong></a>
+ | <a href="#I"><strong>I</strong></a>
  | <a href="#M"><strong>M</strong></a>
- | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
- | <a href="#S"><strong>S</strong></a>
- | <a href="#T"><strong>T</strong></a>
- | <a href="#U"><strong>U</strong></a>
- | <a href="#W"><strong>W</strong></a>
  
 </div>
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Gradebook.add_assignment">add_assignment() (gradelib.Gradebook method)</a>
-</li>
-      <li><a href="index.html#gradelib.Assignments">Assignments (class in gradelib)</a>
+      <li><a href="api.html#gradelib.AssignmentGrouper">AssignmentGrouper (class in gradelib)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Gradebook.assignments">assignments (gradelib.Gradebook property)</a>
-</li>
-      <li><a href="index.html#gradelib.average_gpa">average_gpa() (in module gradelib)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="C">C</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Gradebook.combine">combine() (gradelib.Gradebook class method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Assignments.containing">containing() (gradelib.Assignments method)</a>
+      <li><a href="api.html#gradelib.AssignmentSelector">AssignmentSelector (class in gradelib)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -112,11 +120,7 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.DEFAULT_SCALE">DEFAULT_SCALE (in module gradelib)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Gradebook.drop_lowest">drop_lowest() (gradelib.Gradebook method)</a>
+      <li><a href="api.html#gradelib.scales.DEFAULT_SCALE">DEFAULT_SCALE (in module gradelib.scales)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -124,15 +128,7 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.find_robust_scale">find_robust_scale() (in module gradelib)</a>
-</li>
-      <li><a href="index.html#gradelib.Gradebook.forgive_lates">forgive_lates() (gradelib.Gradebook method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Gradebook.from_canvas">from_canvas() (gradelib.Gradebook class method)</a>
-</li>
-      <li><a href="index.html#gradelib.Gradebook.from_gradescope">from_gradescope() (gradelib.Gradebook class method)</a>
+      <li><a href="api.html#gradelib.scales.find_robust_scale">find_robust_scale() (in module gradelib.scales)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -140,49 +136,114 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Gradebook.give_equal_weights">give_equal_weights() (gradelib.Gradebook method)</a>
+      <li>
+    gradelib.pipeline
+
+      <ul>
+        <li><a href="api.html#module-gradelib.pipeline">module</a>
 </li>
+      </ul></li>
+      <li>
+    gradelib.plot
+
+      <ul>
+        <li><a href="api.html#module-gradelib.plot">module</a>
+</li>
+      </ul></li>
+      <li>
+    gradelib.reports
+
+      <ul>
+        <li><a href="api.html#module-gradelib.reports">module</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Gradebook">Gradebook (class in gradelib)</a>
+      <li>
+    gradelib.scales
+
+      <ul>
+        <li><a href="api.html#module-gradelib.scales">module</a>
 </li>
-      <li><a href="index.html#gradelib.Assignments.group_by">group_by() (gradelib.Assignments method)</a>
+      </ul></li>
+      <li>
+    gradelib.summarize
+
+      <ul>
+        <li><a href="api.html#module-gradelib.summarize">module</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
-<h2 id="K">K</h2>
+<h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Gradebook.keep_assignments">keep_assignments() (gradelib.Gradebook method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Gradebook.keep_pids">keep_pids() (gradelib.Gradebook method)</a>
-</li>
-  </ul></td>
-</tr></table>
+      <li>
+    io.canvas
 
-<h2 id="L">L</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.letter_grade_distribution">letter_grade_distribution() (in module gradelib)</a>
+      <ul>
+        <li><a href="api.html#module-io.canvas">module</a>
 </li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    io.gradescope
+
+      <ul>
+        <li><a href="api.html#module-io.gradescope">module</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.map_scores_to_letter_grades">map_scores_to_letter_grades() (in module gradelib)</a>
+      <li><a href="api.html#gradelib.scales.map_scores_to_letter_grades">map_scores_to_letter_grades() (in module gradelib.scales)</a>
 </li>
+      <li>
+    module
+
+      <ul>
+        <li><a href="api.html#module-gradelib.pipeline">gradelib.pipeline</a>
+</li>
+        <li><a href="api.html#module-gradelib.plot">gradelib.plot</a>
+</li>
+        <li><a href="api.html#module-gradelib.reports">gradelib.reports</a>
+</li>
+        <li><a href="api.html#module-gradelib.scales">gradelib.scales</a>
+</li>
+        <li><a href="api.html#module-gradelib.summarize">gradelib.summarize</a>
+</li>
+        <li><a href="api.html#module-io.canvas">io.canvas</a>
+</li>
+        <li><a href="api.html#module-io.gradescope">io.gradescope</a>
+</li>
+        <li><a href="api.html#module-overview">overview</a>
+</li>
+        <li><a href="api.html#module-policies">policies</a>
+</li>
+        <li><a href="api.html#module-preprocessing">preprocessing</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
-<h2 id="N">N</h2>
+<h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Gradebook.number_of_lates">number_of_lates() (gradelib.Gradebook method)</a>
+      <li>
+    overview
+
+      <ul>
+        <li><a href="api.html#module-overview">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#overview.overview">overview() (in module overview)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -190,69 +251,29 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Gradebook.pids">pids (gradelib.Gradebook property)</a>
+      <li>
+    policies
+
+      <ul>
+        <li><a href="api.html#module-policies">module</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.plot_grade_distribution">plot_grade_distribution() (in module gradelib)</a>
+      <li>
+    preprocessing
+
+      <ul>
+        <li><a href="api.html#module-preprocessing">module</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.read_canvas">read_canvas() (in module gradelib)</a>
-</li>
-      <li><a href="index.html#gradelib.read_egrades_roster">read_egrades_roster() (in module gradelib)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.read_gradescope">read_gradescope() (in module gradelib)</a>
-</li>
-      <li><a href="index.html#gradelib.Gradebook.remove_assignments">remove_assignments() (gradelib.Gradebook method)</a>
-</li>
-      <li><a href="index.html#gradelib.ROUNDED_DEFAULT_SCALE">ROUNDED_DEFAULT_SCALE (in module gradelib)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="S">S</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Gradebook.score">score() (gradelib.Gradebook method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Assignments.starting_with">starting_with() (gradelib.Assignments method)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="T">T</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Gradebook.total">total() (gradelib.Gradebook method)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="U">U</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.Gradebook.unify_assignments">unify_assignments() (gradelib.Gradebook method)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="W">W</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.write_canvas_grades">write_canvas_grades() (in module gradelib)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#gradelib.write_egrades">write_egrades() (in module gradelib)</a>
+      <li><a href="api.html#gradelib.scales.ROUNDED_DEFAULT_SCALE">ROUNDED_DEFAULT_SCALE (in module gradelib.scales)</a>
 </li>
   </ul></td>
 </tr></table>

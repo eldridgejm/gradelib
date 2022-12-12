@@ -141,8 +141,7 @@ def test_make_exceptions_with_replace_scales_using_points_possible():
     assert gradebook.points_earned.loc["A1", "hw02"] == 15
     assert_gradebook_is_sound(gradebook)
 
-
-def test_make_exceptions_with_override():
+def test_make_exceptions_with_replace_using_points():
     # given
     columns = ["hw01", "hw02", "hw03", "hw04"]
     p1 = pd.Series(data=[9, 0, 7, 0], index=columns)
@@ -156,20 +155,35 @@ def test_make_exceptions_with_override():
 
     # when
     gradelib.policies.make_exceptions(
-        gradebook,
-        {
-            "Justin": [
-                gradelib.policies.Override("hw01", gradelib.Percentage(0.5)),
-                gradelib.policies.Override("hw02", gradelib.Points(8)),
-            ],
-        },
+        gradebook, {"Justin": [gradelib.policies.Replace("hw02", with_=gradelib.Points(12))]}
     )
 
     # then
-    assert gradebook.points_earned.loc["A1", "hw01"] == 5
-    assert gradebook.points_earned.loc["A1", "hw02"] == 8
+    assert gradebook.points_earned.loc["A1", "hw01"] == 9
+    assert gradebook.points_earned.loc["A1", "hw02"] == 12
     assert_gradebook_is_sound(gradebook)
 
+def test_make_exceptions_with_replace_using_percentage_of_points_possible():
+    # given
+    columns = ["hw01", "hw02", "hw03", "hw04"]
+    p1 = pd.Series(data=[9, 0, 7, 0], index=columns)
+    p2 = pd.Series(data=[10, 10, 10, 10], index=columns)
+    points = pd.DataFrame(
+        [p1, p2],
+        index=[gradelib.Student("A1", "Justin"), gradelib.Student("A2", "Steve")],
+    )
+    maximums = pd.Series([10, 10, 10, 10], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    # when
+    gradelib.policies.make_exceptions(
+        gradebook, {"Justin": [gradelib.policies.Replace("hw02", with_=gradelib.Percentage(.5))]}
+    )
+
+    # then
+    assert gradebook.points_earned.loc["A1", "hw01"] == 9
+    assert gradebook.points_earned.loc["A1", "hw02"] == 5
+    assert_gradebook_is_sound(gradebook)
 
 def test_make_exceptions_works_with_multiple_students():
     # given

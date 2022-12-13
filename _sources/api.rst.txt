@@ -186,4 +186,4 @@ Core
 
 .. module:: gradelib.pipeline
 
-.. autoclass:: GradingPipeline
+.. autoclass:: Pipeline

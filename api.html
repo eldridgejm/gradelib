@@ -163,7 +163,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-gradelib.pipeline"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pipeline</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#gradelib.pipeline.GradingPipeline"><code class="docutils literal notranslate"><span class="pre">GradingPipeline</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gradelib.pipeline.Pipeline"><code class="docutils literal notranslate"><span class="pre">Pipeline</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -1723,8 +1723,8 @@ any students.</p></li>
 <section id="module-gradelib.pipeline">
 <span id="pipeline"></span><h2><a class="toc-backref" href="#id12"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pipeline</span></code></a><a class="headerlink" href="#module-gradelib.pipeline" title="Permalink to this heading"></a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="gradelib.pipeline.GradingPipeline">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gradelib.pipeline.</span></span><span class="sig-name descname"><span class="pre">GradingPipeline</span></span><a class="headerlink" href="#gradelib.pipeline.GradingPipeline" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="gradelib.pipeline.Pipeline">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gradelib.pipeline.</span></span><span class="sig-name descname"><span class="pre">Pipeline</span></span><a class="headerlink" href="#gradelib.pipeline.Pipeline" title="Permalink to this definition"></a></dt>
 <dd><p>Manage the steps of a grading workflow.</p>
 <p>Grading is often done in Jupyter notebooks. While convenient, they are
 susceptible to subtle errors when cells are run out of order.</p>
@@ -1741,7 +1741,7 @@ passed to the next step, ad infinitum. Alternatively, if a step returns a
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Gradebook</span></code>, it is passed to the next step instead.</p>
 <p>Finally, to run the entire pipeline at once, use <code class="xref py py-meth docutils literal notranslate"><span class="pre">grade()</span></code>.</p>
 <p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">GradingPipeline</span><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">()</span>
 
 <span class="n">homeworks</span> <span class="o">=</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">LazyAssignments</span><span class="p">(</span><span class="k">lambda</span> <span class="n">asmts</span><span class="p">:</span> <span class="n">asmts</span><span class="o">.</span><span class="n">starting_with</span><span class="p">(</span><span class="s1">&#39;home&#39;</span><span class="p">))</span>
 <span class="n">labs</span> <span class="o">=</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">LazyAssignments</span><span class="p">(</span><span class="k">lambda</span> <span class="n">asmts</span><span class="p">:</span> <span class="n">asmts</span><span class="o">.</span><span class="n">starting_with</span><span class="p">(</span><span class="s1">&#39;lab&#39;</span><span class="p">))</span>

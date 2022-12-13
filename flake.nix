@@ -43,6 +43,7 @@
               src = ./.;
               propagatedBuildInputs = with python310Packages; [ pandas bokeh matplotlib numpy ];
               nativeBuildInputs = with python310Packages; [ pytest ipython sphinx sphinx_rtd_theme ];
+              doCheck = false;
             }
           );
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from .core import Gradebook
 
 
-class GradingPipeline:
+class Pipeline:
     """Manage the steps of a grading workflow.
 
     Grading is often done in Jupyter notebooks. While convenient, they are
@@ -31,7 +31,7 @@ class GradingPipeline:
 
     .. code:: python
 
-        pipeline = gradelib.GradingPipeline()
+        pipeline = gradelib.Pipeline()
 
         homeworks = gradelib.LazyAssignments(lambda asmts: asmts.starting_with('home'))
         labs = gradelib.LazyAssignments(lambda asmts: asmts.starting_with('lab'))

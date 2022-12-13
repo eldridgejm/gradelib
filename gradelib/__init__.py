@@ -23,7 +23,7 @@ from .scales import (
     find_robust_scale,
 )
 
-from .pipeline import GradingPipeline
+from .pipeline import Pipeline
 
 from . import policies
 from . import summarize

@@ -54,9 +54,9 @@
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.Gradebook.add_assignment"><code class="docutils literal notranslate"><span class="pre">Gradebook.add_assignment()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.Gradebook.add_note"><code class="docutils literal notranslate"><span class="pre">Gradebook.add_note()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.Gradebook.apply"><code class="docutils literal notranslate"><span class="pre">Gradebook.apply()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#gradelib.Gradebook.assignment_group_scores"><code class="docutils literal notranslate"><span class="pre">Gradebook.assignment_group_scores</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.Gradebook.assignments"><code class="docutils literal notranslate"><span class="pre">Gradebook.assignments</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.Gradebook.copy"><code class="docutils literal notranslate"><span class="pre">Gradebook.copy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gradelib.Gradebook.grading_group_scores"><code class="docutils literal notranslate"><span class="pre">Gradebook.grading_group_scores</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.Gradebook.late"><code class="docutils literal notranslate"><span class="pre">Gradebook.late</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.Gradebook.letter_grades"><code class="docutils literal notranslate"><span class="pre">Gradebook.letter_grades</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.Gradebook.overall_score"><code class="docutils literal notranslate"><span class="pre">Gradebook.overall_score</span></code></a></li>
@@ -468,18 +468,6 @@ transformations.</p>
 </dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py" id="gradelib.Gradebook.assignment_group_scores">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">assignment_group_scores</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#gradelib.Gradebook.assignment_group_scores" title="Permalink to this definition"></a></dt>
-<dd><p>A table of the scores earned in each assignment group.</p>
-<p>Produces a DataFrame with a row for each student and a column for each
-assignment group in which each entry is the student’s score within that
-assignment group.</p>
-<p>This takes into account dropped assignments.</p>
-<p>If <a class="reference internal" href="#gradelib.Gradebook.grading_groups" title="gradelib.Gradebook.grading_groups"><code class="xref py py-attr docutils literal notranslate"><span class="pre">grading_groups</span></code></a> has not yet been set, all entries are <cite>NaN</cite>.</p>
-<p>This is a dynamically-computed property; it should not be modified.</p>
-</dd></dl>
-
-<dl class="py property">
 <dt class="sig sig-object py" id="gradelib.Gradebook.assignments">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">assignments</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#gradelib.Assignments" title="gradelib.core.assignments.Assignments"><span class="pre">Assignments</span></a></em><a class="headerlink" href="#gradelib.Gradebook.assignments" title="Permalink to this definition"></a></dt>
 <dd><p>All assignments in the gradebook.</p>
@@ -503,6 +491,18 @@ assignment group.</p>
 <dd class="field-even"><p><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook">Gradebook</a></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="gradelib.Gradebook.grading_group_scores">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">grading_group_scores</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#gradelib.Gradebook.grading_group_scores" title="Permalink to this definition"></a></dt>
+<dd><p>A table of the scores earned in each assignment group.</p>
+<p>Produces a DataFrame with a row for each student and a column for each
+assignment group in which each entry is the student’s score within that
+assignment group.</p>
+<p>This takes into account dropped assignments.</p>
+<p>If <a class="reference internal" href="#gradelib.Gradebook.grading_groups" title="gradelib.Gradebook.grading_groups"><code class="xref py py-attr docutils literal notranslate"><span class="pre">grading_groups</span></code></a> has not yet been set, all entries are <cite>NaN</cite>.</p>
+<p>This is a dynamically-computed property; it should not be modified.</p>
 </dd></dl>
 
 <dl class="py property">

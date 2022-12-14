@@ -74,6 +74,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#gradelib.GradebookOptions"><code class="docutils literal notranslate"><span class="pre">GradebookOptions</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.GradebookOptions.lateness_fudge"><code class="docutils literal notranslate"><span class="pre">GradebookOptions.lateness_fudge</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gradelib.GradebookOptions.allow_extra_credit"><code class="docutils literal notranslate"><span class="pre">GradebookOptions.allow_extra_credit</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#gradelib.GradingGroup"><code class="docutils literal notranslate"><span class="pre">GradingGroup</span></code></a><ul>
@@ -724,7 +725,7 @@ score. That is computed in <a class="reference internal" href="#gradelib.Gradebo
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gradelib.GradebookOptions">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">GradebookOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lateness_fudge</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">300</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.GradebookOptions" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">GradebookOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lateness_fudge</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_extra_credit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.GradebookOptions" title="Permalink to this definition"></a></dt>
 <dd><p>Configures the behavior of a <a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gradebook</span></code></a>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gradelib.GradebookOptions.lateness_fudge">
@@ -736,6 +737,18 @@ Default: 300.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gradelib.GradebookOptions.allow_extra_credit">
+<span class="sig-name descname"><span class="pre">allow_extra_credit</span></span><a class="headerlink" href="#gradelib.GradebookOptions.allow_extra_credit" title="Permalink to this definition"></a></dt>
+<dd><p>If <cite>True</cite>, grading group weights are allowed to sum to beyond one,
+effectively allowing extra credit. Default: <cite>False</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>

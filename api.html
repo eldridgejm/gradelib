@@ -1763,7 +1763,8 @@ as the optional second argument, a student summary is displayed.</p>
 <dt class="sig sig-object py" id="gradelib.reports.generate_latex">
 <span class="sig-prename descclassname"><span class="pre">gradelib.reports.</span></span><span class="sig-name descname"><span class="pre">generate_latex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gradebook:</span> <span class="pre">~gradelib.core.gradebook.Gradebook</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_directory:</span> <span class="pre">~pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_percentile=&lt;function</span> <span class="pre">_default_percentile_display&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.reports.generate_latex" title="Permalink to this definition"></a></dt>
 <dd><p>Generate a LaTeX grade report for each student.</p>
-<p>Creates one file, <cite>main.tex</cite>, containing all of the reports.</p>
+<p>Creates one file for each student, along with a file “_template.tex” containing
+and empty report.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">

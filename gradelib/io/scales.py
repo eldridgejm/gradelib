@@ -12,6 +12,8 @@ import pathlib
 
 def write(path: pathlib.Path, scale):
     """Writes a scale to disk."""
+    path = pathlib.Path(path)
+
     with path.open("w") as fileobj:
         for letter, threshold in scale.items():
             fileobj.write(f"{letter},{threshold}\n")
@@ -19,6 +21,8 @@ def write(path: pathlib.Path, scale):
 
 def read(path: pathlib.Path):
     """Reads a scale from the file."""
+    path = pathlib.Path(path)
+
     with path.open() as fileobj:
         lines = fileobj.readlines()
 

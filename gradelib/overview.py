@@ -96,7 +96,7 @@ def _student_summary(self, student):
     lines.append("<h2>Group Scores</h2>")
     lines.append("<ul>")
     for group in self.grading_groups:
-        score = self.assignment_group_scores.loc[pid, group.name]
+        score = self.grading_group_scores.loc[pid, group.name]
         li(group.name, _fmt_as_pct(score))
     lines.append("</ul>")
 

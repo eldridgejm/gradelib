@@ -144,6 +144,6 @@ def outcomes(gradebook: Gradebook):
         }
     )
 
-    outcomes = pd.concat([gradebook.assignment_group_scores, statistics], axis=1)
+    outcomes = pd.concat([gradebook.grading_group_scores, statistics], axis=1)
 
     return outcomes.sort_values(by="overall score", ascending=False)

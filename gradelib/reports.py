@@ -95,7 +95,7 @@ def _student_latex_report(
     """
     )
 
-    group_scores = gradebook.assignment_group_scores.loc[student]
+    group_scores = gradebook.grading_group_scores.loc[student]
     for group_name in group_scores.index:
         score = group_scores[group_name]
         _append(

@@ -695,7 +695,7 @@ class Gradebook:
         return pd.DataFrame(result, index=self.students)
 
     @property
-    def assignment_group_scores(self) -> pd.DataFrame:
+    def grading_group_scores(self) -> pd.DataFrame:
         """A table of the scores earned in each assignment group.
 
         Produces a DataFrame with a row for each student and a column for each

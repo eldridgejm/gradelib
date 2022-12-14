@@ -939,7 +939,7 @@ def test_group_scores_raises_if_all_assignments_in_a_group_are_dropped():
 
     # then
     with pytest.raises(ValueError):
-        gradebook.assignment_group_scores
+        gradebook.grading_group_scores
 
 
 def test_group_scores_respects_dropped_assignments():
@@ -962,7 +962,7 @@ def test_group_scores_respects_dropped_assignments():
 
     # then
     pd.testing.assert_frame_equal(
-        gradebook.assignment_group_scores,
+        gradebook.grading_group_scores,
         pd.DataFrame(
             [[91 / 102, 20 / 20], [9 / 52, 20 / 20]],
             index=gradebook.students,
@@ -989,7 +989,7 @@ def test_group_scores_with_assignment_weights():
 
     # then
     pd.testing.assert_frame_equal(
-        gradebook.assignment_group_scores,
+        gradebook.grading_group_scores,
         pd.DataFrame(
             [[0.125 + 0.25, 1], [0, 20 / 20]],
             index=gradebook.students,

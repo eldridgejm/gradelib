@@ -1271,9 +1271,11 @@ are unified into a single new version.</p>
 points possible. If this is not the case, a <cite>ValueError</cite> is raised.</p>
 <p>Similarly, it is assumed that no student earns points for more than one
 of the versions. If this is not true, a <cite>ValueError</cite> is raised.</p>
+<p>If a student’s submission for a version is late, the lateness of that
+submission is used for the student’s submission in the unified assignment.</p>
 <p>It is unclear what the result should be if any of the assignments to be
-unified is dropped or is late, but other parts are not. If either of these
-assumptions are violated, this method will raise a <cite>ValueError</cite>.</p>
+unified is dropped, but other parts are not. Therefore, if any version is
+dropped, this method will raise a <cite>ValueError</cite>.</p>
 <p>Assignment groups are automatically reset to prevent errors. It is
 suggested that the gradebook’s assignments be finalized before setting
 the assignment groups.</p>

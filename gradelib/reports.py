@@ -54,23 +54,6 @@ def _student_latex_report(
 
     parts = []
 
-    head = textwrap.dedent(
-        r"""
-        \documentclass{article}
-        \usepackage[margin=1in]{geometry}
-        \pagestyle{empty}
-        \setlength{\parindent}{0em}
-        \usepackage{enumitem}
-        \begin{document}
-    """
-    )
-
-    tail = textwrap.dedent(
-        r"""
-        \end{document}
-    """
-    )
-
     def _append(s):
         parts.append(textwrap.dedent(s))
 
@@ -102,7 +85,7 @@ def _student_latex_report(
 
     # student was None at start of function
     if student.pid == "":
-        return head + "\n".join(parts) + tail
+        return "\n".join(parts)
 
     _append(r"\section*{Grades}")
 
@@ -171,7 +154,7 @@ def _student_latex_report(
         """
         )
 
-    return head + "\n".join(parts) + tail
+    return "\n".join(parts)
 
 
 def generate_latex(
@@ -181,8 +164,7 @@ def generate_latex(
 ):
     """Generate a LaTeX grade report for each student.
 
-    Creates one file for each student, along with a file "_template.tex" containing
-    and empty report.
+    Creates one file, `main.tex`, containing all of the reports.
 
     Parameters
     ----------
@@ -200,11 +182,30 @@ def generate_latex(
     """
 
     output_directory = pathlib.Path(output_directory)
+
+    head = textwrap.dedent(
+        r"""
+        \documentclass{article}
+        \usepackage[margin=1in]{geometry}
+        \pagestyle{empty}
+        \setlength{\parindent}{0em}
+        \usepackage{enumitem}
+        \begin{document}
+    """
+    )
+
+    pages = [_student_latex_report(gradebook, student=None)]
+    pages += [
+        _student_latex_report(gradebook, student) for student in gradebook.students
+    ]
+    body = "\\newpage\n".join(pages)
+
+    tail = textwrap.dedent(
+        r"""
+        \end{document}
+    """
+    )
+
     output_directory.mkdir(exist_ok=True)
-
-    with (output_directory / '_template.tex').open('w') as fileobj:
-        fileobj.write(_student_latex_report(gradebook, student=None))
-
-    for student in gradebook.students:
-        with (output_directory / f'{student.name}.tex').open('w') as fileobj:
-            fileobj.write(_student_latex_report(gradebook, student=student))
+    with (output_directory / "main.tex").open("w") as fileobj:
+        fileobj.write(head + body + tail)

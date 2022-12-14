@@ -29,6 +29,12 @@ def penalize_lates(
     If a late assignment is marked as dropped it will not be forgiven, as
     it is advantageous for the student to use the forgiveness elsewhere.
 
+    If the `deduction` is an instance of :class:`Percentage`, the deduction is
+    calculated by multuplying the percentage by the points previously earned,
+    as opposed to the points possible. Therefore, if a student had earned 50
+    out of 60 points on an assignment, a 50% deduction would leave them with 25
+    points.
+
     `deduction` can be a callable, in which case it is called with a namedtuple
     with the following attributes:
 
@@ -121,6 +127,7 @@ def _deduct(gradebook, pid, assignment, number, deduction):
     if isinstance(d, Points):
         new_point_total = pts - d.amount
     elif isinstance(d, Percentage):
+        # percentage deduction is of points earned, not points possible
         new_point_total = pts - d.amount * pts
     else:
         raise TypeError("Unknown deduction type.")

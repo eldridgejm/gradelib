@@ -66,6 +66,39 @@ def test_with_callable_deduction():
     assert gradebook.points_earned.loc["A1", "lab01"] == 18
 
 
+def test_percentage_deduction_applies_percentage_to_points_earned():
+    # given
+    columns = ["hw01", "hw02", "lab01"]
+    p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([50, 100, 20], index=columns)
+    lateness = pd.DataFrame(
+        [pd.to_timedelta([6000, 6000, 6000], "s"), pd.to_timedelta([0, 0, 0], "s")],
+        columns=columns,
+        index=points_earned.index,
+    )
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
+    gradebook.grading_groups = {
+        "homeworks": (["hw01", "hw02"], 0.75),
+        "labs": (["lab01"], 0.25),
+    }
+
+    HOMEWORK = gradebook.assignments.starting_with("hw")
+
+    gradebook.opts.lateness_fudge = 60 * 5
+
+    gradelib.policies.penalize_lates(gradebook, deduction=Percentage(.5))
+
+    # least to most valuable:
+    # A1: hw01 lab01 hw02
+    # A2: hw01 hw02 lab01
+    # so hw01 receives the greatest deduction
+
+    assert gradebook.points_earned.loc["A1", "hw01"] == 15
+    assert gradebook.points_earned.loc["A1", "hw02"] == 45
+    assert gradebook.points_earned.loc["A1", "lab01"] == 10
+
 def test_with_callable_deduction_does_not_count_forgiven():
     # given
     columns = ["hw01", "hw02", "lab01"]

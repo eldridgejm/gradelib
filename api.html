@@ -87,6 +87,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.Assignments.__add__"><code class="docutils literal notranslate"><span class="pre">Assignments.__add__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.Assignments.containing"><code class="docutils literal notranslate"><span class="pre">Assignments.containing()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.Assignments.group_by"><code class="docutils literal notranslate"><span class="pre">Assignments.group_by()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gradelib.Assignments.not_containing"><code class="docutils literal notranslate"><span class="pre">Assignments.not_containing()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.Assignments.starting_with"><code class="docutils literal notranslate"><span class="pre">Assignments.starting_with()</span></code></a></li>
 </ul>
 </li>
@@ -96,6 +97,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.LazyAssignments.__call__"><code class="docutils literal notranslate"><span class="pre">LazyAssignments.__call__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.LazyAssignments.containing"><code class="docutils literal notranslate"><span class="pre">LazyAssignments.containing()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.LazyAssignments.group_by"><code class="docutils literal notranslate"><span class="pre">LazyAssignments.group_by()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gradelib.LazyAssignments.not_containing"><code class="docutils literal notranslate"><span class="pre">LazyAssignments.not_containing()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#gradelib.LazyAssignments.starting_with"><code class="docutils literal notranslate"><span class="pre">LazyAssignments.starting_with()</span></code></a></li>
 </ul>
 </li>
@@ -867,6 +869,23 @@ dictionary.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="gradelib.Assignments.not_containing">
+<span class="sig-name descname"><span class="pre">not_containing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">substring</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#gradelib.Assignments" title="gradelib.core.assignments.Assignments"><span class="pre">Assignments</span></a></span></span><a class="headerlink" href="#gradelib.Assignments.not_containing" title="Permalink to this definition"></a></dt>
+<dd><p>Return only those assignments <em>not</em> containing the substring.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>substring</strong> (<em>str</em>) – The substring to search for.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Only those assignments <em>not</em> containing the substring.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#gradelib.Assignments" title="gradelib.Assignments">Assignments</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="gradelib.Assignments.starting_with">
 <span class="sig-name descname"><span class="pre">starting_with</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#gradelib.Assignments" title="gradelib.core.assignments.Assignments"><span class="pre">Assignments</span></a></span></span><a class="headerlink" href="#gradelib.Assignments.starting_with" title="Permalink to this definition"></a></dt>
 <dd><p>Return only those assignments starting with the prefix.</p>
@@ -973,6 +992,12 @@ immediately.</p>
 <span class="go">{&#39;hw 01&#39;: {&#39;hw 01 - a&#39;, &#39;hw 01 - b&#39;}, &#39;hw 02&#39;}</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gradelib.LazyAssignments.not_containing">
+<span class="sig-name descname"><span class="pre">not_containing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">substring</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#gradelib.LazyAssignments" title="gradelib.core.assignments.LazyAssignments"><span class="pre">LazyAssignments</span></a></span></span><a class="headerlink" href="#gradelib.LazyAssignments.not_containing" title="Permalink to this definition"></a></dt>
+<dd><p>A lazy version of <a class="reference internal" href="#gradelib.Assignments.not_containing" title="gradelib.Assignments.not_containing"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Assignments.not_containing()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1240,9 +1265,10 @@ the assignment groups.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>grouper</strong> (<a class="reference internal" href="#gradelib.AssignmentGrouper" title="gradelib.AssignmentGrouper"><em>AssignmentGrouper</em></a>) – Either: 1) a mapping whose keys are new assignment names, and whose
 values are collections of assignments that should be unified under
-their common key; 2) a list of prefixes; each prefix defines a
-group that should be combined; or 3) a callable which maps
-assignment names to new assignment by which they should be grouped.</p>
+their common key; 2) a list of string prefixes or an instance of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Assignments</span></code>/:class`LazyAssignments`; each prefix defines a
+group that should be combined; or 3) a callable which maps assignment
+names to new assignment by which they should be grouped.</p>
 </dd>
 <dt class="field-even">Raises</dt>
 <dd class="field-even"><p><strong>ValueError</strong> – If any of the assignments to be unified is marked as dropped. See above for
@@ -1296,9 +1322,10 @@ the assignment groups.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>grouper</strong> (<a class="reference internal" href="#gradelib.AssignmentGrouper" title="gradelib.AssignmentGrouper"><em>AssignmentGrouper</em></a>) – Either: 1) a mapping whose keys are new assignment names, and whose
 values are collections of assignments that should be unified under
-their common key; 2) a list of prefixes; each prefix defines a
-group that should be combined; or 3) a callable which maps
-assignment names to new assignment by which they should be grouped.</p>
+their common key; 2) a list of string prefixes or an instance of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Assignments</span></code>/:class`LazyAssignments`; each prefix defines a
+group that should be combined; or 3) a callable which maps assignment
+names to new assignment by which they should be grouped.</p>
 </dd>
 <dt class="field-even">Raises</dt>
 <dd class="field-even"><p><strong>ValueError</strong> – If any of the assumptions are violated. See above.</p>
@@ -1376,6 +1403,11 @@ an ordered sequence, and the order is guaranteed to be the same as the
 order of the underlying column names in the <cite>points</cite> table.</p>
 <p>If a late assignment is marked as dropped it will not be forgiven, as
 it is advantageous for the student to use the forgiveness elsewhere.</p>
+<p>If the <cite>deduction</cite> is an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">Percentage</span></code>, the deduction is
+calculated by multuplying the percentage by the points previously earned,
+as opposed to the points possible. Therefore, if a student had earned 50
+out of 60 points on an assignment, a 50% deduction would leave them with 25
+points.</p>
 <p><cite>deduction</cite> can be a callable, in which case it is called with a namedtuple
 with the following attributes:</p>
 <blockquote>
@@ -1419,18 +1451,31 @@ they appear in <cite>within</cite>. Default: <cite>value</cite>.</p></li>
 <dt class="sig sig-object py" id="gradelib.policies.redeem">
 <span class="sig-prename descclassname"><span class="pre">gradelib.policies.</span></span><span class="sig-name descname"><span class="pre">redeem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gradebook</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook"><span class="pre">Gradebook</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">assignments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#gradelib.AssignmentGrouper" title="gradelib.AssignmentGrouper"><span class="pre">AssignmentGrouper</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'</span> <span class="pre">with</span> <span class="pre">redemption'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.policies.redeem" title="Permalink to this definition"></a></dt>
 <dd><p>Replace assignment scores with later assignment scores, if higher.</p>
+<p>If the <cite>deduction</cite> is an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">Percentage</span></code>, the deduction is
+calculated by multiplying the percentage by the points earned on the
+assignment, as opposed to the points possible.</p>
+<p><cite>deduction</cite> can be a callable, in which case it is called with a namedtuple
+with the following attributes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><cite>gradebook</cite>: the current gradebook</p></li>
+<li><p><cite>assignments</cite>: the pair of assignments being redeemed, as a tuple</p></li>
+<li><p><cite>pid</cite>: the pid of the student being penalized</p></li>
+</ul>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>gradebook</strong> (<a class="reference internal" href="#gradelib.Gradebook" title="gradelib.Gradebook"><em>Gradebook</em></a>) – The gradebook that will be modified.</p></li>
 <li><p><strong>assignments</strong> (<a class="reference internal" href="#gradelib.AssignmentGrouper" title="gradelib.AssignmentGrouper"><em>AssignmentGrouper</em></a>) – Pairs of assignments to be redeemed. This can be either 1) a dictionary
 mapping a group name to a pair of assignments; 2) a list of string
-prefixes (each asssignment with that prefix is placed in the same
-group); or 3) a callable which takes an assignment name as input and
-returns a group name. Groups must have exactly two elements, else an
+prefixes or an instance of Assignments/LazyAssignments. Each assignment
+with that prefix is placed in the same group; or 3) a callable which
+takes an assignment name as input and returns a group name. Groups must
+have exactly two elements, else an
 exception is raised.</p></li>
 <li><p><strong>remove_parts</strong> (<em>bool</em>) – Whether the indidividual assignment parts should be removed. Default: <cite>False</cite>.</p></li>
-<li><p><strong>deduction</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><a class="reference internal" href="#gradelib.Points" title="gradelib.Points"><em>Points</em></a><em>, </em><a class="reference internal" href="#gradelib.Percentage" title="gradelib.Percentage"><em>Percentage</em></a><em>]</em><em>]</em>) – A deduction that will optionally be applied to the second assignment in
+<li><p><strong>deduction</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><a class="reference internal" href="#gradelib.Points" title="gradelib.Points"><em>Points</em></a><em>, </em><a class="reference internal" href="#gradelib.Percentage" title="gradelib.Percentage"><em>Percentage</em></a><em>, </em><em>Callable</em><em>]</em><em>]</em>) – A deduction that will optionally be applied to the second assignment in
 the redemption pair. Default: <cite>None</cite>.</p></li>
 </ul>
 </dd>

@@ -898,7 +898,7 @@ def test_groups_setter_allows_callable_returning_dict_for_assignments():
     }
 
 
-def test_groups_setter_raises_if_group_weights_do_not_sum_to_one():
+def test_groups_setter_raises_by_default_if_group_weights_do_not_sum_to_one():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -916,6 +916,28 @@ def test_groups_setter_raises_if_group_weights_do_not_sum_to_one():
             "labs": (LABS_LAZY, 0.5),
         }
 
+def test_groups_setter_allows_extra_credit_if_option_set():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01", "ec"]
+    p1 = pd.Series(data=[2, 50, 100, 20, 3], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20, 2], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20, 4], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.opts.allow_extra_credit = True
+
+    HOMEWORKS_LAZY = lambda asmts: asmts.starting_with("hw")
+    LABS_LAZY = lambda asmts: asmts.starting_with("lab")
+
+    gradebook.grading_groups = {
+        "homeworks": (HOMEWORKS_LAZY, 0.5),
+        "labs": (LABS_LAZY, 0.5),
+        "ec": .1
+    }
+
+    # then
+    gradebook.overall_score.loc['A1'] = 1.075
 
 # group_scores -------------------------------------------------------------------------
 

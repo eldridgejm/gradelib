@@ -193,10 +193,14 @@ class GradebookOptions:
         sources where the lateness may not be reliable, such as Gradescope.
         Default: 300.
 
+    allow_extra_credit: bool
+        If `True`, grading group weights are allowed to sum to beyond one,
+        effectively allowing extra credit. Default: `False`.
+
     """
 
-    # number of seconds within which a late assignment is not considered late
     lateness_fudge: int = 5 * 60
+    allow_extra_credit: bool = False
 
 
 # GradingGroup --------------------------------------------------------------------------------
@@ -403,6 +407,7 @@ class Gradebook:
         scale=None,
         opts=None,
     ):
+        self.opts = opts if opts is not None else GradebookOptions()
         self.points_earned = _cast_index(points_earned)
         self.points_possible = points_possible
         self.lateness = (
@@ -414,7 +419,6 @@ class Gradebook:
         self.notes = {} if notes is None else notes
         self.grading_groups = {} if grading_groups is None else grading_groups
         self.scale = DEFAULT_SCALE if scale is None else scale
-        self.opts = opts if opts is not None else GradebookOptions()
 
     def __repr__(self):
         return (
@@ -537,8 +541,15 @@ class Gradebook:
         new_groups = {name: _make_group(g, name) for name, g in value.items()}
 
         if new_groups:
-            if not math.isclose(sum(g.group_weight for g in new_groups.values()), 1):
-                raise ValueError("Group weights must sum to one.")
+            total_weight = sum(g.group_weight for g in new_groups.values())
+            if self.opts.allow_extra_credit:
+                if total_weight < 1:
+                    raise ValueError('Group weights must sum to >= 1.')
+            elif not math.isclose(total_weight, 1):
+                raise ValueError(
+                        "Group weights must sum to one unless the 'allow_extra_credit' "
+                        "option is enabled."
+                )
 
         self._groups = new_groups
 

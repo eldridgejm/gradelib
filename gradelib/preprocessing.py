@@ -132,12 +132,6 @@ def _combine_assignment_versions(gb, new_name, versions):
         msg = f"{list(students)} turned in more than one version."
         raise ValueError(msg)
 
-    # check that there's no lateness in any version
-    total_lateness = gb.lateness[versions].sum(axis=1)
-    if total_lateness.any():
-        msg = "Cannot combine versions when some have been turned in late."
-        raise ValueError(msg)
-
     assignment_points = gb.points_earned[versions].max(axis=1)
     assignment_max = gb.points_possible[versions[0]]
     assignment_lateness = gb.lateness[versions].max(axis=1)
@@ -170,9 +164,12 @@ def combine_assignment_versions(gb, grouper: AssignmentGrouper):
     Similarly, it is assumed that no student earns points for more than one
     of the versions. If this is not true, a `ValueError` is raised.
 
+    If a student's submission for a version is late, the lateness of that
+    submission is used for the student's submission in the unified assignment.
+
     It is unclear what the result should be if any of the assignments to be
-    unified is dropped or is late, but other parts are not. If either of these
-    assumptions are violated, this method will raise a `ValueError`.
+    unified is dropped, but other parts are not. Therefore, if any version is
+    dropped, this method will raise a `ValueError`.
 
     Assignment groups are automatically reset to prevent errors. It is
     suggested that the gradebook's assignments be finalized before setting

@@ -296,7 +296,7 @@ def test_combine_assignment_versions_doesnt_raise_if_only_one_assignment_version
     # then
     assert gradebook.points_earned.loc['A1', 'midterm'] == 50
 
-def test_combine_assignment_versions_raises_if_any_version_is_late():
+def test_combine_assignment_versions_uses_lateness_of_turned_in_version():
     # given
     columns = ["mt - version a", "mt - version b", "mt - version c"]
     p1 = pd.Series(data=[50, np.nan, np.nan], index=columns, name="A1")
@@ -307,9 +307,11 @@ def test_combine_assignment_versions_raises_if_any_version_is_late():
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
     gradebook.lateness.loc["A1", "mt - version a"] = pd.Timedelta(days=3)
+    gradebook.lateness.loc["A2", "mt - version b"] = pd.Timedelta(days=2)
 
     # when
-    PARTS = gradebook.assignments.starting_with("mt")
+    preprocessing.combine_assignment_versions(gradebook, ['mt'])
 
-    with pytest.raises(ValueError):
-        preprocessing.combine_assignment_versions(gradebook, {"midterm": columns})
+    # then
+    assert gradebook.lateness.loc['A1', 'mt'] == pd.Timedelta(days=3)
+    assert gradebook.lateness.loc['A2', 'mt'] == pd.Timedelta(days=2)

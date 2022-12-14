@@ -137,6 +137,22 @@ class Assignments(collections.abc.Sequence[str]):
         """
         return self.__class__(x for x in self._names if substring in x)
 
+    def not_containing(self, substring: str) -> "Assignments":
+        """Return only those assignments *not* containing the substring.
+
+        Parameters
+        ----------
+        substring : str
+            The substring to search for.
+
+        Returns
+        -------
+        Assignments
+            Only those assignments *not* containing the substring.
+
+        """
+        return self.__class__(x for x in self._names if substring not in x)
+
     def group_by(self, to_key: typing.Callable[[str], str]) -> dict[str, "Assignments"]:
         """Group the assignments according to a key function.
 
@@ -280,6 +296,14 @@ class LazyAssignments:
 
         def closure(asmts):
             return self(asmts).containing(substring)
+
+        return LazyAssignments(closure)
+
+    def not_containing(self, substring: str) -> "LazyAssignments":
+        """A lazy version of :meth:`Assignments.not_containing`."""
+
+        def closure(asmts):
+            return self(asmts).not_containing(substring)
 
         return LazyAssignments(closure)
 

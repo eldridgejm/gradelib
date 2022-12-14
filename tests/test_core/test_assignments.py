@@ -29,6 +29,19 @@ def test_containing():
     assert set(actual) == {"homework 01", "homework 02", "homework 03"}
 
 
+def test_not_containing():
+    # given
+    assignments = gradelib.Assignments(
+        ["homework 01", "homework 02", "homework 03", "lab 01", "lab 02"]
+    )
+
+    # when
+    actual = assignments.not_containing("work")
+
+    # then
+    assert set(actual) == {"lab 01", "lab 02"}
+
+
 def test_add():
     # given
     a1 = gradelib.Assignments(["a", "b", "c"])
@@ -97,6 +110,18 @@ def test_lazy_containing():
 
     # then
     assert set(actual) == {"homework 01", "homework 02"}
+
+
+def test_lazy_not_containing():
+    # given
+    homeworks = gradelib.LazyAssignments().not_containing("work")
+    assignments = gradelib.Assignments(["homework 01", "homework 02", "lab 01"])
+
+    # when
+    actual = homeworks(assignments)
+
+    # then
+    assert set(actual) == {"lab 01"}
 
 
 def test_lazy_add():

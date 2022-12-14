@@ -11,7 +11,7 @@ from util import assert_gradebook_is_sound
 # redeem -------------------------------------------------------------------------------
 
 
-def test_redemption_on_single_assignment_pair():
+def test_on_single_assignment_pair():
     # given
     columns = ["mt01", "mt01 - redemption"]
     p1 = pd.Series(data=[95, 100], index=columns, name="A1")
@@ -33,7 +33,7 @@ def test_redemption_on_single_assignment_pair():
     assert_gradebook_is_sound(gradebook)
 
 
-def test_redemption_adds_note():
+def test_adds_note():
     # given
     columns = ["mt01", "mt01 - redemption"]
     p1 = pd.Series(data=[95, 100], index=columns, name="A1")
@@ -62,7 +62,7 @@ def test_redemption_adds_note():
     }
 
 
-def test_redemption_on_multiple_assignment_pairs():
+def test_on_multiple_assignment_pairs():
     # given
     columns = ["mt01", "mt01 - redemption", "mt02", "mt02 - redemption"]
     p1 = pd.Series(data=[95, 100, 45, 50], index=columns, name="A1")
@@ -92,7 +92,7 @@ def test_redemption_on_multiple_assignment_pairs():
     assert_gradebook_is_sound(gradebook)
 
 
-def test_redemption_with_prefix_selector():
+def test_with_prefix_selector():
     # given
     columns = ["mt01", "mt01 - redemption", "mt02", "mt02 - redemption"]
     p1 = pd.Series(data=[95, 100, 45, 50], index=columns, name="A1")
@@ -116,7 +116,33 @@ def test_redemption_with_prefix_selector():
     assert_gradebook_is_sound(gradebook)
 
 
-def test_redemption_with_remove_parts():
+def test_with_prefix_selector_when_prefixes_given_as_LazyAssignments_instance():
+    # given
+    columns = ["mt01", "mt01 - redemption", "mt02", "mt02 - redemption"]
+    p1 = pd.Series(data=[95, 100, 45, 50], index=columns, name="A1")
+    p2 = pd.Series(data=[92, 60, 40, 35], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([100, 100, 50, 50], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    mts = gradelib.LazyAssignments(lambda asmts: ["mt01", "mt02"])
+
+    # when
+    gradelib.policies.redeem(gradebook, mts)
+
+    # then
+    assert gradebook.points_earned.loc["A1", "mt01 with redemption"] == 100
+    assert gradebook.points_earned.loc["A2", "mt01 with redemption"] == 92
+    assert gradebook.points_earned.loc["A1", "mt02 with redemption"] == 50
+    assert gradebook.points_earned.loc["A2", "mt02 with redemption"] == 40
+    assert "mt01" in gradebook.assignments
+    assert "mt01 - redemption" in gradebook.assignments
+    assert "mt02" in gradebook.assignments
+    assert "mt02 - redemption" in gradebook.assignments
+    assert_gradebook_is_sound(gradebook)
+
+
+def test_with_remove_parts():
     # given
     columns = ["mt01", "mt01 - redemption"]
     p1 = pd.Series(data=[95, 100], index=columns, name="A1")
@@ -140,7 +166,7 @@ def test_redemption_with_remove_parts():
     assert_gradebook_is_sound(gradebook)
 
 
-def test_redemption_with_dropped_assignment_parts_raises():
+def test_with_dropped_assignment_parts_raises():
     # given
     columns = ["mt01", "mt01 - redemption"]
     p1 = pd.Series(data=[95, 100], index=columns, name="A1")
@@ -157,7 +183,7 @@ def test_redemption_with_dropped_assignment_parts_raises():
         )
 
 
-def test_redemption_with_unequal_points_possible_scales_to_the_maximum_of_the_two():
+def test_with_unequal_points_possible_scales_to_the_maximum_of_the_two():
     # given
     columns = ["mt01", "mt01 - redemption"]
     p1 = pd.Series(data=[95, 50], index=columns, name="A1")
@@ -178,7 +204,7 @@ def test_redemption_with_unequal_points_possible_scales_to_the_maximum_of_the_tw
     assert_gradebook_is_sound(gradebook)
 
 
-def test_redemption_with_deduction():
+def test_with_deduction():
     # given
     columns = ["mt01", "mt01 - redemption"]
     p1 = pd.Series(data=[95, 100], index=columns, name="A1")
@@ -202,7 +228,7 @@ def test_redemption_with_deduction():
     assert_gradebook_is_sound(gradebook)
 
 
-def test_redemption_with_nans():
+def test_with_nans():
     # given
     columns = ["mt01", "mt01 - redemption"]
     p1 = pd.Series(data=[np.nan, 100], index=columns, name="A1")

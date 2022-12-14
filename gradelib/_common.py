@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .core import Assignments, LazyAssignments
+
 
 def in_jupyter_notebook():
     try:
@@ -27,7 +29,7 @@ def resolve_assignment_selector(within, assignments):
     return list(within)
 
 
-def resolve_assignment_grouper(grouper, assignments: Collection[str]):
+def resolve_assignment_grouper(grouper, assignments):
     """Resolves an assignment grouper into a dictionary.
 
     The resulting dictionary maps group names to lists of assignments.
@@ -36,15 +38,18 @@ def resolve_assignment_grouper(grouper, assignments: Collection[str]):
 
         - A dictionary mapping strings to lists of assignment names.
 
-        - A list of strings. These strings will be interpreted as prefixes, and
-          will becomes keys in the resulting dictionary. Every assignment that
-          starts with a given prefix will be an element of the list that the
-          key points to.
+        - A list of strings, or an instance of Assignments or LazyAssignments.
+          These strings will be interpreted as prefixes, and will becomes keys
+          in the resulting dictionary. Every assignment that starts with a
+          given prefix will be an element of the list that the key points to.
 
         - A Callable[[str], str] which should produce a group key when called
           on an assignment name.
 
     """
+    if isinstance(grouper, LazyAssignments):
+        grouper = grouper(assignments)
+
     if not callable(grouper):
         if not isinstance(grouper, dict):
             # should be a list of assignment prefixes

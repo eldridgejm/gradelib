@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..core import Percentage
+from ..core import Percentage, LazyAssignments
 from .._common import resolve_assignment_grouper
 
 
@@ -26,9 +26,10 @@ def redeem(
     assignments : AssignmentGrouper
         Pairs of assignments to be redeemed. This can be either 1) a dictionary
         mapping a group name to a pair of assignments; 2) a list of string
-        prefixes (each asssignment with that prefix is placed in the same
-        group); or 3) a callable which takes an assignment name as input and
-        returns a group name. Groups must have exactly two elements, else an
+        prefixes or an instance of Assignments/LazyAssignments. Each assignment
+        with that prefix is placed in the same group; or 3) a callable which
+        takes an assignment name as input and returns a group name. Groups must
+        have exactly two elements, else an
         exception is raised.
     remove_parts : bool
         Whether the indidividual assignment parts should be removed. Default: `False`.
@@ -37,7 +38,11 @@ def redeem(
         the redemption pair. Default: `None`.
 
     """
-    is_prefix_selector = not isinstance(assignments, dict) and not callable(assignments)
+    is_prefix_selector = (
+            isinstance(assignments, (LazyAssignments))
+            or
+            (not callable(assignments) and not isinstance(assignments, dict))
+    )
 
     assignment_pairs = resolve_assignment_grouper(assignments, gradebook.assignments)
 

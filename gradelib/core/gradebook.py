@@ -544,11 +544,11 @@ class Gradebook:
             total_weight = sum(g.group_weight for g in new_groups.values())
             if self.opts.allow_extra_credit:
                 if total_weight < 1:
-                    raise ValueError('Group weights must sum to >= 1.')
+                    raise ValueError("Group weights must sum to >= 1.")
             elif not math.isclose(total_weight, 1):
                 raise ValueError(
-                        "Group weights must sum to one unless the 'allow_extra_credit' "
-                        "option is enabled."
+                    "Group weights must sum to one unless the 'allow_extra_credit' "
+                    "option is enabled."
                 )
 
         self._groups = new_groups

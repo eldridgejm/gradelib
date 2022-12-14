@@ -916,6 +916,7 @@ def test_groups_setter_raises_by_default_if_group_weights_do_not_sum_to_one():
             "labs": (LABS_LAZY, 0.5),
         }
 
+
 def test_groups_setter_allows_extra_credit_if_option_set():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01", "ec"]
@@ -933,11 +934,12 @@ def test_groups_setter_allows_extra_credit_if_option_set():
     gradebook.grading_groups = {
         "homeworks": (HOMEWORKS_LAZY, 0.5),
         "labs": (LABS_LAZY, 0.5),
-        "ec": .1
+        "ec": 0.1,
     }
 
     # then
-    gradebook.overall_score.loc['A1'] = 1.075
+    gradebook.overall_score.loc["A1"] = 1.075
+
 
 # group_scores -------------------------------------------------------------------------
 

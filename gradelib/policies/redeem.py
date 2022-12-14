@@ -19,6 +19,17 @@ def redeem(
 ):
     """Replace assignment scores with later assignment scores, if higher.
 
+    If the `deduction` is an instance of :class:`Percentage`, the deduction is
+    calculated by multiplying the percentage by the points earned on the
+    assignment, as opposed to the points possible.
+
+    `deduction` can be a callable, in which case it is called with a namedtuple
+    with the following attributes:
+
+        - `gradebook`: the current gradebook
+        - `assignments`: the pair of assignments being redeemed, as a tuple
+        - `pid`: the pid of the student being penalized
+
     Parameters
     ----------
     gradebook : Gradebook
@@ -33,15 +44,13 @@ def redeem(
         exception is raised.
     remove_parts : bool
         Whether the indidividual assignment parts should be removed. Default: `False`.
-    deduction : Optional[Union[Points, Percentage]]
+    deduction : Optional[Union[Points, Percentage, Callable]]
         A deduction that will optionally be applied to the second assignment in
         the redemption pair. Default: `None`.
 
     """
-    is_prefix_selector = (
-            isinstance(assignments, (LazyAssignments))
-            or
-            (not callable(assignments) and not isinstance(assignments, dict))
+    is_prefix_selector = isinstance(assignments, (LazyAssignments)) or (
+        not callable(assignments) and not isinstance(assignments, dict)
     )
 
     assignment_pairs = resolve_assignment_grouper(assignments, gradebook.assignments)
@@ -81,12 +90,18 @@ def _redeem(gradebook, new_name, assignment_pair, deduction):
     second_points = second_points.fillna(0)
 
     if deduction is not None:
-        if isinstance(deduction, Percentage):
-            d = points_possible * deduction.amount
-        else:
-            d = deduction.amount
+        for pid in second_points.index:
+            if callable(deduction):
+                deduct = deduction(gradebook, assignment_pair, pid)
+            else:
+                deduct = deduction
 
-        second_points = second_points - d
+            if isinstance(deduct, Percentage):
+                d = second_points[pid] * deduct.amount
+            else:
+                d = deduct.amount
+
+            second_points[pid] = second_points[pid] - d
 
     points_earned = np.maximum(first_points, second_points)
 

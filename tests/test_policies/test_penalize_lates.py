@@ -88,7 +88,7 @@ def test_percentage_deduction_applies_percentage_to_points_earned():
 
     gradebook.opts.lateness_fudge = 60 * 5
 
-    gradelib.policies.penalize_lates(gradebook, deduction=Percentage(.5))
+    gradelib.policies.penalize_lates(gradebook, deduction=Percentage(0.5))
 
     # least to most valuable:
     # A1: hw01 lab01 hw02
@@ -98,6 +98,7 @@ def test_percentage_deduction_applies_percentage_to_points_earned():
     assert gradebook.points_earned.loc["A1", "hw01"] == 15
     assert gradebook.points_earned.loc["A1", "hw02"] == 45
     assert gradebook.points_earned.loc["A1", "lab01"] == 10
+
 
 def test_with_callable_deduction_does_not_count_forgiven():
     # given

@@ -160,6 +160,7 @@ def test_combine_assignment_parts_with_list_of_prefixes_as_LazyAssignments_insta
     assert gradebook.dropped.shape[1] == 3
     assert gradebook.points_earned.shape[1] == 3
 
+
 def test_combine_assignment_parts_uses_max_lateness_for_assignment_pieces():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]
@@ -308,6 +309,7 @@ def test_combine_assignment_versions_raises_if_points_earned_in_multiple_version
     with pytest.raises(ValueError):
         preprocessing.combine_assignment_versions(gradebook, {"midterm": columns})
 
+
 def test_combine_assignment_versions_doesnt_raise_if_only_one_assignment_version_turned_int():
     # given
     columns = ["mt - version a", "mt - version b", "mt - version c", "homework"]
@@ -323,7 +325,8 @@ def test_combine_assignment_versions_doesnt_raise_if_only_one_assignment_version
     preprocessing.combine_assignment_versions(gradebook, {"midterm": PARTS})
 
     # then
-    assert gradebook.points_earned.loc['A1', 'midterm'] == 50
+    assert gradebook.points_earned.loc["A1", "midterm"] == 50
+
 
 def test_combine_assignment_versions_uses_lateness_of_turned_in_version():
     # given
@@ -339,8 +342,8 @@ def test_combine_assignment_versions_uses_lateness_of_turned_in_version():
     gradebook.lateness.loc["A2", "mt - version b"] = pd.Timedelta(days=2)
 
     # when
-    preprocessing.combine_assignment_versions(gradebook, ['mt'])
+    preprocessing.combine_assignment_versions(gradebook, ["mt"])
 
     # then
-    assert gradebook.lateness.loc['A1', 'mt'] == pd.Timedelta(days=3)
-    assert gradebook.lateness.loc['A2', 'mt'] == pd.Timedelta(days=2)
+    assert gradebook.lateness.loc["A1", "mt"] == pd.Timedelta(days=3)
+    assert gradebook.lateness.loc["A2", "mt"] == pd.Timedelta(days=2)

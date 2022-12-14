@@ -11,7 +11,7 @@ AssignmentGrouper = typing.Union[
     typing.Mapping[str, typing.Collection[str]],
     typing.Collection[str],
     typing.Callable[[str], str],
-    "LazyAssignments"
+    "LazyAssignments",
 ]
 
 

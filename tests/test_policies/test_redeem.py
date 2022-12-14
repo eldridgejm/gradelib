@@ -204,11 +204,11 @@ def test_with_unequal_points_possible_scales_to_the_maximum_of_the_two():
     assert_gradebook_is_sound(gradebook)
 
 
-def test_with_deduction():
+def test_percentage_deduction_is_applied_to_points_earned():
     # given
     columns = ["mt01", "mt01 - redemption"]
-    p1 = pd.Series(data=[95, 100], index=columns, name="A1")
-    p2 = pd.Series(data=[50, 100], index=columns, name="A2")
+    p1 = pd.Series(data=[95, 90], index=columns, name="A1")
+    p2 = pd.Series(data=[50, 90], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([100, 100], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
@@ -217,12 +217,43 @@ def test_with_deduction():
     gradelib.policies.redeem(
         gradebook,
         {"mt01 with redemption": ("mt01", "mt01 - redemption")},
-        deduction=Percentage(0.25),
+        deduction=Percentage(0.1),
     )
 
     # then
     assert gradebook.points_earned.loc["A1", "mt01 with redemption"] == 95
-    assert gradebook.points_earned.loc["A2", "mt01 with redemption"] == 75
+    assert gradebook.points_earned.loc["A2", "mt01 with redemption"] == 81
+    assert "mt01" in gradebook.assignments
+    assert "mt01 - redemption" in gradebook.assignments
+    assert_gradebook_is_sound(gradebook)
+
+
+def test_with_callable_deduction():
+    # given
+    columns = ["mt01", "mt01 - redemption"]
+    p1 = pd.Series(data=[95, 100], index=columns, name="A1")
+    p2 = pd.Series(data=[50, 100], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([100, 100], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    def deduction(gradebook, assignment_pair, student):
+        if student == "A1":
+            return gradelib.Points(50)
+        else:
+            return gradelib.Points(10)
+
+    # when
+    gradelib.policies.redeem(
+        gradebook,
+        {"mt01 with redemption": ("mt01", "mt01 - redemption")},
+        deduction=deduction,
+    )
+
+    # then
+    # after deduction, the redemption is no longer better
+    assert gradebook.points_earned.loc["A1", "mt01 with redemption"] == 95
+    assert gradebook.points_earned.loc["A2", "mt01 with redemption"] == 90
     assert "mt01" in gradebook.assignments
     assert "mt01 - redemption" in gradebook.assignments
     assert_gradebook_is_sound(gradebook)

@@ -131,6 +131,35 @@ def test_combine_assignment_parts_with_list_of_prefixes():
     assert gradebook.points_earned.shape[1] == 3
 
 
+def test_combine_assignment_parts_with_list_of_prefixes_as_LazyAssignments_instance():
+    """test that points_earned / points_possible are added across unified assignments"""
+    # given
+    columns = ["hw01", "hw01 - programming", "hw02", "hw02 - testing", "lab 01"]
+    p1 = pd.Series(data=[1, 30, 90, 20, 10], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20, 10], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20, 10], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    hws = gradelib.LazyAssignments(lambda asmts: ["hw01", "hw02"])
+
+    # when
+    preprocessing.combine_assignment_parts(gradebook, hws)
+
+    # then
+    assert len(gradebook.assignments) == 3
+
+    assert gradebook.points_possible["hw01"] == 52
+    assert gradebook.points_earned.loc["A1", "hw01"] == 31
+
+    assert gradebook.points_possible["hw02"] == 120
+    assert gradebook.points_earned.loc["A1", "hw02"] == 110
+
+    assert gradebook.points_possible.shape[0] == 3
+    assert gradebook.late.shape[1] == 3
+    assert gradebook.dropped.shape[1] == 3
+    assert gradebook.points_earned.shape[1] == 3
+
 def test_combine_assignment_parts_uses_max_lateness_for_assignment_pieces():
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "lab01"]

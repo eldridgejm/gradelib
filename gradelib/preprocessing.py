@@ -74,9 +74,10 @@ def combine_assignment_parts(gb, grouper: AssignmentGrouper):
     grouper : AssignmentGrouper
         Either: 1) a mapping whose keys are new assignment names, and whose
         values are collections of assignments that should be unified under
-        their common key; 2) a list of prefixes; each prefix defines a
-        group that should be combined; or 3) a callable which maps
-        assignment names to new assignment by which they should be grouped.
+        their common key; 2) a list of string prefixes or an instance of
+        :class:`Assignments`/:class`LazyAssignments`; each prefix defines a
+        group that should be combined; or 3) a callable which maps assignment
+        names to new assignment by which they should be grouped.
 
     Raises
     ------
@@ -180,9 +181,10 @@ def combine_assignment_versions(gb, grouper: AssignmentGrouper):
     grouper : AssignmentGrouper
         Either: 1) a mapping whose keys are new assignment names, and whose
         values are collections of assignments that should be unified under
-        their common key; 2) a list of prefixes; each prefix defines a
-        group that should be combined; or 3) a callable which maps
-        assignment names to new assignment by which they should be grouped.
+        their common key; 2) a list of string prefixes or an instance of
+        :class:`Assignments`/:class`LazyAssignments`; each prefix defines a
+        group that should be combined; or 3) a callable which maps assignment
+        names to new assignment by which they should be grouped.
 
     Raises
     ------

@@ -265,12 +265,12 @@ def test_combine_assignment_versions_raises_if_any_dropped():
 
 def test_combine_assignment_versions_raises_if_points_earned_in_multiple_versions():
     # given
-    columns = ["mt - version a", "mt - version b", "mt - version c"]
-    p1 = pd.Series(data=[50, 20, np.nan], index=columns, name="A1")
-    p2 = pd.Series(data=[np.nan, 30, np.nan], index=columns, name="A2")
-    p3 = pd.Series(data=[np.nan, np.nan, 40], index=columns, name="A3")
+    columns = ["mt - version a", "mt - version b", "mt - version c", "homework"]
+    p1 = pd.Series(data=[50, 20, np.nan, 10], index=columns, name="A1")
+    p2 = pd.Series(data=[np.nan, 30, np.nan, 10], index=columns, name="A2")
+    p3 = pd.Series(data=[np.nan, np.nan, 40, 10], index=columns, name="A3")
     points_earned = pd.DataFrame([p1, p2, p3])
-    points_possible = pd.Series([50, 50, 40], index=columns)
+    points_possible = pd.Series([50, 50, 40, 10], index=columns)
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
     # when
@@ -279,6 +279,22 @@ def test_combine_assignment_versions_raises_if_points_earned_in_multiple_version
     with pytest.raises(ValueError):
         preprocessing.combine_assignment_versions(gradebook, {"midterm": columns})
 
+def test_combine_assignment_versions_doesnt_raise_if_only_one_assignment_version_turned_int():
+    # given
+    columns = ["mt - version a", "mt - version b", "mt - version c", "homework"]
+    p1 = pd.Series(data=[50, np.nan, np.nan, 10], index=columns, name="A1")
+    p2 = pd.Series(data=[np.nan, 30, np.nan, 10], index=columns, name="A2")
+    p3 = pd.Series(data=[np.nan, np.nan, 40, 10], index=columns, name="A3")
+    points_earned = pd.DataFrame([p1, p2, p3])
+    points_possible = pd.Series([50, 50, 50, 10], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    # when
+    PARTS = gradebook.assignments.starting_with("mt")
+    preprocessing.combine_assignment_versions(gradebook, {"midterm": PARTS})
+
+    # then
+    assert gradebook.points_earned.loc['A1', 'midterm'] == 50
 
 def test_combine_assignment_versions_raises_if_any_version_is_late():
     # given

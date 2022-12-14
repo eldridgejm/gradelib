@@ -25,6 +25,7 @@ from .scales import (
 
 from .pipeline import Pipeline
 
+from . import preprocessing
 from . import policies
 from . import summarize
 from . import io

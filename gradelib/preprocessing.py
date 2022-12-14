@@ -126,7 +126,7 @@ def _combine_assignment_versions(gb, new_name, versions):
         raise ValueError("Cannot combine assignments with drops.")
 
     # check that points are not earned in multiple versions
-    assignments_turned_in = (~pd.isna(gb.points_earned)).sum(axis=1)
+    assignments_turned_in = (~pd.isna(gb.points_earned[versions])).sum(axis=1)
     if (assignments_turned_in > 1).any():
         students = assignments_turned_in[assignments_turned_in > 1].index
         msg = f"{list(students)} turned in more than one version."

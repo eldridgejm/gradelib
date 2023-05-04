@@ -13,7 +13,7 @@
 
             # update version of sphinx to get feature that adds all functions, methods,
             # etc. to navigation
-            python310 = super.python310.override {
+            python3 = super.python3.override {
                   packageOverrides = python-self: python-super: {
                     sphinx = python-super.sphinx.overridePythonAttrs (attrs: {
                         version = "5.2.3";
@@ -38,11 +38,11 @@
       {
         gradelib = forAllSystems (system:
           with import nixpkgs { system = "${system}"; allowBroken = true; overlays = overlays; };
-            python310Packages.buildPythonPackage rec {
+            python3Packages.buildPythonPackage rec {
               name = "gradelib";
               src = ./.;
-              propagatedBuildInputs = with python310Packages; [ pandas bokeh matplotlib numpy ];
-              nativeBuildInputs = with python310Packages; [ pytest ipython sphinx sphinx_rtd_theme ];
+              propagatedBuildInputs = with python3Packages; [ pandas bokeh matplotlib numpy ];
+              nativeBuildInputs = with python3Packages; [ pytest ipython sphinx sphinx_rtd_theme pip ];
               doCheck = false;
             }
           );

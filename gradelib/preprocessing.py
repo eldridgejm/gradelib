@@ -106,7 +106,9 @@ def combine_assignment_parts(gb, dct: Mapping[str, Collection[str]]):
 # combine_assignment_versions ----------------------------------------------------------
 
 
-def _combine_assignment_versions(gb, new_name, versions):
+def _combine_assignment_versions(
+    gb: Gradebook, new_name: str, versions: Collection[str]
+):
     """A helper function to combine assignments under the new name."""
     versions = list(versions)
     if gb.dropped[versions].any(axis=None):
@@ -132,7 +134,7 @@ def _combine_assignment_versions(gb, new_name, versions):
     # of gb, which contains all versions
     gb.dropped = empty_mask_like(gb.points_earned)
 
-    gb.remove_assignments(set(versions) - {new_name})
+    gb.remove_assignments(list(set(versions) - {new_name}))
 
 
 def combine_assignment_versions(gb, groups: Mapping[str, Collection[str]]):

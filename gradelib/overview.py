@@ -1,4 +1,5 @@
 import html
+from typing import Optional
 
 from .core import Gradebook
 from . import plot, summarize
@@ -16,7 +17,7 @@ def _display_html(html: str):
     display(HTML(html))
 
 
-def _class_overview(gradebook):
+def _class_overview(gradebook: Gradebook):
     _display_html("<h1>Class Overview</h1>")
     _display_html(_item("Number of students", len(gradebook.students)))
     _display_html(_item("Average GPA", summarize.average_gpa(gradebook.letter_grades)))
@@ -36,8 +37,8 @@ def _class_overview(gradebook):
     _display_html(summarize.outcomes(gradebook).to_html())
 
 
-def _student_overview(gradebook, student):
-    student = gradebook.students.find(student)
+def _student_overview(gradebook: Gradebook, student_name: str):
+    student = gradebook.students.find(student_name)
     student_name = html.escape(repr(student))
 
     _display_html(f"<h1>Student Overview: {student_name}</h1>")
@@ -54,7 +55,7 @@ def _student_overview(gradebook, student):
         _display_html("</ul>")
 
 
-def overview(gradebook: Gradebook, student=None):
+def overview(gradebook: Gradebook, student: Optional[str] = None):
     """Display a nicely-formatted overview of a gradebook.
 
     Only availably inside of a jupyter notebook. Can be accessed from the

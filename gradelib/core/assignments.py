@@ -1,30 +1,20 @@
-"""Class representing a collection of assignments."""
+"""Represents a collection of assignments."""
 
-import collections.abc
+from collections.abc import Sequence, Collection, Mapping
 import typing
 
-AssignmentSelector = typing.Union[
-    typing.Callable[["Assignments"], "Assignments"], "Assignments", typing.Sequence[str]
-]
+# type definitions =====================================================================
 
-AssignmentGrouper = typing.Union[
-    typing.Mapping[str, typing.Collection[str]],
-    typing.Collection[str],
-    typing.Callable[[str], str],
-    "LazyAssignments",
-]
+AssignmentSelector = typing.Sequence[str]
+AssignmentGrouper = typing.Mapping[str, AssignmentSelector]
 
 
-def normalize(assignments):
+def normalize(assignments: Collection[str]):
     """Normalize assignment weights.
 
-    If the input is iterable, such as a list of assignment names or a
-    dictionary mapping names to weights, the return value is a dictionary
-    mapping assignment names to the same, normalized weight.
-
-    If the input is a callable, the return value is also a callable which wraps
-    the input callable and transforms its output into a dictionary of
-    assignment weights.
+    When given a collection, such as a list of assignment names or a dictionary
+    mapping names to weights, the return value is a dictionary mapping
+    assignment names to the same, normalized weight.
 
     Useful when creating grading groups. For instance:
 
@@ -50,23 +40,11 @@ def normalize(assignments):
 
 
     """
-
-    def _normalize_iterable(assignments):
-        n = len(assignments)
-        return {a: 1 / n for a in assignments}
-
-    if callable(assignments):
-
-        def wrapper(asmts):
-            result = assignments(asmts)
-            return _normalize_iterable(result)
-
-        return wrapper
-    else:
-        return _normalize_iterable(assignments)
+    n = len(assignments)
+    return {a: 1 / n for a in assignments}
 
 
-class Assignments(collections.abc.Sequence[str]):
+class Assignments(Sequence[str]):
     """A sequence of assignments.
 
     Behaves essentially like a standard Python list of strings, but has some

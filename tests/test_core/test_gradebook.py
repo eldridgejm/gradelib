@@ -1505,24 +1505,6 @@ def test_combine_gradebooks_concatenates_notes():
 # normalize ----------------------------------------------------------------------------
 
 
-def test_normalize_works_when_given_a_callable():
-    # given
-    def homeworks(asmts):
-        return ["hw01", "hw02", "hw03", "hw04"]
-
-    # when
-    result = gradelib.normalize(homeworks)
-
-    # then
-    assert callable(result)
-    assert result(["it doesnt matter hwhat I put here"]) == {
-        "hw01": 0.25,
-        "hw02": 0.25,
-        "hw03": 0.25,
-        "hw04": 0.25,
-    }
-
-
 def test_normalize_works_when_given_a_dict():
     # given
     homeworks = {"hw01": 0.1, "hw02": 0.4, "hw03": 0.1, "hw04": 0.4}

@@ -1,7 +1,5 @@
 """A simple tool to manage grading workflows."""
 
-from __future__ import annotations
-
 from .core import Gradebook
 
 

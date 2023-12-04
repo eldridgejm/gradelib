@@ -1,7 +1,5 @@
 """Core type for managing a collection of grades."""
 
-from __future__ import annotations
-
 import copy
 import dataclasses
 import math
@@ -48,7 +46,7 @@ def _cast_index(table: pd.DataFrame) -> pd.DataFrame:
     return table
 
 
-def _concatenate_notes(gradebooks: Sequence[Gradebook]):
+def _concatenate_notes(gradebooks: Sequence["Gradebook"]):
     """Concatenates the notes from a sequence of gradebooks."""
     notes = {}
     for gradebook in gradebooks:

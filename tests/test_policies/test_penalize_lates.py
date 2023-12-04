@@ -196,7 +196,7 @@ def test_within_accepts_callable():
     )
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
-    HOMEWORK = lambda asmts: asmts.starting_with("hw")
+    HOMEWORK = gradebook.assignments.starting_with("hw")
 
     gradelib.policies.penalize_lates(gradebook, within=HOMEWORK)
 

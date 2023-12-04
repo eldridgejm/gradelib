@@ -35,3 +35,30 @@ from . import _common
 
 if _common.in_jupyter_notebook():
     from .overview import overview
+
+__all__ = [
+    "combine_gradebooks",
+    "normalize",
+    "Gradebook",
+    "GradebookOptions",
+    "Assignments",
+    "AssignmentSelector",
+    "AssignmentGrouper",
+    "Student",
+    "Students",
+    "Points",
+    "Percentage",
+    "DEFAULT_SCALE",
+    "ROUNDED_DEFAULT_SCALE",
+    "map_scores_to_letter_grades",
+    "find_robust_scale",
+    "Pipeline",
+    "preprocessing",
+    "policies",
+    "summarize",
+    "io",
+    "plot",
+    "reports",
+    "GradingGroup",
+    "overview",
+]

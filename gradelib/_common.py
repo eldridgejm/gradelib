@@ -1,7 +1,5 @@
-from __future__ import annotations
-
-
-def in_jupyter_notebook():
+def in_jupyter_notebook() -> bool:
+    """Determine if the code is being run in a Jupyter notebook."""
     try:
         shell = get_ipython().__class__.__name__  # pyright: ignore
         if shell == "ZMQInteractiveShell":
@@ -12,16 +10,3 @@ def in_jupyter_notebook():
             return False  # Other type (?)
     except NameError:
         return False
-
-
-def resolve_assignment_selector(within, assignments):
-    if within is None:
-        within = assignments
-
-    if callable(within):
-        within = within(assignments)
-
-    if not within:
-        raise ValueError("Cannot use an empty list of assignments.")
-
-    return list(within)

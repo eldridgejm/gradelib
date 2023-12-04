@@ -2,7 +2,6 @@ import collections
 from typing import Optional, Sequence, Union, Callable
 
 from ..core import Percentage, Points, Gradebook
-from .._common import resolve_assignment_selector
 
 _LateInfo = collections.namedtuple("LateInfo", "gradebook pid assignment number")
 
@@ -55,7 +54,7 @@ def penalize_lates(
         The gradebook that will be modified.
     forgive : Optional[int]
         The number of lates to forgive. Default: 0
-    within : Optional[AssignmentSelector]
+    within : Optional[Sequence[str]]
         A sequence of assignments within which lates will be forgiven, or a
         callable producing such a sequence of assignments. If None, all
         assignments will be used. Default: None
@@ -78,7 +77,11 @@ def penalize_lates(
     if forgive < 0:
         raise ValueError("Must forgive a non-negative number of lates.")
 
-    within = resolve_assignment_selector(within, gradebook.assignments)
+    if within is None:
+        within = gradebook.assignments
+
+    if not within:
+        raise ValueError("Must have at least one assignment to penalize.")
 
     def _penalize_lates_for(pid: str):
         forgiveness_left = forgive

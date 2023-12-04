@@ -4,8 +4,8 @@ from bokeh.models import ColumnDataSource
 from bokeh.plotting import figure, show
 from bokeh.io import output_notebook
 
-from .summarize import rank, percentile, outcomes, letter_grade_distribution
-from ._common import in_jupyter_notebook
+from .summarize import outcomes, letter_grade_distribution
+from ._util import in_jupyter_notebook
 
 # grade_distribution -------------------------------------------------------------------
 

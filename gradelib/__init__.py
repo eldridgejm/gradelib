@@ -31,9 +31,9 @@ from . import io
 from . import plot
 from . import reports
 
-from . import _common
+from . import _util
 
-if _common.in_jupyter_notebook():
+if _util.in_jupyter_notebook():
     from .overview import overview
 
 __all__ = [

@@ -204,8 +204,6 @@ class GradebookOptions:
 
 # GradingGroup --------------------------------------------------------------------------------
 
-GradingGroupDefinition = Union[float, int, Tuple[Mapping[str, float], float]]
-
 
 class GradingGroup:
     """Represents a logical group of assignments and their weights.
@@ -269,6 +267,9 @@ class GradingGroup:
 
     def __eq__(self, other):
         return all(getattr(self, attr) == getattr(other, attr) for attr in self._attrs)
+
+
+GradingGroupDefinition = Union[Real, Tuple[Mapping[str, Real], Real], GradingGroup]
 
 
 # Gradebook ============================================================================
@@ -499,13 +500,36 @@ class Gradebook:
         self,
         value: dict[str, GradingGroupDefinition],
     ):
-        """.grading_groups setter that accepts several difference convenience formats.
+        """.grading_groups setter that accepts several difference formats, for convenience.
 
-        The value should be a dict mapping group names to *group definitions*. A group
-        definition can be any of the following:
+        The value should be a dict mapping group names to *grading group
+        definitions*. A group definition can be any of the following:
 
-            - A single float representing a group weight. In this case, the group name
-              is treated as an assignment name.
+            - A single number. In this case, the group name is treated as an
+              assignment name.
+            - A tuple of the form ``(assignments, group_weight)``, where
+              ``assignments`` is an iterable of assignment names or a dict mapping
+              assignment names to weights. If ``assignments`` is an iterable, the
+              weights are inferred to be proportional to the points possible for each
+              assignment. If ``assignments`` is a dict, the weights are taken directly
+              from the dict.
+            - A :class:`GradingGroup` instance.
+
+        Example
+
+        >>> gradebook.grading_groups = {
+        ...     # list of assignments, followed by group weight. assignment weights
+        ...     # are inferred to be proportional to points possible
+        ...     "homeworks": (['hw 01', 'hw 02', 'hw 03'], 0.25),
+        ...
+        ...     # dictionary of assignment weights, followed by group weight.
+        ...     "labs": ({"lab 01": .25, "lab 02": .75}, 0.25),
+        ...
+        ...     # a single number. the key is interpreted as an assignment name,
+        ...     # and an assignment group consisting only of that assignment is
+        ...     # created.
+        ...     "exam": 0.5
+        ... }
 
         """
         if not isinstance(value, dict):
@@ -538,7 +562,7 @@ class Gradebook:
                     for a in assignment_weights
                 }
 
-            return GradingGroup(assignment_weights, group_weight)
+            return GradingGroup(assignment_weights, float(group_weight))
 
         new_groups = {name: _make_group(g, name) for name, g in value.items()}
 

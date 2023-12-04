@@ -1,5 +1,5 @@
 import collections
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union, Callable
 
 from ..core import Percentage, Points, Gradebook
 from .._common import resolve_assignment_selector
@@ -10,8 +10,10 @@ _LateInfo = collections.namedtuple("LateInfo", "gradebook pid assignment number"
 def penalize_lates(
     gradebook: Gradebook,
     within: Optional[Sequence[str]] = None,
-    forgive=0,
-    deduction=Percentage(1),
+    forgive: int = 0,
+    deduction: Optional[
+        Union[Points, Percentage, Callable[[_LateInfo], Union[Points, Percentage]]]
+    ] = Percentage(1.0),
     order_by="value",
 ):
     """Penalize late assignments.
@@ -110,10 +112,16 @@ def penalize_lates(
     for student in gradebook.students:
         _penalize_lates_for(student)
 
-    return gradebook
 
-
-def _deduct(gradebook, pid, assignment, number, deduction):
+def _deduct(
+    gradebook: Gradebook,
+    pid: str,
+    assignment: str,
+    number: int,
+    deduction: Union[
+        Points, Percentage, Callable[[_LateInfo], Union[Points, Percentage]]
+    ],
+):
     if callable(deduction):
         info = _LateInfo(gradebook, pid, assignment, number)
         d = deduction(info)

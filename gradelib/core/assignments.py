@@ -77,7 +77,8 @@ class Assignments(Sequence[str]):
     def __repr__(self):
         return f"Assignments(names={self._names})"
 
-    def _repr_pretty_(self, p, cycle):
+    def _repr_pretty_(self, p, _):
+        """Pretty-printing for IPython."""
         p.text("Assignments(names=[\n")
         for name in self._names:
             p.text(f"  {name!r}\n")
@@ -129,7 +130,7 @@ class Assignments(Sequence[str]):
             Only those assignments containing the substring.
 
         """
-        return self.__class__(x for x in self._names if substring in x)
+        return self.__class__([x for x in self._names if substring in x])
 
     def not_containing(self, substring: str) -> "Assignments":
         """Return only those assignments *not* containing the substring.
@@ -145,7 +146,7 @@ class Assignments(Sequence[str]):
             Only those assignments *not* containing the substring.
 
         """
-        return self.__class__(x for x in self._names if substring not in x)
+        return self.__class__([x for x in self._names if substring not in x])
 
     def group_by(self, to_key: typing.Callable[[str], str]) -> dict[str, "Assignments"]:
         """Group the assignments according to a key function.

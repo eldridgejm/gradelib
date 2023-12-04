@@ -50,7 +50,7 @@ def _student_latex_report(
     gradebook: Gradebook, student, show_percentile=_default_percentile_display
 ):
     if show_percentile is None:
-        show_percentile = lambda pct: None
+        show_percentile = lambda _: None
 
     parts = []
 
@@ -194,9 +194,12 @@ def generate_latex(
     """
     )
 
-    pages = [_student_latex_report(gradebook, student=None)]
+    pages = [
+        _student_latex_report(gradebook, student=None, show_percentile=show_percentile)
+    ]
     pages += [
-        _student_latex_report(gradebook, student) for student in gradebook.students
+        _student_latex_report(gradebook, student, show_percentile=show_percentile)
+        for student in gradebook.students
     ]
     body = "\\newpage\n".join(pages)
 

@@ -1,15 +1,12 @@
-from __future__ import annotations
-
 import itertools
-import typing
+from typing import Optional, Collection
 
 import pandas as pd
 
-from .._common import resolve_assignment_selector
-from ..core.assignments import AssignmentSelector
+from ..core import Gradebook
 
 
-def drop_lowest(gradebook, n: int, within: typing.Optional[AssignmentSelector] = None):
+def drop_lowest(gradebook: Gradebook, n: int, within: Optional[Collection[str]] = None):
     """Drop the lowest `n` grades within a group of assignments.
 
     If all assignments are worth the same number of points, dropping the
@@ -39,10 +36,9 @@ def drop_lowest(gradebook, n: int, within: typing.Optional[AssignmentSelector] =
         The gradebook that will be modified.
     n : int
         The number of grades to drop.
-    within : Optional[AssignmentSelector]
-        A collection of assignments; the lowest among them will be dropped. If
-        a callable, it will be called on the gradebook's assignments to produce
-        such a collection. If None, all assignments will be used. Default: None
+    within : Optional[Collection[str]]
+        A collection of assignment names; the lowest score among them will be
+        dropped. If None, all assignments will be used. Default: None
 
     Raises
     ------
@@ -50,8 +46,8 @@ def drop_lowest(gradebook, n: int, within: typing.Optional[AssignmentSelector] =
         If `within` is empty, or if n is not a positive integer.
 
     """
-    # number of kept assignments
-    within = resolve_assignment_selector(within, gradebook.assignments)
+    if within is None:
+        within = gradebook.assignments
 
     # the combinations of assignments to drop
     combinations = list(itertools.combinations(within, n))

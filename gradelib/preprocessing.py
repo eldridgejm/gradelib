@@ -1,22 +1,10 @@
 """Tools for preprocessing Gradebooks before grading."""
 
-from __future__ import annotations
-
-import typing
-from typing import Mapping, Collection
+from collections.abc import Mapping, Collection
+from .core import Gradebook
+from ._util import empty_mask_like
 
 import pandas as pd
-
-from .core import AssignmentGrouper
-
-# private helper functions =============================================================
-
-
-def _empty_mask_like(table):
-    """Given a dataframe, create another just like it with every entry False."""
-    empty = table.copy()
-    empty.iloc[:, :] = False
-    return empty.astype(bool)
 
 
 # public functions =====================================================================
@@ -24,29 +12,29 @@ def _empty_mask_like(table):
 # combine_assignment_parts -------------------------------------------------------------
 
 
-def _combine_assignment_parts(gb, new_name, parts):
+def _combine_assignment_parts(gradebook: Gradebook, new_name: str, parts):
     """A helper function to combine assignments under the new name."""
     parts = list(parts)
-    if gb.dropped[parts].any(axis=None):
+    if gradebook.dropped[parts].any(axis=None):
         raise ValueError("Cannot combine assignments with drops.")
 
-    assignment_points = gb.points_earned[parts].sum(axis=1)
-    assignment_max = gb.points_possible[parts].sum()
-    assignment_lateness = gb.lateness[parts].max(axis=1)
+    assignment_points = gradebook.points_earned[parts].sum(axis=1)
+    assignment_max = gradebook.points_possible[parts].sum()
+    assignment_lateness = gradebook.lateness[parts].max(axis=1)
 
-    gb.points_earned[new_name] = assignment_points
-    gb.points_possible[new_name] = assignment_max
-    gb.lateness[new_name] = assignment_lateness
+    gradebook.points_earned[new_name] = assignment_points
+    gradebook.points_possible[new_name] = assignment_max
+    gradebook.lateness[new_name] = assignment_lateness
 
     # we're assuming that dropped was not set; we need to provide an empy
     # mask here, else ._replace will use the existing larger dropped table
     # of gb, which contains all parts
-    gb.dropped = _empty_mask_like(gb.points_earned)
+    gradebook.dropped = empty_mask_like(gradebook.points_earned)
 
-    gb.remove_assignments(set(parts) - {new_name})
+    gradebook.remove_assignments(list(set(parts) - {new_name}))
 
 
-def combine_assignment_parts(gb, dct: AssignmentGrouper):
+def combine_assignment_parts(gb, dct: Mapping[str, Collection[str]]):
     """Combine the assignment parts into one assignment with the new name.
 
     Sometimes assignments may have several parts which are recorded
@@ -142,12 +130,12 @@ def _combine_assignment_versions(gb, new_name, versions):
     # we're assuming that dropped was not set; we need to provide an empy
     # mask here, else ._replace will use the existing larger dropped table
     # of gb, which contains all versions
-    gb.dropped = _empty_mask_like(gb.points_earned)
+    gb.dropped = empty_mask_like(gb.points_earned)
 
     gb.remove_assignments(set(versions) - {new_name})
 
 
-def combine_assignment_versions(gb, groups: AssignmentGrouper):
+def combine_assignment_versions(gb, groups: Mapping[str, Collection[str]]):
     """Combine the assignment versions into one single assignment with the new name.
 
     Sometimes assignments may have several versions which are recorded separately

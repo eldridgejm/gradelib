@@ -1,10 +1,7 @@
-from __future__ import annotations
-
 import collections
-import typing
+from typing import Optional, Sequence
 
-from ..core import Percentage, Points
-from ..core.assignments import AssignmentSelector
+from ..core import Percentage, Points, Gradebook
 from .._common import resolve_assignment_selector
 
 _LateInfo = collections.namedtuple("LateInfo", "gradebook pid assignment number")
@@ -12,7 +9,7 @@ _LateInfo = collections.namedtuple("LateInfo", "gradebook pid assignment number"
 
 def penalize_lates(
     gradebook: Gradebook,
-    within: typing.Optional[AssignmentSelector] = None,
+    within: Optional[Sequence[str]] = None,
     forgive=0,
     deduction=Percentage(1),
     order_by="value",

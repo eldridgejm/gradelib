@@ -1,20 +1,12 @@
-import itertools
-import collections
+from collections.abc import Mapping, Sequence
+from typing import Union, Optional
 
-import numpy as np
 import pandas as pd
 
-from ..core import Percentage, Points
 
+from ..core import Percentage, Points, Gradebook
 
 # private helpers ======================================================================
-
-
-def _empty_mask_like(table):
-    """Given a dataframe, create another just like it with every entry False."""
-    empty = table.copy()
-    empty.iloc[:, :] = False
-    return empty.astype(bool)
 
 
 def _add_reason_to_message(message, reason):
@@ -36,7 +28,10 @@ def _convert_amount_to_absolute_points(amount, gradebook, assignment):
 # make_exceptions ----------------------------------------------------------------------
 
 
-def make_exceptions(gradebook, students):
+def make_exceptions(
+    gradebook: Gradebook,
+    students: Mapping[str, Sequence[Union["ForgiveLate", "Drop", "Replace"]]],
+):
     """Make policy exceptions for individual students.
 
     Parameters
@@ -45,9 +40,11 @@ def make_exceptions(gradebook, students):
         The gradebook to apply the exceptions to. Will be modified.
 
     students
-        A mapping from students to a list of exceptions that will be applied.
-        The exceptions should be instances of :class:`ForgiveLate`,
-        :class:`Drop`, or :class:`Replace`
+        A mapping from student names to a list of exceptions that will be
+        applied. The exceptions should be instances of :class:`ForgiveLate`,
+        :class:`Drop`, or :class:`Replace`. The keys can be the full name
+        or identifying substrings of names -- if it is not a precise match
+        (more than one student is found), an exception will be raised.
 
     """
     for student, exceptions in students.items():
@@ -71,19 +68,18 @@ class ForgiveLate:
 
     """
 
-    def __init__(self, assignment, reason=None):
+    def __init__(self, assignment: str, reason: Optional[str] = None):
         self.assignment = assignment
         self.reason = reason
 
-    def __call__(self, gradebook, student):
-        pid = gradebook.students.find(student)
-        gradebook.lateness.loc[pid, self.assignment] = pd.Timedelta(0, "s")
+    def __call__(self, gradebook: Gradebook, student_name: str):
+        student = gradebook.students.find(student_name)
+        gradebook.lateness.loc[student, self.assignment] = pd.Timedelta(0, "s")
 
         msg = f"Exception applied: late {self.assignment.title()} is forgiven."
         msg = _add_reason_to_message(msg, self.reason)
 
-        gradebook.add_note(pid, "lates", msg)
-        return gradebook
+        gradebook.add_note(student.pid, "lates", msg)
 
 
 # Drop ---------------------------------------------------------------------------------
@@ -102,18 +98,17 @@ class Drop:
 
     """
 
-    def __init__(self, assignment, reason=None):
+    def __init__(self, assignment: str, reason: Optional[str] = None):
         self.assignment = assignment
         self.reason = reason
 
-    def __call__(self, gradebook, student):
-        pid = gradebook.students.find(student)
-        gradebook.dropped.loc[pid, self.assignment] = True
+    def __call__(self, gradebook: Gradebook, student_name):
+        student = gradebook.students.find(student_name)
+        gradebook.dropped.loc[student, self.assignment] = True
 
         msg = f"Exception applied: {self.assignment.title()} dropped."
         msg = _add_reason_to_message(msg, self.reason)
-        gradebook.add_note(pid, "drops", msg)
-        return gradebook
+        gradebook.add_note(student.pid, "drops", msg)
 
 
 # Replace ------------------------------------------------------------------------------
@@ -139,17 +134,22 @@ class Replace:
 
     """
 
-    def __init__(self, assignment, with_, reason=None):
+    def __init__(
+        self,
+        assignment: str,
+        with_: Union[str, Points, Percentage],
+        reason: Optional[str] = None,
+    ):
         self.assignment = assignment
         self.with_ = with_
         self.reason = reason
 
-    def __call__(self, gradebook, student):
-        pid = gradebook.students.find(student)
+    def __call__(self, gradebook: Gradebook, student_name):
+        student = gradebook.students.find(student_name)
 
         if isinstance(self.with_, str):
             other_assignment_score = (
-                gradebook.points_earned.loc[pid, self.with_]
+                gradebook.points_earned.loc[student, self.with_]
                 / gradebook.points_possible.loc[self.with_]
             )
             amount = Percentage(other_assignment_score)
@@ -163,8 +163,7 @@ class Replace:
             amount, gradebook, self.assignment
         )
 
-        gradebook.points_earned.loc[pid, self.assignment] = new_points
+        gradebook.points_earned.loc[student, self.assignment] = new_points
 
         msg = _add_reason_to_message(msg, self.reason)
-        gradebook.add_note(pid, "misc", msg)
-        return gradebook
+        gradebook.add_note(student.pid, "misc", msg)

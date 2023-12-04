@@ -1,21 +1,51 @@
 """Read grades exported from Gradescope."""
 
+import pathlib
+from typing import Union, Sequence
+
 import pandas as pd
 
 from gradelib import Gradebook, Student
 
 
-def _find_index_of_first_assignment_column(columns):
-    # the first column containing an assignment varies depending on whether the
-    # gradescope account has been linked with canvas or not. if linked with canvas,
-    # there will be an extra column named "section_name" before the assignment columns
-    # note that we have set the index to the SID column, so the columns numbers below
-    # are one less than appear in the actual .csv. furthermore, sometimes the csv will
-    # contain a single "name" column, and other times it will contain a "first name"
-    # column as well as a "last name" column.
-    #
-    # we'll handle these situations by simply searching for the first column name that
-    # isn't a header column
+def _find_index_of_first_assignment_column(columns: Sequence[str]) -> int:
+    """Finds the index of the first assignment column in a Gradescope .csv.
+
+    The first assignment is assumed to be the first column that isn't named
+    one of "first name", "last name", "name", "email", "sid", or "section_name".
+
+    Parameters
+    ----------
+    columns : Sequence[str]
+        The column names of the .csv file.
+
+    Returns
+    -------
+    int
+        The index of the first assignment column.
+
+    Raises
+    ------
+    ValueError
+        If there is no assignment column.
+
+    Notes
+    -----
+
+    The first column containing an assignment varies depending on whether the
+    gradescope account has been linked with canvas or not. If linked with
+    canvas, there will be an extra column named "section_name" before the
+    assignment columns.
+
+    Note that we have set the index to the SID column, so the columns numbers
+    below are one less than appear in the actual .csv. Furthermore, sometimes
+    the csv will contain a single "name" column, and other times it will
+    contain a "first name" column as well as a "last name" column.
+
+    We'll handle these situations by simply searching for the first column name
+    that isn't a header column.
+
+    """
     header_columns = {"first name", "last name", "name", "email", "sid", "section_name"}
     for i, column in enumerate(columns):
         if column.lower() not in header_columns:
@@ -23,15 +53,29 @@ def _find_index_of_first_assignment_column(columns):
     raise ValueError("There is no assignment column.")
 
 
-def _lateness_in_seconds(lateness):
-    """Converts a series of lateness strings in HH:MM:SS format to integer seconds"""
+def _lateness_in_seconds(lateness: pd.Series) -> pd.Series:
+    """Converts Series of lateness strings in HH:MM:SS format to integer seconds.
+
+    Parameters
+    ----------
+    lateness : pd.Series
+        A series of lateness strings in HH:MM:SS format.
+
+    Returns
+    -------
+    pd.Series
+        A series of lateness values in seconds, as integers.
+
+    """
     hours = lateness.str.split(":").str[0].astype(int)
     minutes = lateness.str.split(":").str[1].astype(int)
     seconds = lateness.str.split(":").str[2].astype(int)
     return pd.to_timedelta(3600 * hours + 60 * minutes + seconds, unit="s")
 
 
-def read(path, standardize_pids=True, standardize_assignments=True):
+def read(
+    path: Union[str, pathlib.Path], standardize_pids=True, standardize_assignments=True
+) -> Gradebook:
     """Read a CSV exported from Gradescope into a :class:`gradelib.Gradebook`.
 
     Parameters
@@ -75,7 +119,7 @@ def read(path, standardize_pids=True, standardize_assignments=True):
     # time, and a fourth with the lateness.
     stride = 4
 
-    starting_index = _find_index_of_first_assignment_column(table.columns)
+    starting_index = _find_index_of_first_assignment_column(list(table.columns))
 
     # extract the points
     points_earned = table.iloc[:, starting_index::stride].astype(float)

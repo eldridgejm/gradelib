@@ -16,6 +16,19 @@ def test_starting_with():
     assert set(actual) == {"homework 01", "homework 02", "homework 03"}
 
 
+def test_ending_with():
+    # given
+    assignments = gradelib.Assignments(
+        ["homework 01", "homework 02", "homework 03", "lab 01", "lab 02"]
+    )
+
+    # when
+    actual = assignments.ending_with("01")
+
+    # then
+    assert set(actual) == {"homework 01", "lab 01"}
+
+
 def test_containing():
     # given
     assignments = gradelib.Assignments(

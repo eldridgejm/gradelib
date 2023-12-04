@@ -97,7 +97,23 @@ class Assignments(Sequence[str]):
             Only those assignments starting with the prefix.
 
         """
-        return self.__class__(x for x in self._names if x.startswith(prefix))
+        return self.__class__([x for x in self._names if x.startswith(prefix)])
+
+    def ending_with(self, suffix: str) -> "Assignments":
+        """Return only those assignments ending with the suffix.
+
+        Parameters
+        ----------
+        suffix: str
+            The suffix to search for.
+
+        Returns
+        -------
+        Assignments
+            Only those assignments ending with the suffix.
+
+        """
+        return self.__class__([x for x in self._names if x.endswith(suffix)])
 
     def containing(self, substring: str) -> "Assignments":
         """Return only those assignments containing the substring.

@@ -47,7 +47,7 @@ ROUNDED_DEFAULT_SCALE["F"] = 0
 # public functions =====================================================================
 
 
-def map_scores_to_letter_grades(scores, scale=None):
+def map_scores_to_letter_grades(scores, scale=None) -> pd.Series:
     """Map each raw score to a letter grade.
 
     Parameters

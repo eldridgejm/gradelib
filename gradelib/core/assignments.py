@@ -1,6 +1,6 @@
 """Represents a collection of assignments."""
 
-from collections.abc import Sequence, Collection, Mapping
+from collections.abc import Sequence, Collection
 import typing
 
 # type definitions =====================================================================

@@ -5,8 +5,7 @@ from __future__ import annotations
 import copy
 import dataclasses
 import math
-import collections.abc
-from typing import Sequence, Collection, Mapping, Union, Tuple, Optional
+from typing import Sequence, Collection, Mapping, Union, Tuple, Optional, Callable
 from numbers import Real
 
 from ..scales import DEFAULT_SCALE, map_scores_to_letter_grades
@@ -64,17 +63,6 @@ def _concatenate_notes(gradebooks: Sequence[Gradebook]):
                 notes[pid][channel].extend(messages)
 
     return notes
-
-
-def _concatenate_grading_groups(gradebooks: Sequence[Gradebook]):
-    """Concatenates the grading groups from a sequence of gradebooks."""
-    new_groups = {}
-    for gradebook in gradebooks:
-        for group_name, group in gradebook.grading_groups.items():
-            if group_name in new_groups:
-                raise ValueError(f"Duplicate group names seen: {group_name}.")
-            new_groups[group_name] = group
-    return new_groups
 
 
 def _combine_if_equal(gradebooks: Collection["Gradebook"], attr: str):
@@ -440,7 +428,7 @@ class Gradebook:
         Assignments
 
         """
-        return Assignments(self.points_earned.columns)
+        return Assignments(list(self.points_earned.columns))
 
     @property
     def pids(self) -> set[str]:
@@ -535,7 +523,7 @@ class Gradebook:
         if not isinstance(value, dict):
             raise ValueError("Groups must be provided as a dictionary.")
 
-        def _make_group(g, name):
+        def _make_group(g: GradingGroupDefinition, name: str) -> GradingGroup:
             if isinstance(g, GradingGroup):
                 return g
             if isinstance(g, Real):
@@ -544,11 +532,40 @@ class Gradebook:
                 group_weight = float(g)
             elif (
                 isinstance(g, tuple)
-                and (isinstance(g[0], Mapping) or isinstance(g[0], Sequence))
+                and isinstance(g[0], Mapping)
                 and isinstance(g[1], Real)
             ):
+                if not all(isinstance(k, str) for k in g[0].keys()):
+                    raise TypeError(
+                        f"Invalid grading group definition: {g}. "
+                        "When a grading group definition is a (Mapping, Number) tuple, "
+                        "Assignment names in the mapping must be strings. "
+                    )
+                if not all(isinstance(v, Real) for v in g[0].values()):
+                    raise TypeError(
+                        f"Invalid grading group definition: {g}. "
+                        "When a grading group definition is a (Mapping, Number) tuple, "
+                        "Assignment weights in the mapping must be numbers. "
+                    )
+
+                assignment_weights = {
+                    str(a_name): float(a_weight) for a_name, a_weight in g[0].items()
+                }
+                group_weight = float(g[1])
+            elif (
+                isinstance(g, tuple)
+                and isinstance(g[0], Sequence)
+                and isinstance(g[1], Real)
+            ):
+                if not all(isinstance(a, str) for a in g[0]):
+                    raise TypeError(
+                        f"Invalid grading group definition: {g}. "
+                        "When a grading group definition is a (Sequence, Number) tuple, "
+                        "the entries of the sequence must be strings representing "
+                        "assignment names."
+                    )
                 assignment_weights = g[0]
-                group_weight = g[1]
+                group_weight = float(g[1])
             else:
                 raise TypeError("Unexpected type in grading group definition.")
 
@@ -729,7 +746,7 @@ class Gradebook:
 
             result[group_name] = possible
 
-        return pd.DataFrame(result, index=self.students)
+        return pd.DataFrame(result, index=pd.Index(self.students))
 
     @property
     def grading_group_scores(self) -> pd.DataFrame:
@@ -781,17 +798,12 @@ class Gradebook:
 
         """
 
-        def _get_group_by_name(name):
-            for group_name, group in self.grading_groups.items():
-                if group_name == name:
-                    return group
-
         def _convert_df(df):
             new_columns = {}
             for group_name in df.columns:
-                for assignment in _get_group_by_name(group_name).assignment_weights:
+                for assignment in self.grading_groups[group_name].assignment_weights:
                     new_columns[assignment] = df[group_name]
-            return pd.DataFrame(new_columns, index=self.students)
+            return pd.DataFrame(new_columns, index=pd.Index(self.students))
 
         def _convert_series(s):
             new_columns = {}
@@ -799,7 +811,7 @@ class Gradebook:
                 new_columns[group_name] = np.repeat(
                     s[group_name], len(self.points_earned)
                 )
-            df = pd.DataFrame(new_columns, index=self.students)
+            df = pd.DataFrame(new_columns, index=pd.Index(self.students))
             return _convert_df(df)
 
         if isinstance(by_group, pd.Series):
@@ -812,7 +824,7 @@ class Gradebook:
         return pd.DataFrame(
             np.tile(s.values, (len(self.points_earned), 1)),
             columns=s.index,
-            index=self.students,
+            index=pd.Index(self.students),
         )
 
     @property
@@ -1036,7 +1048,9 @@ class Gradebook:
         if extras:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
 
-        return self.restrict_to_assignments(set(self.assignments) - set(assignments))
+        return self.restrict_to_assignments(
+            list(set(self.assignments) - set(assignments))
+        )
 
     def rename_assignments(self, mapping: Mapping[str, str]):
         """Renames assignments.
@@ -1155,9 +1169,9 @@ class Gradebook:
             The result of the last transformation in the sequence.
 
         """
-        try:
+        if isinstance(transformations, Sequence):
             transformations = list(transformations)
-        except TypeError:
+        else:
             transformations = [transformations]
 
         result = self.copy()

@@ -14,7 +14,7 @@ def test_drop_lowest_with_callable_within():
     points = pd.DataFrame([p1, p2])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = lambda asmts: asmts.starting_with("hw")
+    homeworks = gradebook.assignments.starting_with("hw")
 
     gradebook.grading_groups = {"homeworks": (homeworks, 0.75), "lab01": 0.25}
 

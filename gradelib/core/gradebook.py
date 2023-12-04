@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import copy
 import dataclasses
-import typing
 import math
 import collections.abc
+from typing import Sequence, Collection, Mapping, Union, Tuple, Optional
+from numbers import Real
 
 from ..scales import DEFAULT_SCALE, map_scores_to_letter_grades
 from .student import Student, Students
-from .assignments import Assignments, AssignmentSelector, normalize
+from .assignments import Assignments, AssignmentSelector
 
 import numpy as np
 import pandas as pd
@@ -19,14 +20,14 @@ import pandas as pd
 # private helper functions ---------------------------------------------------------------------
 
 
-def _empty_mask_like(table):
+def _empty_mask_like(table: pd.DataFrame) -> pd.DataFrame:
     """Given a dataframe, create another just like it with every entry False."""
     empty = table.copy()
     empty.iloc[:, :] = False
     return empty.astype(bool)
 
 
-def _empty_lateness_like(table):
+def _empty_lateness_like(table: pd.DataFrame) -> pd.DataFrame:
     """Given a dataframe, create another just like it with every entry a timedelta of 0."""
     empty = table.copy()
     empty.iloc[:, :] = 0
@@ -35,7 +36,7 @@ def _empty_lateness_like(table):
     return empty
 
 
-def _cast_index(df):
+def _cast_index(table: pd.DataFrame) -> pd.DataFrame:
     """Ensure that the dataframe index contains Student objects."""
 
     def _cast(x):
@@ -44,11 +45,11 @@ def _cast_index(df):
         else:
             return Student(x)
 
-    df.index = [_cast(x) for x in df.index]
-    return df
+    table.index = [_cast(x) for x in table.index]
+    return table
 
 
-def _concatenate_notes(gradebooks):
+def _concatenate_notes(gradebooks: Sequence[Gradebook]):
     """Concatenates the notes from a sequence of gradebooks."""
     notes = {}
     for gradebook in gradebooks:
@@ -65,8 +66,8 @@ def _concatenate_notes(gradebooks):
     return notes
 
 
-def _concatenate_groups(gradebooks):
-    """Concatenates the groups from a sequence of gradebooks."""
+def _concatenate_grading_groups(gradebooks: Sequence[Gradebook]):
+    """Concatenates the grading groups from a sequence of gradebooks."""
     new_groups = {}
     for gradebook in gradebooks:
         for group_name, group in gradebook.grading_groups.items():
@@ -76,7 +77,7 @@ def _concatenate_groups(gradebooks):
     return new_groups
 
 
-def _combine_if_equal(gradebooks: typing.Collection["Gradebook"], attr: str):
+def _combine_if_equal(gradebooks: Collection["Gradebook"], attr: str):
     """Checks that the attribute is the same in all gradebooks.
 
     If it is, the common attribute is returned. Otherwise, a `ValueError` is raised.
@@ -96,9 +97,7 @@ def _combine_if_equal(gradebooks: typing.Collection["Gradebook"], attr: str):
 # public functions ---------------------------------------------------------------------
 
 
-def combine_gradebooks(
-    gradebooks: typing.Collection["Gradebook"], restrict_to_students=None
-):
+def combine_gradebooks(gradebooks: Collection["Gradebook"], restrict_to_students=None):
     """Create a gradebook by safely combining several existing gradebooks.
 
     It is crucial that the combined gradebooks have exactly the same students
@@ -205,6 +204,8 @@ class GradebookOptions:
 
 # GradingGroup --------------------------------------------------------------------------------
 
+GradingGroupDefinition = Union[float, int, Tuple[Mapping[str, float], float]]
+
 
 class GradingGroup:
     """Represents a logical group of assignments and their weights.
@@ -234,10 +235,9 @@ class GradingGroup:
 
     def __init__(
         self,
-        assignment_weights,
-        group_weight,
+        assignment_weights: Mapping[str, float],
+        group_weight: float,
     ):
-
         if not isinstance(assignment_weights, dict):
             raise TypeError("Must be a dictionary.")
 
@@ -265,7 +265,7 @@ class GradingGroup:
     @property
     def assignments(self) -> Assignments:
         """The assignments in the group."""
-        return Assignments(self.assignment_weights)
+        return Assignments(list(self.assignment_weights))
 
     def __eq__(self, other):
         return all(getattr(self, attr) == getattr(other, attr) for attr in self._attrs)
@@ -275,12 +275,11 @@ class GradingGroup:
 
 
 class Gradebook:
-    """Data structure which facilitates common grading operations.
+    """Stores the grades for a class.
 
     Typically a Gradebook is not created manually, but is instead produced by
     reading grades exported from Gradescope or Canvas, using
     :func:`gradelib.io.gradescope.read` or :func:`gradelib.io.canvas.read`.
-
 
     Parameters
     ----------
@@ -496,7 +495,10 @@ class Gradebook:
         return dict(self._groups)
 
     @grading_groups.setter
-    def grading_groups(self, value):
+    def grading_groups(
+        self,
+        value: dict[str, GradingGroupDefinition],
+    ):
         """.grading_groups setter that accepts several difference convenience formats.
 
         The value should be a dict mapping group names to *group definitions*. A group
@@ -512,19 +514,19 @@ class Gradebook:
         def _make_group(g, name):
             if isinstance(g, GradingGroup):
                 return g
-
-            if isinstance(g, (float, int)):
+            if isinstance(g, Real):
                 # should be a number. this form defines a group with a single assignment
                 assignment_weights = [name]
                 group_weight = float(g)
-            elif isinstance(g, collections.abc.Collection) and len(g) == 2:
+            elif (
+                isinstance(g, tuple)
+                and (isinstance(g[0], Mapping) or isinstance(g[0], Sequence))
+                and isinstance(g[1], Real)
+            ):
                 assignment_weights = g[0]
                 group_weight = g[1]
             else:
-                raise TypeError("Unexpected type for groups.")
-
-            if callable(assignment_weights):
-                assignment_weights = assignment_weights(self.assignments)
+                raise TypeError("Unexpected type in grading group definition.")
 
             if not isinstance(assignment_weights, dict):
                 # an iterable of assignments that we need to turn into a dict
@@ -588,7 +590,7 @@ class Gradebook:
             self._group_points_possible_after_drops
         )
 
-        for group_name, group in self.grading_groups.items():
+        for _, group in self.grading_groups.items():
             if isinstance(group.assignment_weights, dict):
                 weights = pd.Series(group.assignment_weights)
                 weights = self._everyone_to_per_student(weights)
@@ -688,7 +690,7 @@ class Gradebook:
                     self.points_possible[list(group.assignment_weights)],
                     (self.points_earned.shape[0], 1),
                 ),
-                index=self.students,
+                index=pd.Index(self.students),
                 columns=list(group.assignment_weights),
             )
 
@@ -857,7 +859,6 @@ class Gradebook:
     # copying / replacing --------------------------------------------------------------
 
     def _replace(self, **kwargs):
-
         extra = set(kwargs.keys()) - set(self._kwarg_names)
         assert not extra, f"Invalid kwargs provided: {extra}"
 
@@ -894,8 +895,8 @@ class Gradebook:
         name: str,
         points_earned: pd.Series,
         points_possible: pd.Series,
-        lateness: typing.Optional[pd.Series] = None,
-        dropped: typing.Optional[pd.Series] = None,
+        lateness: Optional[pd.Series] = None,
+        dropped: Optional[pd.Series] = None,
     ):
         """Adds a single assignment to the gradebook, mutating it.
 
@@ -1013,7 +1014,7 @@ class Gradebook:
 
         return self.restrict_to_assignments(set(self.assignments) - set(assignments))
 
-    def rename_assignments(self, mapping: typing.Mapping[str, str]):
+    def rename_assignments(self, mapping: Mapping[str, str]):
         """Renames assignments.
 
         If the :attr:`grading_groups` attribute been set, it is reset to
@@ -1043,7 +1044,7 @@ class Gradebook:
 
     # adding/removing students ---------------------------------------------------------
 
-    def restrict_to_students(self, to: typing.Collection[str]):
+    def restrict_to_students(self, to: Collection[str]):
         """Restrict the gradebook to only the supplied PIDs.
 
         Parameters
@@ -1100,9 +1101,7 @@ class Gradebook:
 
     def apply(
         self,
-        transformations: typing.Union[
-            typing.Sequence[typing.Callable], typing.Callable
-        ],
+        transformations: Union[Sequence[Callable], Callable],
     ) -> "Gradebook":
         """Apply transformation(s) to the gradebook.
 

@@ -64,7 +64,7 @@ def test_rank():
     points = pd.DataFrame([p1, p2, p3])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = lambda asmts: asmts.starting_with("hw")
+    homeworks = gradebook.assignments.starting_with("hw")
 
     gradebook.grading_groups = {"homeworks": (homeworks, 0.75), "lab01": 0.25}
 
@@ -88,7 +88,7 @@ def test_percentile():
     points = pd.DataFrame([p1, p2, p3])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = lambda asmts: asmts.starting_with("hw")
+    homeworks = gradebook.assignments.starting_with("hw")
 
     gradebook.grading_groups = {"homeworks": (homeworks, 0.75), "lab01": 0.25}
 
@@ -112,7 +112,7 @@ def test_outcomes():
     points = pd.DataFrame([p1, p2, p3])
     maximums = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
-    homeworks = lambda asmts: asmts.starting_with("hw")
+    homeworks = gradebook.assignments.starting_with("hw")
 
     gradebook.grading_groups = {"homeworks": (homeworks, 0.75), "lab01": 0.25}
 

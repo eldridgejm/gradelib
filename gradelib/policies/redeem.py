@@ -1,11 +1,9 @@
-from __future__ import annotations
-
 from typing import Mapping, Tuple
 
 import numpy as np
 
 
-from ..core import Percentage
+from ..core import Percentage, Gradebook
 
 
 def _fmt_as_pct(f):
@@ -17,7 +15,6 @@ def redeem(
     assignments: Mapping[str, Tuple[str, str]],
     remove_parts=False,
     deduction=None,
-    suffix=" with redemption",
 ):
     """Replace assignment scores with later assignment scores, if higher.
 

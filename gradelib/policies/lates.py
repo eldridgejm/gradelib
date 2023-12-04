@@ -11,9 +11,9 @@ def penalize_lates(
     gradebook: Gradebook,
     within: Optional[Sequence[str]] = None,
     forgive: int = 0,
-    deduction: Optional[
-        Union[Points, Percentage, Callable[[_LateInfo], Union[Points, Percentage]]]
-    ] = Percentage(1.0),
+    deduction: Union[
+        Points, Percentage, Callable[[_LateInfo], Union[Points, Percentage]]
+    ] = Percentage(1),
     order_by="value",
 ):
     """Penalize late assignments.
@@ -59,7 +59,7 @@ def penalize_lates(
         A sequence of assignments within which lates will be forgiven, or a
         callable producing such a sequence of assignments. If None, all
         assignments will be used. Default: None
-    deduction : Optional[Union[Points, Percentage, Callable]]
+    deduction : Union[Points, Percentage, Callable]
         The amount that should be deducted. See the Notes for instructions
         on using a callable. If None, 100% is deducted.
     order_by : str
@@ -80,7 +80,7 @@ def penalize_lates(
 
     within = resolve_assignment_selector(within, gradebook.assignments)
 
-    def _penalize_lates_for(pid):
+    def _penalize_lates_for(pid: str):
         forgiveness_left = forgive
         number = 0
 
@@ -110,7 +110,7 @@ def penalize_lates(
                     _deduct(gradebook, pid, assignment, number, deduction)
 
     for student in gradebook.students:
-        _penalize_lates_for(student)
+        _penalize_lates_for(student.pid)
 
 
 def _deduct(

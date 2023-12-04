@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 
 from ..core import Percentage, Points
-from .._common import resolve_assignment_grouper
 
 
 # private helpers ======================================================================

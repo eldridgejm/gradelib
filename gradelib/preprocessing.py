@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import typing
+from typing import Mapping, Collection
 
 import pandas as pd
 
 from .core import AssignmentGrouper
-from ._common import resolve_assignment_grouper
 
 # private helper functions =============================================================
 
@@ -46,7 +46,7 @@ def _combine_assignment_parts(gb, new_name, parts):
     gb.remove_assignments(set(parts) - {new_name})
 
 
-def combine_assignment_parts(gb, grouper: AssignmentGrouper):
+def combine_assignment_parts(gb, dct: AssignmentGrouper):
     """Combine the assignment parts into one assignment with the new name.
 
     Sometimes assignments may have several parts which are recorded
@@ -109,8 +109,6 @@ def combine_assignment_parts(gb, grouper: AssignmentGrouper):
 
 
     """
-    dct = resolve_assignment_grouper(grouper, gb.assignments)
-
     for key, value in dct.items():
         _combine_assignment_parts(gb, key, value)
 
@@ -149,7 +147,7 @@ def _combine_assignment_versions(gb, new_name, versions):
     gb.remove_assignments(set(versions) - {new_name})
 
 
-def combine_assignment_versions(gb, grouper: AssignmentGrouper):
+def combine_assignment_versions(gb, groups: AssignmentGrouper):
     """Combine the assignment versions into one single assignment with the new name.
 
     Sometimes assignments may have several versions which are recorded separately
@@ -178,13 +176,9 @@ def combine_assignment_versions(gb, grouper: AssignmentGrouper):
 
     Parameters
     ----------
-    grouper : AssignmentGrouper
-        Either: 1) a mapping whose keys are new assignment names, and whose
-        values are collections of assignments that should be unified under
-        their common key; 2) a list of string prefixes or an instance of
-        :class:`Assignments`/:class`LazyAssignments`; each prefix defines a
-        group that should be combined; or 3) a callable which maps assignment
-        names to new assignment by which they should be grouped.
+    grouper : Mapping[str, Collection[str]]
+        A mapping whose keys are new assignment names, and whose values are
+        collections of assignments that should be unified.
 
     Raises
     ------
@@ -212,7 +206,5 @@ def combine_assignment_versions(gb, grouper: AssignmentGrouper):
 
 
     """
-    dct = resolve_assignment_grouper(grouper, gb.assignments)
-
-    for key, value in dct.items():
+    for key, value in groups.items():
         _combine_assignment_versions(gb, key, value)

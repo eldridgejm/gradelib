@@ -2,7 +2,6 @@ from .gradebook import Gradebook, GradebookOptions, GradingGroup, combine_gradeb
 from .assignments import (
     normalize,
     Assignments,
-    LazyAssignments,
     AssignmentSelector,
     AssignmentGrouper,
 )

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from typing import Mapping, Tuple
+
 import numpy as np
 
-from ..core import Percentage, LazyAssignments
-from .._common import resolve_assignment_grouper
+
+from ..core import Percentage
 
 
 def _fmt_as_pct(f):
@@ -12,7 +14,7 @@ def _fmt_as_pct(f):
 
 def redeem(
     gradebook: Gradebook,
-    assignments: AssignmentGrouper,
+    assignments: Mapping[str, Tuple[str, str]],
     remove_parts=False,
     deduction=None,
     suffix=" with redemption",
@@ -49,20 +51,11 @@ def redeem(
         the redemption pair. Default: `None`.
 
     """
-    is_prefix_selector = isinstance(assignments, (LazyAssignments)) or (
-        not callable(assignments) and not isinstance(assignments, dict)
-    )
-
-    assignment_pairs = resolve_assignment_grouper(assignments, gradebook.assignments)
-
-    if is_prefix_selector:
-        assignment_pairs = {k + suffix: v for k, v in assignment_pairs.items()}
-
-    for value in assignment_pairs.values():
+    for value in assignments.values():
         if len(value) != 2:
             raise ValueError("Assignments must be given in pairs.")
 
-    for new_name, assignment_pair in assignment_pairs.items():
+    for new_name, assignment_pair in assignments.items():
         gradebook = _redeem(gradebook, new_name, assignment_pair, deduction)
 
     if remove_parts:

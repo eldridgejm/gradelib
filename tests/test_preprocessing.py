@@ -69,41 +69,7 @@ def test_combine_assignment_parts_with_multiple_in_dictionary():
     assert gradebook.points_earned.shape[1] == 2
 
 
-def test_combine_assignment_parts_with_callable():
-    """test that points_earned / points_possible are added across unified assignments"""
-    # given
-    columns = ["hw01", "hw01 - programming", "hw02", "hw02 - testing"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-
-    HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
-    HOMEWORK_02_PARTS = gradebook.assignments.starting_with("hw02")
-
-    def assignment_to_key(s):
-        return s.split("-")[0].strip()
-
-    # when
-    preprocessing.combine_assignment_parts(gradebook, assignment_to_key)
-
-    # then
-    assert len(gradebook.assignments) == 2
-
-    assert gradebook.points_possible["hw01"] == 52
-    assert gradebook.points_earned.loc["A1", "hw01"] == 31
-
-    assert gradebook.points_possible["hw02"] == 120
-    assert gradebook.points_earned.loc["A1", "hw02"] == 110
-
-    assert gradebook.points_possible.shape[0] == 2
-    assert gradebook.late.shape[1] == 2
-    assert gradebook.dropped.shape[1] == 2
-    assert gradebook.points_earned.shape[1] == 2
-
-
-def test_combine_assignment_parts_with_list_of_prefixes():
+def test_combine_assignment_parts_with_prefixes():
     """test that points_earned / points_possible are added across unified assignments"""
     # given
     columns = ["hw01", "hw01 - programming", "hw02", "hw02 - testing", "lab 01"]
@@ -114,37 +80,10 @@ def test_combine_assignment_parts_with_list_of_prefixes():
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
     # when
-    preprocessing.combine_assignment_parts(gradebook, ["hw01", "hw02"])
-
-    # then
-    assert len(gradebook.assignments) == 3
-
-    assert gradebook.points_possible["hw01"] == 52
-    assert gradebook.points_earned.loc["A1", "hw01"] == 31
-
-    assert gradebook.points_possible["hw02"] == 120
-    assert gradebook.points_earned.loc["A1", "hw02"] == 110
-
-    assert gradebook.points_possible.shape[0] == 3
-    assert gradebook.late.shape[1] == 3
-    assert gradebook.dropped.shape[1] == 3
-    assert gradebook.points_earned.shape[1] == 3
-
-
-def test_combine_assignment_parts_with_list_of_prefixes_as_LazyAssignments_instance():
-    """test that points_earned / points_possible are added across unified assignments"""
-    # given
-    columns = ["hw01", "hw01 - programming", "hw02", "hw02 - testing", "lab 01"]
-    p1 = pd.Series(data=[1, 30, 90, 20, 10], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20, 10], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20, 10], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-
-    hws = gradelib.LazyAssignments(lambda asmts: ["hw01", "hw02"])
-
-    # when
-    preprocessing.combine_assignment_parts(gradebook, hws)
+    preprocessing.combine_assignment_parts(
+        gradebook,
+        gradebook.assignments.starting_with("hw").group_by(lambda s: s.split(" - ")[0]),
+    )
 
     # then
     assert len(gradebook.assignments) == 3
@@ -342,7 +281,7 @@ def test_combine_assignment_versions_uses_lateness_of_turned_in_version():
     gradebook.lateness.loc["A2", "mt - version b"] = pd.Timedelta(days=2)
 
     # when
-    preprocessing.combine_assignment_versions(gradebook, ["mt"])
+    preprocessing.combine_assignment_versions(gradebook, {"mt": columns})
 
     # then
     assert gradebook.lateness.loc["A1", "mt"] == pd.Timedelta(days=3)

@@ -6,7 +6,6 @@ from .core import (
     Gradebook,
     GradebookOptions,
     Assignments,
-    LazyAssignments,
     AssignmentSelector,
     AssignmentGrouper,
     Student,

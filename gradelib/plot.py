@@ -61,7 +61,7 @@ def _plot_grade_distribution_thresholds(p, gb, y_max):
     p.grid.visible = False
 
 
-def grade_distribution(gb, scale=None, x_min=0.6, x_max=1, bin_width=0.025):
+def grade_distribution(gb, x_min=0.6, x_max=1, bin_width=0.025):
     """Visualize the grade distribution with respect to a scale.
 
     This will plot an interactive histogram of the grade distribution, with

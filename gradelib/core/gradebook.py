@@ -165,7 +165,7 @@ def combine_gradebooks(gradebooks: Collection["Gradebook"], restrict_to_students
         dropped=concatenate_table_attr("dropped"),
         notes=_concatenate_notes(gradebooks),
         grading_groups={},
-        opts=_combine_if_equal(gradebooks, "opts"),
+        options=_combine_if_equal(gradebooks, "options"),
         scale=_combine_if_equal(gradebooks, "scale"),
     )
 
@@ -305,7 +305,7 @@ class Gradebook:
         are signals to reporting code that help determine where to display
         notes. The values of the inner dictionary should be sequences of
         strings, each one a message.
-    opts : Optional[GradebookOptions]
+    options : Optional[GradebookOptions]
         An optional collection of options configuring the behavior of the
         Gradebook.
 
@@ -339,7 +339,7 @@ class Gradebook:
         are signals to reporting code that help determine where to display
         notes. The values of the inner dictionary should be iterables of
         strings, each one a message. Can be modified.
-    opts : Optional[GradebookOptions]
+    options : Optional[GradebookOptions]
         An optional collection of options configuring the behavior of the
         Gradebook.
     grading_groups : dict[str, GradingGroup]
@@ -388,7 +388,7 @@ class Gradebook:
         "notes",
         "grading_groups",
         "scale",
-        "opts",
+        "options",
     ]
 
     def __init__(
@@ -400,9 +400,9 @@ class Gradebook:
         notes=None,
         grading_groups=None,
         scale=None,
-        opts=None,
+        options=None,
     ):
-        self.opts = opts if opts is not None else GradebookOptions()
+        self.options = options if options is not None else GradebookOptions()
         self.points_earned = _cast_index_to_student_objects(points_earned)
         self.points_possible = points_possible
         self.lateness = (
@@ -481,7 +481,7 @@ class Gradebook:
         This is a dynamically-computed property; it should not be modified.
 
         """
-        fudge = self.opts.lateness_fudge
+        fudge = self.options.lateness_fudge
         return self.lateness > pd.Timedelta(fudge, unit="s")
 
     # properties: groups ---------------------------------------------------------------
@@ -592,7 +592,7 @@ class Gradebook:
 
         if new_groups:
             total_weight = sum(g.group_weight for g in new_groups.values())
-            if self.opts.allow_extra_credit:
+            if self.options.allow_extra_credit:
                 if total_weight < 1:
                     raise ValueError("Group weights must sum to >= 1.")
             elif not math.isclose(total_weight, 1):

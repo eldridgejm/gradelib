@@ -139,7 +139,7 @@ def test_students_attribute_returns_students_objects():
 # weight -------------------------------------------------------------------------------
 
 
-def test_weight_without_grading_groups_is_nan():
+def test_weight_in_group_without_grading_groups_is_nan():
     columns = ["hw01", "hw02", "lab01", "lab02"]
     p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
     p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
@@ -155,7 +155,7 @@ def test_weight_without_grading_groups_is_nan():
     assert np.isnan(gb.weight_in_group.loc["A2", "hw02"])
 
 
-def test_weight_defaults_to_being_computed_from_points_possible():
+def test_weight_in_group_defaults_to_being_computed_from_points_possible():
     columns = ["hw01", "hw02", "lab01", "lab02"]
     p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
     p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
@@ -176,7 +176,7 @@ def test_weight_defaults_to_being_computed_from_points_possible():
     assert gb.weight_in_group.loc["A2", "hw02"] == 50 / 70
 
 
-def test_weight_assignments_not_in_a_group_are_nan():
+def test_weight_in_group_assignments_not_in_a_group_are_nan():
     columns = ["hw01", "hw02", "lab01", "lab02"]
     p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
     p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
@@ -200,7 +200,7 @@ def test_weight_assignments_not_in_a_group_are_nan():
     assert np.isnan(gb.weight_in_group.loc["A2", "lab02"])
 
 
-def test_weight_takes_drops_into_account_by_renormalizing():
+def test_weight_in_group_takes_drops_into_account_by_renormalizing():
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
     p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
@@ -227,7 +227,7 @@ def test_weight_takes_drops_into_account_by_renormalizing():
     assert gb.weight_in_group.loc["A2", "hw02"] == 1.0
 
 
-def test_weight_with_all_dropped_in_group_raises():
+def test_weight_in_group_with_all_dropped_in_group_raises():
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
     p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
@@ -250,7 +250,7 @@ def test_weight_with_all_dropped_in_group_raises():
         gb.weight_in_group.loc["A1", "hw01"]
 
 
-def test_weight_with_normalization():
+def test_weight_in_group_with_normalization():
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
     p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
@@ -276,7 +276,7 @@ def test_weight_with_normalization():
     assert gb.weight_in_group.loc["A2", "lab01"] == 1.0
 
 
-def test_weight_with_normalization_and_drops():
+def test_weight_in_group_with_normalization_and_drops():
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
     p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
@@ -306,7 +306,7 @@ def test_weight_with_normalization_and_drops():
     assert gb.weight_in_group.loc["A2", "hw02"] == 1.0
 
 
-def test_weight_with_custom_weights():
+def test_weight_in_group_with_custom_weights():
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
     p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
@@ -336,7 +336,7 @@ def test_weight_with_custom_weights():
     assert gb.weight_in_group.loc["A2", "hw02"] == 0.5
 
 
-def test_weight_with_custom_weights_and_drops():
+def test_weight_in_group_with_custom_weights_and_drops():
     columns = ["hw01", "hw02", "hw03", "lab01"]
     p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
     p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")

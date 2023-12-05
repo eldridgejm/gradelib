@@ -616,8 +616,8 @@ class Gradebook:
             the weights are undefined.
 
         """
-        result = self.points_possible / self._by_group_to_by_assignment(
-            self._group_points_possible_after_drops
+        result = self.points_possible / self._by_grading_group_to_by_assignment(
+            self._points_possible_in_grading_group_after_drops
         )
 
         for _, group in self.grading_groups.items():
@@ -650,7 +650,7 @@ class Gradebook:
         total weight of the assignment group it is in. That is computed in
         :attr:`weight`.
 
-        This is a dynamically-computed property; it should not be modified.
+        This is a derived attribute; it should not be modified.
 
         Raises
         ------
@@ -667,7 +667,9 @@ class Gradebook:
             },
             dtype=float,
         )
-        return self.weight_in_group * self._by_group_to_by_assignment(group_weight)
+        return self.weight_in_group * self._by_grading_group_to_by_assignment(
+            group_weight
+        )
 
     @property
     def value(self) -> pd.DataFrame:
@@ -684,7 +686,7 @@ class Gradebook:
         The total of a student's assignment values equals their score in the
         class.
 
-        This is a dynamically-computed property; it should not be modified.
+        This is a derived attribute; it should not be modified.
 
         Raises
         ------
@@ -698,14 +700,14 @@ class Gradebook:
     # properties: scores ---------------------------------------------------------------
 
     @property
-    def _group_points_possible_after_drops(self) -> pd.DataFrame:
+    def _points_possible_in_grading_group_after_drops(self) -> pd.DataFrame:
         """A table of the number of points possible in an assignment group, after drops.
 
         Produces a table with one row per student, and one column per assignment group,
         containing the number of points possible in that group after dropped assignments
         have been removed.
 
-        This is a dynamically-computed property; it should not be modified.
+        This is a derived attribute; it should not be modified.
 
         Raises
         ------
@@ -739,17 +741,17 @@ class Gradebook:
 
     @property
     def grading_group_scores(self) -> pd.DataFrame:
-        """A table of the scores earned in each assignment group.
+        """A table of the scores earned in each grading group.
 
         Produces a DataFrame with a row for each student and a column for each
-        assignment group in which each entry is the student's score within that
-        assignment group.
+        grading group in which each entry is the student's score within that
+        grading group.
 
         This takes into account dropped assignments.
 
         If :attr:`grading_groups` has not yet been set, all entries are `NaN`.
 
-        This is a dynamically-computed property; it should not be modified.
+        This is a derived attribute; it should not be modified.
 
         """
         group_values = pd.DataFrame(
@@ -766,8 +768,8 @@ class Gradebook:
         )
         return group_values / group_weight
 
-    def _by_group_to_by_assignment(self, by_group):
-        """Creates an (students, assignments) DataFrame by tiling.
+    def _by_grading_group_to_by_assignment(self, by_group) -> pd.DataFrame:
+        """Creates a students-by-assignments table from a students-by-groups table by tiling.
 
         Parameters
         ----------
@@ -777,9 +779,9 @@ class Gradebook:
             column is "expanded" by creating a new column for each
             assignment in the group whose value is a copy of the group's
             column in the input. If a Series, it should have group names as
-            its index. The Series is first converted to a (student, groups)
-            dataframe by tiling, then to a (student, assignments) dataframe
-            using the above procedure.
+            its index. The Series is first converted to a students-by-groups
+            dataframe by copying the group value for each student, then to a
+            (student, assignments) dataframe using the above procedure.
 
         Returns
         -------
@@ -788,6 +790,7 @@ class Gradebook:
         """
 
         def _convert_df(df):
+            """Converts a students-by-groups dataframe to a students-by-assignments dataframe."""
             new_columns = {}
             for group_name in df.columns:
                 for assignment in self.grading_groups[group_name].assignment_weights:
@@ -795,6 +798,7 @@ class Gradebook:
             return pd.DataFrame(new_columns, index=pd.Index(self.students))
 
         def _convert_series(s):
+            """Converts a Series with group names as its index to a students-by-assignments dataframe."""
             new_columns = {}
             for group_name in s.index:
                 new_columns[group_name] = np.repeat(
@@ -808,10 +812,17 @@ class Gradebook:
         else:
             return _convert_df(by_group)
 
-    def _everyone_to_per_student(self, s):
-        """Converts a (groups,) or (assignments,) Series to a (students, *) DataFrame."""
+    def _everyone_to_per_student(self, s: pd.Series) -> pd.DataFrame:
+        """Converts a (groups,) or (assignments,) Series to a (students, *) DataFrame.
+
+        That is, given a Series with group or assignment names as its index,
+        creates a DataFrame with one row per student and one column per group
+        or assignment, where each entry is the value of the Series for that
+        group or assignment (each row is a copy of the Series).
+
+        """
         return pd.DataFrame(
-            np.tile(s.values, (len(self.points_earned), 1)),
+            np.tile(np.array(s.values), (len(self.points_earned), 1)),
             columns=s.index,
             index=pd.Index(self.students),
         )
@@ -826,7 +837,7 @@ class Gradebook:
 
         Does not take into account drops.
 
-        This is a dynamically-computed property; it should not be modified.
+        This is a derived attribute; it should not be modified.
 
         """
         return self.points_earned / self.points_possible
@@ -840,7 +851,7 @@ class Gradebook:
         attribute. Each entry is the overall score in the class, taking drops
         into account.
 
-        This is a dynamically-computed property; it should not be modified.
+        This is a derived attribute; it should not be modified.
 
         Raises
         ------
@@ -883,7 +894,13 @@ class Gradebook:
 
     # copying / replacing --------------------------------------------------------------
 
-    def _replace(self, **kwargs):
+    def _replace(self, **kwargs) -> "Gradebook":
+        """Create a new gradebook with some attributes replaced.
+
+        By default, all attributes are copied. Any attributes that are
+        provided as keyword arguments are replaced with the provided values.
+
+        """
         extra = set(kwargs.keys()) - set(self._kwarg_names)
         assert not extra, f"Invalid kwargs provided: {extra}"
 
@@ -902,7 +919,7 @@ class Gradebook:
 
         return self.__class__(**new_kwargs)
 
-    def copy(self):
+    def copy(self) -> "Gradebook":
         """Copy the gradebook.
 
         Returns
@@ -939,8 +956,9 @@ class Gradebook:
         points_possible : float
             The maximum number of points possible on the assignment.
         lateness : Series[pd.Timedelta]
-            How late each student turned in the assignment late. Default: all
-            zero seconds.
+            How late each student turned in the assignment. Turning in the assignment
+            on time should be represented by a pd.Timedelta of zero seconds.
+            Default: all zero seconds.
         dropped : Series[bool]
             Whether the assignment should be dropped for any given student.
             Default: all False.
@@ -948,8 +966,9 @@ class Gradebook:
         Raises
         ------
         ValueError
-            If an assignment with the given name already exists, or if grades for a student
-            are missing / grades for an unknown student are provided.
+            If an assignment with the given name already exists, or if grades
+            for a student are missing / grades for an unknown student are
+            provided.
 
         """
         if name in self.assignments:
@@ -979,21 +998,18 @@ class Gradebook:
         self.lateness[name] = lateness
         self.dropped[name] = dropped
 
-    def restrict_to_assignments(self, assignments: Sequence[str]):
-        """Restrict the gradebook to only the supplied assignments.
+    def restrict_to_assignments(self, assignments: Collection[str]):
+        """Restrict the gradebook to only the supplied assignments, removing all others.
+
+        Modifies the gradebook in-place.
 
         If the :attr:`grading_groups` attribute been set, it is reset to
-        ``{}`` by this operation.
+        an empty dictionary by this operation.
 
         Parameters
         ----------
-        assignments : AssignmentSelector
+        assignments : Collection[str]
             A collection of assignment names.
-
-        Raises
-        ------
-        KeyError
-            If an assignment was specified that was not in the gradebook.
 
         """
         if callable(assignments):
@@ -1011,21 +1027,18 @@ class Gradebook:
 
         self.grading_groups = {}
 
-    def remove_assignments(self, assignments: Sequence[str]):
-        """Removes assignments, mutating the gradebook.
+    def remove_assignments(self, assignments: Collection[str]):
+        """Removes assignments from the gradebook.
+
+        Modifies the gradebook in-place.
 
         If the :attr:`grading_groups` attribute been set, it is reset to
-        ``{}`` by this operation.
+        an empty dictionary by this operation.
 
         Parameters
         ----------
-        assignments : AssignmentSelector
+        assignments : Collection[str]
             A collection of assignments names that will be removed.
-
-        Raises
-        ------
-        KeyError
-            If an assignment was specified that was not in the gradebook.
 
         """
         # TODO: preserve order better
@@ -1044,8 +1057,10 @@ class Gradebook:
     def rename_assignments(self, mapping: Mapping[str, str]):
         """Renames assignments.
 
+        Modifies the gradebook in-place.
+
         If the :attr:`grading_groups` attribute been set, it is reset to
-        ``{}`` by this operation.
+        an empty dictionary by this operation.
 
         Parameters
         ----------
@@ -1071,7 +1086,7 @@ class Gradebook:
 
     # adding/removing students ---------------------------------------------------------
 
-    def restrict_to_students(self, to: Collection[str]):
+    def restrict_to_students(self, to: Collection[Union[str, Student]]):
         """Restrict the gradebook to only the supplied PIDs.
 
         Parameters
@@ -1088,7 +1103,7 @@ class Gradebook:
         pids = list(to)
         extras = set(pids) - set(self.pids)
         if extras:
-            raise KeyError(f"These PIDs were not in the gradebook: {extras}.")
+            raise KeyError(f"These students were not in the gradebook: {extras}.")
 
         self.points_earned = self.points_earned.loc[pids]
         self.lateness = self.lateness.loc[pids]
@@ -1096,15 +1111,16 @@ class Gradebook:
 
     # notes ----------------------------------------------------------------------------
 
-    def add_note(self, pid: str, channel: str, message: str):
-        """Convenience method for adding a note.
+    def add_note(self, student: Union[str, Student], channel: str, message: str):
+        """Add a grading note.
 
         Mutates the gradebook.
 
         Parameters
         ----------
-        pid : str
-            The pid of the student for which the note should be added.
+        pid : Union[str, Student]
+            The PID of the student for which the note should be added, or a
+            :class:`Student` object.
 
         channel : str
             The channel that the note should be added to. Valid channels are:
@@ -1116,6 +1132,11 @@ class Gradebook:
             The note's message.
 
         """
+        if isinstance(student, Student):
+            pid = student.pid
+        else:
+            pid = student
+
         if pid not in self.notes:
             self.notes[pid] = {}
 
@@ -1123,48 +1144,3 @@ class Gradebook:
             self.notes[pid][channel] = []
 
         self.notes[pid][channel].append(message)
-
-    # apply ----------------------------------------------------------------------------
-
-    def apply(
-        self,
-        transformations: Union[Sequence[Callable], Callable],
-    ) -> "Gradebook":
-        """Apply transformation(s) to the gradebook.
-
-        A transformation is a callable that takes in a gradebook object and
-        returns a gradebook object. No assumption is made as to whether the
-        transformation mutates the input or produces a copy (it could return
-        the instance given as input, for example).
-
-        If a sequence of transformations is provided, the output of a
-        transformation is used as the input to the next transformation in the
-        sequence.
-
-        The gradebook is copied before handing it to the first transformation,
-        so self is guaranteed to be unmodified. This allows transformations
-        which mutate for performance reasons while still guaranteeing that the
-        overall application does not mutate this gradebook.
-
-        Parameters
-        ----------
-        transformations : Sequence[Callable] or Callable
-            Either a single gradebook transformation or a sequence of
-            transformations.
-
-        Returns
-        -------
-        Gradebook
-            The result of the last transformation in the sequence.
-
-        """
-        if isinstance(transformations, Sequence):
-            transformations = list(transformations)
-        else:
-            transformations = [transformations]
-
-        result = self.copy()
-        for transformation in transformations:
-            result = transformation(result)
-
-        return result

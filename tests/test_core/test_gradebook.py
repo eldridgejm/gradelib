@@ -1310,6 +1310,19 @@ def test_restrict_to_students_raises_if_pid_does_not_exist():
         example.restrict_to_students(pids)
 
 
+def test_restrict_to_students_with_students_objects():
+    # when
+    example = GRADESCOPE_EXAMPLE.copy()
+    example.restrict_to_students(example.students[0:3])
+
+    # then
+    assert len(example.pids) == 3
+    assert example.students[0].name == "Fitzgerald Zelda"
+    assert example.students[1].name == "Obama Barack"
+    assert example.students[2].name == "Eldridge Justin"
+    assert_gradebook_is_sound(example)
+
+
 # tests: free functions ================================================================
 
 # combine_gradebooks -------------------------------------------------------------------

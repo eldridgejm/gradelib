@@ -1,4 +1,4 @@
-"""Core type for managing a collection of grades."""
+"""Defines the Gradebook object for managing a collection of grades."""
 
 import copy
 import dataclasses
@@ -7,25 +7,19 @@ from typing import Sequence, Collection, Mapping, Union, Tuple, Optional, Callab
 from numbers import Real
 
 from ..scales import DEFAULT_SCALE, map_scores_to_letter_grades
+from .._util import empty_mask_like
 from .student import Student, Students
-from .assignments import Assignments, AssignmentSelector
+from .assignments import Assignments
 
 import numpy as np
 import pandas as pd
 
 
-# private helper functions ---------------------------------------------------------------------
-
-
-def _empty_mask_like(table: pd.DataFrame) -> pd.DataFrame:
-    """Given a dataframe, create another just like it with every entry False."""
-    empty = table.copy()
-    empty.iloc[:, :] = False
-    return empty.astype(bool)
+# private helper functions =============================================================
 
 
 def _empty_lateness_like(table: pd.DataFrame) -> pd.DataFrame:
-    """Given a dataframe, create another just like it with every entry a timedelta of 0."""
+    """Given a dataframe, create another like it with every entry a timedelta of 0."""
     empty = table.copy()
     empty.iloc[:, :] = 0
     for column in empty.columns:
@@ -33,7 +27,7 @@ def _empty_lateness_like(table: pd.DataFrame) -> pd.DataFrame:
     return empty
 
 
-def _cast_index(table: pd.DataFrame) -> pd.DataFrame:
+def _cast_index_to_student_objects(table: pd.DataFrame) -> pd.DataFrame:
     """Ensure that the dataframe index contains Student objects."""
 
     def _cast(x):
@@ -46,7 +40,9 @@ def _cast_index(table: pd.DataFrame) -> pd.DataFrame:
     return table
 
 
-def _concatenate_notes(gradebooks: Sequence["Gradebook"]):
+def _concatenate_notes(
+    gradebooks: Sequence["Gradebook"],
+) -> dict[str, dict[str, list[str]]]:
     """Concatenates the notes from a sequence of gradebooks."""
     notes = {}
     for gradebook in gradebooks:
@@ -68,6 +64,23 @@ def _combine_if_equal(gradebooks: Collection["Gradebook"], attr: str):
 
     If it is, the common attribute is returned. Otherwise, a `ValueError` is raised.
 
+    Parameters
+    ----------
+    gradebooks : Collection[Gradebook]
+        The gradebooks to check.
+    attr : str
+        The attribute to check.
+
+    Returns
+    -------
+    object
+        The value of the attribute.
+
+    Raises
+    ------
+    ValueError
+        If the attribute is not the same in all gradebooks.
+
     """
     obj = None
     for gradebook in gradebooks:
@@ -80,36 +93,31 @@ def _combine_if_equal(gradebooks: Collection["Gradebook"], attr: str):
     return obj
 
 
-# public functions ---------------------------------------------------------------------
+# public functions =====================================================================
 
 
 def combine_gradebooks(gradebooks: Collection["Gradebook"], restrict_to_students=None):
-    """Create a gradebook by safely combining several existing gradebooks.
+    """Create a new :class:`Gradebook` by safely combining existing gradebooks.
 
-    It is crucial that the combined gradebooks have exactly the same students
-    -- we don't want students to have missing grades. This function checks to
-    make sure that the gradebooks have the same students before combining them.
-    Similarly, it verifies that each gradebook has unique assignments and group
-    names, so that no conflicts occur when combining them.
+    The gradebooks being combined must all have the same students, and an
+    assignment name cannot appear in more than one gradebook. If either of
+    these conditions are not met, a `ValueError` is raised.
 
     The new gradebook's assignments groups are reset; there are no groups.
 
-    If the scales are the same, the new scale is set to be the same as the old.
-    If they are different, a `ValueError` is raised.
-
-    If the options are the same, the new options are set to be the same as the
-    old. If they are different, a `ValueError` is raised.
+    If the scales are the same in each gradebook, the new gradebook's scale is
+    set accordingly. If they are different, a `ValueError` is raised. The same
+    is true for the ``options`` attribute.
 
     Parameters
     ----------
     gradebooks : Collection[Gradebook]
-        The gradebooks to combine. Must have matching indices and unique
-        column names.
+        The gradebooks to combine.
     restrict_to_students : Optional[Collection[str]]
-        If provided, each input gradebook will be restrict to the PIDs
-        given before attempting to combine them. This is a convenience
-        option, and it simply calls :meth:`Gradebook.restrict_to_students` on
-        each of the inputs.  Default: None
+        If provided, each input gradebook will be restricted to the PIDs given
+        before attempting to combine them. This is a convenience option, and it
+        simply calls :meth:`Gradebook.restrict_to_students` on each of the
+        inputs. Default: None
 
     Returns
     -------
@@ -120,8 +128,7 @@ def combine_gradebooks(gradebooks: Collection["Gradebook"], restrict_to_students
     ------
     ValueError
         If the PID indices of gradebooks do not match; if there is a duplicate
-        assignment name; a duplicate group name; the options do not match; the
-        scales do not match.
+        assignment name; the options do not match; the scales do not match.
 
     """
     gradebooks = [g.copy() for g in gradebooks]
@@ -146,22 +153,24 @@ def combine_gradebooks(gradebooks: Collection["Gradebook"], restrict_to_students
         raise ValueError("Gradebooks have duplicate assignments.")
 
     # create the combined notebook
-    def concat_attr(a, axis=1):
+    def concatenate_table_attr(a: str, axis=1):
         """Create a DF/Series by combining the same attribute across gradebooks."""
-        all_tables = [getattr(g, a) for g in gradebooks]
+        all_tables = [getattr(gb, a) for gb in gradebooks]
         return pd.concat(all_tables, axis=axis)
 
     return Gradebook(
-        points_earned=concat_attr("points_earned"),
-        points_possible=concat_attr("points_possible", axis=0),
-        lateness=concat_attr("lateness"),
-        dropped=concat_attr("dropped"),
+        points_earned=concatenate_table_attr("points_earned"),
+        points_possible=concatenate_table_attr("points_possible", axis=0),
+        lateness=concatenate_table_attr("lateness"),
+        dropped=concatenate_table_attr("dropped"),
         notes=_concatenate_notes(gradebooks),
         grading_groups={},
         opts=_combine_if_equal(gradebooks, "opts"),
         scale=_combine_if_equal(gradebooks, "scale"),
     )
 
+
+# public classes =======================================================================
 
 # GradebookOptions ---------------------------------------------------------------------
 
@@ -180,12 +189,12 @@ class GradebookOptions:
 
     allow_extra_credit: bool
         If `True`, grading group weights are allowed to sum to beyond one,
-        effectively allowing extra credit. Default: `False`.
+        effectively allowing extra credit. Default: `True`.
 
     """
 
     lateness_fudge: int = 5 * 60
-    allow_extra_credit: bool = False
+    allow_extra_credit: bool = True
 
 
 # GradingGroup --------------------------------------------------------------------------------
@@ -288,13 +297,13 @@ class Gradebook:
         A Boolean dataframe with the same columns/index as `points_earned`. An
         entry that is `True` indicates that the assignment should be dropped.
         If `None` is passed, a dataframe of all `False` is used by default.
-    notes : Optional[dict]
+    notes : Optional[Mapping[str, Mapping[str, Sequence[str]]]]
         A nested dictionary of notes, possibly used by report generating code.
         The keys of the outer dictionary should be student PIDs, and the values
         should be dictionaries. The keys of the inner dictionary should specify
         a note "channel", and can be either "late", "drop", or "misc"; these
         are signals to reporting code that help determine where to display
-        notes. The values of the inner dictionary should be iterables of
+        notes. The values of the inner dictionary should be sequences of
         strings, each one a message.
     opts : Optional[GradebookOptions]
         An optional collection of options configuring the behavior of the
@@ -394,13 +403,13 @@ class Gradebook:
         opts=None,
     ):
         self.opts = opts if opts is not None else GradebookOptions()
-        self.points_earned = _cast_index(points_earned)
+        self.points_earned = _cast_index_to_student_objects(points_earned)
         self.points_possible = points_possible
         self.lateness = (
             lateness if lateness is not None else _empty_lateness_like(points_earned)
         )
         self.dropped = (
-            dropped if dropped is not None else _empty_mask_like(points_earned)
+            dropped if dropped is not None else empty_mask_like(points_earned)
         )
         self.notes = {} if notes is None else notes
         self.grading_groups = {} if grading_groups is None else grading_groups
@@ -988,7 +997,7 @@ class Gradebook:
         self.lateness[name] = lateness
         self.dropped[name] = dropped
 
-    def restrict_to_assignments(self, assignments: AssignmentSelector):
+    def restrict_to_assignments(self, assignments: Sequence[str]):
         """Restrict the gradebook to only the supplied assignments.
 
         If the :attr:`grading_groups` attribute been set, it is reset to
@@ -1020,7 +1029,7 @@ class Gradebook:
 
         self.grading_groups = {}
 
-    def remove_assignments(self, assignments: AssignmentSelector):
+    def remove_assignments(self, assignments: Sequence[str]):
         """Removes assignments, mutating the gradebook.
 
         If the :attr:`grading_groups` attribute been set, it is reset to

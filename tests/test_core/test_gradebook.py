@@ -53,7 +53,7 @@ def as_gradebook_type(gb, gradebook_cls):
         lateness=gb.lateness,
         dropped=gb.dropped,
         notes=gb.notes,
-        opts=gb.opts,
+        options=gb.options,
     )
 
 
@@ -111,7 +111,7 @@ def test_lateness_fudge_can_be_changed():
     assert gradebook.late.loc["A1", "hw01"] == False
     assert gradebook.late.loc["A2", "hw02"] == True
 
-    gradebook.opts.lateness_fudge = 10
+    gradebook.options.lateness_fudge = 10
 
     assert gradebook.late.loc["A1", "hw01"] == True
     assert gradebook.late.loc["A2", "hw02"] == True
@@ -870,7 +870,7 @@ def test_groups_setter_allows_extra_credit_if_option_set():
     points_possible = pd.Series([2, 50, 100, 20, 4], index=columns)
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
-    gradebook.opts.allow_extra_credit = True
+    gradebook.options.allow_extra_credit = True
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
     LABS = gradebook.assignments.starting_with("lab")
@@ -1366,23 +1366,23 @@ def test_combine_gradebooks_uses_existing_options_if_all_the_same():
     ex_1 = GRADESCOPE_EXAMPLE.copy()
     ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
 
-    ex_1.opts.lateness_fudge = 789
-    ex_2.opts.lateness_fudge = 789
+    ex_1.options.lateness_fudge = 789
+    ex_2.options.lateness_fudge = 789
 
     combined = gradelib.combine_gradebooks(
         [ex_1, ex_2],
         restrict_to_students=ROSTER.index,
     )
 
-    assert combined.opts.lateness_fudge == 789
+    assert combined.options.lateness_fudge == 789
 
 
 def test_combine_gradebooks_raises_if_options_do_not_match():
     ex_1 = GRADESCOPE_EXAMPLE.copy()
     ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
 
-    ex_1.opts.lateness_fudge = 5000
-    ex_2.opts.lateness_fudge = 6000
+    ex_1.options.lateness_fudge = 5000
+    ex_2.options.lateness_fudge = 6000
 
     with pytest.raises(ValueError):
         combined = gradelib.combine_gradebooks(

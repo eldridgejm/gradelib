@@ -49,7 +49,7 @@ def test_with_callable_deduction():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradebook.opts.lateness_fudge = 60 * 5
+    gradebook.options.lateness_fudge = 60 * 5
 
     def deduction(info):
         return Points(info.number)
@@ -86,7 +86,7 @@ def test_percentage_deduction_applies_percentage_to_points_earned():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradebook.opts.lateness_fudge = 60 * 5
+    gradebook.options.lateness_fudge = 60 * 5
 
     gradelib.policies.penalize_lates(gradebook, deduction=Percentage(0.5))
 
@@ -121,7 +121,7 @@ def test_with_callable_deduction_does_not_count_forgiven():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradebook.opts.lateness_fudge = 60 * 5
+    gradebook.options.lateness_fudge = 60 * 5
 
     def deduction(info):
         return Points(info.number)
@@ -154,7 +154,7 @@ def test_respects_lateness_fudge():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradebook.opts.lateness_fudge = 60 * 5
+    gradebook.options.lateness_fudge = 60 * 5
 
     gradelib.policies.penalize_lates(gradebook)
 

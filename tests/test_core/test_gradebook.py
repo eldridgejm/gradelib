@@ -149,10 +149,10 @@ def test_weight_without_grading_groups_is_nan():
 
     gb = gradelib.Gradebook(points_earned, points_possible)
 
-    assert np.isnan(gb.weight.loc["A1", "hw01"])
-    assert np.isnan(gb.weight.loc["A1", "hw02"])
-    assert np.isnan(gb.weight.loc["A2", "hw01"])
-    assert np.isnan(gb.weight.loc["A2", "hw02"])
+    assert np.isnan(gb.weight_in_group.loc["A1", "hw01"])
+    assert np.isnan(gb.weight_in_group.loc["A1", "hw02"])
+    assert np.isnan(gb.weight_in_group.loc["A2", "hw01"])
+    assert np.isnan(gb.weight_in_group.loc["A2", "hw02"])
 
 
 def test_weight_defaults_to_being_computed_from_points_possible():
@@ -170,10 +170,10 @@ def test_weight_defaults_to_being_computed_from_points_possible():
         "labs": (gb.assignments.starting_with("lab"), 0.25),
     }
 
-    assert gb.weight.loc["A1", "hw01"] == 20 / 70
-    assert gb.weight.loc["A1", "hw02"] == 50 / 70
-    assert gb.weight.loc["A2", "hw01"] == 20 / 70
-    assert gb.weight.loc["A2", "hw02"] == 50 / 70
+    assert gb.weight_in_group.loc["A1", "hw01"] == 20 / 70
+    assert gb.weight_in_group.loc["A1", "hw02"] == 50 / 70
+    assert gb.weight_in_group.loc["A2", "hw01"] == 20 / 70
+    assert gb.weight_in_group.loc["A2", "hw02"] == 50 / 70
 
 
 def test_weight_assignments_not_in_a_group_are_nan():
@@ -190,14 +190,14 @@ def test_weight_assignments_not_in_a_group_are_nan():
         "homeworks": (gb.assignments.starting_with("hw"), 1),
     }
 
-    assert gb.weight.loc["A1", "hw01"] == 20 / 70
-    assert gb.weight.loc["A1", "hw02"] == 50 / 70
-    assert gb.weight.loc["A2", "hw01"] == 20 / 70
-    assert gb.weight.loc["A2", "hw02"] == 50 / 70
-    assert np.isnan(gb.weight.loc["A1", "lab01"])
-    assert np.isnan(gb.weight.loc["A1", "lab02"])
-    assert np.isnan(gb.weight.loc["A2", "lab01"])
-    assert np.isnan(gb.weight.loc["A2", "lab02"])
+    assert gb.weight_in_group.loc["A1", "hw01"] == 20 / 70
+    assert gb.weight_in_group.loc["A1", "hw02"] == 50 / 70
+    assert gb.weight_in_group.loc["A2", "hw01"] == 20 / 70
+    assert gb.weight_in_group.loc["A2", "hw02"] == 50 / 70
+    assert np.isnan(gb.weight_in_group.loc["A1", "lab01"])
+    assert np.isnan(gb.weight_in_group.loc["A1", "lab02"])
+    assert np.isnan(gb.weight_in_group.loc["A2", "lab01"])
+    assert np.isnan(gb.weight_in_group.loc["A2", "lab02"])
 
 
 def test_weight_takes_drops_into_account_by_renormalizing():
@@ -221,10 +221,10 @@ def test_weight_takes_drops_into_account_by_renormalizing():
     # then
     # - dropped assignments have a weight of zero
     # - all other assignments have a renormalized weight
-    assert gb.weight.loc["A1", "hw01"] == 0.0
-    assert gb.weight.loc["A1", "hw02"] == 50 / 80
-    assert gb.weight.loc["A2", "hw01"] == 0.0
-    assert gb.weight.loc["A2", "hw02"] == 1.0
+    assert gb.weight_in_group.loc["A1", "hw01"] == 0.0
+    assert gb.weight_in_group.loc["A1", "hw02"] == 50 / 80
+    assert gb.weight_in_group.loc["A2", "hw01"] == 0.0
+    assert gb.weight_in_group.loc["A2", "hw02"] == 1.0
 
 
 def test_weight_with_all_dropped_in_group_raises():
@@ -247,7 +247,7 @@ def test_weight_with_all_dropped_in_group_raises():
 
     # then
     with pytest.raises(ValueError):
-        gb.weight.loc["A1", "hw01"]
+        gb.weight_in_group.loc["A1", "hw01"]
 
 
 def test_weight_with_normalization():
@@ -271,9 +271,9 @@ def test_weight_with_normalization():
         ),
     }
 
-    assert gb.weight.loc["A1", "hw01"] == 1 / 3
-    assert gb.weight.loc["A1", "hw02"] == 1 / 3
-    assert gb.weight.loc["A2", "lab01"] == 1.0
+    assert gb.weight_in_group.loc["A1", "hw01"] == 1 / 3
+    assert gb.weight_in_group.loc["A1", "hw02"] == 1 / 3
+    assert gb.weight_in_group.loc["A2", "lab01"] == 1.0
 
 
 def test_weight_with_normalization_and_drops():
@@ -301,9 +301,9 @@ def test_weight_with_normalization_and_drops():
         ),
     }
 
-    assert gb.weight.loc["A1", "hw01"] == 1 / 2
-    assert gb.weight.loc["A1", "hw02"] == 0.0
-    assert gb.weight.loc["A2", "hw02"] == 1.0
+    assert gb.weight_in_group.loc["A1", "hw01"] == 1 / 2
+    assert gb.weight_in_group.loc["A1", "hw02"] == 0.0
+    assert gb.weight_in_group.loc["A2", "hw02"] == 1.0
 
 
 def test_weight_with_custom_weights():
@@ -331,9 +331,9 @@ def test_weight_with_custom_weights():
         ),
     }
 
-    assert gb.weight.loc["A1", "hw01"] == 0.3
-    assert gb.weight.loc["A1", "hw02"] == 0.5
-    assert gb.weight.loc["A2", "hw02"] == 0.5
+    assert gb.weight_in_group.loc["A1", "hw01"] == 0.3
+    assert gb.weight_in_group.loc["A1", "hw02"] == 0.5
+    assert gb.weight_in_group.loc["A2", "hw02"] == 0.5
 
 
 def test_weight_with_custom_weights_and_drops():
@@ -365,10 +365,10 @@ def test_weight_with_custom_weights_and_drops():
         ),
     }
 
-    assert gb.weight.loc["A1", "hw01"] == 0.3 / 0.5
-    assert gb.weight.loc["A1", "hw02"] == 0.0
-    assert gb.weight.loc["A1", "hw03"] == 0.2 / 0.5
-    assert gb.weight.loc["A2", "hw02"] == 1.0
+    assert gb.weight_in_group.loc["A1", "hw01"] == 0.3 / 0.5
+    assert gb.weight_in_group.loc["A1", "hw02"] == 0.0
+    assert gb.weight_in_group.loc["A1", "hw03"] == 0.2 / 0.5
+    assert gb.weight_in_group.loc["A2", "hw02"] == 1.0
 
 
 # overall_weight -----------------------------------------------------------------------

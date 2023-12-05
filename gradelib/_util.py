@@ -22,3 +22,15 @@ def in_jupyter_notebook() -> bool:
             return False  # Other type (?)
     except NameError:
         return False
+
+
+def ensure_df(x) -> pd.DataFrame:
+    """Helps convince the type checker that a variable is a DataFrame."""
+    assert isinstance(x, pd.DataFrame)
+    return x
+
+
+def ensure_series(x) -> pd.Series:
+    """Helps convince the type checker that a variable is a Series."""
+    assert isinstance(x, pd.Series)
+    return x

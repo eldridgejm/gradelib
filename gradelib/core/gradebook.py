@@ -7,7 +7,7 @@ from typing import Sequence, Collection, Mapping, Union, Tuple, Optional, Callab
 from numbers import Real
 
 from ..scales import DEFAULT_SCALE, map_scores_to_letter_grades
-from .._util import empty_mask_like
+from .._util import empty_mask_like, ensure_df, ensure_series
 from .student import Student, Students
 from .assignments import Assignments
 
@@ -93,6 +93,16 @@ def _combine_if_equal(gradebooks: Collection["Gradebook"], attr: str):
     return obj
 
 
+def _copy_notes(
+    notes: Mapping[str, Mapping[str, Sequence[str]]]
+) -> dict[str, dict[str, list[str]]]:
+    """Copy a mapping containing notes into a dictionary."""
+    result = {}
+    for outer_key, outer_value in notes.items():
+        result[outer_key] = {k: list(v) for k, v in outer_value.items()}
+    return result
+
+
 # public functions =====================================================================
 
 
@@ -159,10 +169,12 @@ def combine_gradebooks(gradebooks: Collection["Gradebook"], restrict_to_students
         return pd.concat(all_tables, axis=axis)
 
     return Gradebook(
-        points_earned=concatenate_table_attr("points_earned"),
-        points_possible=concatenate_table_attr("points_possible", axis=0),
-        lateness=concatenate_table_attr("lateness"),
-        dropped=concatenate_table_attr("dropped"),
+        points_earned=ensure_df(concatenate_table_attr("points_earned")),
+        points_possible=ensure_series(
+            concatenate_table_attr("points_possible", axis=0)
+        ),
+        lateness=ensure_df(concatenate_table_attr("lateness")),
+        dropped=ensure_df(concatenate_table_attr("dropped")),
         notes=_concatenate_notes(gradebooks),
         grading_groups={},
         options=_combine_if_equal(gradebooks, "options"),
@@ -219,6 +231,7 @@ class GradingGroup:
         one, or if the group weight is not between 0 and 1.
     TypeError
         If the assignment weights are not in the form of a dictionary.
+
     """
 
     _attrs = [
@@ -264,6 +277,7 @@ class GradingGroup:
         return all(getattr(self, attr) == getattr(other, attr) for attr in self._attrs)
 
 
+# type alias for the multiple valid ways to specify a grading group
 GradingGroupDefinition = Union[Real, Tuple[Mapping[str, Real], Real], GradingGroup]
 
 
@@ -292,7 +306,8 @@ class Gradebook:
         A dataframe of `pd.Timedelta` objects with the same columns/index as
         `points_earned`. An entry in the dataframe records how late a student
         turned in the assignment. If `None` is passed, a dataframe of zero
-        second timedeltas is used by default.
+        second timedeltas is used by default, effectively indicating that no
+        assignments were late.
     dropped : Optional[pandas.DataFrame]
         A Boolean dataframe with the same columns/index as `points_earned`. An
         entry that is `True` indicates that the assignment should be dropped.
@@ -301,48 +316,14 @@ class Gradebook:
         A nested dictionary of notes, possibly used by report generating code.
         The keys of the outer dictionary should be student PIDs, and the values
         should be dictionaries. The keys of the inner dictionary should specify
-        a note "channel", and can be either "late", "drop", or "misc"; these
-        are signals to reporting code that help determine where to display
-        notes. The values of the inner dictionary should be sequences of
-        strings, each one a message.
+        a note channel, and can be either "late", "drop", or "misc"; these are
+        signals to reporting code that help determine where to display notes.
+        The values of the inner dictionary should be sequences of strings, each
+        one a message.
     options : Optional[GradebookOptions]
-        An optional collection of options configuring the behavior of the
-        Gradebook.
-
-    Attributes
-    ----------
-    points_earned : pandas.DataFrame
-        A dataframe with one row per student, and one column for each
-        assignment. Each entry is the raw number of points earned by the
-        student on the given assignment. The index of the dataframe should
-        consist of :class:`Student` objects. This dataframe can be modified.
-    points_possible : pandas.Series
-        A series containing the maximum number of points possible for each
-        assignment. The index of the series should match the columns of the
-        `points_earned` dataframe. This Series can be modified.
-    lateness : Optional[pandas.DataFrame]
-        A dataframe of `pd.Timedelta` objects with the same columns/index as
-        `points_earned`. An entry in the dataframe records how late a student
-        turned in the assignment. If `None` is passed, a dataframe of zero
-        second timedeltas is used by default. See :attr:`late` for a Boolean
-        version of the lateness. This dataframe can be modified.
-    dropped : Optional[pandas.DataFrame]
-        A Boolean dataframe with the same columns/index as `points_earned`. An
-        entry that is `True` indicates that the assignment should be dropped.
-        If `None` is passed, a dataframe of all `False` is used by default.
-        This dataframe can be modified.
-    notes : Optional[dict]
-        A nested dictionary of notes, possibly used by report generating code.
-        The keys of the outer dictionary should be student PIDs, and the values
-        should be dictionaries. The keys of the inner dictionary should specify
-        a note "channel", and can be either "late", "drop", or "misc"; these
-        are signals to reporting code that help determine where to display
-        notes. The values of the inner dictionary should be iterables of
-        strings, each one a message. Can be modified.
-    options : Optional[GradebookOptions]
-        An optional collection of options configuring the behavior of the
-        Gradebook.
-    grading_groups : dict[str, GradingGroup]
+        Options controlling the behavior of the Gradebook. If not provided,
+        default options are used.
+    grading_groups : Mapping[str, GradingGroup]
         A mapping from assignment group names (strings) to :class:`GradingGroup`
         objects representing a group of assignments. The default is simply ``{}``.
 
@@ -373,7 +354,7 @@ class Gradebook:
         ...     "exam": 0.25
         ... }
 
-    scale : Optional[OrderedMapping]
+    scale : Optional[Mapping]
         An ordered mapping from letter grades to score thresholds used to
         determine overall letter grades. If not provided,
         :mod:`gradelib.scales.DEFAULT_SCALE` is used.
@@ -393,14 +374,14 @@ class Gradebook:
 
     def __init__(
         self,
-        points_earned,
-        points_possible,
-        lateness=None,
-        dropped=None,
-        notes=None,
-        grading_groups=None,
-        scale=None,
-        options=None,
+        points_earned: pd.DataFrame,
+        points_possible: pd.Series,
+        lateness: Optional[pd.DataFrame] = None,
+        dropped: Optional[pd.DataFrame] = None,
+        notes: Optional[Mapping[str, Mapping[str, Sequence[str]]]] = None,
+        grading_groups: Optional[Mapping[str, GradingGroupDefinition]] = None,
+        scale: Optional[Mapping] = None,
+        options: Optional[GradebookOptions] = None,
     ):
         self.options = options if options is not None else GradebookOptions()
         self.points_earned = _cast_index_to_student_objects(points_earned)
@@ -411,7 +392,7 @@ class Gradebook:
         self.dropped = (
             dropped if dropped is not None else empty_mask_like(points_earned)
         )
-        self.notes = {} if notes is None else notes
+        self.notes = {} if notes is None else _copy_notes(notes)
         self.grading_groups = {} if grading_groups is None else grading_groups
         self.scale = DEFAULT_SCALE if scale is None else scale
 
@@ -428,7 +409,7 @@ class Gradebook:
     def assignments(self) -> Assignments:
         """All assignments in the gradebook.
 
-        This is a dynamically-computed property; it should not be modified.
+        This is a derived attribute; it should not be modified.
 
         Returns
         -------
@@ -441,7 +422,7 @@ class Gradebook:
     def pids(self) -> set[str]:
         """All student PIDs.
 
-        This is a dynamically-computed property; it should not be modified.
+        This is a derived attribute; it should not be modified.
 
         Returns
         -------
@@ -457,7 +438,7 @@ class Gradebook:
         Returned in the order they appear in the indices of the `points_earned`
         attribute.
 
-        This is a dynamically-computed property; it should not be modified.
+        This is a derived attribute; it should not be modified.
 
         Returns
         -------
@@ -473,12 +454,13 @@ class Gradebook:
         Will have the same index and columns as the `points_earned` attribute.
 
         This is computed from the :attr:`lateness` attribute using the
-        :attr:`GradebookOptions.lateness_fudge` option. If the lateness is less than the
-        lateness fudge, the assignment is considered on-time; otherwise, it is
-        considered late. This can be useful to work around grade sources whose
-        reported lateness is not always reliable, such as Gradescope.
+        :attr:`GradebookOptions.lateness_fudge` option. If the lateness is less
+        than the lateness fudge, the assignment is considered on-time;
+        otherwise, it is considered late. This can be useful to work around
+        grade sources whose reported lateness is not always reliable, such as
+        Gradescope.
 
-        This is a dynamically-computed property; it should not be modified.
+        This is a derived attribute; it should not be modified.
 
         """
         fudge = self.options.lateness_fudge
@@ -493,7 +475,7 @@ class Gradebook:
     @grading_groups.setter
     def grading_groups(
         self,
-        value: dict[str, GradingGroupDefinition],
+        value: Mapping[str, GradingGroupDefinition],
     ):
         """.grading_groups setter that accepts several difference formats, for convenience.
 
@@ -606,7 +588,7 @@ class Gradebook:
     # properties: weights and values ---------------------------------------------------
 
     @property
-    def weight(self) -> pd.DataFrame:
+    def weight_in_group(self) -> pd.DataFrame:
         """A table of assignment weights relative to their assignment group.
 
         If :attr:`grading_groups` is set, this computes a table of the same
@@ -625,7 +607,7 @@ class Gradebook:
         Note that this is **not** the overall weight towards to the overall
         score. That is computed in :attr:`overall_weight`.
 
-        This is a dynamically-computed property; it should not be modified.
+        This is a derived attribute; it should not be modified.
 
         Raises
         ------
@@ -665,8 +647,8 @@ class Gradebook:
         *all* assignments in a group have been dropped, `ValueError` is raised.
 
         Note that this is **not** the weight of the assignment relative to the
-        total weight of the assignment group it is in. That is That is computed
-        in :attr:`weight`.
+        total weight of the assignment group it is in. That is computed in
+        :attr:`weight`.
 
         This is a dynamically-computed property; it should not be modified.
 
@@ -685,7 +667,7 @@ class Gradebook:
             },
             dtype=float,
         )
-        return self.weight * self._by_group_to_by_assignment(group_weight)
+        return self.weight_in_group * self._by_group_to_by_assignment(group_weight)
 
     @property
     def value(self) -> pd.DataFrame:
@@ -1023,7 +1005,7 @@ class Gradebook:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
 
         self.points_earned = self.points_earned.loc[:, assignments]
-        self.points_possible = self.points_possible[assignments]
+        self.points_possible = self.points_possible.loc[assignments]
         self.lateness = self.lateness.loc[:, assignments]
         self.dropped = self.dropped.loc[:, assignments]
 

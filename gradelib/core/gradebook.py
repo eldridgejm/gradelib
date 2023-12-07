@@ -3,6 +3,7 @@
 import copy
 import dataclasses
 import math
+import enum
 from typing import Sequence, Collection, Mapping, Union, Tuple, Optional, Callable
 from numbers import Real
 
@@ -183,6 +184,7 @@ def combine_gradebooks(gradebooks: Collection["Gradebook"], restrict_to_students
 
 
 # public classes =======================================================================
+
 
 # GradebookOptions ---------------------------------------------------------------------
 
@@ -1136,6 +1138,9 @@ class Gradebook:
             pid = student.pid
         else:
             pid = student
+
+        if channel not in {"lates", "drops", "redemption", "misc"}:
+            raise ValueError(f'Unknown channel "{channel}".')
 
         if pid not in self.notes:
             self.notes[pid] = {}

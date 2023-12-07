@@ -3,6 +3,7 @@ import numpy as np
 
 import gradelib
 from gradelib import Percentage
+from gradelib.policies.redemption import redeem
 
 import pytest
 from util import assert_gradebook_is_sound
@@ -21,9 +22,7 @@ def test_on_single_assignment_pair():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    gradelib.policies.redeem(
-        gradebook, {"mt01 with redemption": ("mt01", "mt01 - redemption")}
-    )
+    redeem(gradebook, {"mt01 with redemption": ("mt01", "mt01 - redemption")})
 
     # then
     assert gradebook.points_earned.loc["A1", "mt01 with redemption"] == 100
@@ -43,9 +42,7 @@ def test_adds_note():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    gradelib.policies.redeem(
-        gradebook, {"mt01 with redemption": ("mt01", "mt01 - redemption")}
-    )
+    redeem(gradebook, {"mt01 with redemption": ("mt01", "mt01 - redemption")})
 
     # then
     assert gradebook.notes == {
@@ -72,7 +69,7 @@ def test_on_multiple_assignment_pairs():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    gradelib.policies.redeem(
+    redeem(
         gradebook,
         {
             "mt01 with redemption": ("mt01", "mt01 - redemption"),
@@ -102,9 +99,7 @@ def test_with_unequal_points_possible_scales_to_the_maximum_of_the_two():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    gradelib.policies.redeem(
-        gradebook, {"mt01 with redemption": ("mt01", "mt01 - redemption")}
-    )
+    redeem(gradebook, {"mt01 with redemption": ("mt01", "mt01 - redemption")})
 
     # then
     assert gradebook.points_earned.loc["A1", "mt01 with redemption"] == 100
@@ -123,7 +118,7 @@ def test_percentage_deduction_is_applied_to_points_earned():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    gradelib.policies.redeem(
+    redeem(
         gradebook,
         {"mt01 with redemption": ("mt01", "mt01 - redemption")},
         deduction=Percentage(0.1),
@@ -153,7 +148,7 @@ def test_with_callable_deduction():
             return gradelib.Points(10)
 
     # when
-    gradelib.policies.redeem(
+    redeem(
         gradebook,
         {"mt01 with redemption": ("mt01", "mt01 - redemption")},
         deduction=deduction,
@@ -178,9 +173,7 @@ def test_with_nans():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    gradelib.policies.redeem(
-        gradebook, {"mt01 with redemption": ("mt01", "mt01 - redemption")}
-    )
+    redeem(gradebook, {"mt01 with redemption": ("mt01", "mt01 - redemption")})
 
     # then
     assert gradebook.points_earned.loc["A1", "mt01 with redemption"] == 100

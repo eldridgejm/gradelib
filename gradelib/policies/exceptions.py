@@ -1,7 +1,7 @@
 from collections.abc import Mapping, Sequence
 from typing import Union, Optional
 
-import pandas as pd
+import pandas as _pd
 
 
 from ..core import Percentage, Points, Gradebook
@@ -74,7 +74,7 @@ class ForgiveLate:
 
     def __call__(self, gradebook: Gradebook, student_name: str):
         student = gradebook.students.find(student_name)
-        gradebook.lateness.loc[student, self.assignment] = pd.Timedelta(0, "s")
+        gradebook.lateness.loc[student, self.assignment] = _pd.Timedelta(0, "s")
 
         msg = f"Exception applied: late {self.assignment.title()} is forgiven."
         msg = _add_reason_to_message(msg, self.reason)

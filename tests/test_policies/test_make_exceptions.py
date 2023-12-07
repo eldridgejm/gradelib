@@ -1,6 +1,7 @@
 import pandas as pd
 
 import gradelib
+from gradelib.policies.exceptions import make_exceptions, ForgiveLate, Drop, Replace
 
 from util import assert_gradebook_is_sound
 
@@ -19,9 +20,7 @@ def test_make_exceptions_with_forgive_lates():
     gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(5000, "s")
 
     # when
-    gradelib.policies.make_exceptions(
-        gradebook, {"Justin": [gradelib.policies.ForgiveLate("hw01")]}
-    )
+    make_exceptions(gradebook, {"Justin": [ForgiveLate("hw01")]})
 
     # then
     assert gradebook.lateness.loc["A1", "hw01"] == pd.Timedelta(0, "s")
@@ -42,9 +41,7 @@ def test_make_exceptions_with_forgive_lates_adds_note():
     gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(5000, "s")
 
     # when
-    gradelib.policies.make_exceptions(
-        gradebook, {"Justin": [gradelib.policies.ForgiveLate("hw01")]}
-    )
+    make_exceptions(gradebook, {"Justin": [ForgiveLate("hw01")]})
 
     # then
     assert gradebook.notes == {
@@ -65,9 +62,7 @@ def test_make_exceptions_with_drop():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    gradelib.policies.make_exceptions(
-        gradebook, {"Justin": [gradelib.policies.Drop("hw01")]}
-    )
+    make_exceptions(gradebook, {"Justin": [Drop("hw01")]})
 
     # then
     assert gradebook.dropped.loc["A1", "hw01"] == True
@@ -87,9 +82,7 @@ def test_make_exceptions_with_drop_adds_note():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    gradelib.policies.make_exceptions(
-        gradebook, {"Justin": [gradelib.policies.Drop("hw01")]}
-    )
+    make_exceptions(gradebook, {"Justin": [Drop("hw01")]})
 
     # then
     assert gradebook.dropped.loc["A1", "hw01"] == True
@@ -109,9 +102,7 @@ def test_make_exceptions_with_replace():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    gradelib.policies.make_exceptions(
-        gradebook, {"Justin": [gradelib.policies.Replace("hw02", with_="hw01")]}
-    )
+    make_exceptions(gradebook, {"Justin": [Replace("hw02", with_="hw01")]})
 
     # then
     assert gradebook.points_earned.loc["A1", "hw01"] == 9
@@ -132,9 +123,7 @@ def test_make_exceptions_with_replace_scales_using_points_possible():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    gradelib.policies.make_exceptions(
-        gradebook, {"Justin": [gradelib.policies.Replace("hw01", with_="hw02")]}
-    )
+    make_exceptions(gradebook, {"Justin": [Replace("hw01", with_="hw02")]})
 
     # then
     assert gradebook.points_earned.loc["A1", "hw01"] == 7.5
@@ -155,9 +144,9 @@ def test_make_exceptions_with_replace_using_points():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    gradelib.policies.make_exceptions(
+    make_exceptions(
         gradebook,
-        {"Justin": [gradelib.policies.Replace("hw02", with_=gradelib.Points(12))]},
+        {"Justin": [Replace("hw02", with_=gradelib.Points(12))]},
     )
 
     # then
@@ -179,9 +168,9 @@ def test_make_exceptions_with_replace_using_percentage_of_points_possible():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    gradelib.policies.make_exceptions(
+    make_exceptions(
         gradebook,
-        {"Justin": [gradelib.policies.Replace("hw02", with_=gradelib.Percentage(0.5))]},
+        {"Justin": [Replace("hw02", with_=gradelib.Percentage(0.5))]},
     )
 
     # then
@@ -204,11 +193,11 @@ def test_make_exceptions_works_with_multiple_students():
     gradebook.lateness.loc["A1", "hw01"] = pd.Timedelta(5000, "s")
 
     # when
-    gradelib.policies.make_exceptions(
+    make_exceptions(
         gradebook,
         {
-            "Justin": [gradelib.policies.ForgiveLate("hw01")],
-            "Steve": [gradelib.policies.Drop("hw01")],
+            "Justin": [ForgiveLate("hw01")],
+            "Steve": [Drop("hw01")],
         },
     )
 

@@ -6,7 +6,7 @@ import pandas as pd
 from ..core import Gradebook
 
 
-def drop_lowest(gradebook: Gradebook, n: int, within: Optional[Collection[str]] = None):
+def drop_most_favorable(gradebook: Gradebook, within: Optional[Collection[str]] = None):
     """Drop the lowest `n` grades within a group of assignments.
 
     If all assignments are worth the same number of points, dropping the

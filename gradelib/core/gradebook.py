@@ -1128,6 +1128,7 @@ class Gradebook:
             The channel that the note should be added to. Valid channels are:
                 - lates
                 - drops
+                - redemption
                 - misc
 
         message : str

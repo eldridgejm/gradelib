@@ -265,6 +265,43 @@ def test_order_by_index():
     assert seen["A2"] == ["hw01", "hw02", "lab01"]
 
 
+def test_with_callable_order_by():
+    columns = ["hw01", "hw02", "lab01"]
+    p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([50, 100, 20], index=columns)
+    lateness = pd.DataFrame(
+        [pd.to_timedelta([5000, 5000, 5000], "s"), pd.to_timedelta([6000, 0, 0], "s")],
+        columns=columns,
+        index=points_earned.index,
+    )
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
+
+    HOMEWORK = gradebook.assignments.starting_with("hw")
+
+    gradebook.grading_groups = {"homeworks": (HOMEWORK, 1)}
+
+    # order by the second character of the assignment name, forward
+    def order_by(gradebook, student, assignments):
+        return sorted(assignments, key=lambda a: a[1:])
+
+    seen = {}
+
+    def policy(info):
+        seen.setdefault(info.student, []).append(info.assignment)
+        return Percentage(1)
+
+    penalize(gradebook, policy=policy, order_by=order_by)
+
+    # in order from least to most valuable
+    # for AI: hw01, lab01, hw02 -- penalize hw01
+    # for A2: hw02, hw01, lab01 -- penalize hw02
+
+    assert seen["A1"] == ["lab01", "hw01", "hw02"]
+    assert seen["A2"] == ["hw01"]
+
+
 def test_with_empty_assignment_list_raises():
     # given
     columns = ["hw01", "hw02", "lab01"]

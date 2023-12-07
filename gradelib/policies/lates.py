@@ -47,7 +47,9 @@ def penalize(
     gradebook: Gradebook,
     within: Optional[Sequence[str]] = None,
     policy: Callable[[LateInfo], Penalty] = Deduct(Percentage(1)),
-    order_by="value",
+    order_by: Union[
+        str, Callable[[Gradebook, Student, Sequence[str]], Sequence[str]]
+    ] = "value",
 ):
     if within is None:
         within = gradebook.assignments
@@ -62,12 +64,16 @@ def penalize(
         # since forgiveness will be given to most valuable assignments first
         if order_by == "value":
             value = gradebook.value[within].loc[student]
-            sorted_assignments = sorted(within, key=lambda a: value[a], reverse=True)
+            ordered_assignments = sorted(within, key=lambda a: value[a], reverse=True)
+        elif order_by == "index":
+            ordered_assignments = within
+        elif callable(order_by):
+            ordered_assignments = order_by(gradebook, student, within)
         else:
-            sorted_assignments = within
+            raise ValueError(f"Unknown order_by value: {order_by}")
 
         late = gradebook.late.loc[student]
-        for assignment in sorted_assignments:
+        for assignment in ordered_assignments:
             if late[assignment]:
                 if gradebook.dropped.loc[student, assignment]:
                     continue

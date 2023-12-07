@@ -3,11 +3,11 @@ import pytest
 import pandas as pd
 
 import gradelib
-import gradelib.policies
 from gradelib import Points, Percentage
+from gradelib.policies.lates import penalize, Deduct, Forgive
 
 
-def test_without_forgiveness_or_within_penalizes_all_lates():
+def test_with_deduct_percentage():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -23,13 +23,35 @@ def test_without_forgiveness_or_within_penalizes_all_lates():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradelib.policies.penalize_lates(gradebook)
+    penalize(gradebook, policy=Deduct(Percentage(1)))
 
     assert gradebook.points_earned.loc["A1", "lab01"] == 0
     assert gradebook.points_earned.loc["A2", "hw01"] == 0
 
 
-def test_with_callable_deduction():
+def test_with_deduct_points():
+    # given
+    columns = ["hw01", "hw02", "lab01"]
+    p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([50, 100, 20], index=columns)
+    lateness = pd.DataFrame(
+        [pd.to_timedelta([0, 0, 5000], "s"), pd.to_timedelta([6000, 0, 0], "s")],
+        columns=columns,
+        index=points_earned.index,
+    )
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
+
+    HOMEWORK = gradebook.assignments.starting_with("hw")
+
+    penalize(gradebook, policy=Deduct(Points(3)))
+
+    assert gradebook.points_earned.loc["A1", "lab01"] == 17
+    assert gradebook.points_earned.loc["A2", "hw01"] == 4
+
+
+def test_with_custom_policy():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -51,10 +73,10 @@ def test_with_callable_deduction():
 
     gradebook.options.lateness_fudge = 60 * 5
 
-    def deduction(info):
+    def deduct_one_point_per_occurrence(info):
         return Points(info.number)
 
-    gradelib.policies.penalize_lates(gradebook, deduction=deduction)
+    penalize(gradebook, policy=deduct_one_point_per_occurrence)
 
     # least to most valuable:
     # A1: hw01 lab01 hw02
@@ -64,78 +86,6 @@ def test_with_callable_deduction():
     assert gradebook.points_earned.loc["A1", "hw01"] == 27
     assert gradebook.points_earned.loc["A1", "hw02"] == 89
     assert gradebook.points_earned.loc["A1", "lab01"] == 18
-
-
-def test_percentage_deduction_applies_percentage_to_points_earned():
-    # given
-    columns = ["hw01", "hw02", "lab01"]
-    p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([50, 100, 20], index=columns)
-    lateness = pd.DataFrame(
-        [pd.to_timedelta([6000, 6000, 6000], "s"), pd.to_timedelta([0, 0, 0], "s")],
-        columns=columns,
-        index=points_earned.index,
-    )
-    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
-    gradebook.grading_groups = {
-        "homeworks": (["hw01", "hw02"], 0.75),
-        "labs": (["lab01"], 0.25),
-    }
-
-    HOMEWORK = gradebook.assignments.starting_with("hw")
-
-    gradebook.options.lateness_fudge = 60 * 5
-
-    gradelib.policies.penalize_lates(gradebook, deduction=Percentage(0.5))
-
-    # least to most valuable:
-    # A1: hw01 lab01 hw02
-    # A2: hw01 hw02 lab01
-    # so hw01 receives the greatest deduction
-
-    assert gradebook.points_earned.loc["A1", "hw01"] == 15
-    assert gradebook.points_earned.loc["A1", "hw02"] == 45
-    assert gradebook.points_earned.loc["A1", "lab01"] == 10
-
-
-def test_with_callable_deduction_does_not_count_forgiven():
-    # given
-    columns = ["hw01", "hw02", "lab01"]
-    p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([50, 100, 20], index=columns)
-    lateness = pd.DataFrame(
-        [pd.to_timedelta([6000, 6000, 6000], "s"), pd.to_timedelta([0, 0, 0], "s")],
-        columns=columns,
-        index=points_earned.index,
-    )
-    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
-
-    gradebook.grading_groups = {
-        "homeworks": (["hw01", "hw02"], 0.75),
-        "labs": (["lab01"], 0.25),
-    }
-
-    HOMEWORK = gradebook.assignments.starting_with("hw")
-
-    gradebook.options.lateness_fudge = 60 * 5
-
-    def deduction(info):
-        return Points(info.number)
-
-    gradelib.policies.penalize_lates(gradebook, deduction=deduction, forgive=1)
-
-    # least to most valuable:
-    # A1: hw01, lab01, hw02
-    # A2: hw01, hw02, lab01
-    # so lab01 receives the greatest deduction, hw02 receives forgiveness
-
-    assert gradebook.points_earned.loc["A1", "hw02"] == 90
-    assert gradebook.points_earned.loc["A1", "hw01"] == 28
-    assert gradebook.points_earned.loc["A1", "lab01"] == 19
 
 
 def test_respects_lateness_fudge():
@@ -156,7 +106,7 @@ def test_respects_lateness_fudge():
 
     gradebook.options.lateness_fudge = 60 * 5
 
-    gradelib.policies.penalize_lates(gradebook)
+    penalize(gradebook, policy=Deduct(Percentage(1)))
 
     assert gradebook.points_earned.loc["A2", "hw01"] == 0
 
@@ -177,33 +127,12 @@ def test_within_assignments():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradelib.policies.penalize_lates(gradebook, within=HOMEWORK)
+    penalize(gradebook, within=HOMEWORK, policy=Deduct(Percentage(1)))
 
     assert gradebook.points_earned.loc["A2", "hw01"] == 0
 
 
-def test_within_accepts_callable():
-    # given
-    columns = ["hw01", "hw02", "lab01"]
-    p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([50, 100, 20], index=columns)
-    lateness = pd.DataFrame(
-        [pd.to_timedelta([0, 0, 5000], "s"), pd.to_timedelta([6000, 0, 0], "s")],
-        columns=columns,
-        index=points_earned.index,
-    )
-    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
-
-    HOMEWORK = gradebook.assignments.starting_with("hw")
-
-    gradelib.policies.penalize_lates(gradebook, within=HOMEWORK)
-
-    assert gradebook.points_earned.loc["A2", "hw01"] == 0
-
-
-def test_with_forgiveness():
+def test_forgive():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -224,7 +153,7 @@ def test_with_forgiveness():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradelib.policies.penalize_lates(gradebook, forgive=1)
+    penalize(gradebook, policy=Forgive(1))
 
     # least to greatest value
     # A1: hw01 hw02 lab01
@@ -233,7 +162,7 @@ def test_with_forgiveness():
     assert gradebook.points_earned.loc["A1", "hw01"] == 0
 
 
-def test_with_forgiveness_and_within():
+def test_with_forgive_and_within():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -249,13 +178,13 @@ def test_with_forgiveness_and_within():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradelib.policies.penalize_lates(gradebook, within=HOMEWORK, forgive=2)
-    gradelib.policies.penalize_lates(gradebook, within=["lab01"])
+    penalize(gradebook, within=HOMEWORK, policy=Forgive(2))
+    penalize(gradebook, within=["lab01"], policy=Deduct(Percentage(1)))
 
     assert gradebook.points_earned.loc["A1", "lab01"] == 0
 
 
-def test_with_forgiveness_forgives_most_valuable_assignments_first_by_default():
+def test_assignments_ordered_by_value_by_default():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -280,17 +209,23 @@ def test_with_forgiveness_forgives_most_valuable_assignments_first_by_default():
         "labs": (LABS, 0.25),
     }
 
-    gradelib.policies.penalize_lates(gradebook, within=HOMEWORK + LABS, forgive=2)
+    seen = {}
+
+    def policy(info):
+        seen.setdefault(info.student, []).append(info.assignment)
+        return Percentage(1)
+
+    penalize(gradebook, within=HOMEWORK + LABS, policy=policy)
 
     # in order from least to most valuable
     # for AI: hw01, lab01, hw02 -- penalize hw01
     # for A2: hw02, hw01, lab01 -- penalize hw02
 
-    assert gradebook.points_earned.loc["A1", "hw01"] == 0
-    assert gradebook.points_earned.loc["A2", "hw02"] == 0
+    assert seen["A1"] == ["hw02", "lab01", "hw01"]
+    assert seen["A2"] == ["lab01", "hw01", "hw02"]
 
 
-def test_forgives_the_first_n_lates_when_order_by_is_index():
+def test_order_by_index():
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
     p2 = pd.Series(data=[45, 15, 20], index=columns, name="A2")
@@ -314,12 +249,20 @@ def test_forgives_the_first_n_lates_when_order_by_is_index():
         "labs": (LABS, 0.25),
     }
 
-    gradelib.policies.penalize_lates(
-        gradebook, within=HOMEWORK + LABS, forgive=2, order_by="index"
-    )
+    seen = {}
 
-    assert gradebook.points_earned.loc["A1", "lab01"] == 0
-    assert gradebook.points_earned.loc["A2", "lab01"] == 0
+    def policy(info):
+        seen.setdefault(info.student, []).append(info.assignment)
+        return Percentage(1)
+
+    penalize(gradebook, within=HOMEWORK + LABS, policy=policy, order_by="index")
+
+    # in order from least to most valuable
+    # for AI: hw01, lab01, hw02 -- penalize hw01
+    # for A2: hw02, hw01, lab01 -- penalize hw02
+
+    assert seen["A1"] == ["hw01", "hw02", "lab01"]
+    assert seen["A2"] == ["hw01", "hw02", "lab01"]
 
 
 def test_with_empty_assignment_list_raises():
@@ -341,10 +284,10 @@ def test_with_empty_assignment_list_raises():
 
     # when
     with pytest.raises(ValueError):
-        gradelib.policies.penalize_lates(gradebook, within=[])
+        penalize(gradebook, within=[], policy=Deduct(Percentage(1)))
 
 
-def test_by_default_takes_into_account_drops():
+def test_takes_into_account_drops():
     columns = ["hw01", "hw02", "lab01", "lab02"]
     p1 = pd.Series(data=[30, 90, 20, 1], index=columns, name="A1")
     p2 = pd.Series(data=[7, 15, 20, 1], index=columns, name="A2")
@@ -372,13 +315,13 @@ def test_by_default_takes_into_account_drops():
     # A1 has all assignments late. hw01 should receive forgiveness, lab01 and lab02
     # are penalized
 
-    [gradelib.policies.penalize_lates(gradebook, forgive=1)]
+    penalize(gradebook, policy=Deduct(Percentage(1)))
 
     assert gradebook.points_earned.loc["A1", "lab01"] == 0
     assert gradebook.points_earned.loc["A1", "lab02"] == 0
 
 
-def test_adds_note_for_penalized_assignment():
+def test_deduct_adds_note_for_penalized_assignment():
     # given
     columns = ["hw01", "hw02", "hw03"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -396,7 +339,7 @@ def test_adds_note_for_penalized_assignment():
 
     gradebook.grading_groups = {"homeworks": (HOMEWORK, 1)}
 
-    gradelib.policies.penalize_lates(gradebook)
+    penalize(gradebook, policy=Deduct(Percentage(1)))
 
     assert gradebook.notes == {
         "A1": {
@@ -414,7 +357,7 @@ def test_adds_note_for_penalized_assignment():
     }
 
 
-def test_with_forgiveness_adds_note_for_forgiven_assignments():
+def test_forgive_adds_note_for_forgiven_assignments():
     # given
     columns = ["hw01", "hw02", "hw03"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
@@ -432,7 +375,7 @@ def test_with_forgiveness_adds_note_for_forgiven_assignments():
 
     gradebook.grading_groups = {"homeworks": (HOMEWORK, 1)}
 
-    gradelib.policies.penalize_lates(gradebook, forgive=2)
+    penalize(gradebook, policy=Forgive(2))
 
     # least to greatest value
     # A1: hw01 hw02 lab01
@@ -441,14 +384,14 @@ def test_with_forgiveness_adds_note_for_forgiven_assignments():
     assert gradebook.notes == {
         "A1": {
             "lates": [
-                "Slip day #1 used on Hw02. Slip days remaining: 1.",
-                "Slip day #2 used on Hw01. Slip days remaining: 0.",
+                "Late forgiveness #1 used on Hw02. Late forgiveness remaining: 1.",
+                "Late forgiveness #2 used on Hw01. Late forgiveness remaining: 0.",
                 "Hw03 late. Deduction: 100%. Points earned: 0.",
             ]
         },
         "A2": {
             "lates": [
-                "Slip day #1 used on Hw01. Slip days remaining: 1.",
+                "Late forgiveness #1 used on Hw01. Late forgiveness remaining: 1.",
             ]
         },
     }

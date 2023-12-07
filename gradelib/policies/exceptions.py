@@ -4,7 +4,7 @@ from typing import Union, Optional
 import pandas as _pd
 
 
-from ..core import Percentage, Points, Gradebook
+from ..core import Percentage, Points, Gradebook, Student
 
 # private helpers ======================================================================
 
@@ -30,7 +30,8 @@ def _convert_amount_to_absolute_points(amount, gradebook, assignment):
 
 def make_exceptions(
     gradebook: Gradebook,
-    students: Mapping[str, Sequence[Union["ForgiveLate", "Drop", "Replace"]]],
+    student: Union[Student, str],
+    exceptions: Sequence[Union["ForgiveLate", "Drop", "Replace"]],
 ):
     """Make policy exceptions for individual students.
 
@@ -47,9 +48,11 @@ def make_exceptions(
         (more than one student is found), an exception will be raised.
 
     """
-    for student, exceptions in students.items():
-        for exception in exceptions:
-            exception(gradebook, student)
+    if isinstance(student, str):
+        student = gradebook.students.find(student)
+
+    for exception in exceptions:
+        exception(gradebook, student)
 
 
 # ForgiveLate --------------------------------------------------------------------------
@@ -72,8 +75,7 @@ class ForgiveLate:
         self.assignment = assignment
         self.reason = reason
 
-    def __call__(self, gradebook: Gradebook, student_name: str):
-        student = gradebook.students.find(student_name)
+    def __call__(self, gradebook: Gradebook, student: Student):
         gradebook.lateness.loc[student, self.assignment] = _pd.Timedelta(0, "s")
 
         msg = f"Exception applied: late {self.assignment.title()} is forgiven."
@@ -102,8 +104,7 @@ class Drop:
         self.assignment = assignment
         self.reason = reason
 
-    def __call__(self, gradebook: Gradebook, student_name):
-        student = gradebook.students.find(student_name)
+    def __call__(self, gradebook: Gradebook, student: Student):
         gradebook.dropped.loc[student, self.assignment] = True
 
         msg = f"Exception applied: {self.assignment.title()} dropped."
@@ -144,9 +145,7 @@ class Replace:
         self.with_ = with_
         self.reason = reason
 
-    def __call__(self, gradebook: Gradebook, student_name):
-        student = gradebook.students.find(student_name)
-
+    def __call__(self, gradebook: Gradebook, student: Student):
         if isinstance(self.with_, str):
             other_assignment_score = (
                 gradebook.points_earned.loc[student, self.with_]

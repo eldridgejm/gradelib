@@ -2,8 +2,6 @@ from ._gradebook import Gradebook, GradebookOptions, GradingGroup, combine_grade
 from ._assignments import (
     normalize,
     Assignments,
-    AssignmentSelector,
-    AssignmentGrouper,
 )
 from ._student import Student, Students
 from ._amounts import Points, Percentage
@@ -15,8 +13,6 @@ __all__ = [
     "combine_gradebooks",
     "normalize",
     "Assignments",
-    "AssignmentSelector",
-    "AssignmentGrouper",
     "Student",
     "Students",
     "Points",

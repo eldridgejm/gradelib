@@ -5,9 +5,6 @@ import typing
 
 # type definitions =====================================================================
 
-AssignmentSelector = typing.Sequence[str]
-AssignmentGrouper = typing.Mapping[str, AssignmentSelector]
-
 
 def normalize(assignments: Collection[str]):
     """Normalize assignment weights.

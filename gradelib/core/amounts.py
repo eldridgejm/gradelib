@@ -22,4 +22,4 @@ class Percentage(_GradeAmount):
     """Represents a percentage."""
 
     def __str__(self):
-        return f"{self.amount * 100}%"
+        return f"{self.amount}%"

@@ -20,7 +20,7 @@ def _convert_amount_to_absolute_points(amount, gradebook, assignment):
         return amount.amount
     else:
         # calculate percentage adjustment based on points possible
-        return amount.amount * gradebook.points_possible.loc[assignment]
+        return (amount.amount / 100) * gradebook.points_possible.loc[assignment]
 
 
 # public functions and classes =========================================================
@@ -151,7 +151,7 @@ class Replace:
                 gradebook.points_earned.loc[student, self.with_]
                 / gradebook.points_possible.loc[self.with_]
             )
-            amount = Percentage(other_assignment_score)
+            amount = Percentage(other_assignment_score * 100)
             msg = f"Replacing score on {self.assignment.title()} with score on {self.with_.title()}."
         else:
             # the amount has been explicitly given

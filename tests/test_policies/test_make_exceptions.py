@@ -172,7 +172,7 @@ def test_make_exceptions_with_replace_using_percentage_of_points_possible():
     make_exceptions(
         gradebook,
         "Justin",
-        [Replace("hw02", with_=gradelib.Percentage(0.5))],
+        [Replace("hw02", with_=gradelib.Percentage(50))],
     )
 
     # then

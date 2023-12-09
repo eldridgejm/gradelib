@@ -36,7 +36,7 @@ algorithm which finds "robust" thresholds for every letter grade.
     gradelib.policies.make_exceptions({
         'me': [
             gradelib.policies.Drop("homework 01", reason="illness"),
-            gradelib.policies.Replace("homework 02", with_=gradelib.Percentage(.75))
+            gradelib.policies.Replace("homework 02", with_=gradelib.Percentage(75))
         ],
         'you': [
             gradelib.policies.ForgiveLate("homework 01", reason="illness"),

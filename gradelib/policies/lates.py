@@ -24,7 +24,7 @@ class Deduct:
 
 class Forgive:
     def __init__(
-        self, number: int, then: Callable[[LateInfo], Penalty] = Deduct(Percentage(1))
+        self, number: int, then: Callable[[LateInfo], Penalty] = Deduct(Percentage(100))
     ):
         self.number = number
         self.then = then
@@ -46,7 +46,7 @@ class Forgive:
 def penalize(
     gradebook: Gradebook,
     within: Optional[Sequence[str]] = None,
-    policy: Callable[[LateInfo], Penalty] = Deduct(Percentage(1)),
+    policy: Callable[[LateInfo], Penalty] = Deduct(Percentage(100)),
     order_by: Union[
         str, Callable[[Gradebook, Student, Sequence[str]], Sequence[str]]
     ] = "value",
@@ -98,7 +98,7 @@ def _apply_penalty(
         new_point_total = pts - deduction.amount
     elif isinstance(deduction, Percentage):
         # percentage deduction is of points earned, not points possible
-        new_point_total = pts - deduction.amount * pts
+        new_point_total = pts - (deduction.amount / 100) * pts
     else:
         raise TypeError("Unknown deduction type.")
 

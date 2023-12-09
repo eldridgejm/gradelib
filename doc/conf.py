@@ -41,8 +41,8 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 autodoc_type_aliases = {
-    'AssignmentSelector': 'AssignmentSelector',
-    'AssignmentGrouper': 'AssignmentGrouper'
+    "AssignmentSelector": "AssignmentSelector",
+    "AssignmentGrouper": "AssignmentGrouper",
 }
 
 # -- Options for HTML output -------------------------------------------------
@@ -57,7 +57,4 @@ html_theme = "sphinx_rtd_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-html_theme_options = {
-        'navigation_depth': -1,
-        'collapse_navigation': False
-}
+html_theme_options = {"navigation_depth": -1, "collapse_navigation": False}

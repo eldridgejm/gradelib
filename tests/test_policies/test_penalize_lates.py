@@ -23,7 +23,7 @@ def test_with_deduct_percentage():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    penalize(gradebook, policy=Deduct(Percentage(1)))
+    penalize(gradebook, policy=Deduct(Percentage(100)))
 
     assert gradebook.points_earned.loc["A1", "lab01"] == 0
     assert gradebook.points_earned.loc["A2", "hw01"] == 0
@@ -106,7 +106,7 @@ def test_respects_lateness_fudge():
 
     gradebook.options.lateness_fudge = 60 * 5
 
-    penalize(gradebook, policy=Deduct(Percentage(1)))
+    penalize(gradebook, policy=Deduct(Percentage(100)))
 
     assert gradebook.points_earned.loc["A2", "hw01"] == 0
 
@@ -127,7 +127,7 @@ def test_within_assignments():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    penalize(gradebook, within=HOMEWORK, policy=Deduct(Percentage(1)))
+    penalize(gradebook, within=HOMEWORK, policy=Deduct(Percentage(100)))
 
     assert gradebook.points_earned.loc["A2", "hw01"] == 0
 
@@ -179,7 +179,7 @@ def test_with_forgive_and_within():
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
     penalize(gradebook, within=HOMEWORK, policy=Forgive(2))
-    penalize(gradebook, within=["lab01"], policy=Deduct(Percentage(1)))
+    penalize(gradebook, within=["lab01"], policy=Deduct(Percentage(100)))
 
     assert gradebook.points_earned.loc["A1", "lab01"] == 0
 
@@ -213,7 +213,7 @@ def test_assignments_ordered_by_value_by_default():
 
     def policy(info):
         seen.setdefault(info.student, []).append(info.assignment)
-        return Percentage(1)
+        return Percentage(100)
 
     penalize(gradebook, within=HOMEWORK + LABS, policy=policy)
 
@@ -253,7 +253,7 @@ def test_order_by_index():
 
     def policy(info):
         seen.setdefault(info.student, []).append(info.assignment)
-        return Percentage(1)
+        return Percentage(100)
 
     penalize(gradebook, within=HOMEWORK + LABS, policy=policy, order_by="index")
 
@@ -290,7 +290,7 @@ def test_with_callable_order_by():
 
     def policy(info):
         seen.setdefault(info.student, []).append(info.assignment)
-        return Percentage(1)
+        return Percentage(100)
 
     penalize(gradebook, policy=policy, order_by=order_by)
 
@@ -321,7 +321,7 @@ def test_with_empty_assignment_list_raises():
 
     # when
     with pytest.raises(ValueError):
-        penalize(gradebook, within=[], policy=Deduct(Percentage(1)))
+        penalize(gradebook, within=[], policy=Deduct(Percentage(100)))
 
 
 def test_takes_into_account_drops():
@@ -352,7 +352,7 @@ def test_takes_into_account_drops():
     # A1 has all assignments late. hw01 should receive forgiveness, lab01 and lab02
     # are penalized
 
-    penalize(gradebook, policy=Deduct(Percentage(1)))
+    penalize(gradebook, policy=Deduct(Percentage(100)))
 
     assert gradebook.points_earned.loc["A1", "lab01"] == 0
     assert gradebook.points_earned.loc["A1", "lab02"] == 0
@@ -376,7 +376,7 @@ def test_deduct_adds_note_for_penalized_assignment():
 
     gradebook.grading_groups = {"homeworks": (HOMEWORK, 1)}
 
-    penalize(gradebook, policy=Deduct(Percentage(1)))
+    penalize(gradebook, policy=Deduct(Percentage(100)))
 
     assert gradebook.notes == {
         "A1": {

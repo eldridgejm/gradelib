@@ -4,7 +4,7 @@ from typing import Optional
 from .core import Gradebook
 from . import plot as _plot, statistics as _statistics
 
-from IPython.core.display import display, HTML
+from IPython.core.display import display as _display, HTML as _HTML
 
 
 def _item(desc, msg) -> str:
@@ -14,7 +14,7 @@ def _item(desc, msg) -> str:
 
 def _display_html(html: str):
     """Display HTML in a Jupyter notebook."""
-    display(HTML(html))
+    _display(_HTML(html))
 
 
 def _class_overview(gradebook: Gradebook):

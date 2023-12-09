@@ -381,14 +381,14 @@ def test_deduct_adds_note_for_penalized_assignment():
     assert gradebook.notes == {
         "A1": {
             "lates": [
-                "Hw02 late. Deduction: 100%. Points earned: 0.",
-                "Hw01 late. Deduction: 100%. Points earned: 0.",
-                "Hw03 late. Deduction: 100%. Points earned: 0.",
+                "Hw02 late. Deduction: 100%. Points earned: 0.0",
+                "Hw01 late. Deduction: 100%. Points earned: 0.0",
+                "Hw03 late. Deduction: 100%. Points earned: 0.0",
             ]
         },
         "A2": {
             "lates": [
-                "Hw01 late. Deduction: 100%. Points earned: 0.",
+                "Hw01 late. Deduction: 100%. Points earned: 0.0",
             ]
         },
     }
@@ -423,7 +423,7 @@ def test_forgive_adds_note_for_forgiven_assignments():
             "lates": [
                 "Late forgiveness #1 used on Hw02. Late forgiveness remaining: 1.",
                 "Late forgiveness #2 used on Hw01. Late forgiveness remaining: 0.",
-                "Hw03 late. Deduction: 100%. Points earned: 0.",
+                "Hw03 late. Deduction: 100%. Points earned: 0.0",
             ]
         },
         "A2": {

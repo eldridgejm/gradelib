@@ -385,8 +385,8 @@ class Gradebook:
         options: Optional[GradebookOptions] = None,
     ):
         self.options = options if options is not None else GradebookOptions()
-        self.points_earned = _cast_index_to_student_objects(points_earned)
-        self.points_possible = points_possible
+        self.points_earned = _cast_index_to_student_objects(points_earned).astype(float)
+        self.points_possible = points_possible.astype(float)
         self.lateness = (
             lateness if lateness is not None else _empty_lateness_like(points_earned)
         )

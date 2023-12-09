@@ -102,7 +102,7 @@ def _apply_penalty(
     else:
         raise TypeError("Unknown deduction type.")
 
-    message = f"{assignment.title()} late. Deduction: {deduction}. Points earned: {new_point_total}."
+    message = f"{assignment.title()} late. Deduction: {deduction}. Points earned: {new_point_total}"
     gradebook.add_note(student, "lates", message)
 
     gradebook.points_earned.loc[student, assignment] = new_point_total

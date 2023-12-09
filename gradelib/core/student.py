@@ -55,6 +55,13 @@ class Student:
         else:
             return self.pid == other
 
+    def __lt__(self, other):
+        """Less-than checks always use the pid."""
+        if isinstance(other, Student):
+            return self.pid < other.pid
+        else:
+            return self.pid < other
+
 
 class Students(typing.Sequence[Student]):
     """A sequence of :class:`Student` instances.

@@ -2,9 +2,9 @@
 
 from collections.abc import Mapping, Collection
 from .core import Gradebook
-from ._util import empty_mask_like
+from ._util import empty_mask_like as _empty_mask_like
 
-import pandas as pd
+import pandas as _pd
 
 
 # public functions =====================================================================
@@ -31,7 +31,7 @@ def _combine_assignment_parts(
     # we're assuming that dropped was not set; we need to provide an empy
     # mask here, else ._replace will use the existing larger dropped table
     # of gb, which contains all parts
-    gradebook.dropped = empty_mask_like(gradebook.points_earned)
+    gradebook.dropped = _empty_mask_like(gradebook.points_earned)
 
     gradebook.remove_assignments(list(set(parts) - {new_name}))
 
@@ -113,11 +113,11 @@ def _combine_assignment_versions(
 ):
     """A helper function to combine assignments under the new name."""
     versions = list(versions)
-    if gb.dropped[versions].any(axis=None):
+    if gb.dropped.loc[:, versions].any(axis=None):
         raise ValueError("Cannot combine assignments with drops.")
 
     # check that points are not earned in multiple versions
-    assignments_turned_in = (~pd.isna(gb.points_earned[versions])).sum(axis=1)
+    assignments_turned_in = (~_pd.isna(gb.points_earned[versions])).sum(axis=1)
     if (assignments_turned_in > 1).any():
         students = assignments_turned_in[assignments_turned_in > 1].index
         msg = f"{list(students)} turned in more than one version."
@@ -134,7 +134,7 @@ def _combine_assignment_versions(
     # we're assuming that dropped was not set; we need to provide an empy
     # mask here, else ._replace will use the existing larger dropped table
     # of gb, which contains all versions
-    gb.dropped = empty_mask_like(gb.points_earned)
+    gb.dropped = _empty_mask_like(gb.points_earned)
 
     gb.remove_assignments(list(set(versions) - {new_name}))
 

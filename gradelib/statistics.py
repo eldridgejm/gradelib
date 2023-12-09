@@ -1,10 +1,10 @@
-import pandas as pd
-import numpy as np
+import pandas as _pd
+import numpy as _np
 
 from .core import Gradebook
 
 
-def rank(scores) -> pd.Series:
+def rank(scores) -> _pd.Series:
     """The rank of each student according to score.
 
     Parameters
@@ -20,11 +20,11 @@ def rank(scores) -> pd.Series:
 
     """
     sorted_scores = scores.sort_values(ascending=False).to_frame()
-    sorted_scores["rank"] = np.arange(1, len(sorted_scores) + 1)
+    sorted_scores["rank"] = _np.arange(1, len(sorted_scores) + 1)
     return sorted_scores["rank"]
 
 
-def percentile(scores) -> pd.Series:
+def percentile(scores) -> _pd.Series:
     """The percentile of each student according to score.
 
     Parameters
@@ -64,7 +64,7 @@ def average_gpa(letter_grades, include_failing=False):
     if not include_failing:
         letter_grades = letter_grades[letter_grades != "F"]
 
-    letter_grade_values = pd.Series(
+    letter_grade_values = _pd.Series(
         {
             "A+": 4,
             "A": 4,
@@ -135,7 +135,7 @@ def outcomes(gradebook: Gradebook):
         percentile. Sorted by score, from highest to lowest.
 
     """
-    statistics = pd.DataFrame(
+    statistics = _pd.DataFrame(
         {
             "overall score": gradebook.overall_score,
             "letter": gradebook.letter_grades,
@@ -144,6 +144,6 @@ def outcomes(gradebook: Gradebook):
         }
     )
 
-    outcomes = pd.concat([gradebook.grading_group_scores, statistics], axis=1)
+    outcomes = _pd.concat([gradebook.grading_group_scores, statistics], axis=1)
 
     return outcomes.sort_values(by="overall score", ascending=False)

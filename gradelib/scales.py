@@ -1,9 +1,9 @@
 """Mapping point totals to letter grades."""
 
-import collections
+import collections as _collections
 
-import pandas as pd
-import numpy as np
+import pandas as _pd
+import numpy as _np
 
 
 # helper functions =====================================================================
@@ -19,7 +19,7 @@ def _check_that_scale_monotonically_decreases(scale):
 
 # common scales ========================================================================
 
-DEFAULT_SCALE = collections.OrderedDict(
+DEFAULT_SCALE = _collections.OrderedDict(
     [
         ("A+", 0.97),
         ("A", 0.93),
@@ -47,7 +47,7 @@ ROUNDED_DEFAULT_SCALE["F"] = 0
 # public functions =====================================================================
 
 
-def map_scores_to_letter_grades(scores, scale=None) -> pd.Series:
+def map_scores_to_letter_grades(scores, scale=None) -> _pd.Series:
     """Map each raw score to a letter grade.
 
     Parameters
@@ -120,20 +120,20 @@ def find_robust_scale(scores, scale=None, grade_gap=0.005, threshold_gap=0.01):
     if scale is None:
         scale = DEFAULT_SCALE
 
-    scale_dummy_scores = np.array(list(scale.values()))
-    scores = np.append(scores, scale_dummy_scores)
+    scale_dummy_scores = _np.array(list(scale.values()))
+    scores = _np.append(scores, scale_dummy_scores)
 
-    scores = np.sort(scores)
-    deltas = np.diff(scores)
+    scores = _np.sort(scores)
+    deltas = _np.diff(scores)
 
     ix = deltas > grade_gap
     possible_thresholds = scores[1:][ix]
 
-    robust_scale = collections.OrderedDict()
+    robust_scale = _collections.OrderedDict()
     prev_threshold = float("inf")
     for letter, threshold in scale.items():
         threshold = min(threshold, prev_threshold - threshold_gap)
-        z = robust_scale[letter] = np.amax(
+        z = robust_scale[letter] = _np.amax(
             possible_thresholds[possible_thresholds <= threshold], initial=0
         )
         prev_threshold = z

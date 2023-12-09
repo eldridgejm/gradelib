@@ -1,9 +1,9 @@
-import re
-import pathlib
-import textwrap
+import pathlib as _pathlib
+import re as _re
+import textwrap as _textwrap
 
 from .core import Gradebook, Student
-from . import statistics
+from . import statistics as _statistics
 
 
 def _tex_escape(text):
@@ -22,9 +22,9 @@ def _tex_escape(text):
         "<": r"\textless{}",
         ">": r"\textgreater{}",
     }
-    regex = re.compile(
+    regex = _re.compile(
         "|".join(
-            re.escape(str(key))
+            _re.escape(str(key))
             for key in sorted(conv.keys(), key=lambda item: -len(item))
         )
     )
@@ -55,7 +55,7 @@ def _student_latex_report(
     parts = []
 
     def _append(s):
-        parts.append(textwrap.dedent(s))
+        parts.append(_textwrap.dedent(s))
 
     _append(
         rf"""
@@ -114,7 +114,7 @@ def _student_latex_report(
     """
     )
 
-    percentile = statistics.percentile(gradebook.overall_score).loc[student]
+    percentile = _statistics.percentile(gradebook.overall_score).loc[student]
     percentile_message = show_percentile(percentile)
 
     if percentile_message is not None:
@@ -159,7 +159,7 @@ def _student_latex_report(
 
 def generate_latex(
     gradebook: Gradebook,
-    output_directory: pathlib.Path,
+    output_directory: _pathlib.Path,
     show_percentile=_default_percentile_display,
 ):
     """Generate a LaTeX grade report for each student.
@@ -181,9 +181,9 @@ def generate_latex(
 
     """
 
-    output_directory = pathlib.Path(output_directory)
+    output_directory = _pathlib.Path(output_directory)
 
-    head = textwrap.dedent(
+    head = _textwrap.dedent(
         r"""
         \documentclass{article}
         \usepackage[margin=1in]{geometry}
@@ -203,7 +203,7 @@ def generate_latex(
     ]
     body = "\\newpage\n".join(pages)
 
-    tail = textwrap.dedent(
+    tail = _textwrap.dedent(
         r"""
         \end{document}
     """

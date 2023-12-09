@@ -4,8 +4,11 @@ import bokeh.models
 import bokeh.plotting
 import bokeh.io
 
-from .statistics import outcomes, letter_grade_distribution
-from ._util import in_jupyter_notebook
+from .statistics import (
+    outcomes as _outcomes,
+    letter_grade_distribution as _letter_grade_distribution,
+)
+from ._util import in_jupyter_notebook as _in_jupyter_notebook
 from .core import Gradebook
 
 # grade_distribution -------------------------------------------------------------------
@@ -20,7 +23,7 @@ def _plot_grade_distribution_histogram(
 def _plot_grade_distribution_students(
     fig: bokeh.models.Model, gb: Gradebook
 ) -> bokeh.models.GlyphRenderer:
-    source_df = outcomes(gb).reset_index().rename(columns={"index": "student"})
+    source_df = _outcomes(gb).reset_index().rename(columns={"index": "student"})
     source_df["student"] = source_df["student"].astype(str)
 
     source = bokeh.models.ColumnDataSource(source_df)
@@ -60,7 +63,7 @@ def _plot_grade_distribution_thresholds(
     fig.xaxis.ticker = list(gb.scale.values())
 
     # change the major labels
-    lgd = letter_grade_distribution(gb.letter_grades)
+    lgd = _letter_grade_distribution(gb.letter_grades)
     for letter, threshold in gb.scale.items():
         count = f"({lgd[letter]})"
         pct = f"{threshold * 100:0.1f}%"
@@ -93,7 +96,7 @@ def grade_distribution(
         How wide each bin should be. Default: 0.025.
 
     """
-    if in_jupyter_notebook():
+    if _in_jupyter_notebook():
         bokeh.io.output_notebook()
 
     # compute a histogram of overall scores
@@ -121,4 +124,4 @@ def grade_distribution(
     _plot_grade_distribution_hover_tool(fig, renderer)
     _plot_grade_distribution_thresholds(fig, gradebook, y_max)
 
-    bokeh.plotting.show(fig)
+    bokeh.plotting.show(fig)  # pyright: ignore

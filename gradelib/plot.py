@@ -4,7 +4,7 @@ import bokeh.models
 import bokeh.plotting
 import bokeh.io
 
-from .summarize import outcomes, letter_grade_distribution
+from .statistics import outcomes, letter_grade_distribution
 from ._util import in_jupyter_notebook
 from .core import Gradebook
 

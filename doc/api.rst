@@ -139,10 +139,10 @@ Core
 .. autofunction:: map_scores_to_letter_grades
 .. autofunction:: find_robust_scale
 
-:mod:`summarize`
+:mod:`statistics`
 ================
 
-.. module:: gradelib.summarize
+.. module:: gradelib.statistics
 
    Functions for summarizing gradebooks.
 

@@ -26,7 +26,7 @@ from .pipeline import Pipeline
 
 from . import preprocessing
 from . import policies
-from . import summarize
+from . import statistics
 from . import io
 from . import plot
 from . import reports
@@ -55,10 +55,10 @@ __all__ = [
     "Pipeline",
     "preprocessing",
     "policies",
-    "summarize",
     "io",
     "plot",
     "reports",
     "GradingGroup",
     "overview",
+    "statistics",
 ]

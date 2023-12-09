@@ -2,7 +2,7 @@ import html
 from typing import Optional
 
 from .core import Gradebook
-from . import plot, summarize
+from . import plot, statistics
 
 from IPython.core.display import display, HTML
 
@@ -20,21 +20,21 @@ def _display_html(html: str):
 def _class_overview(gradebook: Gradebook):
     _display_html("<h1>Class Overview</h1>")
     _display_html(_item("Number of students", len(gradebook.students)))
-    _display_html(_item("Average GPA", summarize.average_gpa(gradebook.letter_grades)))
+    _display_html(_item("Average GPA", statistics.average_gpa(gradebook.letter_grades)))
 
     _display_html("<h2>Letter Grade Distribution</h2>")
     _display_html(
-        summarize.letter_grade_distribution(gradebook.letter_grades)
+        statistics.letter_grade_distribution(gradebook.letter_grades)
         .to_frame()
         .T.to_html()
     )
     plot.grade_distribution(gradebook)
 
     _display_html("<h2>Lates</h2>")
-    _display_html(summarize.lates(gradebook).to_html())
+    _display_html(statistics.lates(gradebook).to_html())
 
     _display_html("<h2>Individual Outcomes</h2>")
-    _display_html(summarize.outcomes(gradebook).to_html())
+    _display_html(statistics.outcomes(gradebook).to_html())
 
 
 def _student_overview(gradebook: Gradebook, student_name: str):
@@ -43,7 +43,7 @@ def _student_overview(gradebook: Gradebook, student_name: str):
 
     _display_html(f"<h1>Student Overview: {student_name}</h1>")
 
-    _display_html(summarize.outcomes(gradebook).loc[student].to_frame().T.to_html())
+    _display_html(statistics.outcomes(gradebook).loc[student].to_frame().T.to_html())
 
     _display_html("<h2>Notes</h2>")
     notes = gradebook.notes[student]

@@ -3,7 +3,7 @@ import pathlib
 import textwrap
 
 from .core import Gradebook, Student
-from . import summarize
+from . import statistics
 
 
 def _tex_escape(text):
@@ -114,7 +114,7 @@ def _student_latex_report(
     """
     )
 
-    percentile = summarize.percentile(gradebook.overall_score).loc[student]
+    percentile = statistics.percentile(gradebook.overall_score).loc[student]
     percentile_message = show_percentile(percentile)
 
     if percentile_message is not None:

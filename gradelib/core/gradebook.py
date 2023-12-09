@@ -3,7 +3,6 @@
 import copy
 import dataclasses
 import math
-import enum
 from typing import Sequence, Collection, Mapping, Union, Tuple, Optional, Callable
 from numbers import Real
 
@@ -938,7 +937,7 @@ class Gradebook:
         self,
         name: str,
         points_earned: pd.Series,
-        points_possible: pd.Series,
+        points_possible: Union[float, int],
         lateness: Optional[pd.Series] = None,
         dropped: Optional[pd.Series] = None,
     ):
@@ -996,7 +995,7 @@ class Gradebook:
         _match_pids(dropped.index, "dropped")
 
         self.points_earned[name] = points_earned
-        self.points_possible[name] = points_possible
+        self.points_possible[name] = float(points_possible)
         self.lateness[name] = lateness
         self.dropped[name] = dropped
 

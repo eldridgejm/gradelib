@@ -1,130 +1,80 @@
-from typing import Mapping, Tuple
+from typing import Union, Sequence, Callable
 
-import numpy as np
+import pandas as pd
 
 
-from ..core import Percentage, Gradebook
+from ..core import Gradebook, Student
 
 
 def _fmt_as_pct(f):
     return f"{f * 100:0.2f}%"
 
 
+class Maximum:
+    """Perform redemption by taking the maximum score of a set of assignments.
+
+    Adds a note to each student's gradebook entry describing the redemption.
+
+    """
+
+    def __call__(self, gradebook: Gradebook, assignments: Sequence[str]) -> pd.Series:
+        max_assignment_ix = gradebook.score[assignments].idxmax(axis=1)
+        max_score = gradebook.score[assignments].max(axis=1)
+        self._add_notes(gradebook, assignments, max_assignment_ix)
+        return max_score
+
+    def _add_notes(
+        self,
+        gradebook: Gradebook,
+        assignments: Sequence[str],
+        max_assignment_ix: pd.Series,
+    ):
+        def make_note_for(student: Student) -> str:
+            def assignment_part(assignment):
+                """Make string like 'Mt01 score: 95.00%'."""
+                formatted_score = _fmt_as_pct(gradebook.score.loc[student, assignment])
+                return f"{assignment.title()} score: {formatted_score}."
+
+            # makes string like 'Mt01 score used.'
+            used_part = f"{max_assignment_ix.loc[student].title()} score used."
+
+            return " ".join([assignment_part(a) for a in assignments] + [used_part])
+
+        for student in gradebook.students:
+            gradebook.add_note(student, "redemption", make_note_for(student))
+
+
 def redeem(
     gradebook: Gradebook,
-    assignments: Mapping[str, Tuple[str, str]],
-    remove_parts=False,
-    deduction=None,
+    existing_assignments: Sequence[str],
+    new_assignment: str,
+    *,
+    remove=False,
+    policy: Callable[[Gradebook, Sequence[str]], pd.Series] = Maximum(),
+    points_possible: Union[int, float] = 1.0,
 ):
-    """Replace assignment scores with later assignment scores, if higher.
-
-    If the `deduction` is an instance of :class:`Percentage`, the deduction is
-    calculated by multiplying the percentage by the points earned on the
-    assignment, as opposed to the points possible.
-
-    `deduction` can be a callable, in which case it is called with a namedtuple
-    with the following attributes:
-
-        - `gradebook`: the current gradebook
-        - `assignments`: the pair of assignments being redeemed, as a tuple
-        - `pid`: the pid of the student being penalized
+    """Provides multiple chances to earn points on an assignment.
 
     Parameters
     ----------
     gradebook : Gradebook
         The gradebook that will be modified.
-    assignments : AssignmentGrouper
-        Pairs of assignments to be redeemed. This can be either 1) a dictionary
-        mapping a group name to a pair of assignments; 2) a list of string
-        prefixes or an instance of Assignments/LazyAssignments. Each assignment
-        with that prefix is placed in the same group; or 3) a callable which
-        takes an assignment name as input and returns a group name. Groups must
-        have exactly two elements, else an
-        exception is raised.
-    remove_parts : bool
-        Whether the indidividual assignment parts should be removed. Default: `False`.
-    deduction : Optional[Union[Points, Percentage, Callable]]
-        A deduction that will optionally be applied to the second assignment in
-        the redemption pair. Default: `None`.
+    existing_assignments : Sequence[str]
+        The assignments to be aggregated.
+    new_assignment : str
+        The name of the assignment that will be created.
+    remove : bool, optional
+        Whether to remove the existing assignments, by default False.
+    policy : Callable[[Gradebook, Sequence[str]], pd.Series], optional
+        A function that takes a gradebook and a sequence of assignment names
+        and returns a Series of scores, by default Maximum().
+    points_possible : Union[int, float], optional
+        The number of points possible on the new assignment, by default 1.
 
     """
-    for value in assignments.values():
-        if len(value) != 2:
-            raise ValueError("Assignments must be given in pairs.")
+    redeemed_score = policy(gradebook, existing_assignments)
+    points_earned = redeemed_score * points_possible
+    gradebook.add_assignment(new_assignment, points_earned, points_possible)
 
-    for new_name, assignment_pair in assignments.items():
-        gradebook = _redeem(gradebook, new_name, assignment_pair, deduction)
-
-    if remove_parts:
-        gradebook = _remove_parts(gradebook, assignments)
-
-    return gradebook
-
-
-def _redeem(gradebook, new_name, assignment_pair, deduction):
-    first, second = assignment_pair
-
-    if gradebook.dropped[[first, second]].values.any():
-        raise ValueError("Cannot apply redemption to dropped assignments.")
-
-    points_possible = gradebook.points_possible[[first, second]].max()
-
-    first_scale, second_scale = (
-        points_possible / gradebook.points_possible[[first, second]]
-    )
-
-    first_points = gradebook.points_earned[first] * first_scale
-    second_points = gradebook.points_earned[second] * second_scale
-
-    first_points = first_points.fillna(0)
-    second_points = second_points.fillna(0)
-
-    if deduction is not None:
-        for pid in second_points.index:
-            if callable(deduction):
-                deduct = deduction(gradebook, assignment_pair, pid)
-            else:
-                deduct = deduction
-
-            if isinstance(deduct, Percentage):
-                d = second_points[pid] * deduct.amount
-            else:
-                d = deduct.amount
-
-            second_points[pid] = second_points[pid] - d
-
-    points_earned = np.maximum(first_points, second_points)
-
-    # used for messaging
-    first_raw_score = gradebook.points_earned[first] / gradebook.points_possible[first]
-    second_raw_score = (
-        gradebook.points_earned[second] / gradebook.points_possible[second]
-    )
-
-    def _fmt_score(score):
-        if np.isnan(score):
-            return "n/a"
-        else:
-            return _fmt_as_pct(score)
-
-    for pid in points_earned.index:
-        first_score_string = _fmt_score(first_raw_score.loc[pid])
-        second_score_string = _fmt_score(second_raw_score.loc[pid])
-        pieces = [
-            f"{first.title()} score: {first_score_string}.",
-            f"{second.title()} score: {second_score_string}.",
-        ]
-        if first_points.loc[pid] >= second_points.loc[pid]:
-            pieces.append(f"{first.title()} score used.")
-        else:
-            pieces.append(f"{second.title()} score used.")
-        gradebook.add_note(pid, "redemption", " ".join(pieces))
-
-    gradebook.add_assignment(new_name, points_earned, points_possible)
-    return gradebook
-
-
-def _remove_parts(gradebook, selector):
-    for assignment_pair in selector.values():
-        gradebook.remove_assignments(assignment_pair)
-    return gradebook
+    if remove:
+        gradebook.remove_assignments(existing_assignments)

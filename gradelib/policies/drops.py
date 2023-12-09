@@ -1,7 +1,7 @@
 import itertools
 from typing import Optional, Collection
 
-import pandas as pd
+import pandas as _pd
 
 from ..core import Gradebook
 
@@ -66,18 +66,18 @@ def drop_most_favorable(
 
     # now we put the scores into a table and find the index of the best
     # score for each student
-    all_scores = pd.concat(scores, axis=1)
+    all_scores = _pd.concat(scores, axis=1)
     index_of_best_score = all_scores.idxmax(axis=1)
 
     # loop through the students and mark the assignments which should be
     # dropped
     new_dropped = gradebook.dropped.copy()
-    for pid in gradebook.pids:
-        best_combo_ix = index_of_best_score.loc[pid]
+    for student in gradebook.students:
+        best_combo_ix = index_of_best_score.loc[student]
         tossed = list(combinations[best_combo_ix])
-        new_dropped.loc[pid, tossed] = True
+        new_dropped.loc[student, tossed] = True
 
         for assignment in tossed:
-            gradebook.add_note(pid, "drops", f"{assignment.title()} dropped.")
+            gradebook.add_note(student, "drops", f"{assignment.title()} dropped.")
 
     gradebook.dropped = new_dropped

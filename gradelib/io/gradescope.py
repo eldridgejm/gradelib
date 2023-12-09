@@ -1,9 +1,9 @@
 """Read grades exported from Gradescope."""
 
-import pathlib
+import pathlib as _pathlib
 from typing import Union, Sequence
 
-import pandas as pd
+import pandas as _pd
 
 from gradelib import Gradebook, Student
 
@@ -53,7 +53,7 @@ def _find_index_of_first_assignment_column(columns: Sequence[str]) -> int:
     raise ValueError("There is no assignment column.")
 
 
-def _lateness_in_seconds(lateness: pd.Series) -> pd.Series:
+def _lateness_in_seconds(lateness: _pd.Series) -> _pd.Series:
     """Converts Series of lateness strings in HH:MM:SS format to integer seconds.
 
     Parameters
@@ -70,11 +70,11 @@ def _lateness_in_seconds(lateness: pd.Series) -> pd.Series:
     hours = lateness.str.split(":").str[0].astype(int)
     minutes = lateness.str.split(":").str[1].astype(int)
     seconds = lateness.str.split(":").str[2].astype(int)
-    return pd.to_timedelta(3600 * hours + 60 * minutes + seconds, unit="s")
+    return _pd.to_timedelta(3600 * hours + 60 * minutes + seconds, unit="s")
 
 
 def read(
-    path: Union[str, pathlib.Path], standardize_pids=True, standardize_assignments=True
+    path: Union[str, _pathlib.Path], standardize_pids=True, standardize_assignments=True
 ) -> Gradebook:
     """Read a CSV exported from Gradescope into a :class:`gradelib.Gradebook`.
 
@@ -95,7 +95,7 @@ def read(
     Gradebook
 
     """
-    table = pd.read_csv(path, dtype={"SID": str}).set_index("SID")
+    table = _pd.read_csv(path, dtype={"SID": str}).set_index("SID")
 
     if standardize_pids:
         table.index = table.index.str.upper()

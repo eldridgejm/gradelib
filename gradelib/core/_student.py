@@ -1,6 +1,6 @@
 """Representa a student in the class."""
 
-import typing
+from typing import Optional, Sequence
 
 
 class Student:
@@ -32,7 +32,7 @@ class Student:
 
     """
 
-    def __init__(self, pid, name=None):
+    def __init__(self, pid: str, name: Optional[str] = None):
         self.pid = pid
         self.name = name
 
@@ -63,7 +63,7 @@ class Student:
             return self.pid < other
 
 
-class Students(typing.Sequence[Student]):
+class Students(Sequence[Student]):
     """A sequence of :class:`Student` instances.
 
     This behaves like a list of :class:`Student` instances, but also provides a
@@ -72,7 +72,7 @@ class Students(typing.Sequence[Student]):
 
     """
 
-    def __init__(self, students: typing.Sequence[Student]):
+    def __init__(self, students: Sequence[Student]):
         self._students = students
 
     def __getitem__(self, ix):

@@ -1,6 +1,6 @@
 import gradelib
 
-from pytest import raises
+from pytest import raises  # pyright: ignore
 
 
 def test_verifies_that_assignment_weights_add_to_one():

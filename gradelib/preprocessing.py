@@ -12,10 +12,12 @@ import pandas as pd
 # combine_assignment_parts -------------------------------------------------------------
 
 
-def _combine_assignment_parts(gradebook: Gradebook, new_name: str, parts):
+def _combine_assignment_parts(
+    gradebook: Gradebook, new_name: str, parts: Collection[str]
+):
     """A helper function to combine assignments under the new name."""
     parts = list(parts)
-    if gradebook.dropped[parts].any(axis=None):
+    if gradebook.dropped.loc[:, parts].any(axis=None):
         raise ValueError("Cannot combine assignments with drops.")
 
     assignment_points = gradebook.points_earned[parts].sum(axis=1)

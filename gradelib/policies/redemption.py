@@ -1,6 +1,6 @@
 from typing import Union, Sequence, Callable
 
-import pandas as pd
+import pandas as _pd
 
 
 from ..core import Gradebook, Student
@@ -17,8 +17,8 @@ class Maximum:
 
     """
 
-    def __call__(self, gradebook: Gradebook, assignments: Sequence[str]) -> pd.Series:
-        max_assignment_ix = gradebook.score[assignments].idxmax(axis=1)
+    def __call__(self, gradebook: Gradebook, assignments: Sequence[str]) -> _pd.Series:
+        max_assignment_ix = gradebook.score.loc[:, assignments].idxmax(axis=1)
         max_score = gradebook.score[assignments].max(axis=1)
         self._add_notes(gradebook, assignments, max_assignment_ix)
         return max_score
@@ -27,7 +27,7 @@ class Maximum:
         self,
         gradebook: Gradebook,
         assignments: Sequence[str],
-        max_assignment_ix: pd.Series,
+        max_assignment_ix: _pd.Series,
     ):
         def make_note_for(student: Student) -> str:
             def assignment_part(assignment):
@@ -50,7 +50,7 @@ def redeem(
     new_assignment: str,
     *,
     remove=False,
-    policy: Callable[[Gradebook, Sequence[str]], pd.Series] = Maximum(),
+    policy: Callable[[Gradebook, Sequence[str]], _pd.Series] = Maximum(),
     points_possible: Union[int, float] = 1.0,
 ):
     """Provides multiple chances to earn points on an assignment.

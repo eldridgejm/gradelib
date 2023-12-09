@@ -1,12 +1,12 @@
-from .gradebook import Gradebook, GradebookOptions, GradingGroup, combine_gradebooks
-from .assignments import (
+from ._gradebook import Gradebook, GradebookOptions, GradingGroup, combine_gradebooks
+from ._assignments import (
     normalize,
     Assignments,
     AssignmentSelector,
     AssignmentGrouper,
 )
-from .student import Student, Students
-from .amounts import Points, Percentage
+from ._student import Student, Students
+from ._amounts import Points, Percentage
 
 __all__ = [
     "Gradebook",

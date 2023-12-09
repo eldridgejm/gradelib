@@ -51,10 +51,10 @@ def test_creates_index_of_student_objects_with_names():
     gb = gradelib.io.canvas.read(EXAMPLES_DIRECTORY / "canvas.csv")
 
     # then
-    assert gb.points_earned.index[0].pid == "A16000000"
+    assert gb.points_earned.index[0].pid == "A16000000"  # pyright: ignore
     assert (
-        gb.points_earned.index[0].name == "Zelda Fitzgerald"
+        gb.points_earned.index[0].name == "Zelda Fitzgerald"  # pyright: ignore
     )  # I got the order wrong in the example CSV
 
-    assert gb.late.index[0].pid == "A16000000"
-    assert gb.late.index[0].name == "Zelda Fitzgerald"
+    assert gb.late.index[0].pid == "A16000000"  # pyright: ignore
+    assert gb.late.index[0].name == "Zelda Fitzgerald"  # pyright: ignore

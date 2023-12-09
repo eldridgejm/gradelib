@@ -1,4 +1,4 @@
-import pytest
+import pytest  # pyright: ignore
 
 import gradelib
 

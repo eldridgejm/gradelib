@@ -9,10 +9,10 @@ order of the rows matters!
 from collections.abc import Mapping
 from collections import OrderedDict
 from typing import Union
-import pathlib
+import pathlib as _pathlib
 
 
-def write(path: Union[str, pathlib.Path], scale: Mapping):
+def write(path: Union[str, _pathlib.Path], scale: Mapping):
     """Writes a grading scale to disk.
 
     Parameters
@@ -28,14 +28,14 @@ def write(path: Union[str, pathlib.Path], scale: Mapping):
     letter grade, and the second contains the cutoff as a decimal number.
 
     """
-    path = pathlib.Path(path)
+    path = _pathlib.Path(path)
 
     with path.open("w") as fileobj:
         for letter, cutoff in scale.items():
             fileobj.write(f"{letter},{cutoff}\n")
 
 
-def read(path: Union[str, pathlib.Path]) -> OrderedDict:
+def read(path: Union[str, _pathlib.Path]) -> OrderedDict:
     """Reads a grading scale from the file.
 
     Parameters
@@ -49,7 +49,7 @@ def read(path: Union[str, pathlib.Path]) -> OrderedDict:
         A mapping from letter grades to their cutoffs.
 
     """
-    path = pathlib.Path(path)
+    path = _pathlib.Path(path)
 
     with path.open() as fileobj:
         lines = fileobj.readlines()

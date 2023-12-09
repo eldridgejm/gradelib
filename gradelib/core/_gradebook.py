@@ -3,13 +3,13 @@
 import copy
 import dataclasses
 import math
-from typing import Sequence, Collection, Mapping, Union, Tuple, Optional, Callable
+from typing import Sequence, Collection, Mapping, Union, Tuple, Optional
 from numbers import Real
 
 from ..scales import DEFAULT_SCALE, map_scores_to_letter_grades
 from .._util import empty_mask_like, ensure_df, ensure_series
-from .student import Student, Students
-from .assignments import Assignments
+from ._student import Student, Students
+from ._assignments import Assignments
 
 import numpy as np
 import pandas as pd
@@ -23,7 +23,7 @@ def _empty_lateness_like(table: pd.DataFrame) -> pd.DataFrame:
     empty = table.copy()
     empty.iloc[:, :] = 0
     for column in empty.columns:
-        empty[column] = pd.to_timedelta(empty[column], unit="s")
+        empty[column] = pd.to_timedelta(empty[column], unit="s")  # pyright: ignore
     return empty
 
 
@@ -42,7 +42,7 @@ def _cast_index_to_student_objects(table: pd.DataFrame) -> pd.DataFrame:
 
 def _concatenate_notes(
     gradebooks: Sequence["Gradebook"],
-) -> dict[str, dict[str, list[str]]]:
+) -> dict[Student, dict[str, list[str]]]:
     """Concatenates the notes from a sequence of gradebooks."""
     notes = {}
     for gradebook in gradebooks:
@@ -94,8 +94,8 @@ def _combine_if_equal(gradebooks: Collection["Gradebook"], attr: str):
 
 
 def _copy_notes(
-    notes: Mapping[str, Mapping[str, Sequence[str]]]
-) -> dict[str, dict[str, list[str]]]:
+    notes: Mapping[Student, Mapping[str, Sequence[str]]]
+) -> dict[Student, dict[str, list[str]]]:
     """Copy a mapping containing notes into a dictionary."""
     result = {}
     for outer_key, outer_value in notes.items():
@@ -279,7 +279,9 @@ class GradingGroup:
 
 
 # type alias for the multiple valid ways to specify a grading group
-GradingGroupDefinition = Union[Real, Tuple[Mapping[str, Real], Real], GradingGroup]
+GradingGroupDefinition = Union[
+    float, Tuple[Sequence[str], float], Tuple[Mapping[str, float], float], GradingGroup
+]
 
 
 # Gradebook ============================================================================
@@ -313,7 +315,7 @@ class Gradebook:
         A Boolean dataframe with the same columns/index as `points_earned`. An
         entry that is `True` indicates that the assignment should be dropped.
         If `None` is passed, a dataframe of all `False` is used by default.
-    notes : Optional[Mapping[str, Mapping[str, Sequence[str]]]]
+    notes : Optional[Mapping[Student, Mapping[str, Sequence[str]]]]
         A nested dictionary of notes, possibly used by report generating code.
         The keys of the outer dictionary should be student PIDs, and the values
         should be dictionaries. The keys of the inner dictionary should specify
@@ -379,7 +381,7 @@ class Gradebook:
         points_possible: pd.Series,
         lateness: Optional[pd.DataFrame] = None,
         dropped: Optional[pd.DataFrame] = None,
-        notes: Optional[Mapping[str, Mapping[str, Sequence[str]]]] = None,
+        notes: Optional[Mapping[Student, Mapping[str, Sequence[str]]]] = None,
         grading_groups: Optional[Mapping[str, GradingGroupDefinition]] = None,
         scale: Optional[Mapping] = None,
         options: Optional[GradebookOptions] = None,
@@ -1013,10 +1015,7 @@ class Gradebook:
             A collection of assignment names.
 
         """
-        if callable(assignments):
-            assignments = assignments(self.assignments)
-        else:
-            assignments = list(assignments)
+        assignments = list(assignments)
         extras = set(assignments) - set(self.assignments)
         if extras:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
@@ -1024,7 +1023,7 @@ class Gradebook:
         self.points_earned = self.points_earned.loc[:, assignments]
         self.points_possible = self.points_possible.loc[assignments]
         self.lateness = self.lateness.loc[:, assignments]
-        self.dropped = self.dropped.loc[:, assignments]
+        self.dropped = ensure_df(self.dropped.loc[:, assignments])
 
         self.grading_groups = {}
 
@@ -1042,11 +1041,7 @@ class Gradebook:
             A collection of assignments names that will be removed.
 
         """
-        # TODO: preserve order better
-        if callable(assignments):
-            assignments = assignments(self.assignments)
-        else:
-            assignments = list(assignments)
+        assignments = list(assignments)
         extras = set(assignments) - set(self.assignments)
         if extras:
             raise KeyError(f"These assignments were not in the gradebook: {extras}.")
@@ -1092,8 +1087,8 @@ class Gradebook:
 
         Parameters
         ----------
-        to : Collection[str]
-            A collection of PIDs. For instance, from the final course roster.
+        to : Collection[Union[str, Student]]
+            A collection of PIDs or Students.
 
         Raises
         ------
@@ -1101,7 +1096,7 @@ class Gradebook:
             If a PID was specified that is not in the gradebook.
 
         """
-        pids = list(to)
+        pids = [s.pid if isinstance(s, Student) else s for s in to]
         extras = set(pids) - set(self.pids)
         if extras:
             raise KeyError(f"These students were not in the gradebook: {extras}.")
@@ -1112,16 +1107,15 @@ class Gradebook:
 
     # notes ----------------------------------------------------------------------------
 
-    def add_note(self, student: Union[str, Student], channel: str, message: str):
+    def add_note(self, student: Student, channel: str, message: str):
         """Add a grading note.
 
         Mutates the gradebook.
 
         Parameters
         ----------
-        pid : Union[str, Student]
-            The PID of the student for which the note should be added, or a
-            :class:`Student` object.
+        student : Student
+            The student for which the note should be added.
 
         channel : str
             The channel that the note should be added to. Valid channels are:
@@ -1134,18 +1128,13 @@ class Gradebook:
             The note's message.
 
         """
-        if isinstance(student, Student):
-            pid = student.pid
-        else:
-            pid = student
-
         if channel not in {"lates", "drops", "redemption", "misc"}:
             raise ValueError(f'Unknown channel "{channel}".')
 
-        if pid not in self.notes:
-            self.notes[pid] = {}
+        if student not in self.notes:
+            self.notes[student] = {}
 
-        if channel not in self.notes[pid]:
-            self.notes[pid][channel] = []
+        if channel not in self.notes[student]:
+            self.notes[student][channel] = []
 
-        self.notes[pid][channel].append(message)
+        self.notes[student][channel].append(message)

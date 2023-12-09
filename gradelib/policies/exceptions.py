@@ -1,4 +1,4 @@
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from typing import Union, Optional
 
 import pandas as _pd
@@ -81,7 +81,7 @@ class ForgiveLate:
         msg = f"Exception applied: late {self.assignment.title()} is forgiven."
         msg = _add_reason_to_message(msg, self.reason)
 
-        gradebook.add_note(student.pid, "lates", msg)
+        gradebook.add_note(student, "lates", msg)
 
 
 # Drop ---------------------------------------------------------------------------------
@@ -109,7 +109,7 @@ class Drop:
 
         msg = f"Exception applied: {self.assignment.title()} dropped."
         msg = _add_reason_to_message(msg, self.reason)
-        gradebook.add_note(student.pid, "drops", msg)
+        gradebook.add_note(student, "drops", msg)
 
 
 # Replace ------------------------------------------------------------------------------
@@ -165,4 +165,4 @@ class Replace:
         gradebook.points_earned.loc[student, self.assignment] = new_points
 
         msg = _add_reason_to_message(msg, self.reason)
-        gradebook.add_note(student.pid, "misc", msg)
+        gradebook.add_note(student, "misc", msg)

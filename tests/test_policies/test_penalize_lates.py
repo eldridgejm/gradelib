@@ -1,4 +1,4 @@
-import pytest
+import pytest  # pyright: ignore
 
 import pandas as pd
 
@@ -21,8 +21,6 @@ def test_with_deduct_percentage():
     )
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
-    HOMEWORK = gradebook.assignments.starting_with("hw")
-
     penalize(gradebook, policy=Deduct(Percentage(100)))
 
     assert gradebook.points_earned.loc["A1", "lab01"] == 0
@@ -42,8 +40,6 @@ def test_with_deduct_points():
         index=points_earned.index,
     )
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
-
-    HOMEWORK = gradebook.assignments.starting_with("hw")
 
     penalize(gradebook, policy=Deduct(Points(3)))
 
@@ -68,8 +64,6 @@ def test_with_custom_policy():
         "homeworks": (["hw01", "hw02"], 0.75),
         "labs": (["lab01"], 0.25),
     }
-
-    HOMEWORK = gradebook.assignments.starting_with("hw")
 
     gradebook.options.lateness_fudge = 60 * 5
 
@@ -101,8 +95,6 @@ def test_respects_lateness_fudge():
         index=points_earned.index,
     )
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
-
-    HOMEWORK = gradebook.assignments.starting_with("hw")
 
     gradebook.options.lateness_fudge = 60 * 5
 
@@ -150,8 +142,6 @@ def test_forgive():
         "homeworks": (["hw01", "hw02"], 0.75),
         "labs": (["lab01"], 0.25),
     }
-
-    HOMEWORK = gradebook.assignments.starting_with("hw")
 
     penalize(gradebook, policy=Forgive(1))
 
@@ -283,7 +273,7 @@ def test_with_callable_order_by():
     gradebook.grading_groups = {"homeworks": (HOMEWORK, 1)}
 
     # order by the second character of the assignment name, forward
-    def order_by(gradebook, student, assignments):
+    def order_by(gradebook, student, assignments):  # pyright: ignore
         return sorted(assignments, key=lambda a: a[1:])
 
     seen = {}

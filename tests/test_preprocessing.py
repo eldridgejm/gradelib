@@ -4,7 +4,7 @@ import numpy as np
 import gradelib
 from gradelib import preprocessing
 
-import pytest
+import pytest  # pyright: ignore
 
 
 # combine_assignment_parts -------------------------------------------------------------
@@ -144,7 +144,6 @@ def test_combine_assignment_parts_copies_attributes():
     points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points_earned, points_possible)
-    gradebook.notes = {"A1": ["ok"]}
 
     HOMEWORK_01_PARTS = gradebook.assignments.starting_with("hw01")
 
@@ -186,7 +185,6 @@ def test_combine_assignment_versions_removes_assignment_versions():
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
     # when
-    PARTS = gradebook.assignments.starting_with("mt")
     preprocessing.combine_assignment_versions(gradebook, {"midterm": columns})
 
     # then
@@ -204,7 +202,6 @@ def test_combine_assignment_versions_merges_points():
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
     # when
-    PARTS = gradebook.assignments.starting_with("mt")
     preprocessing.combine_assignment_versions(gradebook, {"midterm": columns})
 
     # then
@@ -226,8 +223,6 @@ def test_combine_assignment_versions_raises_if_any_dropped():
     gradebook.dropped.loc["A1", "mt - version a"] = True
 
     # when
-    PARTS = gradebook.assignments.starting_with("mt")
-
     with pytest.raises(ValueError):
         preprocessing.combine_assignment_versions(gradebook, {"midterm": columns})
 
@@ -243,8 +238,6 @@ def test_combine_assignment_versions_raises_if_points_earned_in_multiple_version
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
     # when
-    PARTS = gradebook.assignments.starting_with("mt")
-
     with pytest.raises(ValueError):
         preprocessing.combine_assignment_versions(gradebook, {"midterm": columns})
 

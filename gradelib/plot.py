@@ -12,13 +12,13 @@ from .core import Gradebook
 
 
 def _plot_grade_distribution_histogram(
-    fig: bokeh.plotting.figure, x_hist: np.ndarray, y_hist: np.ndarray
+    fig: bokeh.models.Model, x_hist: np.ndarray, y_hist: np.ndarray
 ):
     fig.quad(top=y_hist, bottom=0, left=x_hist[:-1], right=x_hist[1:], fill_alpha=0.7)
 
 
 def _plot_grade_distribution_students(
-    fig: bokeh.plotting.figure, gb: Gradebook
+    fig: bokeh.models.Model, gb: Gradebook
 ) -> bokeh.models.GlyphRenderer:
     source_df = outcomes(gb).reset_index().rename(columns={"index": "student"})
     source_df["student"] = source_df["student"].astype(str)
@@ -37,7 +37,7 @@ def _plot_grade_distribution_students(
 
 
 def _plot_grade_distribution_hover_tool(
-    fig: bokeh.plotting.figure, renderer: bokeh.models.GlyphRenderer
+    fig: bokeh.models.Model, renderer: bokeh.models.GlyphRenderer
 ):
     fig.hover.tooltips = [
         ("student", "@student"),
@@ -50,7 +50,7 @@ def _plot_grade_distribution_hover_tool(
 
 
 def _plot_grade_distribution_thresholds(
-    fig: bokeh.plotting.figure, gb: Gradebook, y_max: float
+    fig: bokeh.models.Model, gb: Gradebook, y_max: float
 ):
     # plot threshold lines
     for letter, threshold in gb.scale.items():

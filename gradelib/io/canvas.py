@@ -1,23 +1,23 @@
 """Read Canvas gradebooks."""
 
-import re
-import pathlib
+import re as _re
+import pathlib as _pathlib
 from typing import Union
 
 
-import pandas as pd
-import numpy as np
+import pandas as _pd
+import numpy as _np
 
 from gradelib import Gradebook, Student
 
 
 def _remove_assignment_id(s: str) -> str:
     """Remove the trailing (xxxxx) from a Canvas assignment name."""
-    return re.sub(r" +\(\d+\)$", "", s)
+    return _re.sub(r" +\(\d+\)$", "", s)
 
 
 def read(
-    path: Union[str, pathlib.Path],
+    path: Union[str, _pathlib.Path],
     *,
     standardize_pids=True,
     standardize_assignments=True,
@@ -44,7 +44,7 @@ def read(
     Gradebook
 
     """
-    table = pd.read_csv(path).set_index("SIS User ID")
+    table = _pd.read_csv(path).set_index("SIS User ID")
 
     if standardize_pids:
         table.index = table.index.str.upper()
@@ -54,8 +54,8 @@ def read(
 
     def _student(pid, name):
         # some of the pids are nan; we will preserve these
-        if pd.isna(pid):
-            return np.nan
+        if _pd.isna(pid):
+            return _np.nan
         else:
             return Student(pid, name)
 
@@ -69,19 +69,19 @@ def read(
     # `xxxxxx` is some integer number.
     def is_assignment(s):
         """Does the string end with parens containing a number?"""
-        return bool(re.search(r"\(\d+\)$", s))
+        return bool(_re.search(r"\(\d+\)$", s))
 
     assignments = [c for c in table.columns if is_assignment(c)]
 
     # keep only the assignments and the student name column, because we'll use
     # the names in a moment to find the max points
-    table = table[["Student"] + assignments]
+    table = table.loc[:, ["Student"] + assignments]
 
     # the maximum points are stored in a row with student name "Points Possible",
     # and SIS User ID == NaN. For some reason, though, "Points Possible" has a
     # bunch of whitespace at the front... thanks Canvas
     points_possible = table[
-        pd.isna(table.index) & table["Student"].str.contains("Points Possible")
+        _pd.isna(table.index) & table["Student"].str.contains("Points Possible")
     ]
 
     # the result of the above was a dataframe. turn it into a series and get
@@ -91,7 +91,9 @@ def read(
 
     # clean up the table. get rid of the student column, and drop all rows with
     # NaN indices
-    points_earned = table[~pd.isna(table.index)].drop(columns=["Student"]).astype(float)
+    points_earned = (
+        table[~_pd.isna(table.index)].drop(columns=["Student"]).astype(float)
+    )
 
     if standardize_assignments:
         points_earned.columns = points_earned.columns.str.lower()

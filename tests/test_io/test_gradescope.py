@@ -57,14 +57,14 @@ def test_creates_index_of_student_objects_with_names():
     gb = gradelib.io.gradescope.read(EXAMPLES_DIRECTORY / "gradescope.csv")
 
     # then
-    assert gb.points_earned.index[0].pid == "A16000000"
+    assert gb.points_earned.index[0].pid == "A16000000"  # pyright: ignore
     assert (
-        gb.points_earned.index[0].name == "Fitzgerald Zelda"
+        gb.points_earned.index[0].name == "Fitzgerald Zelda"  # pyright: ignore
     )  # I got the order wrong in the example CSV
 
-    assert gb.late.index[0].pid == "A16000000"
+    assert gb.late.index[0].pid == "A16000000"  # pyright: ignore
     assert (
-        gb.late.index[0].name == "Fitzgerald Zelda"
+        gb.late.index[0].name == "Fitzgerald Zelda"  # pyright: ignore
     )  # I got the order wrong in the example CSV
 
 

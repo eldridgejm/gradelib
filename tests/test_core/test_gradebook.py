@@ -2,13 +2,14 @@
 
 import pathlib
 
-import pytest
+import pytest  # pyright: ignore
 import pandas as pd
 import numpy as np
 
 import gradelib
 import gradelib.io.gradescope
 import gradelib.io.canvas
+from gradelib import Student
 
 # examples setup -----------------------------------------------------------------------
 
@@ -684,8 +685,6 @@ def test_overall_score_raises_if_groups_not_set():
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-
     with pytest.raises(ValueError):
         gradebook.overall_score
 
@@ -784,8 +783,6 @@ def test_letter_grades_raises_if_groups_not_set():
         "D": 0.1,
         "F": 0,
     }
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
 
     with pytest.raises(ValueError):
         gradebook.letter_grades
@@ -933,7 +930,7 @@ def test_group_scores_respects_dropped_assignments():
         gradebook.grading_group_scores,
         pd.DataFrame(
             [[91 / 102, 20 / 20], [9 / 52, 20 / 20]],
-            index=gradebook.students,
+            index=list(gradebook.students),
             columns=["homeworks", "labs"],
         ),
     )
@@ -960,7 +957,7 @@ def test_group_scores_with_assignment_weights():
         gradebook.grading_group_scores,
         pd.DataFrame(
             [[0.125 + 0.25, 1], [0, 20 / 20]],
-            index=gradebook.students,
+            index=list(gradebook.students),
             columns=["homeworks", "labs"],
         ),
     )
@@ -975,16 +972,6 @@ def test_restrict_to_assignments():
     # when
     example = GRADESCOPE_EXAMPLE.copy()
     example.restrict_to_assignments(["homework 01", "homework 02"])
-
-    # then
-    assert set(example.assignments) == {"homework 01", "homework 02"}
-    assert_gradebook_is_sound(example)
-
-
-def test_restrict_to_assignments_accepts_function_assignment_selector():
-    # when
-    example = GRADESCOPE_EXAMPLE.copy()
-    example.restrict_to_assignments(lambda asmts: ["homework 01", "homework 02"])
 
     # then
     assert set(example.assignments) == {"homework 01", "homework 02"}
@@ -1046,28 +1033,6 @@ def test_remove_assignments():
     assert_gradebook_is_sound(example)
 
 
-def test_remove_assignments_accepts_function_assignment_selector():
-    # given
-    example = GRADESCOPE_EXAMPLE.copy()
-
-    # when
-    example.remove_assignments(lambda asmts: asmts.starting_with("lab"))
-
-    # then
-    assert set(example.assignments) == {
-        "homework 01",
-        "homework 02",
-        "homework 03",
-        "homework 04",
-        "homework 05",
-        "homework 06",
-        "homework 07",
-        "project 01",
-        "project 02",
-    }
-    assert_gradebook_is_sound(example)
-
-
 def test_remove_assignments_resets_groups():
     # when
     example = GRADESCOPE_EXAMPLE.copy()
@@ -1102,7 +1067,6 @@ def test_add_assignment():
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
     assignment_points_earned = pd.Series([10, 20], index=["A1", "A2"])
-    assignment_max = 20
     assignment_late = pd.Series(
         [pd.Timedelta(days=2), pd.Timedelta(days=0)], index=["A1", "A2"]
     )
@@ -1135,7 +1099,6 @@ def test_add_assignment_default_none_dropped_or_late():
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
     assignment_points_earned = pd.Series([10, 20], index=["A1", "A2"])
-    assignment_max = 20
 
     # when
     gradebook.add_assignment(
@@ -1160,7 +1123,6 @@ def test_add_assignment_raises_on_missing_student():
 
     # A2 is missing
     assignment_points_earned = pd.Series([10], index=["A1"])
-    assignment_max = 20
 
     # when
     with pytest.raises(ValueError):
@@ -1182,7 +1144,6 @@ def test_add_assignment_raises_on_unknown_student():
 
     # foo is unknown
     assignment_points_earned = pd.Series([10, 20, 30], index=["A1", "A2", "A3"])
-    assignment_max = 20
 
     # when
     with pytest.raises(ValueError):
@@ -1224,7 +1185,6 @@ def test_rename_assignments_simple_example():
     points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points_earned, points_possible)
-    gradebook.notes = {"A1": ["ok"]}
 
     gradebook.rename_assignments(
         {
@@ -1251,7 +1211,6 @@ def test_rename_assignments_raises_error_on_name_clash():
     points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points_earned, points_possible)
-    gradebook.notes = {"A1": ["ok"]}
 
     with pytest.raises(ValueError):
         gradebook.rename_assignments(
@@ -1267,7 +1226,6 @@ def test_rename_assignments_allows_swapping_names():
     points_earned = pd.DataFrame([p1, p2])
     points_possible = pd.Series([2, 50, 100, 20], index=columns)
     gradebook = gradelib.Gradebook(points_earned, points_possible)
-    gradebook.notes = {"A1": ["ok"]}
 
     gradebook.rename_assignments(
         {
@@ -1345,15 +1303,13 @@ def test_combine_gradebooks_raises_if_duplicate_assignments():
     # the canvas example and the gradescope example both have lab 01.
     # when
     with pytest.raises(ValueError):
-        combined = gradelib.combine_gradebooks([GRADESCOPE_EXAMPLE, CANVAS_EXAMPLE])
+        gradelib.combine_gradebooks([GRADESCOPE_EXAMPLE, CANVAS_EXAMPLE])
 
 
 def test_combine_gradebooks_raises_if_indices_do_not_match():
     # when
     with pytest.raises(ValueError):
-        combined = gradelib.combine_gradebooks(
-            [CANVAS_WITHOUT_LAB_EXAMPLE, GRADESCOPE_EXAMPLE]
-        )
+        gradelib.combine_gradebooks([CANVAS_WITHOUT_LAB_EXAMPLE, GRADESCOPE_EXAMPLE])
 
 
 def test_combine_gradebooks_resets_groups():
@@ -1398,7 +1354,7 @@ def test_combine_gradebooks_raises_if_options_do_not_match():
     ex_2.options.lateness_fudge = 6000
 
     with pytest.raises(ValueError):
-        combined = gradelib.combine_gradebooks(
+        gradelib.combine_gradebooks(
             [ex_1, ex_2],
             restrict_to_students=ROSTER.index,
         )
@@ -1428,7 +1384,7 @@ def test_combine_gradebooks_raises_if_scales_do_not_match():
     ex_2.scale = gradelib.scales.ROUNDED_DEFAULT_SCALE
 
     with pytest.raises(ValueError):
-        combined = gradelib.combine_gradebooks(
+        gradelib.combine_gradebooks(
             [ex_1, ex_2],
             restrict_to_students=ROSTER.index,
         )
@@ -1439,12 +1395,15 @@ def test_combine_gradebooks_concatenates_notes():
     example_1 = GRADESCOPE_EXAMPLE.copy()
     example_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
 
-    example_1.notes = {"A1": {"drop": ["foo", "bar"]}, "A2": {"misc": ["baz"]}}
+    example_1.notes = {
+        Student("A1"): {"drop": ["foo", "bar"]},
+        Student("A2"): {"misc": ["baz"]},
+    }
 
     example_2.notes = {
-        "A1": {"drop": ["baz", "quux"]},
-        "A2": {"late": ["ok"]},
-        "A3": {"late": ["message"]},
+        Student("A1"): {"drop": ["baz", "quux"]},
+        Student("A2"): {"late": ["ok"]},
+        Student("A3"): {"late": ["message"]},
     }
 
     combined = gradelib.combine_gradebooks(
@@ -1453,9 +1412,9 @@ def test_combine_gradebooks_concatenates_notes():
 
     # then
     assert combined.notes == {
-        "A1": {"drop": ["foo", "bar", "baz", "quux"]},
-        "A2": {"misc": ["baz"], "late": ["ok"]},
-        "A3": {"late": ["message"]},
+        Student("A1"): {"drop": ["foo", "bar", "baz", "quux"]},
+        Student("A2"): {"misc": ["baz"], "late": ["ok"]},
+        Student("A3"): {"late": ["message"]},
     }
 
 

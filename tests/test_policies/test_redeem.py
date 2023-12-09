@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 
 import gradelib
-from gradelib import Percentage
 from gradelib.policies.redemption import redeem
 
 from util import assert_gradebook_is_sound

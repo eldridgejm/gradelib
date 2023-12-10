@@ -1122,14 +1122,14 @@ class Gradebook:
             The channel that the note should be added to. Valid channels are:
                 - lates
                 - drops
-                - retries
+                - attempts
                 - misc
 
         message : str
             The note's message.
 
         """
-        if channel not in {"lates", "drops", "retries", "misc"}:
+        if channel not in {"lates", "drops", "attempts", "misc"}:
             raise ValueError(f'Unknown channel "{channel}".')
 
         if student not in self.notes:

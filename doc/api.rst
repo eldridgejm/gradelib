@@ -120,7 +120,7 @@ Core
 .. autoclass:: gradelib.policies.lates.LateInfo
 .. autoclass:: gradelib.policies.lates.Deduct
 .. autoclass:: gradelib.policies.lates.Forgive
-.. autofunction:: gradelib.policies.redemption.redeem
+.. autofunction:: gradelib.policies.attempts.take_best
 .. autofunction:: gradelib.policies.exceptions.make_exceptions
 .. autoclass:: gradelib.policies.exceptions.Drop
 .. autoclass:: gradelib.policies.exceptions.ForgiveLate

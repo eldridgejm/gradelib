@@ -42,7 +42,7 @@
               name = "gradelib";
               src = ./.;
               propagatedBuildInputs = with python3Packages; [ pandas bokeh matplotlib numpy ];
-              nativeBuildInputs = with python3Packages; [ pytest ipython sphinx sphinx_rtd_theme pip ];
+              nativeBuildInputs = with python3Packages; [ pytest ipython sphinx sphinx_rtd_theme pip jupyterlab ];
               doCheck = false;
             }
           );

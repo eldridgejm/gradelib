@@ -111,8 +111,8 @@ def grade_distribution(
     # create the base figure
     fig = bokeh.plotting.figure(
         title="Grade Distribution",
-        plot_width=800,
-        plot_height=400,
+        min_width=800,
+        min_height=400,
         x_range=[x_min, x_max],
         y_range=[0, y_max],
         tools="hover,pan,box_zoom,save,reset,help",

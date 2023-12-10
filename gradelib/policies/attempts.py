@@ -3,41 +3,11 @@ from typing import Union, Sequence, Callable, Mapping, Optional
 import pandas as _pd
 
 
-from ..core import Gradebook, Student
+from ..core import Gradebook
 
 
 def _fmt_as_pct(f):
     return f"{f * 100:0.2f}%"
-
-
-class Maximum:
-    """The maximum score on a set of assignments."""
-
-    def __call__(self, gradebook: Gradebook, assignments: Sequence[str]) -> _pd.Series:
-        max_assignment_ix = gradebook.score.loc[:, assignments].idxmax(axis=1)
-        max_score = gradebook.score[assignments].max(axis=1)
-        self._add_notes(gradebook, assignments, max_assignment_ix)
-        return max_score
-
-    def _add_notes(
-        self,
-        gradebook: Gradebook,
-        assignments: Sequence[str],
-        max_assignment_ix: _pd.Series,
-    ):
-        def make_note_for(student: Student) -> str:
-            def assignment_part(assignment):
-                """Make string like 'Mt01 score: 95.00%'."""
-                formatted_score = _fmt_as_pct(gradebook.score.loc[student, assignment])
-                return f"{assignment.title()} score: {formatted_score}."
-
-            # makes string like 'Mt01 score used.'
-            used_part = f"{max_assignment_ix.loc[student].title()} score used."
-
-            return " ".join([assignment_part(a) for a in assignments] + [used_part])
-
-        for student in gradebook.students:
-            gradebook.add_note(student, "attempts", make_note_for(student))
 
 
 def _scores_after_penalty(
@@ -106,14 +76,16 @@ def take_best(
     for new_assignment, existing_assignments in attempts.items():
         best_scores = _pd.Series()
         for student in gradebook.students:
-            raw_scores = gradebook.score.loc[student, existing_assignments]
-            effective_scores = _scores_after_penalty(raw_scores, policy)
+            raw_attempt_scores = gradebook.score.loc[student, existing_assignments]
+            effective_attempt_scores = _scores_after_penalty(raw_attempt_scores, policy)
 
             gradebook.add_note(
-                student, "attempts", _make_notes(raw_scores, effective_scores)
+                student,
+                "attempts",
+                _make_notes(raw_attempt_scores, effective_attempt_scores),
             )
 
-            best_scores[student] = effective_scores.max()
+            best_scores[student] = effective_attempt_scores.max()
 
         points_earned = best_scores * points_possible
         gradebook.add_assignment(new_assignment, points_earned, points_possible)

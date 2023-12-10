@@ -13,6 +13,9 @@ class Student:
     name : Optional[str]
         The student's name. If not available, this will be `None`.
 
+    Notes
+    -----
+
     When a :class:`Student` instance is printed, the student's name is displayed if
     available; however, when two :class:`Student` instances are compared for equality,
     the :code:`.pid` attribute is used.

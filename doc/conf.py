@@ -46,7 +46,7 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 autodoc_type_aliases = {
-    # "AssignmentSelector": "AssignmentSelector",
+    "Penalty": "Penalty",
     # "AssignmentGrouper": "AssignmentGrouper",
 }
 

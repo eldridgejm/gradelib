@@ -10,4 +10,7 @@ Tutorial
    gradebooks
    loading
    preprocessing
+   groups
    policies
+   scales
+   reviewing

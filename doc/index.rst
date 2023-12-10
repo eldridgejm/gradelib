@@ -45,13 +45,13 @@ algorithm which finds "robust" thresholds for every letter grade.
         gradelib.io.canvas.read('./canvas.csv')
     ])
 
-    HOMEWORKS = lambda gb: gb.assignments.starting_with("home")
-    LABS = lambda gb: gb.assignments.starting_with("lab")
+    HOMEWORKS = gb.assignments.starting_with("home")
+    LABS = gb.assignments.starting_with("lab")
 
     # group the assignments and determine their weight in the overall score calculation
     gb.grading_groups = {
-        'homeworks': (HOMEWORKS(gb), .25),
-        'labs': (LABS(gb), .25),
+        'homeworks': (HOMEWORKS, .25),
+        'labs': (LABS, .25),
         'midterm exam': .25,
         'final exam': .25
     }
@@ -67,9 +67,9 @@ algorithm which finds "robust" thresholds for every letter grade.
     )
 
     # apply grading policies
-    lates.penalize(gb, policy=lates.Forgive(3), within=HOMEWORKS(gb) + LABS(gb))
-    drops.drop_most_favorable(gb, 1, within=HOMEWORKS(gb))
-    drops.drop_most_favorable(gb, 1, within=LABS(gb))
+    lates.penalize(gb, policy=lates.Forgive(3), within=HOMEWORKS + LABS)
+    drops.drop_most_favorable(gb, 1, within=HOMEWORKS)
+    drops.drop_most_favorable(gb, 1, within=LABS)
 
     # find robust letter grade cutoffs by clustering grades
     gb.scale = gradelib.scales.find_robust_scale(gb.overall_score)
@@ -85,7 +85,11 @@ Contents
    :maxdepth: 2
 
    tutorial/index.rst
-   api
+
+.. toctree::
+   :maxdepth: 3
+
+   api/index.rst
 
 ******************
 Indices and tables

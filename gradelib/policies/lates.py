@@ -5,16 +5,49 @@ from ..core import Percentage, Points, Gradebook, Student
 
 
 class LateInfo(typing.NamedTuple):
+    """Contains information about a single late assignment.
+
+    Attributes
+    ----------
+    gradebook : Gradebook
+        The gradebook containing the late assignment.
+    student : Student
+        The student who submitted the late assignment.
+    assignment : str
+        The name of the late assignment.
+    number : int
+        The number of late assignments submitted by the student that have been
+        seen so far, including this one.
+
+    """
+
     gradebook: Gradebook
     student: Student
     assignment: str
     number: int
 
 
-Penalty = Union[Points, Percentage, None]
+Penalty = Optional[Union[Points, Percentage]]
+"""A type alias for a penalty returned by a late policy.
+
+This can be a fixed number of points (:class:`gradelib.Points`), a percentage of the
+total points possible (:class:`gradelib.Percentage`), or ``None`` to indicate that no
+penalty should be applied.
+
+"""
 
 
 class Deduct:
+    """A late policy that deducts a fixed amount from the grade.
+
+    Parameters
+    ----------
+    amount : Union[Points, Percentage]
+        The amount to deduct from the grade. This can be a fixed number of
+        points, or a percentage of the total points possible.
+
+    """
+
     def __init__(self, amount: Union[Points, Percentage]):
         self.amount = amount
 
@@ -23,6 +56,18 @@ class Deduct:
 
 
 class Forgive:
+    """A late policy that forgives the first N late assignments.
+
+    Parameters
+    ----------
+    number : int
+        The number of late assignments to forgive.
+    then : Callable[[LateInfo], Penalty]
+        The policy to apply to late assignments after the first N.
+        By default, this is a policy that deducts 100% of the points.
+
+    """
+
     def __init__(
         self, number: int, then: Callable[[LateInfo], Penalty] = Deduct(Percentage(100))
     ):
@@ -51,6 +96,33 @@ def penalize(
         str, Callable[[Gradebook, Student, Sequence[str]], Sequence[str]]
     ] = "value",
 ):
+    """Penalize late assignments.
+
+    Parameters
+    ----------
+    gradebook : Gradebook
+        The gradebook containing the assignments.
+    within : Optional[Sequence[str]]
+        The assignments within which to look for late submissions. If None,
+        all assignments will be considered.
+    policy : Callable[[LateInfo], Penalty]
+        The policy to apply to late assignments. This should be a function that
+        accepts a :class:`LateInfo` object and returns a :class:`Penalty` object.
+        By default, this is a policy that deducts 100% of the points for any
+        late assignment. For alternative policies, see :class:`Deduct` and
+        :class:`Forgive`.
+    order_by : Union[str, Callable[[Gradebook, Student, Sequence[str]], Sequence[str]]]
+        Determines the order in which assignments are considered (e.g., disambiguates
+        what is meant by "first late assignment"). By default, this is "value",
+        which means that assignments will be considered in order of decreasing
+        value. Also accepted is "index", which means that assignments will be
+        considered in the order in which they appear in ``within``. Finally,
+        a function can be passed that accepts a gradebook, a student, and the
+        sequence of assignments determined by the ``within`` argument, and
+        returns a sequence of assignments in the order in which they should be
+        considered.
+
+    """
     if within is None:
         within = gradebook.assignments
 
@@ -93,6 +165,7 @@ def _apply_penalty(
     assignment: str,
     deduction: Union[Points, Percentage],
 ):
+    """A helper function that applies a penalty to a late assignment."""
     pts = gradebook.points_earned.loc[student, assignment]
     if isinstance(deduction, Points):
         new_point_total = pts - deduction.amount

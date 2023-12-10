@@ -1,4 +1,4 @@
-Grading policies
+Grading Policies
 ================
 
 Common grading policies are implemented in `gradelib` as functions that modify
@@ -129,11 +129,54 @@ increase their overall score the most.
 Giving multiple chances at an assignment
 ----------------------------------------
 
-The :func:`gradelib.policies.retries.take_best_attempt`
-function allows you to give
-students multiple chances at an assignment. By default, it takes the maximum
-score of all attempts, but you can specify a different function to combine
-scores with a penalty.
+The :func:`gradelib.policies.attempts.take_best`
+function allows you to give students multiple chances at an assignment. By
+default, it takes the maximum score of all attempts, but you can specify a
+policy that penalizes multiple attempts.
+
+For example, to penalize each attempt by 10%, you can do the following:
+
+
+.. testsetup:: take-best
+
+    import pandas as pd
+    import gradelib
+    import numpy as np
+
+    students = ["Alice", "Barack", "Charlie"]
+    assignments = ["Exam - Attempt 01", "Exam - Attempt 02", "Exam - Attempt 03"]
+    points_earned = pd.DataFrame(
+        [[27, np.nan, np.nan], [15, 21, 30], [21, 25.5, np.nan]],
+        index=students, columns=assignments
+    )
+    points_possible = pd.Series([30, 30, 30], index=assignments)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+.. doctest:: take-best
+
+    >>> from gradelib.policies.attempts import take_best
+    >>> gradebook.score
+               Exam - Attempt 01  Exam - Attempt 02  Exam - Attempt 03
+    <Alice>                  0.9                NaN                NaN
+    <Barack>                 0.5               0.70                1.0
+    <Charlie>                0.7               0.85                NaN
+    >>> def penalize_10_per_attempt(i, raw_score):
+    ...     return raw_score * (1 - 0.1 * i)
+    >>> take_best(
+    ...     gradebook,
+    ...     attempts=gradebook.assignments.group_by(lambda s: s.split(" - ")[0].strip()),
+    ...     policy=penalize_10_per_attempt
+    ... )
+    >>> gradebook.score
+                Exam
+    <Alice>    0.900
+    <Barack>   0.800
+    <Charlie>  0.765
 
 Tracking exceptions
 -------------------
+
+The :func:`gradelib.policies.exceptions.make_exceptions` function allows you to
+make grading exceptions for individual students. It adds notes to the gradebook
+that appear in the student's grade summary, making the exception clear to the
+student.

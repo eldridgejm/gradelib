@@ -335,12 +335,20 @@ class Gradebook:
         :class:`GradingGroup` instances as values, the attribute can be
         *set* in several ways. See the documentation for the
         setter for more details.
-
-
     scale : Optional[Mapping]
         An ordered mapping from letter grades to score thresholds used to
         determine overall letter grades. If not provided,
         :mod:`gradelib.scales.DEFAULT_SCALE` is used.
+
+    Attributes
+    ----------
+    notes : dict[Student, dict[str, list[str]]]
+        A nested dictionary of notes, possibly used by report generating code.
+    options : GradebookOptions
+        Options controlling the behavior of the Gradebook.
+    scale : dict
+        An ordered mapping from letter grades to score thresholds used to
+        determine overall letter grades.
 
     """
 
@@ -453,17 +461,11 @@ class Gradebook:
 
     @property
     def grading_groups(self) -> dict[str, GradingGroup]:
-        return dict(self._groups)
+        """A grouping of assignments and their weight in the overall grade.
 
-    @grading_groups.setter
-    def grading_groups(
-        self,
-        value: Mapping[str, GradingGroupDefinition],
-    ):
-        """.grading_groups setter that accepts several difference formats, for convenience.
-
-        The value should be a dict mapping group names to *grading group
-        definitions*. A group definition can be any of the following:
+        This attribute should be set directly. The value should be a dict
+        mapping group names to *grading group definitions*. A group definition
+        can be any of the following:
 
             - A single number. In this case, the group name is treated as an
               assignment name.
@@ -513,6 +515,13 @@ class Gradebook:
             ... }
 
         """
+        return dict(self._groups)
+
+    @grading_groups.setter
+    def grading_groups(
+        self,
+        value: Mapping[str, GradingGroupDefinition],
+    ):
         if not isinstance(value, dict):
             raise ValueError("Groups must be provided as a dictionary.")
 

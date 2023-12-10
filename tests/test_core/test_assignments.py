@@ -94,3 +94,32 @@ def test_group_by():
         "lab 02": {"lab 02"},
     }
     assert isinstance(actual["homework 01"], gradelib.Assignments)
+
+
+def test_group_by_splitting_on():
+    # given
+    assignments = gradelib.Assignments(
+        [
+            "homework 01",
+            "homework 01 - programming",
+            "homework 02",
+            "homework 03",
+            "homework 03 - programming",
+            "lab 01",
+            "lab 02",
+        ]
+    )
+
+    # when
+    actual = assignments.group_by_splitting_on("-")
+
+    # then
+    actual_as_sets = {k: set(v) for k, v in actual.items()}
+    assert actual_as_sets == {
+        "homework 01": {"homework 01", "homework 01 - programming"},
+        "homework 02": {"homework 02"},
+        "homework 03": {"homework 03", "homework 03 - programming"},
+        "lab 01": {"lab 01"},
+        "lab 02": {"lab 02"},
+    }
+    assert isinstance(actual["homework 01"], gradelib.Assignments)

@@ -213,3 +213,50 @@ class Assignments(Sequence[str]):
             dct[key].append(assignment)
 
         return {key: Assignments(value) for key, value in dct.items()}
+
+    def group_by_splitting_on(self, separator: str) -> dict[str, "Assignments"]:
+        """Group the assignments by splitting on a separator.
+
+        This is a convenience method which is equivalent to calling
+        :meth:`group_by` with a function that splits on the given separator,
+        strips whitespace from the resulting strings, and returns the first
+        part.
+
+        Parameters
+        ----------
+        separator : str
+            The separator to split on.
+
+        Returns
+        -------
+        dict[str, Assignments]
+            A dictionary mapping keys to collections of assignments.
+
+        Example
+        -------
+
+        .. testsetup::
+
+            import gradelib
+
+        .. doctest::
+            :options: +NORMALIZE_WHITESPACE
+
+            >>> assignments = gradelib.Assignments([
+            ... "homework 01", "homework 01 - programming", "homework 02",
+            ... "homework 03", "homework 03 - programming", "lab 01", "lab 02"
+            ... ])
+            >>> assignments.group_by_splitting_on('-')
+            {'homework 01': Assignments(names=['homework 01', 'homework 01 - programming']),
+             'homework 02': Assignments(names=['homework 02']),
+             'homework 03': Assignments(names=['homework 03', 'homework 03 - programming']),
+             'lab 01': Assignments(names=['lab 01']),
+             'lab 02': Assignments(names=['lab 02'])}
+
+        See Also
+        --------
+        :meth:`Gradebook.combine_assignment_parts`
+        :meth:`Gradebook.combine_assignment_versions`
+
+        """
+        return self.group_by(lambda s: s.split(separator)[0].strip())

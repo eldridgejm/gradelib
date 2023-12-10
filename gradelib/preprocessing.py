@@ -36,7 +36,7 @@ def _combine_assignment_parts(
     gradebook.remove_assignments(list(set(parts) - {new_name}))
 
 
-def combine_assignment_parts(gb, dct: Mapping[str, Collection[str]]):
+def combine_assignment_parts(gb, parts: Mapping[str, Collection[str]]):
     """Combine the assignment parts into one assignment with the new name.
 
     Sometimes assignments may have several parts which are recorded
@@ -61,13 +61,9 @@ def combine_assignment_parts(gb, dct: Mapping[str, Collection[str]]):
 
     Parameters
     ----------
-    grouper : AssignmentGrouper
-        Either: 1) a mapping whose keys are new assignment names, and whose
-        values are collections of assignments that should be unified under
-        their common key; 2) a list of string prefixes or an instance of
-        :class:`Assignments`/:class`LazyAssignments`; each prefix defines a
-        group that should be combined; or 3) a callable which maps assignment
-        names to new assignment by which they should be grouped.
+    parts : Mapping[str, Collection[str]]
+        A mapping from the new assignment name to the collection of
+        assignments to be unified under that name.
 
     Raises
     ------
@@ -84,22 +80,39 @@ def combine_assignment_parts(gb, dct: Mapping[str, Collection[str]]):
     etc. In order to unify the programming parts with the rest of the homework,
     we can write:
 
-    >>> gradebook.combine_assignment_parts(lambda s: s.split('-')[0].strip())
+    .. testsetup:: parts
 
-    This used a callable grouper. Alternatively, one could use a list of prefixes:
+        import pandas as pd
+        import gradelib
+        import numpy as np
 
-    >>> gradebook.combine_assignment_parts(["homework 01", "homework 02"])
+        students = ["Alice", "Barack", "Charlie"]
+        assignments = ["homework 01", "homework 01 - programming", "homework 02", "homework 02 - programming"]
+        points_earned = pd.DataFrame(
+            np.random.randint(0, 10, size=(len(students), len(assignments))),
+            index=students, columns=assignments
+        )
+        points_possible = pd.Series([10, 10, 10, 10], index=assignments)
+        gradebook = gradelib.Gradebook(points_earned, points_possible)
 
-    Or a dictionary mapping new assignment names to their parts:
+    .. doctest:: parts
 
-    >>> gradebook.combine_assignment_parts({
-    ... 'homework 01': {'homework 01', 'homework 01 - programming'},
-    ... 'homework 02': {'homework 02', 'homework 02 - programming'}
-    ... })
+        >>> gradelib.preprocessing.combine_assignment_parts(gradebook, {
+        ...     "homework 01": ["homework 01", "homework 01 - programming"],
+        ...     "homework 02": ["homework 02", "homework 02 - programming"],
+        ... })
+
+    or, equivalently:
+
+    .. doctest:: parts
+
+        >>> gradelib.preprocessing.combine_assignment_parts(gradebook,
+        ...     gradebook.assignments.group_by(lambda s: s.split(" - ")[0].strip())
+        ... )
 
 
     """
-    for key, value in dct.items():
+    for key, value in parts.items():
         _combine_assignment_parts(gb, key, value)
 
     gb.grading_groups = {}
@@ -139,7 +152,7 @@ def _combine_assignment_versions(
     gb.remove_assignments(list(set(versions) - {new_name}))
 
 
-def combine_assignment_versions(gb, groups: Mapping[str, Collection[str]]):
+def combine_assignment_versions(gb, versions: Mapping[str, Collection[str]]):
     """Combine the assignment versions into one single assignment with the new name.
 
     Sometimes assignments may have several versions which are recorded separately
@@ -168,7 +181,7 @@ def combine_assignment_versions(gb, groups: Mapping[str, Collection[str]]):
 
     Parameters
     ----------
-    grouper : Mapping[str, Collection[str]]
+    versions : Mapping[str, Collection[str]]
         A mapping whose keys are new assignment names, and whose values are
         collections of assignments that should be unified.
 
@@ -180,23 +193,39 @@ def combine_assignment_versions(gb, groups: Mapping[str, Collection[str]]):
     Example
     -------
 
+    .. testsetup:: versions
+
+        import pandas as pd
+        import gradelib
+        import numpy as np
+
+        students = ["Alice", "Barack", "Charlie"]
+        assignments = ["midterm - version a", "midterm - version b", "midterm - version c"]
+        points_earned = pd.DataFrame(
+            [[10, np.nan, np.nan], [np.nan, 10, np.nan], [np.nan, np.nan, 10]],
+            index=students, columns=assignments
+        )
+        points_possible = pd.Series([10, 10, 10], index=assignments)
+        gradebook = gradelib.Gradebook(points_earned, points_possible)
+
     Assuming the gradebook has assignments named `midterm - version a`,
     `midterm - version b`, `midterm - version c`, etc., the following will
     "combine" the assignments into `midterm`:
 
-        >>> gradebook.combine_assignment_versions(lambda s: s.split('-')[0].strip())
+    .. doctest:: versions
 
-    Alternatively, you could write:
+        >>> gradelib.preprocessing.combine_assignment_versions(gradebook,
+        ...     {'midterm': ['midterm - version a', 'midterm - version b', 'midterm - version c']}
+        ... )
 
-        >>> gradebook.combine_assignment_versions(["midterm"])
+    or, equivalently:
 
-    Or:
+    .. doctest:: versions
 
-        >>> gradebook.combine_assignment_versions({
-            'midterm': {'midterm - version a', 'midterm - version b', 'midterm - 'version c'},
-            })
-
+        >>> gradelib.preprocessing.combine_assignment_versions(gradebook,
+        ...     gradebook.assignments.group_by(lambda s: s.split('-')[0].strip())
+        ... )
 
     """
-    for key, value in groups.items():
+    for key, value in versions.items():
         _combine_assignment_versions(gb, key, value)

@@ -1,4 +1,9 @@
+"""Types for representing point amounts."""
+
+
 class _GradeAmount:
+    """Base class for representing point amounts."""
+
     def __init__(self, amount):
         self.amount = amount
 
@@ -19,7 +24,7 @@ class Points(_GradeAmount):
 
 
 class Percentage(_GradeAmount):
-    """Represents a percentage."""
+    """Represents a percentage as a number between 0 and 100."""
 
     def __str__(self):
         return f"{self.amount}%"

@@ -1,4 +1,4 @@
-"""Representa a student in the class."""
+"""Represent a student in the class."""
 
 from typing import Optional, Sequence
 

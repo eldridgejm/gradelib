@@ -1,4 +1,4 @@
-from typing import Union, Sequence, Callable
+from typing import Union, Sequence, Callable, Mapping
 
 import pandas as _pd
 
@@ -11,11 +11,7 @@ def _fmt_as_pct(f):
 
 
 class Maximum:
-    """Perform redemption by taking the maximum score of a set of assignments.
-
-    Adds a note to each student's gradebook entry describing the redemption.
-
-    """
+    """The maximum score on a set of assignments."""
 
     def __call__(self, gradebook: Gradebook, assignments: Sequence[str]) -> _pd.Series:
         max_assignment_ix = gradebook.score.loc[:, assignments].idxmax(axis=1)
@@ -41,13 +37,12 @@ class Maximum:
             return " ".join([assignment_part(a) for a in assignments] + [used_part])
 
         for student in gradebook.students:
-            gradebook.add_note(student, "redemption", make_note_for(student))
+            gradebook.add_note(student, "retries", make_note_for(student))
 
 
-def redeem(
+def retry(
     gradebook: Gradebook,
-    existing_assignments: Sequence[str],
-    new_assignment: str,
+    attempts: Mapping[str, Sequence[str]],
     *,
     remove=False,
     policy: Callable[[Gradebook, Sequence[str]], _pd.Series] = Maximum(),
@@ -59,10 +54,10 @@ def redeem(
     ----------
     gradebook : Gradebook
         The gradebook that will be modified.
-    existing_assignments : Sequence[str]
-        The assignments to be aggregated.
-    new_assignment : str
-        The name of the assignment that will be created.
+    attempts : Mapping[str, Sequence[str]]
+        A mapping from the name of the new assignment to a sequence of
+        existing assignments that will be used to determine the score on
+        the new assignment.
     remove : bool, optional
         Whether to remove the existing assignments, by default False.
     policy : Callable[[Gradebook, Sequence[str]], pd.Series], optional
@@ -72,9 +67,10 @@ def redeem(
         The number of points possible on the new assignment, by default 1.
 
     """
-    redeemed_score = policy(gradebook, existing_assignments)
-    points_earned = redeemed_score * points_possible
-    gradebook.add_assignment(new_assignment, points_earned, points_possible)
+    for new_assignment, existing_assignments in attempts.items():
+        redeemed_score = policy(gradebook, existing_assignments)
+        points_earned = redeemed_score * points_possible
+        gradebook.add_assignment(new_assignment, points_earned, points_possible)
 
-    if remove:
-        gradebook.remove_assignments(existing_assignments)
+        if remove:
+            gradebook.remove_assignments(existing_assignments)

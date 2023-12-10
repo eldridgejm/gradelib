@@ -3,22 +3,13 @@
 from collections.abc import Sequence, Collection
 import typing
 
-# type definitions =====================================================================
 
-
-def normalize(assignments: Collection[str]):
+def normalize(assignments: Collection[str]) -> dict[str, float]:
     """Normalize assignment weights.
 
     When given a collection, such as a list of assignment names or a dictionary
     mapping names to weights, the return value is a dictionary mapping
     assignment names to the same, normalized weight.
-
-    Useful when creating grading groups. For instance:
-
-        >>> gradebook.grading_groups = (
-        ...     ('homework', normalize(gradebook.assignments.starting_with('home')), 0.5)
-        ...     ('labs', normalize(gradebook.assignments.starting_with('lab')), 0.5)
-        ... )
 
     Parameters
     ----------
@@ -32,8 +23,35 @@ def normalize(assignments: Collection[str]):
 
     Example
     -------
-    >>> normalize(['foo', 'bar', 'baz', 'quux'])
-    {'foo': 0.25, 'bar': 0.25, 'baz': 0.25, 'quux': 0.25}
+    .. testsetup:: normalize
+
+        import pandas as pd
+        import gradelib
+        from gradelib import normalize
+        import numpy as np
+
+        students = ["Alice", "Barack", "Charlie"]
+        assignments = ["homework 01", "homework 02", "lab 01"]
+        points_earned = pd.DataFrame(
+            [[10, np.nan, np.nan], [np.nan, 10, np.nan], [np.nan, np.nan, 10]],
+            index=students, columns=assignments
+        )
+        points_possible = pd.Series([10, 10, 10], index=assignments)
+        gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    .. doctest:: normalize
+
+        >>> normalize(['foo', 'bar', 'baz', 'quux'])
+        {'foo': 0.25, 'bar': 0.25, 'baz': 0.25, 'quux': 0.25}
+
+    Useful when creating grading groups. For instance:
+
+    .. doctest:: normalize
+
+        >>> gradebook.grading_groups = {
+        ...     'homework': (normalize(gradebook.assignments.starting_with('home')), 0.5),
+        ...     'labs': (normalize(gradebook.assignments.starting_with('lab')), 0.5)
+        ... }
 
 
     """
@@ -52,26 +70,26 @@ class Assignments(Sequence[str]):
     def __init__(self, names: typing.Sequence[str]):
         self._names = list(names)
 
-    def __contains__(self, element):
+    def __contains__(self, element: str) -> bool:
         return element in self._names
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._names)
 
     def __iter__(self):
         return iter(self._names)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return list(self) == list(other)
 
-    def __add__(self, other):
-        """Unions :class:`Assignments`."""
+    def __add__(self, other) -> "Assignments":
+        """Concatenates two collections of :class:`Assignments`."""
         return Assignments(self._names + other._names)
 
-    def __getitem__(self, index):
-        return self._names[index]
+    def __getitem__(self, index_or_slice) -> str:
+        return self._names[index_or_slice]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Assignments(names={self._names})"
 
     def _repr_pretty_(self, p, _):
@@ -162,7 +180,13 @@ class Assignments(Sequence[str]):
 
         Example
         -------
-        Suppose that the gradebook has assignments
+
+        .. testsetup::
+
+            import gradelib
+
+        .. doctest::
+            :options: +NORMALIZE_WHITESPACE
 
             >>> assignments = gradelib.Assignments([
             ... "homework 01", "homework 01 - programming", "homework 02",

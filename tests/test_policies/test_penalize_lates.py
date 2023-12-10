@@ -21,10 +21,10 @@ def test_with_deduct_percentage():
     )
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
-    penalize(gradebook, policy=Deduct(Percentage(100)))
+    penalize(gradebook, policy=Deduct(Percentage(50)))
 
-    assert gradebook.points_earned.loc["A1", "lab01"] == 0
-    assert gradebook.points_earned.loc["A2", "hw01"] == 0
+    assert gradebook.points_earned.loc["A1", "lab01"] == 10
+    assert gradebook.points_earned.loc["A2", "hw01"] == 3.5
 
 
 def test_with_deduct_points():

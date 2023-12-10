@@ -29,48 +29,46 @@ dropped lab.
 
 ```python
 import gradelib
+from gradelib.policies import exceptions, lates, drops
 
-# read the egrades roster
-roster = gradelib.read_egrades_roster('roster.csv')
+# combine grades from Gradescope and Canvas
+gb = gradelib.combine_gradebooks([
+    gradelib.io.gradescope.read('./gradescope.csv'),
+    gradelib.io.canvas.read('./canvas.csv')
+])
 
-# read grades from canvas and gradescope
-gradescope_grades = gradelib.Gradebook.from_gradescope('gradescope.csv')
-canvas_grades = gradelib.Gradebook.from_canvas('canvas.csv')
+HOMEWORKS = lambda gb: gb.assignments.starting_with("home")
+LABS = lambda gb: gb.assignments.starting_with("lab")
 
-# combine canvas and gradescope grades into a single gradebook, 
-# checking that all enrolled students are accounted for
-gradebook = gradelib.Gradebook.combine(
-    [gradescope_grades, canvas_grades], 
-    restrict_to_students=roster.index
+# group the assignments and determine their weight in the overall score calculation
+gb.grading_groups = {
+    'homeworks': (HOMEWORKS(gb), .25),
+    'labs': (LABS(gb), .25),
+    'midterm exam': .25,
+    'final exam': .25
+}
+
+# handle exceptions
+exceptions.make_exceptions(
+    gb,
+    "Justin",
+    [
+        exceptions.Drop("lab 01", reason="illness"),
+        exceptions.Replace("homework 01", with_="homework 02", reason="added late")
+    ]
 )
 
-# define assignment groups
-HOMEWORKS = gradebook.assignments.starting_with('home')
-LABS = gradebook.assignments.starting_with('lab')
+# apply grading policies
+lates.penalize(gb, policy=lates.Forgive(3), within=HOMEWORKS(gb) + LABS(gb))
+drops.drop_most_favorable(gb, 1, within=HOMEWORKS(gb))
+drops.drop_most_favorable(gb, 1, within=LABS(gb))
 
-# apply grading policy
-gradebook = (
-    gradebook
-    .forgive_lates(4, within=HOMEWORKS + LABS)
-    .drop_lowest(1, within=HOMEWORKS)
-    .drop_lowest(1, within=LABS)
-)
+# find robust letter grade cutoffs by clustering grades
+gb.scale = gradelib.scales.find_robust_scale(gb.overall_score)
 
-# calculate overall grades according to weighted grading
-# scheme; 25% homeworks, 20% labs, etc.
-overall = (
-    .25 * gradebook.score(HOMEWORKS)
-    +
-    .20 * gradebook.score(LABS)
-    +
-    .05 * gradebook.score('project 01')
-    +
-    .10 * gradebook.score('project 02')
-    +
-    .10 * gradebook.score('midterm exam')
-    +
-    .30 * gradebook.score('final exam')
-)
+# generate student reports, complete with auto-generated grading notes about which
+# assignments were dropped, penalized for being late, etc.
+gradelib.reports.generate_latex(gb, output_directory=".")
 ```
 
  The final grading scale is determined by a simple clustering algorithm which finds
@@ -80,26 +78,8 @@ overall = (
 
 ```python
 # find robust letter grade cutoffs by clustering grades
-robust_scale = gradelib.find_robust_scale(overall)
-
-# visualize the grade distribution
-gradelib.plot_grade_distribution(overall, robust_scale)
+robust_scale = gradelib.scales.find_robust_scale(overall)
 ```
-
-The result of the visualization is the image below:
-
-![robust grading scale](./robust_scale.png)
-
-Letter grades can be assigned using this scale and exported to egrades:
-
-```python
-# assign letter grades
-letters = gradelib.map_scores_to_letter_grades(overall, robust_scale)
-
-# export letter grades in egrades format
-gradelib.write_egrades('roster.csv', 'letter-grades.csv', letters) 
-```
-
 
 Documentation
 -------------

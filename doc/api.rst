@@ -22,10 +22,6 @@ Core
    :members:
    :special-members: __add__
 
-.. autoclass:: LazyAssignments
-   :members:
-   :special-members: __add__,__call__
-
 .. class:: AssignmentSelector
 
    A type alias defining a way of selecting a collection of assignments. In
@@ -119,13 +115,16 @@ Core
 
    Functionality for implementing grading policies on Gradebooks.
 
-.. autofunction:: gradelib.policies.drop_lowest
-.. autofunction:: gradelib.policies.penalize_lates
-.. autofunction:: gradelib.policies.redeem
-.. autofunction:: gradelib.policies.make_exceptions
-.. autoclass:: gradelib.policies.Drop
-.. autoclass:: gradelib.policies.ForgiveLate
-.. autoclass:: gradelib.policies.Replace
+.. autofunction:: gradelib.policies.drops.drop_most_favorable
+.. autofunction:: gradelib.policies.lates.penalize
+.. autoclass:: gradelib.policies.lates.LateInfo
+.. autoclass:: gradelib.policies.lates.Deduct
+.. autoclass:: gradelib.policies.lates.Forgive
+.. autofunction:: gradelib.policies.redemption.redeem
+.. autofunction:: gradelib.policies.exceptions.make_exceptions
+.. autoclass:: gradelib.policies.exceptions.Drop
+.. autoclass:: gradelib.policies.exceptions.ForgiveLate
+.. autoclass:: gradelib.policies.exceptions.Replace
 
 :mod:`scales`
 ==============
@@ -140,7 +139,7 @@ Core
 .. autofunction:: find_robust_scale
 
 :mod:`statistics`
-================
+=================
 
 .. module:: gradelib.statistics
 
@@ -154,7 +153,7 @@ Core
 .. autofunction:: outcomes
 
 :mod:`plot`
-================
+===========
 
 .. module:: gradelib.plot
 
@@ -180,10 +179,3 @@ Core
 .. module:: gradelib.reports
 
 .. autofunction:: generate_latex
-
-:mod:`pipeline`
-===============
-
-.. module:: gradelib.pipeline
-
-.. autoclass:: Pipeline

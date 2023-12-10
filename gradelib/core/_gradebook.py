@@ -1,4 +1,4 @@
-"""Defines the Gradebook object for managing a collection of grades."""
+"""A type for managing a collection of grades."""
 
 import copy
 import dataclasses
@@ -111,23 +111,24 @@ def combine_gradebooks(gradebooks: Collection["Gradebook"], restrict_to_students
 
     The gradebooks being combined must all have the same students, and an
     assignment name cannot appear in more than one gradebook. If either of
-    these conditions are not met, a `ValueError` is raised.
+    these conditions are violated, a `ValueError` is raised.
 
-    The new gradebook's assignments groups are reset; there are no groups.
+    The new gradebook's grading groups are reset; there are no groups.
 
     If the scales are the same in each gradebook, the new gradebook's scale is
-    set accordingly. If they are different, a `ValueError` is raised. The same
+    set accordingly. If they are different, a ``ValueError`` is raised. The same
     is true for the ``options`` attribute.
 
     Parameters
     ----------
     gradebooks : Collection[Gradebook]
         The gradebooks to combine.
-    restrict_to_students : Optional[Collection[str]]
-        If provided, each input gradebook will be restricted to the PIDs given
-        before attempting to combine them. This is a convenience option, and it
-        simply calls :meth:`Gradebook.restrict_to_students` on each of the
-        inputs. Default: None
+    restrict_to_students : Optional[Collection[Union[str, Student]]]
+        If provided, each input gradebook will be restricted to the
+        Students/PIDs given before attempting to combine them. This is a
+        convenience option, and it simply calls
+        :meth:`Gradebook.restrict_to_students` on each of the inputs.
+        Default: None
 
     Returns
     -------
@@ -218,7 +219,7 @@ class GradingGroup:
 
     Attributes
     ----------
-    assignment_weights: dict[str, float]
+    assignment_weights: Mapping[str, float]
         A dictionary mapping assignment names (strings) to their weight within
         the group (as a float between 0 and 1). Their weights should add to
         one.
@@ -230,8 +231,6 @@ class GradingGroup:
     ValueError
         If the assignment weights are not between 0 and 1, they do not add to
         one, or if the group weight is not between 0 and 1.
-    TypeError
-        If the assignment weights are not in the form of a dictionary.
 
     """
 
@@ -245,8 +244,7 @@ class GradingGroup:
         assignment_weights: Mapping[str, float],
         group_weight: float,
     ):
-        if not isinstance(assignment_weights, dict):
-            raise TypeError("Must be a dictionary.")
+        assignment_weights = {str(k): float(v) for k, v in assignment_weights.items()}
 
         if not assignment_weights:
             raise ValueError("Assignment weights cannot be empty.")
@@ -317,12 +315,12 @@ class Gradebook:
         If `None` is passed, a dataframe of all `False` is used by default.
     notes : Optional[Mapping[Student, Mapping[str, Sequence[str]]]]
         A nested dictionary of notes, possibly used by report generating code.
-        The keys of the outer dictionary should be student PIDs, and the values
-        should be dictionaries. The keys of the inner dictionary should specify
-        a note channel, and can be either "late", "drop", or "misc"; these are
-        signals to reporting code that help determine where to display notes.
-        The values of the inner dictionary should be sequences of strings, each
-        one a message.
+        The keys of the outer dictionary should be :class:`Student` objects,
+        and the values should be dictionaries. The keys of the inner dictionary
+        should specify a note channel, and can be either "late", "drop", or
+        "misc"; these are signals to reporting code that help determine where
+        to display notes. The values of the inner dictionary should be
+        sequences of strings, each one a message.
     options : Optional[GradebookOptions]
         Options controlling the behavior of the Gradebook. If not provided,
         default options are used.
@@ -331,31 +329,13 @@ class Gradebook:
         objects representing a group of assignments. The default is simply ``{}``.
 
         To prevent unintentional errors, the grading groups must be set before
-        accessive summative attributes, such as :attr:`overall_score`.
+        accessing summative attributes, such as :attr:`overall_score`.
 
         While the dictionary returned by this attribute has
         :class:`GradingGroup` instances as values, the attribute can be
-        *set* in several ways, as the example shows.
+        *set* in several ways. See the documentation for the
+        setter for more details.
 
-        Example
-        -------
-
-        >>> gradebook.grading_groups = {
-        ...     # list of assignments, followed by group weight. assignment weights
-        ...     # are inferred to be proportional to points possible
-        ...     "homeworks": (['hw 01', 'hw 02', 'hw 03'], 0.25),
-
-        ...     # dictionary of assignment weights, followed by group weight.
-        ...     "labs": ({"lab 01": .25, "lab 02": .75}, 0.25),
-        ...
-        ...     # callable that produces assignment names or an assignment weight dict.
-        ...     "projects": (func, 0.25),
-        ...
-        ...     # group weight only. the key is interpreted as an assignment name,
-        ...     # and an assignment group consisting only of that assignment is
-        ...     # created.
-        ...     "exam": 0.25
-        ... }
 
     scale : Optional[Mapping]
         An ordered mapping from letter grades to score thresholds used to
@@ -495,21 +475,42 @@ class Gradebook:
               from the dict.
             - A :class:`GradingGroup` instance.
 
-        Example
+        To normalize the weights of assignments (so that they are all weighed the same)
+        use the :func:`gradelib.normalize` function.
 
-        >>> gradebook.grading_groups = {
-        ...     # list of assignments, followed by group weight. assignment weights
-        ...     # are inferred to be proportional to points possible
-        ...     "homeworks": (['hw 01', 'hw 02', 'hw 03'], 0.25),
-        ...
-        ...     # dictionary of assignment weights, followed by group weight.
-        ...     "labs": ({"lab 01": .25, "lab 02": .75}, 0.25),
-        ...
-        ...     # a single number. the key is interpreted as an assignment name,
-        ...     # and an assignment group consisting only of that assignment is
-        ...     # created.
-        ...     "exam": 0.5
-        ... }
+        Example
+        -------
+
+        .. testsetup:: grading_groups
+
+            import pandas as pd
+            import gradelib
+            import numpy as np
+
+            students = ["Alice", "Barack", "Charlie"]
+            assignments = ["hw 01", "hw 02", "hw 03", "lab 01", "lab 02", "exam"]
+            points_earned = pd.DataFrame(
+                np.random.randint(0, 10, size=(len(students), len(assignments))),
+                index=students, columns=assignments
+            )
+            points_possible = pd.Series([10, 10, 10], index=assignments)
+            gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+        .. doctest:: grading_groups
+
+            >>> gradebook.grading_groups = {
+            ...     # list of assignments, followed by group weight. assignment weights
+            ...     # are inferred to be proportional to points possible
+            ...     "homeworks": (['hw 01', 'hw 02', 'hw 03'], 0.25),
+            ...
+            ...     # dictionary of assignment weights, followed by group weight.
+            ...     "labs": ({"lab 01": .25, "lab 02": .75}, 0.25),
+            ...
+            ...     # a single number. the key is interpreted as an assignment name,
+            ...     # and an assignment group consisting only of that assignment is
+            ...     # created.
+            ...     "exam": 0.5
+            ... }
 
         """
         if not isinstance(value, dict):
@@ -1121,14 +1122,14 @@ class Gradebook:
             The channel that the note should be added to. Valid channels are:
                 - lates
                 - drops
-                - redemption
+                - retries
                 - misc
 
         message : str
             The note's message.
 
         """
-        if channel not in {"lates", "drops", "redemption", "misc"}:
+        if channel not in {"lates", "drops", "retries", "misc"}:
             raise ValueError(f'Unknown channel "{channel}".')
 
         if student not in self.notes:

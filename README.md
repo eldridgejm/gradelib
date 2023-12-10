@@ -3,19 +3,23 @@ gradelib
 
 ![Master](https://github.com/eldridgejm/gradelib/workflows/Test/badge.svg)
 
-gradelib is a python package which streamlines end-of-quarter grading. It is
-designed to work with the tools most commonly used at UC San Diego, including
-gradescope, canvas, and eGrades.
+`gradelib` is a Python package for computing overall grades. It implements
+common grading policies and flexibly supports creative grading schemes. It aims
+to make grading straightforward, reproducible, and error-free.
+See the documentation at https://eldridgejm.github.io/gradelib/.
 
 Features
 --------
 
-- read grades from gradescope and canvas
-- implement common grading strategies, like dropping the lowest homework and
-  forgiving late assignments
-- intelligently choose letter grade cutoffs by clustering
-- visualize score distributions
-- create upload-ready gradebooks for eGrades and canvas
+* Read grades from common learning management software, including Gradescope
+  and Canvas.
+* Manage multi-part or multi-version assignments.
+* Apply common policies, like dropping the lowest homework and penalizing late assignments.
+* Keep track of exceptions, like forgiven late assignments.
+* Find "robust" letter grade scales, where no student is too close to a cutoff.
+* Display interactive summaries of the grade distribution.
+* Make a PDF grade report for each student in the class, explaining their grade.
+
 
 Example
 -------

@@ -5,6 +5,7 @@ gradelib
 `gradelib` is a Python package for computing overall grades. It implements
 common grading policies and flexibly supports creative grading schemes. It aims
 to make grading straightforward, reproducible, and error-free.
+See the project at `GitHub <https://github.com/eldridgejm/gradelib>`_.
 
 **Features**
 
@@ -27,7 +28,6 @@ others were kept on Gradescope. The grading policy allowed for 3 late
 assignments between homeworks and labs, as well as one dropped homework and one
 dropped lab. The final grading scale is determined by a simple clustering
 algorithm which finds "robust" thresholds for every letter grade.
-
 
 .. testsetup::
 

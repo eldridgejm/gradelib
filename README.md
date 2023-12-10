@@ -75,15 +75,10 @@ gb.scale = gradelib.scales.find_robust_scale(gb.overall_score)
 gradelib.reports.generate_latex(gb, output_directory=".")
 ```
 
-The final grading scale is determined by a simple clustering algorithm which
+The final grading scale was determined by a simple clustering algorithm which
 finds "robust" thresholds for every letter grade. These are thresholds which
 are far from the nearest grade on the left; that is, there are no students "on
 the cusp" of the next highest letter grade.
-
-```python
-# find robust letter grade cutoffs by clustering grades
-robust_scale = gradelib.scales.find_robust_scale(overall)
-```
 
 Finally, if we're working in a Jupyter notebook, we can plot an interactive overview of the grade distribution:
 

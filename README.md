@@ -37,13 +37,13 @@ gb = gradelib.combine_gradebooks([
     gradelib.io.canvas.read('./canvas.csv')
 ])
 
-HOMEWORKS = lambda gb: gb.assignments.starting_with("home")
-LABS = lambda gb: gb.assignments.starting_with("lab")
+HOMEWORKS = gb.assignments.starting_with("home")
+LABS = gb.assignments.starting_with("lab")
 
 # group the assignments and determine their weight in the overall score calculation
 gb.grading_groups = {
-    'homeworks': (HOMEWORKS(gb), .25),
-    'labs': (LABS(gb), .25),
+    'homeworks': (HOMEWORKS, .25),
+    'labs': (LABS, .25),
     'midterm exam': .25,
     'final exam': .25
 }
@@ -59,9 +59,9 @@ exceptions.make_exceptions(
 )
 
 # apply grading policies
-lates.penalize(gb, policy=lates.Forgive(3), within=HOMEWORKS(gb) + LABS(gb))
-drops.drop_most_favorable(gb, 1, within=HOMEWORKS(gb))
-drops.drop_most_favorable(gb, 1, within=LABS(gb))
+lates.penalize(gb, policy=lates.Forgive(3), within=HOMEWORKS + LABS)
+drops.drop_most_favorable(gb, 1, within=HOMEWORKS)
+drops.drop_most_favorable(gb, 1, within=LABS)
 
 # find robust letter grade cutoffs by clustering grades
 gb.scale = gradelib.scales.find_robust_scale(gb.overall_score)
@@ -71,14 +71,20 @@ gb.scale = gradelib.scales.find_robust_scale(gb.overall_score)
 gradelib.reports.generate_latex(gb, output_directory=".")
 ```
 
- The final grading scale is determined by a simple clustering algorithm which finds
- "robust" thresholds for every letter grade. These are thresholds which are far from the
- nearest grade on the left; that is, there are no students "on the cusp" of the next
- highest letter grade.
+The final grading scale is determined by a simple clustering algorithm which
+finds "robust" thresholds for every letter grade. These are thresholds which
+are far from the nearest grade on the left; that is, there are no students "on
+the cusp" of the next highest letter grade.
 
 ```python
 # find robust letter grade cutoffs by clustering grades
 robust_scale = gradelib.scales.find_robust_scale(overall)
+```
+
+Finally, if we're working in a Jupyter notebook, we can plot an interactive overview of the grade distribution:
+
+```python
+gradelib.overview(gb)
 ```
 
 Documentation

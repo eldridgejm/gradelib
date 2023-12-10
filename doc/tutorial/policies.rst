@@ -129,7 +129,8 @@ increase their overall score the most.
 Giving multiple chances at an assignment
 ----------------------------------------
 
-The :func:`gradelib.policies.retries.retry` function allows you to give
+The :func:`gradelib.policies.retries.take_best_attempt`
+function allows you to give
 students multiple chances at an assignment. By default, it takes the maximum
 score of all attempts, but you can specify a different function to combine
 scores with a penalty.

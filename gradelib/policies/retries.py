@@ -40,7 +40,7 @@ class Maximum:
             gradebook.add_note(student, "retries", make_note_for(student))
 
 
-def retry(
+def take_best_attempt(
     gradebook: Gradebook,
     attempts: Mapping[str, Sequence[str]],
     *,

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 import gradelib
-from gradelib.policies.retries import retry
+from gradelib.policies.retries import take_best_attempt
 
 from util import assert_gradebook_is_sound
 
@@ -20,7 +20,7 @@ def test_maximum():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    retry(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
+    take_best_attempt(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
 
     # then
     assert gradebook.points_earned.loc["A1", "mt01 with retry"] == 100 / 100
@@ -40,7 +40,7 @@ def test_maximum_adds_note():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    retry(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
+    take_best_attempt(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
 
     # then
     assert gradebook.notes == {
@@ -69,7 +69,7 @@ def test_with_nans():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    retry(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
+    take_best_attempt(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
 
     # then
     assert gradebook.points_earned.loc["A1", "mt01 with retry"] == 0.9
@@ -87,7 +87,7 @@ def test_points_possible():
     gradebook = gradelib.Gradebook(points, maximums)
 
     # when
-    retry(
+    take_best_attempt(
         gradebook,
         {"mt01 with retry": ["mt01", "mt01 - retry"]},
         points_possible=20,

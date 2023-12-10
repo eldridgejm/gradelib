@@ -26,7 +26,7 @@ Example
 
 The following example shows the complete workflow for calculating final grades
 in a typical scenario. In this case, some grades were kept on Canvas, while
-others were kept on Gradescope. The grading policy allowed for 4 late
+others were kept on Gradescope. The grading policy allowed for 3 late
 assignments between homeworks and labs, as well as one dropped homework and one
 dropped lab.
 

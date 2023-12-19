@@ -74,7 +74,7 @@ def take_best(
         policy = lambda _, score: score
 
     for new_assignment, existing_assignments in attempts.items():
-        best_scores = _pd.Series()
+        best_scores = _pd.Series(dtype="float64")
         for student in gradebook.students:
             raw_attempt_scores = gradebook.score.loc[student, existing_assignments]
             effective_attempt_scores = _scores_after_penalty(raw_attempt_scores, policy)

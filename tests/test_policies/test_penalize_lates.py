@@ -215,6 +215,48 @@ def test_assignments_in_descending_order_of_value_by_default():
     assert seen["A2"] == ["lab01", "hw01", "hw02"]
 
 
+def test_order_by_value_works_even_when_value_of_some_assignments_is_nan():
+    # given
+    columns = ["hw01", "hw02", "lab01"]
+    p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[45, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([50, 100, 20], index=columns)
+    lateness = pd.DataFrame(
+        [
+            pd.to_timedelta([5000, 5000, 5000], "s"),
+            pd.to_timedelta([6000, 5000, 5000], "s"),
+        ],
+        columns=columns,
+        index=points_earned.index,
+    )
+    gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
+
+    HOMEWORK = gradebook.assignments.starting_with("hw")
+    LABS = gradebook.assignments.starting_with("lab")
+
+    gradebook.grading_groups = {
+        "homeworks": (HOMEWORK, 1),
+    }
+
+    assert pd.isna(gradebook.value["lab01"].iloc[0])
+
+    seen = {}
+
+    def policy(info):
+        seen.setdefault(info.student, []).append(info.assignment)
+        return Percentage(100)
+
+    penalize(gradebook, within=HOMEWORK + LABS, policy=policy)
+
+    # in order from least to most valuable
+    # for AI: hw01, lab01, hw02 -- penalize hw01
+    # for A2: hw02, hw01, lab01 -- penalize hw02
+
+    assert seen["A1"] == ["hw02", "hw01", "lab01"]
+    assert seen["A2"] == ["hw01", "hw02", "lab01"]
+
+
 def test_order_by_index():
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")

@@ -174,7 +174,7 @@ def test_with_forgive_and_within():
     assert gradebook.points_earned.loc["A1", "lab01"] == 0
 
 
-def test_assignments_ordered_by_value_by_default():
+def test_assignments_in_descending_order_of_value_by_default():
     # given
     columns = ["hw01", "hw02", "lab01"]
     p1 = pd.Series(data=[30, 90, 20], index=columns, name="A1")

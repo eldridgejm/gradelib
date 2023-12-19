@@ -135,8 +135,8 @@ def penalize(
         # by default, reorder assignments from most valuable to least valuable,
         # since forgiveness will be given to most valuable assignments first
         if order_by == "value":
-            value = gradebook.value[within].loc[student]
-            ordered_assignments = sorted(within, key=lambda a: value[a], reverse=True)
+            value = gradebook.value[within].loc[student].sort_values(ascending=False)
+            ordered_assignments = value.index
         elif order_by == "index":
             ordered_assignments = within
         elif callable(order_by):

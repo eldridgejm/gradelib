@@ -40,6 +40,7 @@
           with import nixpkgs { system = "${system}"; allowBroken = true; overlays = overlays; };
             python3Packages.buildPythonPackage rec {
               name = "gradelib";
+              format = "pyproject";
               src = ./.;
               propagatedBuildInputs = with python3Packages; [ pandas bokeh matplotlib numpy ];
               nativeBuildInputs = with python3Packages; [ pytest ipython sphinx sphinx_rtd_theme pip jupyterlab ];

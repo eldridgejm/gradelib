@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "gradelib"
+version = "0.3.0"
+
+[options]
+packages = ["src/gradelib"]
+install_requires = ["pandas", "numpy", "matplotlib", "bokeh"]
+
+[options.package_data]
+gradelib = ["template/**/*"]

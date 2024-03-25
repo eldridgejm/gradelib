@@ -4,7 +4,7 @@ requires = ["setuptools", "wheel"]
 [project]
 name = "gradelib"
 version = "0.3.0"
+dependencies = ["pandas", "numpy", "matplotlib", "bokeh"]
 
 [options]
 packages = ["src/gradelib"]
-install_requires = ["pandas", "numpy", "matplotlib", "bokeh"]

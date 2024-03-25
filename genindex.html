@@ -76,39 +76,163 @@
 <li class="toctree-l2"><a class="reference internal" href="api/index.html#computing-grades">Computing Grades</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api/core.html"><code class="docutils literal notranslate"><span class="pre">gradelib</span></code> core</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="api/core.html#core-types">Core Types</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="api/core-gradebook.html"><code class="docutils literal notranslate"><span class="pre">Gradebook</span></code> et al.</a></li>
-<li class="toctree-l5"><a class="reference internal" href="api/core-assignments.html"><code class="docutils literal notranslate"><span class="pre">Assignments</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="api/core-students.html"><code class="docutils literal notranslate"><span class="pre">Student</span></code> and <code class="docutils literal notranslate"><span class="pre">Students</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="api/core-amounts.html"><code class="docutils literal notranslate"><span class="pre">Points</span></code> and <code class="docutils literal notranslate"><span class="pre">Percentage</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="api/core-gradebook.html"><code class="docutils literal notranslate"><span class="pre">Gradebook</span></code> et al.</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook"><code class="docutils literal notranslate"><span class="pre">Gradebook</span></code></a><ul>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.notes"><code class="docutils literal notranslate"><span class="pre">Gradebook.notes</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.options"><code class="docutils literal notranslate"><span class="pre">Gradebook.options</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.scale"><code class="docutils literal notranslate"><span class="pre">Gradebook.scale</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.add_assignment"><code class="docutils literal notranslate"><span class="pre">Gradebook.add_assignment()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.add_note"><code class="docutils literal notranslate"><span class="pre">Gradebook.add_note()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.assignments"><code class="docutils literal notranslate"><span class="pre">Gradebook.assignments</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.copy"><code class="docutils literal notranslate"><span class="pre">Gradebook.copy()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.grading_group_scores"><code class="docutils literal notranslate"><span class="pre">Gradebook.grading_group_scores</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.grading_groups"><code class="docutils literal notranslate"><span class="pre">Gradebook.grading_groups</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.late"><code class="docutils literal notranslate"><span class="pre">Gradebook.late</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.letter_grades"><code class="docutils literal notranslate"><span class="pre">Gradebook.letter_grades</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.overall_score"><code class="docutils literal notranslate"><span class="pre">Gradebook.overall_score</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.overall_weight"><code class="docutils literal notranslate"><span class="pre">Gradebook.overall_weight</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.pids"><code class="docutils literal notranslate"><span class="pre">Gradebook.pids</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.remove_assignments"><code class="docutils literal notranslate"><span class="pre">Gradebook.remove_assignments()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.rename_assignments"><code class="docutils literal notranslate"><span class="pre">Gradebook.rename_assignments()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.restrict_to_assignments"><code class="docutils literal notranslate"><span class="pre">Gradebook.restrict_to_assignments()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.restrict_to_students"><code class="docutils literal notranslate"><span class="pre">Gradebook.restrict_to_students()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.score"><code class="docutils literal notranslate"><span class="pre">Gradebook.score</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.students"><code class="docutils literal notranslate"><span class="pre">Gradebook.students</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.value"><code class="docutils literal notranslate"><span class="pre">Gradebook.value</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.Gradebook.weight_in_group"><code class="docutils literal notranslate"><span class="pre">Gradebook.weight_in_group</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l4"><a class="reference internal" href="api/core.html#functions">Functions</a></li>
+<li class="toctree-l6"><a class="reference internal" href="api/core-gradebook.html#gradelib.GradebookOptions"><code class="docutils literal notranslate"><span class="pre">GradebookOptions</span></code></a><ul>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.GradebookOptions.lateness_fudge"><code class="docutils literal notranslate"><span class="pre">GradebookOptions.lateness_fudge</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.GradebookOptions.allow_extra_credit"><code class="docutils literal notranslate"><span class="pre">GradebookOptions.allow_extra_credit</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="api/core-gradebook.html#gradelib.GradingGroup"><code class="docutils literal notranslate"><span class="pre">GradingGroup</span></code></a><ul>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.GradingGroup.assignment_weights"><code class="docutils literal notranslate"><span class="pre">GradingGroup.assignment_weights</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.GradingGroup.group_weight"><code class="docutils literal notranslate"><span class="pre">GradingGroup.group_weight</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-gradebook.html#gradelib.GradingGroup.assignments"><code class="docutils literal notranslate"><span class="pre">GradingGroup.assignments</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="api/core-assignments.html"><code class="docutils literal notranslate"><span class="pre">Assignments</span></code></a><ul>
+<li class="toctree-l6"><a class="reference internal" href="api/core-assignments.html#gradelib.Assignments"><code class="docutils literal notranslate"><span class="pre">Assignments</span></code></a><ul>
+<li class="toctree-l7"><a class="reference internal" href="api/core-assignments.html#gradelib.Assignments.__add__"><code class="docutils literal notranslate"><span class="pre">Assignments.__add__()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-assignments.html#gradelib.Assignments.containing"><code class="docutils literal notranslate"><span class="pre">Assignments.containing()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-assignments.html#gradelib.Assignments.ending_with"><code class="docutils literal notranslate"><span class="pre">Assignments.ending_with()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-assignments.html#gradelib.Assignments.group_by"><code class="docutils literal notranslate"><span class="pre">Assignments.group_by()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-assignments.html#gradelib.Assignments.group_by_splitting_on"><code class="docutils literal notranslate"><span class="pre">Assignments.group_by_splitting_on()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-assignments.html#gradelib.Assignments.not_containing"><code class="docutils literal notranslate"><span class="pre">Assignments.not_containing()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-assignments.html#gradelib.Assignments.starting_with"><code class="docutils literal notranslate"><span class="pre">Assignments.starting_with()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="api/core-students.html"><code class="docutils literal notranslate"><span class="pre">Student</span></code> and <code class="docutils literal notranslate"><span class="pre">Students</span></code></a><ul>
+<li class="toctree-l6"><a class="reference internal" href="api/core-students.html#gradelib.Student"><code class="docutils literal notranslate"><span class="pre">Student</span></code></a><ul>
+<li class="toctree-l7"><a class="reference internal" href="api/core-students.html#gradelib.Student.pid"><code class="docutils literal notranslate"><span class="pre">Student.pid</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="api/core-students.html#gradelib.Student.name"><code class="docutils literal notranslate"><span class="pre">Student.name</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="api/core-students.html#gradelib.Students"><code class="docutils literal notranslate"><span class="pre">Students</span></code></a><ul>
+<li class="toctree-l7"><a class="reference internal" href="api/core-students.html#gradelib.Students.find"><code class="docutils literal notranslate"><span class="pre">Students.find()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="api/core-amounts.html"><code class="docutils literal notranslate"><span class="pre">Points</span></code> and <code class="docutils literal notranslate"><span class="pre">Percentage</span></code></a><ul>
+<li class="toctree-l6"><a class="reference internal" href="api/core-amounts.html#gradelib.Points"><code class="docutils literal notranslate"><span class="pre">Points</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="api/core-amounts.html#gradelib.Percentage"><code class="docutils literal notranslate"><span class="pre">Percentage</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="api/core.html#functions">Functions</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="api/core.html#gradelib.combine_gradebooks"><code class="docutils literal notranslate"><span class="pre">combine_gradebooks()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="api/core.html#gradelib.normalize"><code class="docutils literal notranslate"><span class="pre">normalize()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="api/io.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.io</span></code> - Input/Output</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/io.html#gradescope"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradescope</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/io.html#canvas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">canvas</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/io.html#gradescope"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradescope</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="api/io.html#gradelib.io.gradescope.read"><code class="docutils literal notranslate"><span class="pre">read()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="api/preprocessing.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.preprocessing</span></code> - Preprocessing gradebooks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/io.html#canvas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">canvas</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="api/io.html#gradelib.io.canvas.read"><code class="docutils literal notranslate"><span class="pre">read()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/preprocessing.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.preprocessing</span></code> - Preprocessing gradebooks</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#gradelib.preprocessing.combine_assignment_parts"><code class="docutils literal notranslate"><span class="pre">combine_assignment_parts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#gradelib.preprocessing.combine_assignment_versions"><code class="docutils literal notranslate"><span class="pre">combine_assignment_versions()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="api/policies.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.policies</span></code> - Common grading policies</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/policies-lates.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.lates</span></code> - Handle late assignments</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/policies-drops.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.drops</span></code> - Drop low-scoring assignments</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/policies-attempts.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.attempts</span></code> - Allow multiple attempts</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/policies-exceptions.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.exceptions</span></code> - Track grading exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/policies-lates.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.lates</span></code> - Handle late assignments</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="api/policies-lates.html#gradelib.policies.lates.penalize"><code class="docutils literal notranslate"><span class="pre">penalize()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="api/policies-lates.html#gradelib.policies.lates.LateInfo"><code class="docutils literal notranslate"><span class="pre">LateInfo</span></code></a><ul>
+<li class="toctree-l6"><a class="reference internal" href="api/policies-lates.html#gradelib.policies.lates.LateInfo.gradebook"><code class="docutils literal notranslate"><span class="pre">LateInfo.gradebook</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="api/policies-lates.html#gradelib.policies.lates.LateInfo.student"><code class="docutils literal notranslate"><span class="pre">LateInfo.student</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="api/policies-lates.html#gradelib.policies.lates.LateInfo.assignment"><code class="docutils literal notranslate"><span class="pre">LateInfo.assignment</span></code></a></li>
+<li class="toctree-l6"><a class="reference internal" href="api/policies-lates.html#gradelib.policies.lates.LateInfo.number"><code class="docutils literal notranslate"><span class="pre">LateInfo.number</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="api/scales.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.scales</span></code> - Letter grade scales</a></li>
+<li class="toctree-l5"><a class="reference internal" href="api/policies-lates.html#gradelib.policies.lates.Deduct"><code class="docutils literal notranslate"><span class="pre">Deduct</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="api/policies-lates.html#gradelib.policies.lates.Forgive"><code class="docutils literal notranslate"><span class="pre">Forgive</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="api/policies-lates.html#gradelib.policies.lates.Penalty"><code class="docutils literal notranslate"><span class="pre">Penalty</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="api/policies-drops.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.drops</span></code> - Drop low-scoring assignments</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="api/policies-drops.html#gradelib.policies.drops.drop_most_favorable"><code class="docutils literal notranslate"><span class="pre">drop_most_favorable()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="api/policies-attempts.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.attempts</span></code> - Allow multiple attempts</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="api/policies-attempts.html#gradelib.policies.attempts.take_best"><code class="docutils literal notranslate"><span class="pre">take_best()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="api/policies-exceptions.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.exceptions</span></code> - Track grading exceptions</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="api/policies-exceptions.html#gradelib.policies.exceptions.make_exceptions"><code class="docutils literal notranslate"><span class="pre">make_exceptions()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="api/policies-exceptions.html#gradelib.policies.exceptions.Drop"><code class="docutils literal notranslate"><span class="pre">Drop</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="api/policies-exceptions.html#gradelib.policies.exceptions.ForgiveLate"><code class="docutils literal notranslate"><span class="pre">ForgiveLate</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="api/policies-exceptions.html#gradelib.policies.exceptions.Replace"><code class="docutils literal notranslate"><span class="pre">Replace</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/scales.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.scales</span></code> - Letter grade scales</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/scales.html#gradelib.scales.DEFAULT_SCALE"><code class="docutils literal notranslate"><span class="pre">DEFAULT_SCALE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/scales.html#gradelib.scales.ROUNDED_DEFAULT_SCALE"><code class="docutils literal notranslate"><span class="pre">ROUNDED_DEFAULT_SCALE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/scales.html#gradelib.scales.map_scores_to_letter_grades"><code class="docutils literal notranslate"><span class="pre">map_scores_to_letter_grades()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/scales.html#gradelib.scales.find_robust_scale"><code class="docutils literal notranslate"><span class="pre">find_robust_scale()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="api/index.html#reviewing-grades">Reviewing Grades</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api/statistics.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.statistics</span></code> - Summary statistics for computed grades</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/plot.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.plot</span></code> - Display visual summaries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/statistics.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.statistics</span></code> - Summary statistics for computed grades</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/statistics.html#gradelib.statistics.rank"><code class="docutils literal notranslate"><span class="pre">rank()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/statistics.html#gradelib.statistics.percentile"><code class="docutils literal notranslate"><span class="pre">percentile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/statistics.html#gradelib.statistics.average_gpa"><code class="docutils literal notranslate"><span class="pre">average_gpa()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/statistics.html#gradelib.statistics.letter_grade_distribution"><code class="docutils literal notranslate"><span class="pre">letter_grade_distribution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/statistics.html#gradelib.statistics.lates"><code class="docutils literal notranslate"><span class="pre">lates()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/statistics.html#gradelib.statistics.outcomes"><code class="docutils literal notranslate"><span class="pre">outcomes()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/plot.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.plot</span></code> - Display visual summaries</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/plot.html#gradelib.plot.grade_distribution"><code class="docutils literal notranslate"><span class="pre">grade_distribution()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="api/overview.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.overview</span></code> - Interactive overview of grades</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="api/overview.html#gradelib.overview"><code class="docutils literal notranslate"><span class="pre">gradelib.overview()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="api/reports.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.reports</span></code> - LaTeX grade reports</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/reports.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.reports</span></code> - LaTeX grade reports</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/reports.html#gradelib.reports.generate_latex"><code class="docutils literal notranslate"><span class="pre">generate_latex()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -142,12 +266,62 @@
 <h1 id="index">Index</h1>
 
 <div class="genindex-jumpbox">
- <a href="#B"><strong>B</strong></a>
+ <a href="#_"><strong>_</strong></a>
+ | <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
+ | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
+ | <a href="#V"><strong>V</strong></a>
+ | <a href="#W"><strong>W</strong></a>
  
 </div>
+<h2 id="_">_</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-assignments.html#gradelib.Assignments.__add__">__add__() (gradelib.Assignments method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.add_assignment">add_assignment() (gradelib.Gradebook method)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.add_note">add_note() (gradelib.Gradebook method)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.GradebookOptions.allow_extra_credit">allow_extra_credit (gradelib.GradebookOptions attribute)</a>
+</li>
+      <li><a href="api/policies-lates.html#gradelib.policies.lates.LateInfo.assignment">assignment (gradelib.policies.lates.LateInfo attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-gradebook.html#gradelib.GradingGroup.assignment_weights">assignment_weights (gradelib.GradingGroup attribute)</a>
+</li>
+      <li><a href="api/core-assignments.html#gradelib.Assignments">Assignments (class in gradelib)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.assignments">assignments (gradelib.Gradebook property)</a>
+
+      <ul>
+        <li><a href="api/core-gradebook.html#gradelib.GradingGroup.assignments">(gradelib.GradingGroup property)</a>
+</li>
+      </ul></li>
+      <li><a href="api/statistics.html#gradelib.statistics.average_gpa">average_gpa() (in module gradelib.statistics)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -161,9 +335,77 @@
   </ul></td>
 </tr></table>
 
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/preprocessing.html#gradelib.preprocessing.combine_assignment_parts">combine_assignment_parts() (in module gradelib.preprocessing)</a>
+</li>
+      <li><a href="api/preprocessing.html#gradelib.preprocessing.combine_assignment_versions">combine_assignment_versions() (in module gradelib.preprocessing)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core.html#gradelib.combine_gradebooks">combine_gradebooks() (in module gradelib)</a>
+</li>
+      <li><a href="api/core-assignments.html#gradelib.Assignments.containing">containing() (gradelib.Assignments method)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.copy">copy() (gradelib.Gradebook method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/policies-lates.html#gradelib.policies.lates.Deduct">Deduct (class in gradelib.policies.lates)</a>
+</li>
+      <li><a href="api/scales.html#gradelib.scales.DEFAULT_SCALE">DEFAULT_SCALE (in module gradelib.scales)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/policies-exceptions.html#gradelib.policies.exceptions.Drop">Drop (class in gradelib.policies.exceptions)</a>
+</li>
+      <li><a href="api/policies-drops.html#gradelib.policies.drops.drop_most_favorable">drop_most_favorable() (in module gradelib.policies.drops)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-assignments.html#gradelib.Assignments.ending_with">ending_with() (gradelib.Assignments method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-students.html#gradelib.Students.find">find() (gradelib.Students method)</a>
+</li>
+      <li><a href="api/scales.html#gradelib.scales.find_robust_scale">find_robust_scale() (in module gradelib.scales)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/policies-lates.html#gradelib.policies.lates.Forgive">Forgive (class in gradelib.policies.lates)</a>
+</li>
+      <li><a href="api/policies-exceptions.html#gradelib.policies.exceptions.ForgiveLate">ForgiveLate (class in gradelib.policies.exceptions)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/reports.html#gradelib.reports.generate_latex">generate_latex() (in module gradelib.reports)</a>
+</li>
+      <li><a href="api/plot.html#gradelib.plot.grade_distribution">grade_distribution() (in module gradelib.plot)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook">Gradebook (class in gradelib)</a>
+</li>
+      <li><a href="api/policies-lates.html#gradelib.policies.lates.LateInfo.gradebook">gradebook (gradelib.policies.lates.LateInfo attribute)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.GradebookOptions">GradebookOptions (class in gradelib)</a>
+</li>
       <li>
     gradelib
 
@@ -215,12 +457,48 @@
         <li><a href="api/statistics.html#module-gradelib.statistics">module</a>
 </li>
       </ul></li>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.grading_group_scores">grading_group_scores (gradelib.Gradebook property)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.grading_groups">grading_groups (gradelib.Gradebook property)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.GradingGroup">GradingGroup (class in gradelib)</a>
+</li>
+      <li><a href="api/core-assignments.html#gradelib.Assignments.group_by">group_by() (gradelib.Assignments method)</a>
+</li>
+      <li><a href="api/core-assignments.html#gradelib.Assignments.group_by_splitting_on">group_by_splitting_on() (gradelib.Assignments method)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.GradingGroup.group_weight">group_weight (gradelib.GradingGroup attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.late">late (gradelib.Gradebook property)</a>
+</li>
+      <li><a href="api/policies-lates.html#gradelib.policies.lates.LateInfo">LateInfo (class in gradelib.policies.lates)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.GradebookOptions.lateness_fudge">lateness_fudge (gradelib.GradebookOptions attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/statistics.html#gradelib.statistics.lates">lates() (in module gradelib.statistics)</a>
+</li>
+      <li><a href="api/statistics.html#gradelib.statistics.letter_grade_distribution">letter_grade_distribution() (in module gradelib.statistics)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.letter_grades">letter_grades (gradelib.Gradebook property)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/policies-exceptions.html#gradelib.policies.exceptions.make_exceptions">make_exceptions() (in module gradelib.policies.exceptions)</a>
+</li>
+      <li><a href="api/scales.html#gradelib.scales.map_scores_to_letter_grades">map_scores_to_letter_grades() (in module gradelib.scales)</a>
+</li>
       <li>
     module
 
@@ -245,9 +523,59 @@
   </ul></td>
 </tr></table>
 
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-students.html#gradelib.Student.name">name (gradelib.Student attribute)</a>
+</li>
+      <li><a href="api/core.html#gradelib.normalize">normalize() (in module gradelib)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-assignments.html#gradelib.Assignments.not_containing">not_containing() (gradelib.Assignments method)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.notes">notes (gradelib.Gradebook attribute)</a>
+</li>
+      <li><a href="api/policies-lates.html#gradelib.policies.lates.LateInfo.number">number (gradelib.policies.lates.LateInfo attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.options">options (gradelib.Gradebook attribute)</a>
+</li>
+      <li><a href="api/statistics.html#gradelib.statistics.outcomes">outcomes() (in module gradelib.statistics)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.overall_score">overall_score (gradelib.Gradebook property)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.overall_weight">overall_weight (gradelib.Gradebook property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/policies-lates.html#gradelib.policies.lates.penalize">penalize() (in module gradelib.policies.lates)</a>
+</li>
+      <li><a href="api/policies-lates.html#gradelib.policies.lates.Penalty">Penalty (in module gradelib.policies.lates)</a>
+</li>
+      <li><a href="api/core-amounts.html#gradelib.Percentage">Percentage (class in gradelib)</a>
+</li>
+      <li><a href="api/statistics.html#gradelib.statistics.percentile">percentile() (in module gradelib.statistics)</a>
+</li>
+      <li><a href="api/core-students.html#gradelib.Student.pid">pid (gradelib.Student attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.pids">pids (gradelib.Gradebook property)</a>
+</li>
+      <li><a href="api/core-amounts.html#gradelib.Points">Points (class in gradelib)</a>
+</li>
       <li>
     policies
 
@@ -255,8 +583,6 @@
         <li><a href="api/policies.html#module-policies">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     preprocessing
 
@@ -264,6 +590,80 @@
         <li><a href="api/preprocessing.html#module-preprocessing">module</a>
 </li>
       </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/statistics.html#gradelib.statistics.rank">rank() (in module gradelib.statistics)</a>
+</li>
+      <li><a href="api/io.html#gradelib.io.canvas.read">read() (in module gradelib.io.canvas)</a>
+
+      <ul>
+        <li><a href="api/io.html#gradelib.io.gradescope.read">(in module gradelib.io.gradescope)</a>
+</li>
+      </ul></li>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.remove_assignments">remove_assignments() (gradelib.Gradebook method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.rename_assignments">rename_assignments() (gradelib.Gradebook method)</a>
+</li>
+      <li><a href="api/policies-exceptions.html#gradelib.policies.exceptions.Replace">Replace (class in gradelib.policies.exceptions)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.restrict_to_assignments">restrict_to_assignments() (gradelib.Gradebook method)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.restrict_to_students">restrict_to_students() (gradelib.Gradebook method)</a>
+</li>
+      <li><a href="api/scales.html#gradelib.scales.ROUNDED_DEFAULT_SCALE">ROUNDED_DEFAULT_SCALE (in module gradelib.scales)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.scale">scale (gradelib.Gradebook attribute)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.score">score (gradelib.Gradebook property)</a>
+</li>
+      <li><a href="api/core-assignments.html#gradelib.Assignments.starting_with">starting_with() (gradelib.Assignments method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-students.html#gradelib.Student">Student (class in gradelib)</a>
+</li>
+      <li><a href="api/policies-lates.html#gradelib.policies.lates.LateInfo.student">student (gradelib.policies.lates.LateInfo attribute)</a>
+</li>
+      <li><a href="api/core-students.html#gradelib.Students">Students (class in gradelib)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.students">students (gradelib.Gradebook property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/policies-attempts.html#gradelib.policies.attempts.take_best">take_best() (in module gradelib.policies.attempts)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.value">value (gradelib.Gradebook property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core-gradebook.html#gradelib.Gradebook.weight_in_group">weight_in_group (gradelib.Gradebook property)</a>
+</li>
   </ul></td>
 </tr></table>
 

@@ -763,6 +763,11 @@ class Gradebook:
 
         This takes into account dropped assignments.
 
+        If an assignment has a score of `NaN`, it is treated as a zero for the
+        purposes of computing the grading group score. Conceptually, an
+        individual assignment may not be attempted by a student, but a grading
+        group score is always "attempted" and so it cannot be `NaN`.
+
         If :attr:`grading_groups` has not yet been set, all entries are `NaN`.
 
         This is a derived attribute; it should not be modified.
@@ -862,7 +867,7 @@ class Gradebook:
         the number of points possible on that assignment.
 
         If the student did not attempt the assignment (and so the `points_earned` entry
-        is `NaN`), the score is zero.
+        is `NaN`), the score is also `NaN`.
 
         Does not take into account drops.
 

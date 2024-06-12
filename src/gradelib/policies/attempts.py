@@ -34,9 +34,13 @@ def _make_notes(raw_scores: _pd.Series, effective_scores: _pd.Series) -> str:
                 f"{str(assignment).title()} raw score: {raw_score}, after penalty for retrying: {effective_score}."
             )
 
-    best_assignment = str(effective_scores.idxmax())
-    best_score = _fmt_as_pct(effective_scores.max())
-    parts.append(f"{best_assignment.title()} score ({best_score}) used.")
+    # if all of a student's attempts are nans (i.e. they didn't attempt any of the
+    # parts), .idxmax() will fail with a ValueError (or print a warning). In this case,
+    # there really is no "best" assignment, so we won't print anything more.
+    if not bool(effective_scores.isna().all()):
+        best_assignment = str(effective_scores.idxmax())
+        best_score = _fmt_as_pct(effective_scores.max())
+        parts.append(f"{best_assignment.title()} score ({best_score}) used.")
 
     return " ".join(parts)
 

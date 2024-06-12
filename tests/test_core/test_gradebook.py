@@ -879,7 +879,7 @@ def test_groups_setter_allows_extra_credit_if_option_set():
     }
 
     # then
-    gradebook.overall_score.loc["A1"] = 1.075
+    assert gradebook.overall_score.loc["A1"] == 1.075
 
 
 # group_scores -------------------------------------------------------------------------

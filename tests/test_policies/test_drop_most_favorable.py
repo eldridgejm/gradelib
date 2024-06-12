@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 import gradelib
 
@@ -132,3 +133,21 @@ def test_drop_most_favorable_with_multiple_dropped_adds_note():
         "A1": {"drops": ["Hw01 dropped.", "Hw02 dropped."]},
         "A2": {"drops": ["Hw02 dropped.", "Hw03 dropped."]},
     }
+
+
+def test_drop_most_favorable_treats_nans_as_zeros():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[np.nan, 30, 90, 20], index=columns, name="A1")
+    points = pd.DataFrame([p1])
+    maximums = pd.Series([100, 100, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+    homeworks = gradebook.assignments.starting_with("hw")
+
+    gradebook.grading_groups = {"homeworks": (homeworks, 0.75), "lab01": 0.25}
+
+    # when
+    drop_most_favorable(gradebook, 1, within=homeworks)
+
+    # then
+    assert gradebook.dropped.iloc[0, 0]

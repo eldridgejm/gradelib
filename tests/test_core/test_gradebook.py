@@ -907,6 +907,25 @@ def test_group_scores_raises_if_all_assignments_in_a_group_are_dropped():
         gradebook.grading_group_scores
 
 
+def test_group_scores_treats_nans_as_zeros():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[np.nan, 30, 90, 20], index=columns, name="A1")
+    points_earned = pd.DataFrame([p1])
+    points_possible = pd.Series([100, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.grading_groups = {
+        "homeworks": (HOMEWORKS, 0.5),
+        "labs": (["lab01"], 0.5),
+    }
+
+    # then
+    assert np.isclose(gradebook.grading_group_scores.loc["A1", "homeworks"], 120 / 250)
+
+
 def test_group_scores_respects_dropped_assignments():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]

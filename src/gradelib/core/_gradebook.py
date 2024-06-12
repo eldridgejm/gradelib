@@ -297,8 +297,9 @@ class Gradebook:
     points_earned : pandas.DataFrame
         A dataframe with one row per student, and one column for each
         assignment. Each entry should be the raw number of points earned by the
-        student on the given assignment. The index of the dataframe should
-        consist of :class:`Student` objects.
+        student on the given assignment (or `NaN` if the student did not turn
+        in the assignment). The index of the dataframe should consist of
+        :class:`Student` objects.
     points_possible : pandas.Series
         A series containing the maximum number of points possible for each
         assignment. The index of the series should match the columns of the
@@ -841,6 +842,18 @@ class Gradebook:
         )
 
     @property
+    def attempted(self) -> pd.DataFrame:
+        """A table of whether each assignment was attempted (i.e., turned in).
+
+        Produces a DataFrame with a row for each student and a column for each
+        assignment. Each entry is `True` if the student attempted the
+        assignment and `False` otherwise. An assignment is considered
+        "attempted" if `points_earned` is not `NaN`.
+
+        """
+        return ~self.points_earned.isna()
+
+    @property
     def score(self) -> pd.DataFrame:
         """A table of scores on each assignment.
 
@@ -848,12 +861,15 @@ class Gradebook:
         containing the number of points earned on that assignment as a proportion of
         the number of points possible on that assignment.
 
+        If the student did not attempt the assignment (and so the `points_earned` entry
+        is `NaN`), the score is zero.
+
         Does not take into account drops.
 
         This is a derived attribute; it should not be modified.
 
         """
-        return self.points_earned / self.points_possible
+        return self.points_earned.fillna(0) / self.points_possible
 
     @property
     def overall_score(self) -> pd.Series:

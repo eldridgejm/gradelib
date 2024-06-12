@@ -86,7 +86,42 @@ def test_adds_note():
     }
 
 
-def test_with_nans():
+def test_does_not_print_warning_if_all_attempts_are_nan(recwarn):
+    """If all of a student's attempts are nan, no warning should be printed."""
+    # given
+    columns = ["mt01", "mt01 - retry"]
+    p1 = pd.Series(data=[np.nan, np.nan], index=columns, name="A1")
+    points = pd.DataFrame([p1])
+    maximums = pd.Series([100, 100], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    # when
+    # assert that no warnings are raised
+    take_best(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
+
+    # then
+    # no warnings should be raised
+    assert len(recwarn) == 0
+
+
+def test_best_attempt_is_zero_if_none_of_the_parts_are_attempted():
+    """If all of a student's attempts are nan, the best attempt should be nan."""
+    # given
+    columns = ["mt01", "mt01 - retry"]
+    p1 = pd.Series(data=[np.nan, np.nan], index=columns, name="A1")
+    points = pd.DataFrame([p1])
+    maximums = pd.Series([100, 100], index=columns)
+    gradebook = gradelib.Gradebook(points, maximums)
+
+    # when
+    take_best(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
+
+    # then
+    assert gradebook.points_earned.loc["A1", "mt01 with retry"] == 0
+    assert_gradebook_is_sound(gradebook)
+
+
+def test_ignores_nan_when_taking_maximum():
     """Nans should be ignored. That is, if a student has a nan for one assignment, the
     maximum should be taken from the other assignments."""
     # given

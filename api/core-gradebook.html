@@ -16,7 +16,7 @@
         <script src="../_static/jquery.js?v=5d32c60e"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../_static/documentation_options.js?v=6ffd866b"></script>
-        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
         <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -87,6 +87,7 @@
 <li class="toctree-l7"><a class="reference internal" href="#gradelib.Gradebook.add_assignment"><code class="docutils literal notranslate"><span class="pre">Gradebook.add_assignment()</span></code></a></li>
 <li class="toctree-l7"><a class="reference internal" href="#gradelib.Gradebook.add_note"><code class="docutils literal notranslate"><span class="pre">Gradebook.add_note()</span></code></a></li>
 <li class="toctree-l7"><a class="reference internal" href="#gradelib.Gradebook.assignments"><code class="docutils literal notranslate"><span class="pre">Gradebook.assignments</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="#gradelib.Gradebook.attempted"><code class="docutils literal notranslate"><span class="pre">Gradebook.attempted</span></code></a></li>
 <li class="toctree-l7"><a class="reference internal" href="#gradelib.Gradebook.copy"><code class="docutils literal notranslate"><span class="pre">Gradebook.copy()</span></code></a></li>
 <li class="toctree-l7"><a class="reference internal" href="#gradelib.Gradebook.grading_group_scores"><code class="docutils literal notranslate"><span class="pre">Gradebook.grading_group_scores</span></code></a></li>
 <li class="toctree-l7"><a class="reference internal" href="#gradelib.Gradebook.grading_groups"><code class="docutils literal notranslate"><span class="pre">Gradebook.grading_groups</span></code></a></li>
@@ -282,8 +283,9 @@ reading grades exported from Gradescope or Canvas, using
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>points_earned</strong> (<em>pandas.DataFrame</em>) – A dataframe with one row per student, and one column for each
 assignment. Each entry should be the raw number of points earned by the
-student on the given assignment. The index of the dataframe should
-consist of <a class="reference internal" href="core-students.html#gradelib.Student" title="gradelib.Student"><code class="xref py py-class docutils literal notranslate"><span class="pre">Student</span></code></a> objects.</p></li>
+student on the given assignment (or <cite>NaN</cite> if the student did not turn
+in the assignment). The index of the dataframe should consist of
+<a class="reference internal" href="core-students.html#gradelib.Student" title="gradelib.Student"><code class="xref py py-class docutils literal notranslate"><span class="pre">Student</span></code></a> objects.</p></li>
 <li><p><strong>points_possible</strong> (<em>pandas.Series</em>) – A series containing the maximum number of points possible for each
 assignment. The index of the series should match the columns of the
 <cite>points_earned</cite> dataframe.</p></li>
@@ -417,6 +419,16 @@ Default: all False.</p></li>
 <dd class="field-odd"><p><a class="reference internal" href="core-assignments.html#gradelib.Assignments" title="gradelib.Assignments">Assignments</a></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="gradelib.Gradebook.attempted">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">attempted</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#gradelib.Gradebook.attempted" title="Link to this definition"></a></dt>
+<dd><p>A table of whether each assignment was attempted (i.e., turned in).</p>
+<p>Produces a DataFrame with a row for each student and a column for each
+assignment. Each entry is <cite>True</cite> if the student attempted the
+assignment and <cite>False</cite> otherwise. An assignment is considered
+“attempted” if <cite>points_earned</cite> is not <cite>NaN</cite>.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -634,6 +646,8 @@ an empty dictionary by this operation.</p>
 <p>Produces a DataFrame with a row for each student and a column for each assignment
 containing the number of points earned on that assignment as a proportion of
 the number of points possible on that assignment.</p>
+<p>If the student did not attempt the assignment (and so the <cite>points_earned</cite> entry
+is <cite>NaN</cite>), the score is zero.</p>
 <p>Does not take into account drops.</p>
 <p>This is a derived attribute; it should not be modified.</p>
 </dd></dl>

@@ -453,6 +453,10 @@ assignment and <cite>False</cite> otherwise. An assignment is considered
 grading group in which each entry is the student’s score within that
 grading group.</p>
 <p>This takes into account dropped assignments.</p>
+<p>If an assignment has a score of <cite>NaN</cite>, it is treated as a zero for the
+purposes of computing the grading group score. Conceptually, an
+individual assignment may not be attempted by a student, but a grading
+group score is always “attempted” and so it cannot be <cite>NaN</cite>.</p>
 <p>If <a class="reference internal" href="#gradelib.Gradebook.grading_groups" title="gradelib.Gradebook.grading_groups"><code class="xref py py-attr docutils literal notranslate"><span class="pre">grading_groups</span></code></a> has not yet been set, all entries are <cite>NaN</cite>.</p>
 <p>This is a derived attribute; it should not be modified.</p>
 </dd></dl>
@@ -647,7 +651,7 @@ an empty dictionary by this operation.</p>
 containing the number of points earned on that assignment as a proportion of
 the number of points possible on that assignment.</p>
 <p>If the student did not attempt the assignment (and so the <cite>points_earned</cite> entry
-is <cite>NaN</cite>), the score is zero.</p>
+is <cite>NaN</cite>), the score is also <cite>NaN</cite>.</p>
 <p>Does not take into account drops.</p>
 <p>This is a derived attribute; it should not be modified.</p>
 </dd></dl>

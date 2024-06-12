@@ -104,7 +104,7 @@ def test_does_not_print_warning_if_all_attempts_are_nan(recwarn):
     assert len(recwarn) == 0
 
 
-def test_best_attempt_is_zero_if_none_of_the_parts_are_attempted():
+def test_best_attempt_is_nan_if_none_of_the_parts_are_attempted():
     """If all of a student's attempts are nan, the best attempt should be nan."""
     # given
     columns = ["mt01", "mt01 - retry"]
@@ -117,7 +117,7 @@ def test_best_attempt_is_zero_if_none_of_the_parts_are_attempted():
     take_best(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
 
     # then
-    assert gradebook.points_earned.loc["A1", "mt01 with retry"] == 0
+    assert pd.isna(gradebook.points_earned.loc["A1", "mt01 with retry"])
     assert_gradebook_is_sound(gradebook)
 
 

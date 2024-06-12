@@ -874,7 +874,7 @@ class Gradebook:
         This is a derived attribute; it should not be modified.
 
         """
-        return self.points_earned.fillna(0) / self.points_possible
+        return self.points_earned / self.points_possible
 
     @property
     def overall_score(self) -> pd.Series:

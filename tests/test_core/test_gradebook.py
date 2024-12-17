@@ -881,6 +881,23 @@ def test_groups_setter_allows_extra_credit_if_option_set():
     # then
     assert gradebook.overall_score.loc["A1"] == 1.075
 
+def test_groups_setter_raises_if_group_is_empty():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    with pytest.raises(ValueError) as exc:
+        gradebook.grading_groups = {
+            "homeworks": ([], 0.5),
+            "labs": (["lab01"], 0.5),
+        }
+
+    assert "Grading group \"homeworks\" is empty." in str(exc)
+
 
 # group_scores -------------------------------------------------------------------------
 

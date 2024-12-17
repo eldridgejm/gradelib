@@ -572,6 +572,9 @@ class Gradebook:
             else:
                 raise TypeError("Unexpected type in grading group definition.")
 
+            if not assignment_weights:
+                raise ValueError(f'Grading group "{name}" is empty.')
+
             if not isinstance(assignment_weights, dict):
                 # an iterable of assignments that we need to turn into a dict
                 total_points_possible = sum(

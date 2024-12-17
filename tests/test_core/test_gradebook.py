@@ -881,6 +881,7 @@ def test_groups_setter_allows_extra_credit_if_option_set():
     # then
     assert gradebook.overall_score.loc["A1"] == 1.075
 
+
 def test_groups_setter_raises_if_group_is_empty():
     # given
     columns = ["hw01", "hw02", "hw03", "lab01"]
@@ -896,7 +897,7 @@ def test_groups_setter_raises_if_group_is_empty():
             "labs": (["lab01"], 0.5),
         }
 
-    assert "Grading group \"homeworks\" is empty." in str(exc)
+    assert 'Grading group "homeworks" is empty.' in str(exc)
 
 
 # group_scores -------------------------------------------------------------------------

@@ -40,12 +40,21 @@ def make_exceptions(
     gradebook : Gradebook
         The gradebook to apply the exceptions to. Will be modified.
 
-    students
-        A mapping from student names to a list of exceptions that will be
-        applied. The exceptions should be instances of :class:`ForgiveLate`,
-        :class:`Drop`, or :class:`Replace`. The keys can be the full name
-        or identifying substrings of names -- if it is not a precise match
-        (more than one student is found), an exception will be raised.
+    student: Union[Student, str]
+        The student to apply the exceptions to. Can be a :class:`Student` object
+        or a string that will be used to find the student.
+
+    exceptions : Sequence[Union[ForgiveLate, Drop, Replace]]
+        A sequence of exceptions to apply to the student. Each exception should
+        be an instance of :class:`ForgiveLate`, :class:`Drop`, or :class:`Replace`.
+
+    Example
+    -------
+    >>> from gradelib.policies.exceptions import make_exceptions, ForgiveLate, Drop
+    >>> make_exceptions(gradebook, "Justin", [
+            Drop("homework 01", reason="Illness."),
+            ForgiveLate("homework 02", reason="Family emergency.")
+        ])
 
     """
     if isinstance(student, str):

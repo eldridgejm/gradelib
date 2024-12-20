@@ -277,14 +277,21 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>gradebook</strong> (<a class="reference internal" href="core-gradebook.html#gradelib.Gradebook" title="gradelib.Gradebook"><em>Gradebook</em></a>) – The gradebook to apply the exceptions to. Will be modified.</p></li>
-<li><p><strong>students</strong> – A mapping from student names to a list of exceptions that will be
-applied. The exceptions should be instances of <a class="reference internal" href="#gradelib.policies.exceptions.ForgiveLate" title="gradelib.policies.exceptions.ForgiveLate"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForgiveLate</span></code></a>,
-<a class="reference internal" href="#gradelib.policies.exceptions.Drop" title="gradelib.policies.exceptions.Drop"><code class="xref py py-class docutils literal notranslate"><span class="pre">Drop</span></code></a>, or <a class="reference internal" href="#gradelib.policies.exceptions.Replace" title="gradelib.policies.exceptions.Replace"><code class="xref py py-class docutils literal notranslate"><span class="pre">Replace</span></code></a>. The keys can be the full name
-or identifying substrings of names – if it is not a precise match
-(more than one student is found), an exception will be raised.</p></li>
+<li><p><strong>student</strong> (<em>Union</em><em>[</em><a class="reference internal" href="core-students.html#gradelib.Student" title="gradelib.Student"><em>Student</em></a><em>, </em><em>str</em><em>]</em>) – The student to apply the exceptions to. Can be a <code class="xref py py-class docutils literal notranslate"><span class="pre">Student</span></code> object
+or a string that will be used to find the student.</p></li>
+<li><p><strong>exceptions</strong> (<em>Sequence</em><em>[</em><em>Union</em><em>[</em><a class="reference internal" href="#gradelib.policies.exceptions.ForgiveLate" title="gradelib.policies.exceptions.ForgiveLate"><em>ForgiveLate</em></a><em>, </em><a class="reference internal" href="#gradelib.policies.exceptions.Drop" title="gradelib.policies.exceptions.Drop"><em>Drop</em></a><em>, </em><a class="reference internal" href="#gradelib.policies.exceptions.Replace" title="gradelib.policies.exceptions.Replace"><em>Replace</em></a><em>]</em><em>]</em>) – A sequence of exceptions to apply to the student. Each exception should
+be an instance of <a class="reference internal" href="#gradelib.policies.exceptions.ForgiveLate" title="gradelib.policies.exceptions.ForgiveLate"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForgiveLate</span></code></a>, <a class="reference internal" href="#gradelib.policies.exceptions.Drop" title="gradelib.policies.exceptions.Drop"><code class="xref py py-class docutils literal notranslate"><span class="pre">Drop</span></code></a>, or <a class="reference internal" href="#gradelib.policies.exceptions.Replace" title="gradelib.policies.exceptions.Replace"><code class="xref py py-class docutils literal notranslate"><span class="pre">Replace</span></code></a>.</p></li>
 </ul>
 </dd>
 </dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">gradelib.policies.exceptions</span> <span class="kn">import</span> <span class="n">make_exceptions</span><span class="p">,</span> <span class="n">ForgiveLate</span><span class="p">,</span> <span class="n">Drop</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">make_exceptions</span><span class="p">(</span><span class="n">gradebook</span><span class="p">,</span> <span class="s2">&quot;Justin&quot;</span><span class="p">,</span> <span class="p">[</span>
+<span class="go">        Drop(&quot;homework 01&quot;, reason=&quot;Illness.&quot;),</span>
+<span class="go">        ForgiveLate(&quot;homework 02&quot;, reason=&quot;Family emergency.&quot;)</span>
+<span class="go">    ])</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py class">

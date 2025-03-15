@@ -1,312 +1,163 @@
-
-
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" data-content_root="../">
+
+<html :class="{'dark': darkMode === 'dark' || (darkMode === 'system' &amp;&amp; window.matchMedia('(prefers-color-scheme: dark)').matches)}" class="scroll-smooth" data-content_root="../" lang="en" x-data="{ darkMode: localStorage.getItem('darkMode') || localStorage.setItem('darkMode', 'system'), activeSection: '' }" x-init="$watch('darkMode', val =&gt; localStorage.setItem('darkMode', val))">
 <head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>gradelib.overview - Interactive overview of grades &mdash; gradelib 0.2.4 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
-
-  
-      <script src="../_static/jquery.js?v=5d32c60e"></script>
-      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=6ffd866b"></script>
-      <script src="../_static/doctools.js?v=9bcbadda"></script>
-      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="gradelib.reports - LaTeX grade reports" href="reports.html" />
-    <link rel="prev" title="gradelib.plot - Display visual summaries" href="plot.html" /> 
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta charset="utf-8"/>
+<meta content="white" media="(prefers-color-scheme: light)" name="theme-color"/>
+<meta content="black" media="(prefers-color-scheme: dark)" name="theme-color"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>gradelib.overview - Interactive overview of grades | smartconfig</title>
+<meta content="gradelib.overview - Interactive overview of grades | smartconfig" property="og:title"/>
+<meta content="gradelib.overview - Interactive overview of grades | smartconfig" name="twitter:title"/>
+<link href="../_static/pygments.css?v=1f3678b7" rel="stylesheet" type="text/css"/>
+<link href="../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
+<link href="../search.html" rel="search" title="Search"/>
+<link href="../genindex.html" rel="index" title="Index"/>
+<link href="reports.html" rel="next" title="gradelib.reports - LaTeX grade reports"/>
+<link href="plot.html" rel="prev" title="gradelib.plot - Display visual summaries"/>
+<script>
+    <!-- Prevent Flash of wrong theme -->
+      const userPreference = localStorage.getItem('darkMode');
+      let mode;
+      if (userPreference === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        mode = 'dark';
+        document.documentElement.classList.add('dark');
+      } else {
+        mode = 'light';
+      }
+      if (!userPreference) {localStorage.setItem('darkMode', mode)}
+    </script>
 </head>
-
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-
-          
-          
-          <a href="../index.html" class="icon icon-home">
-            gradelib
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
+<body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
+<div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
+      Skip to content
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
+<div class="hidden mr-4 md:flex">
+<a class="flex items-center mr-6" href="../index.html"><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">smartconfig</span>
+</a></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+<svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
+</svg>
+<span class="sr-only">Toggle navigation menu</span>
+</button>
+<div class="flex items-center justify-between flex-1 space-x-2 sm:space-x-4 md:justify-end">
+<div class="flex-1 w-full md:w-auto md:flex-none"><form @keydown.k.window.meta="$refs.search.focus()" action="../search.html" class="relative flex items-center group" id="searchbox" method="get">
+<input aria-label="Search the docs" class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" id="search-input" name="q" placeholder="Search ..." type="search" x-ref="search"/>
+<kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+<span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
-<li class="toctree-l1"><a class="reference internal" href="../tutorial/index.html">Tutorial</a><ul>
+<nav class="flex items-center space-x-1">
+<button @click="darkMode = darkMode === 'light' ? 'dark' : 'light'" aria-label="Color theme switcher" class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9" type="button">
+<svg class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z"></path>
+</svg>
+<svg class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z"></path>
+</svg>
+</button>
+</nav>
+</div>
+</div>
+</header>
+<div class="flex-1"><div class="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }" class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full shrink-0 overflow-y-auto border-r border-border md:sticky" id="left-sidebar">
+<a class="!justify-start text-sm md:!hidden bg-background" href="../index.html"><span class="font-bold text-clip whitespace-nowrap">smartconfig</span>
+</a>
+<div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
+<div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
+<ul>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../tutorial/index.html">Tutorial<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/gradebooks.html">Gradebooks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/loading.html">Loading Grades</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorial/preprocessing.html">Preprocessing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../tutorial/preprocessing.html#combining-assignment-versions">Combining assignment versions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../tutorial/preprocessing.html#combining-assignment-parts">Combining assignment parts</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorial/groups.html">Grading Groups</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../tutorial/groups.html#example">Example</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorial/policies.html">Grading Policies</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../tutorial/policies.html#handling-late-assignments">Handling late assignments</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../tutorial/policies.html#dropping-low-scores">Dropping low scores</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../tutorial/policies.html#giving-multiple-chances-at-an-assignment">Giving multiple chances at an assignment</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../tutorial/policies.html#tracking-exceptions">Tracking exceptions</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorial/preprocessing.html">Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorial/groups.html">Grading Groups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorial/policies.html">Grading Policies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/scales.html">Setting Letter Grade Scales</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorial/reviewing.html">Reviewing and Distributing Grades</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../tutorial/reviewing.html#overviews">Overviews</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../tutorial/reviewing.html#statistics">Statistics</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../tutorial/reviewing.html#latex-grade-reports">LaTeX Grade Reports</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorial/reviewing.html">Reviewing and Distributing Grades</a></li>
 </ul>
 </li>
 </ul>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">API</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="index.html#computing-grades">Computing Grades</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="core.html"><code class="docutils literal notranslate"><span class="pre">gradelib</span></code> core</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="core.html#core-types">Core Types</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="core-gradebook.html"><code class="docutils literal notranslate"><span class="pre">Gradebook</span></code> et al.</a><ul>
-<li class="toctree-l6"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook"><code class="docutils literal notranslate"><span class="pre">Gradebook</span></code></a><ul>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.notes"><code class="docutils literal notranslate"><span class="pre">Gradebook.notes</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.options"><code class="docutils literal notranslate"><span class="pre">Gradebook.options</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.scale"><code class="docutils literal notranslate"><span class="pre">Gradebook.scale</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.add_assignment"><code class="docutils literal notranslate"><span class="pre">Gradebook.add_assignment()</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.add_note"><code class="docutils literal notranslate"><span class="pre">Gradebook.add_note()</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.assignments"><code class="docutils literal notranslate"><span class="pre">Gradebook.assignments</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.attempted"><code class="docutils literal notranslate"><span class="pre">Gradebook.attempted</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.copy"><code class="docutils literal notranslate"><span class="pre">Gradebook.copy()</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.grading_group_scores"><code class="docutils literal notranslate"><span class="pre">Gradebook.grading_group_scores</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.grading_groups"><code class="docutils literal notranslate"><span class="pre">Gradebook.grading_groups</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.late"><code class="docutils literal notranslate"><span class="pre">Gradebook.late</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.letter_grades"><code class="docutils literal notranslate"><span class="pre">Gradebook.letter_grades</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.overall_score"><code class="docutils literal notranslate"><span class="pre">Gradebook.overall_score</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.overall_weight"><code class="docutils literal notranslate"><span class="pre">Gradebook.overall_weight</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.pids"><code class="docutils literal notranslate"><span class="pre">Gradebook.pids</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.remove_assignments"><code class="docutils literal notranslate"><span class="pre">Gradebook.remove_assignments()</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.rename_assignments"><code class="docutils literal notranslate"><span class="pre">Gradebook.rename_assignments()</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.restrict_to_assignments"><code class="docutils literal notranslate"><span class="pre">Gradebook.restrict_to_assignments()</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.restrict_to_students"><code class="docutils literal notranslate"><span class="pre">Gradebook.restrict_to_students()</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.score"><code class="docutils literal notranslate"><span class="pre">Gradebook.score</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.students"><code class="docutils literal notranslate"><span class="pre">Gradebook.students</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.value"><code class="docutils literal notranslate"><span class="pre">Gradebook.value</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook.weight_in_group"><code class="docutils literal notranslate"><span class="pre">Gradebook.weight_in_group</span></code></a></li>
+<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="index.html">API<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="core.html"><code class="docutils literal notranslate"><span class="pre">gradelib</span></code> core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l3"><a class="reference internal" href="core-gradebook.html"><code class="docutils literal notranslate"><span class="pre">Gradebook</span></code> et al.</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core-assignments.html"><code class="docutils literal notranslate"><span class="pre">Assignments</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core-students.html"><code class="docutils literal notranslate"><span class="pre">Student</span></code> and <code class="docutils literal notranslate"><span class="pre">Students</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core-amounts.html"><code class="docutils literal notranslate"><span class="pre">Points</span></code> and <code class="docutils literal notranslate"><span class="pre">Percentage</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l6"><a class="reference internal" href="core-gradebook.html#gradelib.GradebookOptions"><code class="docutils literal notranslate"><span class="pre">GradebookOptions</span></code></a><ul>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.GradebookOptions.lateness_fudge"><code class="docutils literal notranslate"><span class="pre">GradebookOptions.lateness_fudge</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.GradebookOptions.allow_extra_credit"><code class="docutils literal notranslate"><span class="pre">GradebookOptions.allow_extra_credit</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.io</span></code> - Input/Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preprocessing.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.preprocessing</span></code> - Preprocessing gradebooks</a></li>
+<li class="toctree-l2" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="policies.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.policies</span></code> - Common grading policies<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l3"><a class="reference internal" href="policies-lates.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.lates</span></code> - Handle late assignments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="policies-drops.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.drops</span></code> - Drop low-scoring assignments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="policies-attempts.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.attempts</span></code> - Allow multiple attempts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="policies-exceptions.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.exceptions</span></code> - Track grading exceptions</a></li>
 </ul>
 </li>
-<li class="toctree-l6"><a class="reference internal" href="core-gradebook.html#gradelib.GradingGroup"><code class="docutils literal notranslate"><span class="pre">GradingGroup</span></code></a><ul>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.GradingGroup.assignment_weights"><code class="docutils literal notranslate"><span class="pre">GradingGroup.assignment_weights</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.GradingGroup.group_weight"><code class="docutils literal notranslate"><span class="pre">GradingGroup.group_weight</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-gradebook.html#gradelib.GradingGroup.assignments"><code class="docutils literal notranslate"><span class="pre">GradingGroup.assignments</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="scales.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.scales</span></code> - Letter grade scales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="statistics.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.statistics</span></code> - Summary statistics for computed grades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.plot</span></code> - Display visual summaries</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.overview</span></code> - Interactive overview of grades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reports.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.reports</span></code> - LaTeX grade reports</a></li>
 </ul>
 </li>
 </ul>
-</li>
-<li class="toctree-l5"><a class="reference internal" href="core-assignments.html"><code class="docutils literal notranslate"><span class="pre">Assignments</span></code></a><ul>
-<li class="toctree-l6"><a class="reference internal" href="core-assignments.html#gradelib.Assignments"><code class="docutils literal notranslate"><span class="pre">Assignments</span></code></a><ul>
-<li class="toctree-l7"><a class="reference internal" href="core-assignments.html#gradelib.Assignments.__add__"><code class="docutils literal notranslate"><span class="pre">Assignments.__add__()</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-assignments.html#gradelib.Assignments.containing"><code class="docutils literal notranslate"><span class="pre">Assignments.containing()</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-assignments.html#gradelib.Assignments.ending_with"><code class="docutils literal notranslate"><span class="pre">Assignments.ending_with()</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-assignments.html#gradelib.Assignments.group_by"><code class="docutils literal notranslate"><span class="pre">Assignments.group_by()</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-assignments.html#gradelib.Assignments.group_by_splitting_on"><code class="docutils literal notranslate"><span class="pre">Assignments.group_by_splitting_on()</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-assignments.html#gradelib.Assignments.not_containing"><code class="docutils literal notranslate"><span class="pre">Assignments.not_containing()</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-assignments.html#gradelib.Assignments.starting_with"><code class="docutils literal notranslate"><span class="pre">Assignments.starting_with()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l5"><a class="reference internal" href="core-students.html"><code class="docutils literal notranslate"><span class="pre">Student</span></code> and <code class="docutils literal notranslate"><span class="pre">Students</span></code></a><ul>
-<li class="toctree-l6"><a class="reference internal" href="core-students.html#gradelib.Student"><code class="docutils literal notranslate"><span class="pre">Student</span></code></a><ul>
-<li class="toctree-l7"><a class="reference internal" href="core-students.html#gradelib.Student.pid"><code class="docutils literal notranslate"><span class="pre">Student.pid</span></code></a></li>
-<li class="toctree-l7"><a class="reference internal" href="core-students.html#gradelib.Student.name"><code class="docutils literal notranslate"><span class="pre">Student.name</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l6"><a class="reference internal" href="core-students.html#gradelib.Students"><code class="docutils literal notranslate"><span class="pre">Students</span></code></a><ul>
-<li class="toctree-l7"><a class="reference internal" href="core-students.html#gradelib.Students.find"><code class="docutils literal notranslate"><span class="pre">Students.find()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l5"><a class="reference internal" href="core-amounts.html"><code class="docutils literal notranslate"><span class="pre">Points</span></code> and <code class="docutils literal notranslate"><span class="pre">Percentage</span></code></a><ul>
-<li class="toctree-l6"><a class="reference internal" href="core-amounts.html#gradelib.Points"><code class="docutils literal notranslate"><span class="pre">Points</span></code></a></li>
-<li class="toctree-l6"><a class="reference internal" href="core-amounts.html#gradelib.Percentage"><code class="docutils literal notranslate"><span class="pre">Percentage</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l4"><a class="reference internal" href="core.html#functions">Functions</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="core.html#gradelib.combine_gradebooks"><code class="docutils literal notranslate"><span class="pre">combine_gradebooks()</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="core.html#gradelib.normalize"><code class="docutils literal notranslate"><span class="pre">normalize()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="io.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.io</span></code> - Input/Output</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="io.html#gradescope"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradescope</span></code></a><ul>
-<li class="toctree-l5"><a class="reference internal" href="io.html#gradelib.io.gradescope.read"><code class="docutils literal notranslate"><span class="pre">read()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l4"><a class="reference internal" href="io.html#canvas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">canvas</span></code></a><ul>
-<li class="toctree-l5"><a class="reference internal" href="io.html#gradelib.io.canvas.read"><code class="docutils literal notranslate"><span class="pre">read()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="preprocessing.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.preprocessing</span></code> - Preprocessing gradebooks</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#gradelib.preprocessing.combine_assignment_parts"><code class="docutils literal notranslate"><span class="pre">combine_assignment_parts()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#gradelib.preprocessing.combine_assignment_versions"><code class="docutils literal notranslate"><span class="pre">combine_assignment_versions()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="policies.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.policies</span></code> - Common grading policies</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="policies-lates.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.lates</span></code> - Handle late assignments</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="policies-lates.html#gradelib.policies.lates.penalize"><code class="docutils literal notranslate"><span class="pre">penalize()</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="policies-lates.html#gradelib.policies.lates.LateInfo"><code class="docutils literal notranslate"><span class="pre">LateInfo</span></code></a><ul>
-<li class="toctree-l6"><a class="reference internal" href="policies-lates.html#gradelib.policies.lates.LateInfo.gradebook"><code class="docutils literal notranslate"><span class="pre">LateInfo.gradebook</span></code></a></li>
-<li class="toctree-l6"><a class="reference internal" href="policies-lates.html#gradelib.policies.lates.LateInfo.student"><code class="docutils literal notranslate"><span class="pre">LateInfo.student</span></code></a></li>
-<li class="toctree-l6"><a class="reference internal" href="policies-lates.html#gradelib.policies.lates.LateInfo.assignment"><code class="docutils literal notranslate"><span class="pre">LateInfo.assignment</span></code></a></li>
-<li class="toctree-l6"><a class="reference internal" href="policies-lates.html#gradelib.policies.lates.LateInfo.number"><code class="docutils literal notranslate"><span class="pre">LateInfo.number</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l5"><a class="reference internal" href="policies-lates.html#gradelib.policies.lates.Deduct"><code class="docutils literal notranslate"><span class="pre">Deduct</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="policies-lates.html#gradelib.policies.lates.Forgive"><code class="docutils literal notranslate"><span class="pre">Forgive</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="policies-lates.html#gradelib.policies.lates.Penalty"><code class="docutils literal notranslate"><span class="pre">Penalty</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l4"><a class="reference internal" href="policies-drops.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.drops</span></code> - Drop low-scoring assignments</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="policies-drops.html#gradelib.policies.drops.drop_most_favorable"><code class="docutils literal notranslate"><span class="pre">drop_most_favorable()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l4"><a class="reference internal" href="policies-attempts.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.attempts</span></code> - Allow multiple attempts</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="policies-attempts.html#gradelib.policies.attempts.take_best"><code class="docutils literal notranslate"><span class="pre">take_best()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l4"><a class="reference internal" href="policies-exceptions.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.exceptions</span></code> - Track grading exceptions</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="policies-exceptions.html#gradelib.policies.exceptions.make_exceptions"><code class="docutils literal notranslate"><span class="pre">make_exceptions()</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="policies-exceptions.html#gradelib.policies.exceptions.Drop"><code class="docutils literal notranslate"><span class="pre">Drop</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="policies-exceptions.html#gradelib.policies.exceptions.ForgiveLate"><code class="docutils literal notranslate"><span class="pre">ForgiveLate</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="policies-exceptions.html#gradelib.policies.exceptions.Replace"><code class="docutils literal notranslate"><span class="pre">Replace</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="scales.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.scales</span></code> - Letter grade scales</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="scales.html#gradelib.scales.DEFAULT_SCALE"><code class="docutils literal notranslate"><span class="pre">DEFAULT_SCALE</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="scales.html#gradelib.scales.ROUNDED_DEFAULT_SCALE"><code class="docutils literal notranslate"><span class="pre">ROUNDED_DEFAULT_SCALE</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="scales.html#gradelib.scales.map_scores_to_letter_grades"><code class="docutils literal notranslate"><span class="pre">map_scores_to_letter_grades()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="scales.html#gradelib.scales.find_robust_scale"><code class="docutils literal notranslate"><span class="pre">find_robust_scale()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2 current"><a class="reference internal" href="index.html#reviewing-grades">Reviewing Grades</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="statistics.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.statistics</span></code> - Summary statistics for computed grades</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="statistics.html#gradelib.statistics.rank"><code class="docutils literal notranslate"><span class="pre">rank()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="statistics.html#gradelib.statistics.percentile"><code class="docutils literal notranslate"><span class="pre">percentile()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="statistics.html#gradelib.statistics.average_gpa"><code class="docutils literal notranslate"><span class="pre">average_gpa()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="statistics.html#gradelib.statistics.letter_grade_distribution"><code class="docutils literal notranslate"><span class="pre">letter_grade_distribution()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="statistics.html#gradelib.statistics.lates"><code class="docutils literal notranslate"><span class="pre">lates()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="statistics.html#gradelib.statistics.outcomes"><code class="docutils literal notranslate"><span class="pre">outcomes()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="plot.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.plot</span></code> - Display visual summaries</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="plot.html#gradelib.plot.grade_distribution"><code class="docutils literal notranslate"><span class="pre">grade_distribution()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.overview</span></code> - Interactive overview of grades</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#gradelib.overview"><code class="docutils literal notranslate"><span class="pre">gradelib.overview()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="reports.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.reports</span></code> - LaTeX grade reports</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="reports.html#gradelib.reports.generate_latex"><code class="docutils literal notranslate"><span class="pre">generate_latex()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">gradelib</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="index.html">API</a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.overview</span></code> - Interactive overview of grades</li>
-      <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/api/overview.rst.txt" rel="nofollow"> View page source</a>
-      </li>
-  </ul>
-  <hr/>
+</nav>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
-  <section id="gradelib-overview-interactive-overview-of-grades">
-<h1><a class="reference internal" href="#gradelib.overview" title="gradelib.overview"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.overview</span></code></a> - Interactive overview of grades<a class="headerlink" href="#gradelib-overview-interactive-overview-of-grades" title="Link to this heading"></a></h1>
+</div>
+<button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
+<svg class="h-4 w-4" fill="currentColor" height="24" stroke="none" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 632 284 828q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536 576l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480 632Z"></path>
+</svg>
+</button>
+</aside>
+<main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+<div class="w-full min-w-0 mx-auto">
+<nav aria-label="breadcrumbs" class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
+<a class="overflow-hidden text-ellipsis whitespace-nowrap hover:text-foreground" href="../index.html">
+<span class="hidden md:inline">smartconfig</span>
+<svg aria-label="Home" class="md:hidden" fill="currentColor" height="18" stroke="none" viewbox="0 96 960 960" width="18" xmlns="http://www.w3.org/2000/svg">
+<path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
+</svg>
+</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="index.html">API</a>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.overview</span></code> - Interactive overview of grades</span>
+</nav>
+<div id="content" role="main">
+<section id="gradelib-overview-interactive-overview-of-grades">
+<h1><a class="reference internal" href="#gradelib.overview" title="gradelib.overview"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.overview</span></code></a> - Interactive overview of grades<a class="headerlink" href="#gradelib-overview-interactive-overview-of-grades" title="Link to this heading"><span>#</span></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="gradelib.overview">
-<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">overview</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gradebook</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook" title="gradelib.Gradebook"><span class="pre">Gradebook</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">student</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.overview" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">overview</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gradebook</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook" title="gradelib.Gradebook"><span class="pre">Gradebook</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">student</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gradelib.overview" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#gradelib.overview'"><span>#</span></a></dt>
 <dd><p>Display an overview of a gradebook. Only available if in a Jupyter Notebook.</p>
 <p>By default, a class overview is displayed. If a student’s name is provided
 as the optional second argument, a student summary is displayed.</p>
 </dd></dl>
-
 </section>
-
-
-           </div>
-          </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="plot.html" class="btn btn-neutral float-left" title="gradelib.plot - Display visual summaries" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="reports.html" class="btn btn-neutral float-right" title="gradelib.reports - LaTeX grade reports" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2020, Justin Eldridge.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
+</div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
+<div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
+<ul>
+<li><a :data-current="activeSection === '#gradelib.overview'" class="reference internal" href="#gradelib.overview"><code class="docutils literal notranslate"><span class="pre">gradelib.overview()</span></code></a></li>
+</ul>
+</div>
+</aside>
+</main>
+</div>
+</div><footer class="py-6 border-t border-border md:py-0">
+<div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+<div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+<p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2020, Justin Eldridge Built with <a class="font-medium underline underline-offset-4" href="https://www.sphinx-doc.org" rel="noreferrer">Sphinx 8.1.3</a></p>
+</div>
+</div>
 </footer>
-        </div>
-      </div>
-    </section>
-  </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
-
+</div>
+<script src="../_static/documentation_options.js?v=6ffd866b"></script>
+<script src="../_static/doctools.js?v=9bcbadda"></script>
+<script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+<script defer="defer" src="../_static/theme.js?v=073f68d9"></script>
 </body>
 </html>

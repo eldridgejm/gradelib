@@ -55,11 +55,10 @@ autodoc_type_aliases = {
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
+html_theme = "sphinxawesome_theme"
+html_permalinks_icon = "<span>#</span>"
+html_title = "smartconfig"
 html_static_path = ["_static"]
 
-html_theme_options = {"navigation_depth": -1, "collapse_navigation": False}
+pygments_style = "friendly"  # 'friendly' is also OK...
+pygments_style_dark = "paraiso-dark"

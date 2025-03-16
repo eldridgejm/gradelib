@@ -1,5 +1,7 @@
-``gradelib.policies.exceptions`` - Track grading exceptions
------------------------------------------------------------
+``gradelib.policies.exceptions``
+--------------------------------
+
+Track and apply grading exceptions.
 
 .. autofunction:: gradelib.policies.exceptions.make_exceptions
 .. autoclass:: gradelib.policies.exceptions.Drop

@@ -1,5 +1,7 @@
-``gradelib.policies.lates`` - Handle late assignments
------------------------------------------------------
+``gradelib.policies.lates``
+---------------------------
+
+Handle late assignments.
 
 .. autofunction:: gradelib.policies.lates.penalize
 .. autoclass:: gradelib.policies.lates.LateInfo

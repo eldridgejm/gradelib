@@ -1,8 +1,12 @@
-import numpy as np
+from typing import Tuple, Sequence, Optional, Union, Callable
+import pathlib
 
+import bokeh.io
 import bokeh.models
 import bokeh.plotting
-import bokeh.io
+import matplotlib.animation
+import matplotlib.pyplot as plt
+import numpy as np
 
 from .statistics import (
     outcomes as _outcomes,
@@ -123,3 +127,171 @@ def grade_distribution(
     _plot_grade_distribution_thresholds(fig, gradebook, y_max)
 
     bokeh.plotting.show(fig)  # pyright: ignore
+
+
+def _grade_shift_animation_2d_setup_figure():
+    plt.figure(figsize=(4, 4))
+    fig, ax = plt.subplots()
+
+    ax.set_aspect(1)
+
+    ax.set_ylim(0.25, 1.05)
+    ax.set_xlim(0.25, 1.05)
+
+    ax.set_xticks([0.3, 1])
+    ax.set_yticks([0.3, 1])
+
+    return fig, ax
+
+
+# grade_shift_animation_2d -------------------------------------------------------------
+
+
+def grade_shift_animation_2d(
+    scores: Tuple[
+        Tuple[Sequence[float], Sequence[float]], Tuple[Sequence[float], Sequence[float]]
+    ],
+    filepath: Optional[Union[str, pathlib.Path]] = None,
+    title: Optional[Union[str, tuple[str, str]]] = None,
+    xlabel: Optional[Union[str, tuple[str, str]]] = None,
+    ylabel: Optional[Union[str, tuple[str, str]]] = None,
+    color: str = "#007aff",
+    alpha: float = 0.5,
+    setup_figure: Optional[Callable] = None,
+) -> matplotlib.animation.FuncAnimation:
+    """Visualize the shift in scores as an animated scatter plot.
+
+    This is especially useful for visualizing the effect of a grading policy, such as a
+    curve or allowing multiple attempts on two assignments. For example, suppose a
+    course allows students to retake Midterm 01 and Midterm 02 to improve their scores.
+    The animation created by this function will start by plotting a scatter plot of
+    Midterm 01 vs. Midterm 02 scores for all students. As the animation progresses, the
+    scores will shift to show the new scores after the retake, demonstrating the "shift"
+    of the scores due to the grading policy. The animation then "rewinds" to show the
+    original scores, allowing for an infinite loop of the before-and-after effect.
+
+    Parameters
+    ----------
+    scores : Tuple[Tuple[Sequence[float], Sequence[float]], Tuple[Sequence[float], Sequence[float]]]
+        A tuple containing two tuples, each with two sequences of floats. The first
+        tuple contains the before and after scores for all students on Assignment A,
+        and the second tuple contains the before and after scores for all students on
+        Assignment B.
+    filepath : Optional[Union[str, pathlib.Path]]
+        The path to save the animation to. If `None`, the animation will not be saved.
+    title : Optional[Union[str, tuple[str, str]]]
+        The title of the plot. If a tuple is provided, the first element will be
+        displayed at the start of the animation and the second element at the end.
+        If a string is provided, it will be used for both the start and end of the animation.
+        If nothing is provided, no title will be displayed.
+    xlabel : Optional[Union[str, tuple[str, str]]]
+        The label for the x-axis. If a tuple is provided, the first element will be
+        displayed at the start of the animation and the second element at the end.
+        If a string is provided, it will be used for both the start and end of the animation.
+        If nothing is provided, no label will be displayed.
+    ylabel : Optional[Union[str, tuple[str, str]]]
+        The label for the y-axis. If a tuple is provided, the first element will be
+        displayed at the start of the animation and the second element at the end.
+        If a string is provided, it will be used for both the start and end of the animation.
+        If nothing is provided, no label will be displayed.
+    color : str
+        The color of the points in the scatter plot. Default: "#007aff".
+    alpha : float
+        The transparency of the points in the scatter plot. Default: 0.5.
+    setup_figure : Optional[Callable]
+        A callable that sets up the figure and axes for the plot. Should return
+        matplotlib Figure and Axes objects. If `None`, a default setup function will be
+        used.
+
+    Returns
+    -------
+    matplotlib.animation.FuncAnimation
+        The animation object. If `filepath` is provided, the animation will also be
+        saved to the specified path.
+
+    """
+    scores_a_before, scores_a_after = scores[0]
+    scores_b_before, scores_b_after = scores[1]
+
+    if isinstance(filepath, str):
+        filepath = pathlib.Path(filepath)
+
+    if title is not None and isinstance(title, str):
+        title = (title, title)
+
+    if xlabel is not None and isinstance(xlabel, str):
+        xlabel = (xlabel, xlabel)
+
+    if ylabel is not None and isinstance(ylabel, str):
+        ylabel = (ylabel, ylabel)
+
+    if setup_figure is None:
+        setup_figure = _grade_shift_animation_2d_setup_figure
+
+    fig, ax = setup_figure()
+
+    if xlabel is not None:
+        ax.set_xlabel(xlabel[0])
+    if ylabel is not None:
+        ax.set_ylabel(ylabel[0])
+
+    if title is not None:
+        ax.set_title(title[0])
+
+    scatter = ax.scatter(scores_a_before, scores_b_before, color=color, alpha=alpha)
+
+    start = np.column_stack((scores_a_before, scores_b_before))
+    finish = np.column_stack((scores_a_after, scores_b_after))
+    delta = finish - start
+
+    n_frames = 300
+
+    def ease_in_out(t, alpha=30):
+        """Logistic easing function; smoothes the animation.
+
+        Larger alpha makes the animation "snappier".
+        """
+        if t < 0.5:
+            return (np.tanh((t - 0.25) * alpha) + 1) / 2
+        else:
+            return 1 - (np.tanh((t - 0.75) * alpha) + 1) / 2
+
+    def interpolate(i):
+        return start + delta * ease_in_out(i / n_frames)
+
+    def init():
+        return (scatter,)
+
+    def update(i):
+        progress = ease_in_out(i / n_frames)
+        data = interpolate(i)
+        scatter.set_offsets(data)
+
+        if title is not None:
+            if progress < 0.5:
+                ax.set_title(title[0])
+            else:
+                ax.set_title(title[1])
+
+        if xlabel is not None:
+            if progress < 0.5:
+                ax.set_xlabel(xlabel[0])
+            else:
+                ax.set_xlabel(xlabel[1])
+
+        if ylabel is not None:
+            if progress < 0.5:
+                ax.set_ylabel(ylabel[0])
+            else:
+                ax.set_ylabel(ylabel[1])
+
+        return (scatter,)
+
+    animation = matplotlib.animation.FuncAnimation(
+        fig, update, frames=n_frames, init_func=init, blit=True
+    )
+
+    if filepath is not None:
+        animation.save(filepath, fps=30, dpi=200)
+
+    return animation

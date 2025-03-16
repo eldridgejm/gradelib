@@ -57,7 +57,7 @@ autodoc_type_aliases = {
 #
 html_theme = "sphinxawesome_theme"
 html_permalinks_icon = "<span>#</span>"
-html_title = "smartconfig"
+html_title = "gradelib"
 html_static_path = ["_static"]
 
 pygments_style = "friendly"  # 'friendly' is also OK...

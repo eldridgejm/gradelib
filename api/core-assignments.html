@@ -82,27 +82,27 @@
 </ul>
 <ul class="current">
 <li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="index.html">API<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
-<li class="toctree-l2 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="core.html"><code class="docutils literal notranslate"><span class="pre">gradelib</span></code> core<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="core.html"><code class="docutils literal notranslate"><span class="pre">gradelib</span></code><button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l3"><a class="reference internal" href="core-gradebook.html"><code class="docutils literal notranslate"><span class="pre">Gradebook</span></code> et al.</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">Assignments</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="core-students.html"><code class="docutils literal notranslate"><span class="pre">Student</span></code> and <code class="docutils literal notranslate"><span class="pre">Students</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="core-amounts.html"><code class="docutils literal notranslate"><span class="pre">Points</span></code> and <code class="docutils literal notranslate"><span class="pre">Percentage</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="io.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.io</span></code> - Input/Output</a></li>
-<li class="toctree-l2"><a class="reference internal" href="preprocessing.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.preprocessing</span></code> - Preprocessing gradebooks</a></li>
-<li class="toctree-l2" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="policies.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.policies</span></code> - Common grading policies<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l3"><a class="reference internal" href="policies-lates.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.lates</span></code> - Handle late assignments</a></li>
-<li class="toctree-l3"><a class="reference internal" href="policies-drops.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.drops</span></code> - Drop low-scoring assignments</a></li>
-<li class="toctree-l3"><a class="reference internal" href="policies-attempts.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.attempts</span></code> - Allow multiple attempts</a></li>
-<li class="toctree-l3"><a class="reference internal" href="policies-exceptions.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.exceptions</span></code> - Track grading exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.io</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="preprocessing.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.preprocessing</span></code></a></li>
+<li class="toctree-l2" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="policies.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.policies</span></code><button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l3"><a class="reference internal" href="policies-lates.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.lates</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="policies-drops.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.drops</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="policies-attempts.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.attempts</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="policies-exceptions.html"><code class="docutils literal notranslate"><span class="pre">gradelib.policies.exceptions</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="scales.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.scales</span></code> - Letter grade scales</a></li>
-<li class="toctree-l2"><a class="reference internal" href="statistics.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.statistics</span></code> - Summary statistics for computed grades</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plot.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.plot</span></code> - Display visual summaries</a></li>
-<li class="toctree-l2"><a class="reference internal" href="overview.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.overview</span></code> - Interactive overview of grades</a></li>
-<li class="toctree-l2"><a class="reference internal" href="reports.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.reports</span></code> - LaTeX grade reports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scales.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.scales</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="statistics.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.statistics</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.plot</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.overview</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reports.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.reports</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -125,7 +125,7 @@
 </svg>
 </a>
 <div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="index.html">API</a>
-<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="core.html"><code class="docutils literal notranslate"><span class="pre">gradelib</span></code> core</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="core.html"><code class="docutils literal notranslate"><span class="pre">gradelib</span></code></a>
 <div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap"><code class="docutils literal notranslate"><span class="pre">Assignments</span></code></span>
 </nav>
 <div id="content" role="main">

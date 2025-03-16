@@ -1,5 +1,5 @@
-:mod:`gradelib.statistics` - Summary statistics for computed grades
-===================================================================
+:mod:`gradelib.statistics`
+==========================
 
 .. module:: gradelib.statistics
 

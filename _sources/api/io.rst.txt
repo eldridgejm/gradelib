@@ -1,5 +1,5 @@
-:mod:`gradelib.io` - Input/Output
-=================================
+:mod:`gradelib.io`
+==================
 
 .. module:: gradelib.io
 

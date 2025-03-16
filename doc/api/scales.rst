@@ -1,5 +1,5 @@
-:mod:`gradelib.scales` - Letter grade scales
-============================================
+:mod:`gradelib.scales`
+======================
 
 .. module:: gradelib.scales
 

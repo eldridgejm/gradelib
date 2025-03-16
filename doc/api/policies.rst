@@ -1,8 +1,8 @@
-:mod:`gradelib.policies` - Common grading policies
-==================================================
+:mod:`gradelib.policies`
+========================
 
 
-.. module:: policies
+.. module:: gradelib.policies
 
    Functionality for implementing grading policies on Gradebooks.
 

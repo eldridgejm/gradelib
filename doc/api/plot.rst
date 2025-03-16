@@ -1,5 +1,5 @@
-:mod:`gradelib.plot` - Display visual summaries
-===============================================
+:mod:`gradelib.plot`
+====================
 
 .. module:: gradelib.plot
 

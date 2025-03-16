@@ -1,5 +1,5 @@
-:mod:`gradelib.overview` - Interactive overview of grades
-=========================================================
+:mod:`gradelib.overview`
+========================
 
 .. function:: gradelib.overview(gradebook: Gradebook, student: Optional[str])
 

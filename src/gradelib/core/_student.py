@@ -4,7 +4,7 @@ from typing import Optional, Sequence
 
 
 class Student:
-    """Represents a student.
+    """Represents a single student.
 
     Attributes
     ----------

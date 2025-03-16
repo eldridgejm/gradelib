@@ -7,9 +7,8 @@ import typing
 def normalize(assignments: Collection[str]) -> dict[str, float]:
     """Normalize assignment weights.
 
-    When given a collection, such as a list of assignment names or a dictionary
-    mapping names to weights, the return value is a dictionary mapping
-    assignment names to the same, normalized weight.
+    When given a collection, such as a list of assignment names, the return value is a
+    dictionary mapping assignment names to the same, normalized weight.
 
     Parameters
     ----------

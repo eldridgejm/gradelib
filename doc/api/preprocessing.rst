@@ -1,7 +1,7 @@
-:mod:`gradelib.preprocessing` - Preprocessing gradebooks
-========================================================
+:mod:`gradelib.preprocessing`
+=============================
 
-.. module:: preprocessing
+.. module:: gradelib.preprocessing
 
    Functionality for preprocessing Gradebooks.
 

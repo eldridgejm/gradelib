@@ -94,7 +94,7 @@ def _combine_if_equal(gradebooks: Collection["Gradebook"], attr: str):
 
 
 def _copy_notes(
-    notes: Mapping[Student, Mapping[str, Sequence[str]]]
+    notes: Mapping[Student, Mapping[str, Sequence[str]]],
 ) -> dict[Student, dict[str, list[str]]]:
     """Copy a mapping containing notes into a dictionary."""
     result = {}
@@ -106,7 +106,10 @@ def _copy_notes(
 # public functions =====================================================================
 
 
-def combine_gradebooks(gradebooks: Collection["Gradebook"], restrict_to_students=None):
+def combine_gradebooks(
+    gradebooks: Collection["Gradebook"],
+    restrict_to_students: Optional[Collection[Union[str, Student]]] = None,
+) -> "Gradebook":
     """Create a new :class:`Gradebook` by safely combining existing gradebooks.
 
     The gradebooks being combined must all have the same students, and an

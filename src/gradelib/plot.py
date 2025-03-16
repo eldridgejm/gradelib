@@ -67,9 +67,7 @@ def _plot_grade_distribution_thresholds(
     for letter, threshold in gb.scale.items():
         count = f"({lgd[letter]})"
         pct = f"{threshold * 100:0.1f}%"
-        fig.xaxis.major_label_overrides[
-            threshold
-        ] = f"{pct}\n{letter}\n{count}"  # pyright: ignore
+        fig.xaxis.major_label_overrides[threshold] = f"{pct}\n{letter}\n{count}"  # pyright: ignore
 
     fig.xaxis.major_label_text_font_size = "14px"
     fig.grid.visible = False
@@ -81,7 +79,7 @@ def grade_distribution(
     """Visualize the grade distribution with respect to a scale.
 
     This will plot an interactive histogram of the grade distribution, with
-    each individual grade marked as a dot. Furthermore, if a gradine scale is
+    each individual grade marked as a dot. Furthermore, if a grading scale is
     provided, the letter grade thresholds are marked on the histogram as
     vertical lines, and the frequency of each letter grade is shown.
 

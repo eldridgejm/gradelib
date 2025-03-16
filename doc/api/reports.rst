@@ -1,5 +1,5 @@
-:mod:`gradelib.reports` - LaTeX grade reports
----------------------------------------------
+:mod:`gradelib.reports`
+=======================
 
 .. module:: gradelib.reports
 

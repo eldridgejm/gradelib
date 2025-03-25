@@ -61,8 +61,12 @@ def test_with_custom_policy():
     )
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
     gradebook.grading_groups = {
-        "homeworks": (["hw01", "hw02"], 0.75),
-        "labs": (["lab01"], 0.25),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["hw01", "hw02"], 0.75
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.25
+        ),
     }
 
     gradebook.options.lateness_fudge = 60 * 5
@@ -139,8 +143,12 @@ def test_forgive():
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
 
     gradebook.grading_groups = {
-        "homeworks": (["hw01", "hw02"], 0.75),
-        "labs": (["lab01"], 0.25),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["hw01", "hw02"], 0.75
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.25
+        ),
     }
 
     penalize(gradebook, policy=Forgive(1))
@@ -195,8 +203,10 @@ def test_assignments_in_descending_order_of_value_by_default():
     LABS = gradebook.assignments.starting_with("lab")
 
     gradebook.grading_groups = {
-        "homeworks": (HOMEWORK, 0.75),
-        "labs": (LABS, 0.25),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, HOMEWORK, 0.75
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(gradebook, LABS, 0.25),
     }
 
     seen = {}
@@ -236,7 +246,9 @@ def test_order_by_value_works_even_when_value_of_some_assignments_is_nan():
     LABS = gradebook.assignments.starting_with("lab")
 
     gradebook.grading_groups = {
-        "homeworks": (HOMEWORK, 1),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, HOMEWORK, 1
+        ),
     }
 
     assert pd.isna(gradebook.value["lab01"].iloc[0])
@@ -277,8 +289,10 @@ def test_order_by_index():
     LABS = gradebook.assignments.starting_with("lab")
 
     gradebook.grading_groups = {
-        "homeworks": (HOMEWORK, 0.75),
-        "labs": (LABS, 0.25),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, HOMEWORK, 0.75
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(gradebook, LABS, 0.25),
     }
 
     seen = {}
@@ -312,7 +326,11 @@ def test_with_callable_order_by():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradebook.grading_groups = {"homeworks": (HOMEWORK, 1)}
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, HOMEWORK, 1
+        )
+    }
 
     # order by the second character of the assignment name, forward
     def order_by(gradebook, student, assignments):  # pyright: ignore
@@ -373,8 +391,12 @@ def test_takes_into_account_drops():
 
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness=lateness)
     gradebook.grading_groups = {
-        "homeworks": (gradebook.assignments.starting_with("hw"), 0.75),
-        "labs": (gradebook.assignments.starting_with("lab"), 0.25),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, gradebook.assignments.starting_with("hw"), 0.75
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, gradebook.assignments.starting_with("lab"), 0.25
+        ),
     }
 
     gradebook.dropped.loc["A1", "hw02"] = True
@@ -406,7 +428,11 @@ def test_deduct_adds_note_for_penalized_assignment():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradebook.grading_groups = {"homeworks": (HOMEWORK, 1)}
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, HOMEWORK, 1
+        )
+    }
 
     penalize(gradebook, policy=Deduct(Percentage(100)))
 
@@ -442,7 +468,11 @@ def test_forgive_adds_note_for_forgiven_assignments():
 
     HOMEWORK = gradebook.assignments.starting_with("hw")
 
-    gradebook.grading_groups = {"homeworks": (HOMEWORK, 1)}
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, HOMEWORK, 1
+        )
+    }
 
     penalize(gradebook, policy=Forgive(2))
 

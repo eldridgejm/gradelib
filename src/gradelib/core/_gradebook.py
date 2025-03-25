@@ -309,6 +309,64 @@ class GradingGroup:
         n = len(assignments)
         return cls({a: 1 / n for a in assignments}, group_weight=group_weight)
 
+    @classmethod
+    def with_proportional_weights(
+        cls, gb: "Gradebook", assignments: Collection[str], group_weight: float
+    ) -> "GradingGroup":
+        """Create a grading group in which each assignment is weighed proportionally.
+
+        An assignment's weight within the group is proportional to the number of
+        points possible for that assignment.
+
+        Parameters
+        ----------
+        gb : Gradebook
+            The gradebook containing the assignments.
+        assignments: Collection[str]
+            The assignments to include in the group.
+        group_weight: float
+            The overall weight of the group.
+
+        Returns
+        -------
+        GradingGroup
+
+        Example
+        -------
+        .. testsetup:: with_proportional_weights
+
+            import pandas as pd
+            import gradelib
+            from gradelib import GradingGroup
+            import numpy as np
+
+            students = ["Alice", "Barack", "Charlie"]
+
+            assignments = ["homework 01", "homework 02", "lab 01"]
+            points_earned = pd.DataFrame(
+                [[10, np.nan, np.nan], [np.nan, 10, np.nan], [np.nan, np.nan, 10]],
+                index=students, columns=assignments
+            )
+            points_possible = pd.Series([15, 45, 30], index=assignments)
+            gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+        .. doctest:: with_proportional_weights
+
+            >>> group = GradingGroup.with_proportional_weights(
+            ...     gradebook, ['homework 01', 'homework 02'], 0.5
+            ... )
+            >>> group.assignment_weights
+            {'homework 01': 0.25, 'homework 02': 0.75}
+
+        """
+        total_points_possible = gb.points_possible.loc[assignments].sum()
+
+        assignment_weights = {
+            a: gb.points_possible[a] / total_points_possible for a in assignments
+        }
+
+        return cls(assignment_weights, group_weight=group_weight)
+
     def __repr__(self):
         return (
             f"GradingGroup(assignment_weights={self.assignment_weights!r}, "
@@ -325,9 +383,7 @@ class GradingGroup:
 
 
 # type alias for the multiple valid ways to specify a grading group
-GradingGroupDefinition = Union[
-    float, Tuple[Sequence[str], float], Tuple[Mapping[str, float], float], GradingGroup
-]
+GradingGroupDefinition = Union[float, Tuple[Mapping[str, float], float], GradingGroup]
 
 
 # Gradebook ============================================================================
@@ -514,20 +570,17 @@ class Gradebook:
 
         This attribute should be set directly. The value should be a dict
         mapping group names to *grading group definitions*. A group definition
-        can be any of the following:
+        can be either of the following:
 
             - A single number. In this case, the group name is treated as an
               assignment name.
-            - A tuple of the form ``(assignments, group_weight)``, where
-              ``assignments`` is an iterable of assignment names or a dict mapping
-              assignment names to weights. If ``assignments`` is an iterable, the
-              weights are inferred to be proportional to the points possible for each
-              assignment. If ``assignments`` is a dict, the weights are taken directly
-              from the dict.
+            - A tuple of the form ``(assignments, group_weight)``, where ``assignments``
+              is a dict mapping assignment names to weights.
             - A :class:`GradingGroup` instance.
 
         To normalize the weights of assignments (so that they are all weighed the same)
-        use the :func:`gradelib.normalize` function.
+        use :meth:`GradingGroup.with_equal_weights`. To set the weights proportionally,
+        use :meth:`GradingGroup.with_proportional_weights`.
 
         Example
         -------
@@ -550,10 +603,6 @@ class Gradebook:
         .. doctest:: grading_groups
 
             >>> gradebook.grading_groups = {
-            ...     # list of assignments, followed by group weight. assignment weights
-            ...     # are inferred to be proportional to points possible
-            ...     "homeworks": (['hw 01', 'hw 02', 'hw 03'], 0.25),
-            ...
             ...     # dictionary of assignment weights, followed by group weight.
             ...     "labs": ({"lab 01": .25, "lab 02": .75}, 0.25),
             ...
@@ -561,6 +610,9 @@ class Gradebook:
             ...     # and an assignment group consisting only of that assignment is
             ...     # created.
             ...     "exam": 0.5
+            ...
+            ...     # use equal weights for all assignments
+            ...     "homework": GradingGroup.with_equal_weights(["hw 01", "hw 02", "hw 03"], 0.25)
             ... }
 
         """
@@ -579,13 +631,17 @@ class Gradebook:
                 return g
             if isinstance(g, Real):
                 # should be a number. this form defines a group with a single assignment
-                assignment_weights = [name]
+                # whose weight within the group is 100%
+                assignment_weights = {name: 1}
                 group_weight = float(g)
-            elif (
-                isinstance(g, tuple)
-                and isinstance(g[0], Mapping)
-                and isinstance(g[1], Real)
-            ):
+            elif isinstance(g, tuple):
+                if not isinstance(g[0], Mapping):
+                    raise TypeError(
+                        f"Invalid grading group definition: {g}. "
+                        "When a grading group definition is a (Mapping, Number) tuple, "
+                        "the first element must be a mapping from assignment names to "
+                        "weights."
+                    )
                 if not all(isinstance(k, str) for k in g[0].keys()):
                     raise TypeError(
                         f"Invalid grading group definition: {g}. "
@@ -603,35 +659,11 @@ class Gradebook:
                     str(a_name): float(a_weight) for a_name, a_weight in g[0].items()
                 }
                 group_weight = float(g[1])
-            elif (
-                isinstance(g, tuple)
-                and isinstance(g[0], Sequence)
-                and isinstance(g[1], Real)
-            ):
-                if not all(isinstance(a, str) for a in g[0]):
-                    raise TypeError(
-                        f"Invalid grading group definition: {g}. "
-                        "When a grading group definition is a (Sequence, Number) tuple, "
-                        "the entries of the sequence must be strings representing "
-                        "assignment names."
-                    )
-                assignment_weights = g[0]
-                group_weight = float(g[1])
             else:
                 raise TypeError("Unexpected type in grading group definition.")
 
             if not assignment_weights:
                 raise ValueError(f'Grading group "{name}" is empty.')
-
-            if not isinstance(assignment_weights, dict):
-                # an iterable of assignments that we need to turn into a dict
-                total_points_possible = sum(
-                    self.points_possible[a] for a in assignment_weights
-                )
-                assignment_weights = {
-                    a: self.points_possible[a] / total_points_possible
-                    for a in assignment_weights
-                }
 
             return GradingGroup(assignment_weights, float(group_weight))
 

@@ -38,6 +38,7 @@
               sphinx
               sphinxawesome-theme
               jupyterlab
+              ruff
 
               # install gradelib package to 1) make sure it's installable, and
               # 2) to get its dependencies. But below we'll add it to PYTHONPATH

@@ -264,6 +264,51 @@ class GradingGroup:
         self.assignment_weights = assignment_weights
         self.group_weight = group_weight
 
+    @classmethod
+    def with_equal_weights(
+        cls, assignments: Collection[str], group_weight: float
+    ) -> "GradingGroup":
+        """Create a grading group in which each assignment is given equal weight.
+
+        Parameters
+        ----------
+        assignments: Collection[str]
+            The assignments to include in the group.
+        group_weight: float
+            The overall weight of the group.
+
+        Returns
+        -------
+        GradingGroup
+
+        Example
+        -------
+        .. testsetup:: with_equal_weights
+
+            import pandas as pd
+            import gradelib
+            from gradelib import GradingGroup
+            import numpy as np
+
+            students = ["Alice", "Barack", "Charlie"]
+            assignments = ["homework 01", "homework 02", "lab 01"]
+            points_earned = pd.DataFrame(
+                [[10, np.nan, np.nan], [np.nan, 10, np.nan], [np.nan, np.nan, 10]],
+                index=students, columns=assignments
+            )
+            points_possible = pd.Series([10, 10, 10], index=assignments)
+            gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+        .. doctest:: with_equal_weights
+
+            >>> group = GradingGroup.with_equal_weights(['foo', 'bar', 'baz', 'quux'], 0.5)
+            >>> group.assignment_weights
+            {'foo': 0.25, 'bar': 0.25, 'baz': 0.25, 'quux': 0.25}
+
+        """
+        n = len(assignments)
+        return cls({a: 1 / n for a in assignments}, group_weight=group_weight)
+
     def __repr__(self):
         return (
             f"GradingGroup(assignment_weights={self.assignment_weights!r}, "

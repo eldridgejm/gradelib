@@ -84,8 +84,8 @@ def test_lateness_fudge_defaults_to_5_minutes():
 
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness)
 
-    assert gradebook.late.loc["A1", "hw01"] == False
-    assert gradebook.late.loc["A2", "hw02"] == True
+    assert not gradebook.late.loc["A1", "hw01"]
+    assert gradebook.late.loc["A2", "hw02"]
 
 
 def test_lateness_fudge_can_be_changed():
@@ -109,13 +109,13 @@ def test_lateness_fudge_can_be_changed():
 
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness)
 
-    assert gradebook.late.loc["A1", "hw01"] == False
-    assert gradebook.late.loc["A2", "hw02"] == True
+    assert not gradebook.late.loc["A1", "hw01"]
+    assert gradebook.late.loc["A2", "hw02"]
 
     gradebook.options.lateness_fudge = 10
 
-    assert gradebook.late.loc["A1", "hw01"] == True
-    assert gradebook.late.loc["A2", "hw02"] == True
+    assert gradebook.late.loc["A1", "hw01"]
+    assert gradebook.late.loc["A2", "hw02"]
 
 
 # tests: properties ====================================================================
@@ -262,12 +262,12 @@ def test_weight_in_group_with_normalization():
     gb = gradelib.Gradebook(points_earned, points_possible)
 
     gb.grading_groups = {
-        "homeworks": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("hw")),
+        "homeworks": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("hw"),
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -292,12 +292,12 @@ def test_weight_in_group_with_normalization_and_drops():
     gb.dropped.loc["A2", "hw03"] = True
 
     gb.grading_groups = {
-        "homeworks": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("hw")),
+        "homeworks": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("hw"),
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -326,8 +326,8 @@ def test_weight_in_group_with_custom_weights():
             },
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -360,8 +360,8 @@ def test_weight_in_group_with_custom_weights_and_drops():
             },
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -455,12 +455,12 @@ def test_overall_weight_with_normalization():
     gb = gradelib.Gradebook(points_earned, points_possible)
 
     gb.grading_groups = {
-        "homeworks": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("hw")),
+        "homeworks": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("hw"),
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -485,12 +485,12 @@ def test_overall_weight_with_normalization_and_drops():
     gb.dropped.loc["A2", "hw03"] = True
 
     gb.grading_groups = {
-        "homeworks": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("hw")),
+        "homeworks": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("hw"),
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -519,8 +519,8 @@ def test_overall_weight_with_custom_weights():
             },
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -553,8 +553,8 @@ def test_overall_weight_with_custom_weights_and_drops():
             },
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -580,8 +580,8 @@ def test_value_with_default_weights():
 
     gb.grading_groups = {
         "homeworks": (gb.assignments.starting_with("hw"), 0.75),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -606,8 +606,8 @@ def test_value_with_drops():
 
     gb.grading_groups = {
         "homeworks": (gb.assignments.starting_with("hw"), 0.75),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -636,8 +636,8 @@ def test_value_with_custom_assignment_weights():
             },
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -748,7 +748,7 @@ def test_letter_grades_respects_scale():
     HOMEWORKS = gradebook.assignments.starting_with("hw")
 
     gradebook.grading_groups = {
-        "homeworks": gradelib.GradingGroup(gradelib.normalize(HOMEWORKS), 0.6),
+        "homeworks": gradelib.GradingGroup.with_equal_weights(HOMEWORKS, 0.6),
         "labs": (["lab01"], 0.4),
     }
 
@@ -1146,8 +1146,8 @@ def test_add_assignment_default_none_dropped_or_late():
     )
 
     # then
-    assert gradebook.late.loc["A1", "new"] == False
-    assert gradebook.dropped.loc["A1", "new"] == False
+    assert not gradebook.late.loc["A1", "new"]
+    assert not gradebook.dropped.loc["A1", "new"]
 
 
 def test_add_assignment_raises_on_missing_student():
@@ -1456,15 +1456,17 @@ def test_combine_gradebooks_concatenates_notes():
     }
 
 
-# normalize ----------------------------------------------------------------------------
+# with_equal_weights --------------------------------------------------------------------
 
 
-def test_normalize_works_when_given_a_dict():
+def test_with_equal_weights_works_with_dict_keys():
     # given
     homeworks = {"hw01": 0.1, "hw02": 0.4, "hw03": 0.1, "hw04": 0.4}
 
     # when
-    result = gradelib.normalize(homeworks)
+    result = gradelib.GradingGroup.with_equal_weights(
+        homeworks.keys(), group_weight=1.0
+    ).assignment_weights
 
     # then
     assert result == {

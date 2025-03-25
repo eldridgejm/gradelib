@@ -54,8 +54,8 @@ def read(path: Union[str, _pathlib.Path]) -> OrderedDict:
     with path.open() as fileobj:
         lines = fileobj.readlines()
 
-    def parse_line(l):
-        letter, cutoff = l.split(",")
+    def parse_line(line):
+        letter, cutoff = line.split(",")
         cutoff = float(cutoff)
         return (letter, cutoff)
 

@@ -1,61 +1,7 @@
 """Represents a collection of assignments."""
 
-from collections.abc import Sequence, Collection
+from collections.abc import Sequence
 import typing
-
-
-def normalize(assignments: Collection[str]) -> dict[str, float]:
-    """Normalize assignment weights.
-
-    When given a collection, such as a list of assignment names, the return value is a
-    dictionary mapping assignment names to the same, normalized weight.
-
-    Parameters
-    ----------
-    assignments: Collection[str]
-        The assignments to normalize.
-
-    Returns
-    -------
-    dict[str, float]
-        An assignment weight dictionary in which each assignment is weighed equally.
-
-    Example
-    -------
-    .. testsetup:: normalize
-
-        import pandas as pd
-        import gradelib
-        from gradelib import normalize
-        import numpy as np
-
-        students = ["Alice", "Barack", "Charlie"]
-        assignments = ["homework 01", "homework 02", "lab 01"]
-        points_earned = pd.DataFrame(
-            [[10, np.nan, np.nan], [np.nan, 10, np.nan], [np.nan, np.nan, 10]],
-            index=students, columns=assignments
-        )
-        points_possible = pd.Series([10, 10, 10], index=assignments)
-        gradebook = gradelib.Gradebook(points_earned, points_possible)
-
-    .. doctest:: normalize
-
-        >>> normalize(['foo', 'bar', 'baz', 'quux'])
-        {'foo': 0.25, 'bar': 0.25, 'baz': 0.25, 'quux': 0.25}
-
-    Useful when creating grading groups. For instance:
-
-    .. doctest:: normalize
-
-        >>> gradebook.grading_groups = {
-        ...     'homework': (normalize(gradebook.assignments.starting_with('home')), 0.5),
-        ...     'labs': (normalize(gradebook.assignments.starting_with('lab')), 0.5)
-        ... }
-
-
-    """
-    n = len(assignments)
-    return {a: 1 / n for a in assignments}
 
 
 class Assignments(Sequence[str]):

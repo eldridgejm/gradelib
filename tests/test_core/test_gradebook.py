@@ -842,16 +842,22 @@ def test_groups_setter_allows_two_tuple_form_and_float_form():
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
     gradebook.grading_groups = {
-        "homeworks": gradelib.GradingGroup.with_proportional_weights(
-            gradebook, ["hw01", "hw02", "hw03"], 0.5
+        "homeworks": (
+            {
+                "hw01": 0.2,
+                "hw02": 0.5,
+                "hw03": 0.3,
+            },
+            0.5,
         ),
         "midterm": 0.5,
     }
 
     # then
-    hw_weights = {"hw01": 2 / 152, "hw02": 50 / 152, "hw03": 100 / 152}
     assert gradebook.grading_groups == {
-        "homeworks": gradelib.GradingGroup(hw_weights, group_weight=0.5),
+        "homeworks": gradelib.GradingGroup(
+            {"hw01": 0.2, "hw02": 0.5, "hw03": 0.3}, group_weight=0.5
+        ),
         "midterm": gradelib.GradingGroup({"midterm": 1}, group_weight=0.5),
     }
 

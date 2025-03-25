@@ -136,7 +136,7 @@
 <span id="gradelib-reports"></span><h1><a class="reference internal" href="#module-gradelib.reports" title="gradelib.reports"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gradelib.reports</span></code></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#module-gradelib.reports"><span>#</span></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="gradelib.reports.generate_latex">
-<span class="sig-prename descclassname"><span class="pre">gradelib.reports.</span></span><span class="sig-name descname"><span class="pre">generate_latex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gradebook:</span> <span class="pre">~gradelib.core._gradebook.Gradebook</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_directory:</span> <span class="pre">~pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_percentile=&lt;function</span> <span class="pre">_default_percentile_display&gt;</span></span></em><span class="sig-paren">)</span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#gradelib.reports.generate_latex" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#gradelib.reports.generate_latex'"><span>#</span></a></dt>
+<span class="sig-prename descclassname"><span class="pre">gradelib.reports.</span></span><span class="sig-name descname"><span class="pre">generate_latex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gradebook:</span> <span class="pre">~gradelib.core._gradebook.Gradebook</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_directory:</span> <span class="pre">~pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_percentile=&lt;function</span> <span class="pre">_default_percentile_display&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">one_file=False</span></span></em><span class="sig-paren">)</span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#gradelib.reports.generate_latex" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#gradelib.reports.generate_latex'"><span>#</span></a></dt>
 <dd><p>Generate a LaTeX grade report for each student.</p>
 <p>Creates one file, <cite>main.tex</cite>, containing all of the reports.</p>
 <dl class="field-list simple">
@@ -149,6 +149,10 @@ does not already exist.</p></li>
 displayed to the student. If the output of the function is <cite>None</cite>, no
 message is displayed. If this is <cite>None</cite>, no messages are displayed to
 any students.</p></li>
+<li><p><strong>one_file</strong> (<em>bool</em>) – If True, all student reports will be placed in a single file, <cite>main.tex</cite>.
+Otherwise, each student will have their own file (&lt;pid&gt;.tex). In either case,
+a <cite>_template.tex</cite> file will be created that can be used as a template for
+the gradebook application.</p></li>
 </ul>
 </dd>
 </dl>

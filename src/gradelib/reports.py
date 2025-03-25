@@ -64,10 +64,10 @@ def _student_latex_report(
 
     _append(
         r"""
-        \begin{center}}
-            \textsc{Overall Grade Report}}
-        \end{center}}
-        \vspace{4em}}
+        \begin{center}
+            \textsc{Overall Grade Report}
+        \end{center}
+        \vspace{4em}
     """
     )
 

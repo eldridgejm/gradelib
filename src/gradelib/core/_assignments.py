@@ -15,7 +15,9 @@ class Assignments(Sequence[str]):
     def __init__(self, names: typing.Sequence[str]):
         self._names = list(names)
 
-    def __contains__(self, element: str) -> bool:
+    def __contains__(self, element) -> bool:
+        if not isinstance(element, str):
+            return False
         return element in self._names
 
     def __len__(self) -> int:

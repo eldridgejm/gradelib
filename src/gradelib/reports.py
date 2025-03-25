@@ -1,6 +1,7 @@
 import pathlib as _pathlib
 import re as _re
 import textwrap as _textwrap
+from typing import Optional
 
 from .core import Gradebook, Student
 from . import statistics as _statistics
@@ -46,11 +47,15 @@ def _default_percentile_display(pct):
         return None
 
 
+def _null_percentile_display(pct):
+    return None
+
+
 def _student_latex_report(
     gradebook: Gradebook, student, show_percentile=_default_percentile_display
-):
+) -> str:
     if show_percentile is None:
-        show_percentile = lambda _: None
+        show_percentile = _null_percentile_display
 
     parts = []
 
@@ -58,11 +63,11 @@ def _student_latex_report(
         parts.append(_textwrap.dedent(s))
 
     _append(
-        rf"""
-        \begin{{center}}
-            \textsc{{Overall Grade Report}}
-        \end{{center}}
-        \vspace{{4em}}
+        r"""
+        \begin{center}}
+            \textsc{Overall Grade Report}}
+        \end{center}}
+        \vspace{4em}}
     """
     )
 
@@ -161,6 +166,7 @@ def generate_latex(
     gradebook: Gradebook,
     output_directory: _pathlib.Path,
     show_percentile=_default_percentile_display,
+    one_file=False,
 ):
     """Generate a LaTeX grade report for each student.
 
@@ -178,37 +184,63 @@ def generate_latex(
         displayed to the student. If the output of the function is `None`, no
         message is displayed. If this is `None`, no messages are displayed to
         any students.
+    one_file : bool
+        If True, all student reports will be placed in a single file, `main.tex`.
+        Otherwise, each student will have their own file (<pid>.tex). In either case,
+        a `_template.tex` file will be created that can be used as a template for
+        the gradebook application.
 
     """
 
     output_directory = _pathlib.Path(output_directory)
+    output_directory.mkdir(exist_ok=True)
 
     head = _textwrap.dedent(
         r"""
-        \documentclass{article}
-        \usepackage[margin=1in]{geometry}
-        \pagestyle{empty}
-        \setlength{\parindent}{0em}
-        \usepackage{enumitem}
-        \begin{document}
-    """
+            \documentclass{article}
+            \usepackage[margin=1in]{geometry}
+            \pagestyle{empty}
+            \setlength{\parindent}{0em}
+            \begin{document}
+        """
     )
-
-    pages = [
-        _student_latex_report(gradebook, student=None, show_percentile=show_percentile)
-    ]
-    pages += [
-        _student_latex_report(gradebook, student, show_percentile=show_percentile)
-        for student in gradebook.students
-    ]
-    body = "\\newpage\n".join(pages)
 
     tail = _textwrap.dedent(
         r"""
-        \end{document}
-    """
+            \end{document}
+        """
     )
 
-    output_directory.mkdir(exist_ok=True)
-    with (output_directory / "main.tex").open("w") as fileobj:
-        fileobj.write(head + body + tail)
+    def make_student_report_file(student: Optional[Student]):
+        """Create a LaTeX file for a student."""
+        body = _student_latex_report(
+            gradebook, student, show_percentile=show_percentile
+        )
+        document = head + body + tail
+
+        if student is not None:
+            filename = f"{student.pid}.tex"
+        else:
+            filename = "_template.tex"
+
+        with (output_directory / filename).open("w") as fileobj:
+            fileobj.write(document)
+
+    def make_main_file():
+        body = "\\newpage".join(
+            _student_latex_report(gradebook, student, show_percentile=show_percentile)
+            for student in gradebook.students
+        )
+        document = head + body + tail
+
+        with output_directory.joinpath("main.tex").open("w") as fileobj:
+            fileobj.write(document)
+
+    if one_file:
+        make_main_file()
+    else:
+        for student in gradebook.students:
+            make_student_report_file(student)
+
+    # saves a template file
+    make_student_report_file(None)

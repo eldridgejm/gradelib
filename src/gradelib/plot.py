@@ -129,6 +129,9 @@ def grade_distribution(
     bokeh.plotting.show(fig)  # pyright: ignore
 
 
+# grade_shift_animation_2d -------------------------------------------------------------
+
+
 def _grade_shift_animation_2d_setup_figure():
     plt.figure(figsize=(4, 4))
     fig, ax = plt.subplots()
@@ -142,9 +145,6 @@ def _grade_shift_animation_2d_setup_figure():
     ax.set_yticks([0.3, 1])
 
     return fig, ax
-
-
-# grade_shift_animation_2d -------------------------------------------------------------
 
 
 def grade_shift_animation_2d(

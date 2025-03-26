@@ -1329,7 +1329,7 @@ def test_rename_assignments_allows_swapping_names():
     assert_gradebook_is_sound(gradebook)
 
 
-# test: misc. methods ==================================================================
+# tests: misc. methods ==================================================================
 
 
 # restrict_to_students ---------------------------------------------------------------------
@@ -1513,22 +1513,124 @@ def test_combine_gradebooks_concatenates_notes():
     }
 
 
-# with_equal_weights --------------------------------------------------------------------
+# tests: extra credit ==================================================================
+
+# There are several ways of offering extra credit:
+#
+# 1. As a separate assignment.
+#   a) in an existing grading group (e.g., in homeworks)
+#   b) in a grading group that contains only extra credit assignments
+#   c) not in any grading group, added to the overall score in the class
+# 2. Within an assignment, so that the assignment's score is over 100%.
 
 
-def test_with_equal_weights_works_with_dict_keys():
-    # given
-    homeworks = {"hw01": 0.1, "hw02": 0.4, "hw03": 0.1, "hw04": 0.4}
+# approach 1a
+def test_extra_credit_assignment_in_existing_grading_group():
+    columns = ["hw01", "hw02", "hw03", "extra credit", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20, 10], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 15, 8], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20, 10], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
 
-    # when
-    result = gradelib.GradingGroup.with_equal_weights(
-        homeworks.keys(), group_weight=1.0
-    ).assignment_weights
+    hw_group = gradelib.GradingGroup.with_proportional_weights(
+        gradebook, ["hw01", "hw02", "hw03"], 0.5
+    )
 
-    # then
-    assert result == {
-        "hw01": 0.25,
-        "hw02": 0.25,
-        "hw03": 0.25,
-        "hw04": 0.25,
+    hw_group.assignment_weights["extra credit"] = gradelib.ExtraCredit(0.1)
+
+    gradebook.grading_groups = {
+        "homeworks": hw_group,
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.5
+        ),
     }
+
+    assert np.isclose(
+        gradebook.grading_group_scores.loc["A1", "homeworks"],
+        (1 + 30 + 90) / (2 + 50 + 100) + 0.1,
+    )
+    assert gradebook.grading_group_scores.loc["A2", "homeworks"] == (2 + 7 + 15) / (
+        2 + 50 + 100
+    ) + 0.1 * (15 / 20)
+
+
+# approach 1(b)
+def test_extra_credit_assignment_in_group_for_extra_credit_only():
+    columns = ["hw01", "hw02", "hw03", "extra credit 01", "extra credit 02"]
+    p1 = pd.Series(data=[2, 50, 100, 20, 10], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 15, 5], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20, 10], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["hw01", "hw02", "hw03"], 1
+        ),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gradebook.assignments.starting_with("extra credit"), ExtraCredit(0.25)
+        ),
+    }
+
+    assert gradebook.grading_group_scores.loc["A1", "extra credit"] == 1
+    assert gradebook.grading_group_scores.loc["A2", "extra credit"] == (
+        15 / 20 + 5 / 10
+    )
+
+    assert gradebook.overall_score.loc["A1"] == 1 + 0.25
+    assert gradebook.overall_score.loc["A2"] == (
+        (2 + 7 + 15) / (2 + 50 + 100)
+    ) + 0.25 * (15 / 20 + 5 / 10)
+
+
+# approach 1(c)
+def test_extra_credit_in_a_separate_assignment_not_in_any_grading_group():
+    columns = ["lab01", "hw01", "hw02", "extra credit"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 10], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["hw01", "hw02"], 0.5
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.5
+        ),
+        "extra credit": gradelib.ExtraCredit(0.1),
+    }
+
+    assert gradebook.overall_score.loc["A1"] == (1 + 30 + 90) / (2 + 50 + 100) + 0.1
+    assert gradebook.overall_score.loc["A2"] == (2 + 7 + 15) / (2 + 50 + 100) + 0.1 * (
+        10 / 20
+    )
+
+
+# approach 2
+def test_extra_credit_within_an_assignment_is_permitted():
+    columns = ["lab01", "hw01", "hw02"]
+    p1 = pd.Series(data=[1, 60, 100], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["hw01", "hw02"], 0.5
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.5
+        ),
+    }
+
+    assert gradebook.score.loc["A1", "hw01"] == 60 / 50
+    assert np.isclose(
+        gradebook.grading_group_scores.loc["A1", "homeworks"], (60 + 100) / 150
+    )
+    assert np.isclose(
+        gradebook.overall_score.loc["A1"], 0.5 * (160 / 150) + 0.5 * (1 / 2)
+    )

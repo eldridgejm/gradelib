@@ -967,7 +967,7 @@ def test_groups_setter_raises_if_group_is_empty():
             ),
         }
 
-    assert "Assignment weights cannot be empty." in str(exc)
+    assert "Must have at least one regular assignment" in str(exc)
 
 
 # group_scores -------------------------------------------------------------------------
@@ -1706,3 +1706,26 @@ def test_extra_credit_within_an_assignment_is_permitted():
     assert np.isclose(
         gradebook.overall_score.loc["A1"], 0.5 * (160 / 150) + 0.5 * (1 / 2)
     )
+
+
+def test_cap_group_score_at_100_percent():
+    columns = ["lab01", "hw01", "hw02"]
+    p1 = pd.Series(data=[3, 60, 100], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["hw01", "hw02"], 0.5, cap_total_score_at_100_percent=True
+        ),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            ["lab01"], 0.5, cap_total_score_at_100_percent=True
+        ),
+    }
+
+    assert gradebook.score.loc["A1", "hw01"] == 60 / 50
+    assert np.isclose(gradebook.grading_group_scores.loc["A1", "homeworks"], 1)
+    assert np.isclose(gradebook.grading_group_scores.loc["A1", "labs"], 1)
+    assert np.isclose(gradebook.overall_score.loc["A1"], 1)

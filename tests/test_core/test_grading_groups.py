@@ -49,7 +49,7 @@ def test_with_proportional_weights():
     assert sum(group.assignment_weights.values()) == 1.0
 
 
-def test_with_extra_credit():
+def test_dict_form_with_extra_credit():
     group = gradelib.GradingGroup(
         {
             "homework 01": 0.5,
@@ -63,7 +63,7 @@ def test_with_extra_credit():
     assert group.assignment_weights["homework 01"] == 0.5
 
 
-def test_with_extra_credit_raises_if_regular_assignment_weights_do_not_sum_to_one():
+def test_dict_form_with_extra_credit_raises_if_regular_assignment_weights_do_not_sum_to_one():
     with raises(ValueError) as exc:
         gradelib.GradingGroup(
             {
@@ -74,3 +74,27 @@ def test_with_extra_credit_raises_if_regular_assignment_weights_do_not_sum_to_on
             group_weight=0.5,
         )
     assert "weights must sum to one" in str(exc.value)
+
+
+def test_with_extra_credit_method_creates_new_grading_group():
+    # given
+    group = gradelib.GradingGroup(
+        {
+            "homework 01": 0.5,
+            "homework 02": 0.25,
+            "homework 03": 0.25,
+        },
+        group_weight=0.5,
+    )
+
+    new_group_with_ec = group.with_extra_credit_assignments(
+        {
+            "extra credit": 0.1,
+        }
+    )
+
+    assert new_group_with_ec.assignment_weights["homework 01"] == 0.5
+
+    group.assignment_weights["homework 01"] = 0.6
+
+    assert new_group_with_ec.assignment_weights["homework 01"] == 0.5

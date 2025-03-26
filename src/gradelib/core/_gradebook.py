@@ -779,6 +779,7 @@ class Gradebook:
             _check_if_all_dropped(group_name)
 
             assignments = list(group.assignment_weights)
+
             regular_assignments, extra_credit_assignments = _categorize_assignments(
                 group.assignment_weights
             )

@@ -1,4 +1,10 @@
-from ._gradebook import Gradebook, GradebookOptions, GradingGroup, combine_gradebooks
+from ._gradebook import (
+    Gradebook,
+    GradebookOptions,
+    GradingGroup,
+    ExtraCredit,
+    combine_gradebooks,
+)
 from ._assignments import (
     Assignments,
 )
@@ -9,6 +15,7 @@ __all__ = [
     "Gradebook",
     "GradebookOptions",
     "GradingGroup",
+    "ExtraCredit",
     "combine_gradebooks",
     "Assignments",
     "Student",

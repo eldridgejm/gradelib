@@ -10,6 +10,7 @@ from .core import (
     Points,
     Percentage,
     GradingGroup,
+    ExtraCredit,
 )
 
 from . import io
@@ -39,6 +40,7 @@ __all__ = [
     "plot",
     "reports",
     "GradingGroup",
+    "ExtaCredit",
     "statistics",
     "scales",
     "overview",

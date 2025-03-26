@@ -386,6 +386,44 @@ def test_weight_in_group_with_custom_weights_and_drops():
     assert gb.weight_in_group.loc["A2", "hw02"] == 1.0
 
 
+def test_weight_in_group_with_extra_credit():
+    # extra credit assignments do not contribute to the total points possible within
+    # a group, but they have a nonzero weight within the group
+    columns = ["hw01", "hw02", "hw03", "extra credit"]
+    p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
+
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 30, 40], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    gb.dropped.loc["A1", "hw02"] = True
+    gb.dropped.loc["A2", "hw01"] = True
+    gb.dropped.loc["A2", "hw03"] = True
+
+    hw_group = gradelib.GradingGroup(
+        {
+            "hw01": 0.3,
+            "hw02": 0.5,
+            "hw03": 0.2,
+        },
+        1,
+    )
+
+    hw_group.assignment_weights["extra credit"] = gradelib.ExtraCredit(0.1)
+
+    gb.grading_groups = {
+        "homeoworks": hw_group,
+    }
+
+    assert gb.weight_in_group.loc["A1", "hw01"] == 0.3 / 0.5
+    assert gb.weight_in_group.loc["A1", "hw02"] == 0.0
+    assert gb.weight_in_group.loc["A1", "hw03"] == 0.2 / 0.5
+    assert gb.weight_in_group.loc["A2", "hw02"] == 1.0
+    assert gb.weight_in_group.loc["A1", "extra credit"] == 0.1
+
+
 # overall_weight -----------------------------------------------------------------------
 
 

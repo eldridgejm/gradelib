@@ -217,6 +217,24 @@ class GradebookOptions:
 # GradingGroup --------------------------------------------------------------------------------
 
 
+class ExtraCredit:
+    """Represents extra credit in a grading group.
+
+    Parameters
+    ----------
+    percentage : float
+        The percentage of extra credit to give. For example, if this is 0.1,
+        then the group will be worth 10% (on top of the normal 100%).
+
+    """
+
+    def __init__(self, percentage: float):
+        self.percentage = percentage
+
+    def __repr__(self):
+        return f"ExtraCredit({self.percentage!r})"
+
+
 class GradingGroup:
     """Represents a logical group of assignments and their weights.
 
@@ -688,21 +706,23 @@ class Gradebook:
     def weight_in_group(self) -> pd.DataFrame:
         """A table of assignment weights relative to their assignment group.
 
-        If :attr:`grading_groups` is set, this computes a table of the same
-        size as :attr:`points_earned` containing for each student and
-        assignment, the weight of that assignment relative to the assignment
-        group.
+        If :attr:`grading_groups` is set, this computes a table of the same size as
+        :attr:`points_earned` containing for each student and assignment, the weight of
+        that assignment relative to the assignment group.
 
-        If an assignment is not in an assignment group, the weight for that
-        assignment is `NaN`. If no grading groups have been defined, all
-        weights are `Nan`.
+        If an assignment is not in an assignment group, the weight for that assignment
+        is `NaN`. If no grading groups have been defined, all weights are `Nan`.
 
-        If the assignment is dropped for that student, the weight is zero.
-        If *all* assignments in a group have been dropped, `ValueError` is
-        raised.
+        If the assignment is dropped for that student, the weight is zero. If *all*
+        assignments in a group have been dropped, `ValueError` is raised.
 
-        Note that this is **not** the overall weight towards to the overall
-        score. That is computed in :attr:`overall_weight`.
+        An extra credit assignment (denoted by a weight wrapped in :class:`ExtraCredit`)
+        has its weight converted to a float between 0 and 1, and is treated as a regular
+        assignment, however, summing all of the weights in a group will add up to more
+        than 1.
+
+        Note that this is **not** the overall weight towards to the overall score. That
+        is computed in :attr:`overall_weight`.
 
         This is a derived attribute; it should not be modified.
 
@@ -713,17 +733,90 @@ class Gradebook:
             the weights are undefined.
 
         """
-        result = self.points_possible / self._by_grading_group_to_by_assignment(
-            self._points_possible_in_grading_group_after_drops
-        )
+        # the result is an (n_students, n_grading_groups) dataframe
+        result = pd.DataFrame({}, index=pd.Index(self.students))
 
-        for _, group in self.grading_groups.items():
-            if isinstance(group.assignment_weights, dict):
-                weights = pd.Series(group.assignment_weights)
-                weights = self._everyone_to_per_student(weights)
-                weights = weights * ~self.dropped[list(group.assignment_weights)]
-                weights = (weights.T / weights.sum(axis=1)).T
-                result.loc[:, list(group.assignment_weights)] = weights
+        def _check_if_all_dropped(group_name: str):
+            """Checks if there are any students whose assignments are all dropped."""
+            group = self.grading_groups[group_name]
+            all_dropped = self.dropped[list(group.assignment_weights)].all(axis=1)
+            assert isinstance(all_dropped, pd.Series)
+            if all_dropped.any():
+                problematic_pids = list(all_dropped.index[all_dropped])  # type: ignore
+                raise ValueError(
+                    f"All assignments are dropped for {problematic_pids} in group '{group_name}'."
+                )
+
+        def _coerce_extra_credit_to_float(v: float | ExtraCredit) -> float:
+            """Converts an ExtraCredit object to a float."""
+            if isinstance(v, ExtraCredit):
+                return v.percentage
+            return v
+
+        def _categorize_assignments(assignment_weights):
+            """Categorizes assignments into regular and extra credit."""
+            regular_assignments = [
+                k
+                for k, v in assignment_weights.items()
+                if not isinstance(v, ExtraCredit)
+            ]
+
+            extra_credit_assignments = [
+                k for k, v in assignment_weights.items() if isinstance(v, ExtraCredit)
+            ]
+
+            return regular_assignments, extra_credit_assignments
+
+        def _grading_group_weights(group_name: str) -> pd.DataFrame:
+            """Computes a table of weights for assignments in a single grading group.
+
+            The result is an (n_students, n_assignments_in_group) dataframe.
+
+            We do this per-student because different students have different dropped
+            assignments, so each student has a different total weight for the group.
+
+            """
+            _check_if_all_dropped(group_name)
+
+            assignments = list(group.assignment_weights)
+            regular_assignments, extra_credit_assignments = _categorize_assignments(
+                group.assignment_weights
+            )
+
+            assignment_weights = {
+                k: _coerce_extra_credit_to_float(v)
+                for k, v in group.assignment_weights.items()
+            }
+
+            weights = pd.Series(assignment_weights)
+
+            # make `weights` an (n_students, n_assignments_in_group) dataframe
+            weights = self._everyone_to_per_student(weights)
+
+            # compute a total weight for each student. This is a sum of all assignment
+            # weights, excluding dropped assignments and extra credit assignments.
+            # `total_weight` is a Series with one entry per student.
+            total_weight = weights.copy()
+            total_weight[extra_credit_assignments] = 0
+            total_weight[self.dropped[assignments]] = 0
+            total_weight = total_weight.sum(axis=1)
+
+            # set weight of dropped assignments to zero
+            weights = weights * ~self.dropped[list(assignment_weights)]
+
+            # renormalize the weights so that they sum to one for each student. Only
+            # do this for regular assignments! Extra credit assignments are not
+            # renormalized.
+            weights.loc[:, regular_assignments] = (
+                weights.loc[:, regular_assignments].T / total_weight
+            ).T
+
+            return weights
+
+        for group_name, group in self.grading_groups.items():
+            result.loc[:, list(group.assignment_weights)] = _grading_group_weights(
+                group_name
+            )
 
         return result * (~self.dropped)
 
@@ -804,6 +897,8 @@ class Gradebook:
         containing the number of points possible in that group after dropped assignments
         have been removed.
 
+        Extra credit is excluded from the total points possible in a group.
+
         This is a derived attribute; it should not be modified.
 
         Raises
@@ -814,13 +909,20 @@ class Gradebook:
         """
         result = {}
         for group_name, group in self.grading_groups.items():
+            # the assignments which are not extra credit
+            regular_assignments = [
+                k
+                for k, v in group.assignment_weights.items()
+                if not isinstance(v, ExtraCredit)
+            ]
+
             possible = pd.DataFrame(
                 np.tile(
-                    self.points_possible[list(group.assignment_weights)],
+                    self.points_possible[regular_assignments],
                     (self.points_earned.shape[0], 1),
                 ),
                 index=pd.Index(self.students),
-                columns=list(group.assignment_weights),
+                columns=regular_assignments,
             )
 
             possible[self.dropped[list(group.assignment_weights)]] = 0

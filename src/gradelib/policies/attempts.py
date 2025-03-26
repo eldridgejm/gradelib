@@ -45,6 +45,10 @@ def _make_notes(raw_scores: _pd.Series, effective_scores: _pd.Series) -> str:
     return " ".join(parts)
 
 
+def _no_penalty_policy(_, score: float) -> float:
+    return score
+
+
 def take_best(
     gradebook: Gradebook,
     attempts: Mapping[str, Sequence[str]],
@@ -75,7 +79,7 @@ def take_best(
 
     """
     if policy is None:
-        policy = lambda _, score: score
+        policy = _no_penalty_policy
 
     for new_assignment, existing_assignments in attempts.items():
         best_scores = _pd.Series(dtype="float64")

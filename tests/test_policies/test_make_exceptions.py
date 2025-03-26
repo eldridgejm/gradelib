@@ -65,7 +65,7 @@ def test_make_exceptions_with_drop():
     make_exceptions(gradebook, "Justin", [Drop("hw01")])
 
     # then
-    assert gradebook.dropped.loc["A1", "hw01"] == True
+    assert gradebook.dropped.loc["A1", "hw01"]
     assert_gradebook_is_sound(gradebook)
 
 
@@ -85,7 +85,7 @@ def test_make_exceptions_with_drop_adds_note():
     make_exceptions(gradebook, "Justin", [Drop("hw01")])
 
     # then
-    assert gradebook.dropped.loc["A1", "hw01"] == True
+    assert gradebook.dropped.loc["A1", "hw01"]
     assert gradebook.notes == {"A1": {"drops": ["Exception applied: Hw01 dropped."]}}
 
 

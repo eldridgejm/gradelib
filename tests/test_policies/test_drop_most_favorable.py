@@ -17,7 +17,12 @@ def test_drop_most_favorable_with_callable_within():
     gradebook = gradelib.Gradebook(points, maximums)
     homeworks = gradebook.assignments.starting_with("hw")
 
-    gradebook.grading_groups = {"homeworks": (homeworks, 0.75), "lab01": 0.25}
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, homeworks, 0.75
+        ),
+        "lab01": 0.25,
+    }
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
@@ -42,7 +47,12 @@ def test_drop_most_favorable_maximizes_overall_score():
     gradebook = gradelib.Gradebook(points, maximums)
 
     HOMEWORKS = gradebook.assignments.starting_with("hw")
-    gradebook.grading_groups = {"homeworks": (HOMEWORKS, 0.75), "lab01": 0.25}
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, HOMEWORKS, 0.75
+        ),
+        "lab01": 0.25,
+    }
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
@@ -67,7 +77,12 @@ def test_drop_most_favorable_with_multiple_dropped():
     gradebook = gradelib.Gradebook(points, maximums)
     homeworks = gradebook.assignments.starting_with("hw")
 
-    gradebook.grading_groups = {"homeworks": (homeworks, 0.75), "lab01": 0.25}
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, homeworks, 0.75
+        ),
+        "lab01": 0.25,
+    }
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
@@ -94,7 +109,9 @@ def test_drop_most_favorable_ignores_assignments_already_dropped():
     gradebook.dropped.loc["A1", "hw04"] = True
 
     gradebook.grading_groups = {
-        "homeworks": (gradebook.assignments.starting_with("hw"), 1),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, gradebook.assignments.starting_with("hw"), 1
+        ),
     }
 
     # since A1's perfect homeworks are already dropped, we should drop a third
@@ -121,7 +138,12 @@ def test_drop_most_favorable_with_multiple_dropped_adds_note():
     gradebook = gradelib.Gradebook(points, maximums)
     homeworks = gradebook.assignments.starting_with("hw")
 
-    gradebook.grading_groups = {"homeworks": (homeworks, 0.75), "lab01": 0.25}
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, homeworks, 0.75
+        ),
+        "lab01": 0.25,
+    }
 
     # if we are dropping 1 HW, the right strategy is to drop the 50 point HW
     # for A1 and to drop the 100 point homework for A2
@@ -144,7 +166,12 @@ def test_drop_most_favorable_treats_nans_as_zeros():
     gradebook = gradelib.Gradebook(points, maximums)
     homeworks = gradebook.assignments.starting_with("hw")
 
-    gradebook.grading_groups = {"homeworks": (homeworks, 0.75), "lab01": 0.25}
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, homeworks, 0.75
+        ),
+        "lab01": 0.25,
+    }
 
     # when
     drop_most_favorable(gradebook, 1, within=homeworks)

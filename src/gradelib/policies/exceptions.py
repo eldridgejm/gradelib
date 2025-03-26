@@ -50,8 +50,24 @@ def make_exceptions(
 
     Example
     -------
-    >>> from gradelib.policies.exceptions import make_exceptions, ForgiveLate, Drop
-    >>> make_exceptions(gradebook, "Justin", [
+
+    .. testsetup::
+
+        import pandas as pd
+        import gradelib
+
+        columns = ["hw01", "hw02", "hw03", "lab01"]
+        students = [gradelib.Student("A1", "Justin"), gradelib.Student("A2", "Steve")]
+        p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+        p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+        points_earned = pd.DataFrame([p1, p2], index=gradelib.Students(students))
+        points_possible = pd.Series([2, 50, 100, 20], index=columns)
+        gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    .. testcode::
+
+        from gradelib.policies.exceptions import make_exceptions, ForgiveLate, Drop
+        make_exceptions(gradebook, "Justin", [
             Drop("homework 01", reason="Illness."),
             ForgiveLate("homework 02", reason="Family emergency.")
         ])

@@ -2,7 +2,6 @@
 
 from .core import (
     combine_gradebooks,
-    normalize,
     Gradebook,
     GradebookOptions,
     Assignments,
@@ -11,6 +10,7 @@ from .core import (
     Points,
     Percentage,
     GradingGroup,
+    ExtraCredit,
 )
 
 from . import io
@@ -20,10 +20,13 @@ from . import preprocessing
 from . import reports
 from . import scales
 from . import statistics
+from . import _util
+
+if _util.in_jupyter_notebook():
+    from .overview import overview  # type: ignore
 
 __all__ = [
     "combine_gradebooks",
-    "normalize",
     "Gradebook",
     "GradebookOptions",
     "Assignments",
@@ -37,13 +40,8 @@ __all__ = [
     "plot",
     "reports",
     "GradingGroup",
+    "ExtaCredit",
     "statistics",
     "scales",
+    "overview",
 ]
-
-from . import _util
-
-if _util.in_jupyter_notebook():
-    from .overview import overview
-
-    __all__.append("overview")

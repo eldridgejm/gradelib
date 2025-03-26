@@ -103,6 +103,13 @@ def _copy_notes(
     return result
 
 
+def _coerce_extra_credit_to_float(v: Union[float, "ExtraCredit"]) -> float:
+    """Converts an ExtraCredit object to a float."""
+    if isinstance(v, ExtraCredit):
+        return v.percentage
+    return v
+
+
 # public functions =====================================================================
 
 
@@ -204,17 +211,30 @@ class GradebookOptions:
         sources where the lateness may not be reliable, such as Gradescope.
         Default: 300.
 
-    allow_extra_credit: bool
-        If `True`, grading group weights are allowed to sum to beyond one,
-        effectively allowing extra credit. Default: `True`.
-
     """
 
     lateness_fudge: int = 5 * 60
-    allow_extra_credit: bool = True
 
 
 # GradingGroup --------------------------------------------------------------------------------
+
+
+class ExtraCredit:
+    """Represents extra credit in a grading group.
+
+    Parameters
+    ----------
+    percentage : float
+        The percentage of extra credit to give. For example, if this is 0.1,
+        then the group will be worth 10% (on top of the normal 100%).
+
+    """
+
+    def __init__(self, percentage: float):
+        self.percentage = percentage
+
+    def __repr__(self):
+        return f"ExtraCredit({self.percentage!r})"
 
 
 class GradingGroup:
@@ -222,12 +242,15 @@ class GradingGroup:
 
     Attributes
     ----------
-    assignment_weights: Mapping[str, float]
-        A dictionary mapping assignment names (strings) to their weight within
-        the group (as a float between 0 and 1). Their weights should add to
-        one.
-    group_weight: float
-        The overall weight of the group.
+    assignment_weights: Mapping[str, float | ExtraCredit]
+        A dictionary mapping assignment names (strings) to their weight within the group
+        (as a float between 0 and 1, or as an instance of :class:`ExtraCredit`). The
+        weights of regular (non-extra credit) assignments should add to one.
+    group_weight: float | ExtraCredit
+        The weight of the group in the overall grade calculation. This should be a
+        float between 0 and 1, or an instance of :class:`ExtraCredit`.
+    cap_total_score_at_100_percent : bool
+        If True, the total score for the group is capped at 100%. Default: False.
 
     Raises
     ------
@@ -240,29 +263,175 @@ class GradingGroup:
     _attrs = [
         "assignment_weights",
         "group_weight",
+        "cap_total_score_at_100_percent",
     ]
 
     def __init__(
         self,
         assignment_weights: Mapping[str, float],
         group_weight: float,
+        cap_total_score_at_100_percent: bool = False,
     ):
-        assignment_weights = {str(k): float(v) for k, v in assignment_weights.items()}
-
-        if not assignment_weights:
-            raise ValueError("Assignment weights cannot be empty.")
-
-        if not math.isclose(sum(assignment_weights.values()), 1):
-            raise ValueError("Assignment weights must sum to one.")
-
-        if not all(0 <= w <= 1 for w in assignment_weights.values()):
-            raise ValueError("Assignment weights must be between 0 and 1.")
-
-        if not 0 <= group_weight <= 1:
-            raise ValueError("Group weight must be between 0 and 1.")
-
         self.assignment_weights = assignment_weights
         self.group_weight = group_weight
+        self.cap_total_score_at_100_percent = cap_total_score_at_100_percent
+
+        self.validate()
+
+    @classmethod
+    def with_equal_weights(
+        cls,
+        assignments: Collection[str],
+        group_weight: float,
+        cap_total_score_at_100_percent: bool = False,
+    ) -> "GradingGroup":
+        """Create a grading group in which each assignment is given equal weight.
+
+        Parameters
+        ----------
+        assignments: Collection[str]
+            The assignments to include in the group.
+        group_weight: float
+            The overall weight of the group.
+        cap_total_score_at_100_percent: bool
+            If True, the total score for the group is capped at 100%. Default: False.
+
+        Returns
+        -------
+        GradingGroup
+
+        Example
+        -------
+        .. testsetup:: with_equal_weights
+
+            import pandas as pd
+            import gradelib
+            from gradelib import GradingGroup
+            import numpy as np
+
+            students = ["Alice", "Barack", "Charlie"]
+            assignments = ["homework 01", "homework 02", "lab 01"]
+            points_earned = pd.DataFrame(
+                [[10, np.nan, np.nan], [np.nan, 10, np.nan], [np.nan, np.nan, 10]],
+                index=students, columns=assignments
+            )
+            points_possible = pd.Series([10, 10, 10], index=assignments)
+            gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+        .. doctest:: with_equal_weights
+
+            >>> group = GradingGroup.with_equal_weights(['foo', 'bar', 'baz', 'quux'], 0.5)
+            >>> group.assignment_weights
+            {'foo': 0.25, 'bar': 0.25, 'baz': 0.25, 'quux': 0.25}
+
+        """
+        n = len(assignments)
+        return cls(
+            {a: 1 / n for a in assignments},
+            group_weight=group_weight,
+            cap_total_score_at_100_percent=cap_total_score_at_100_percent,
+        )
+
+    @classmethod
+    def with_proportional_weights(
+        cls,
+        gb: "Gradebook",
+        assignments: Collection[str],
+        group_weight: float,
+        cap_total_score_at_100_percent: bool = False,
+    ) -> "GradingGroup":
+        """Create a grading group in which each assignment is weighed proportionally.
+
+        An assignment's weight within the group is proportional to the number of
+        points possible for that assignment.
+
+        Parameters
+        ----------
+        gb : Gradebook
+            The gradebook containing the assignments.
+        assignments: Collection[str]
+            The assignments to include in the group.
+        group_weight: float
+            The overall weight of the group.
+
+        Returns
+        -------
+        GradingGroup
+
+        Example
+        -------
+        .. testsetup:: with_proportional_weights
+
+            import pandas as pd
+            import gradelib
+            from gradelib import GradingGroup
+            import numpy as np
+
+            students = ["Alice", "Barack", "Charlie"]
+
+            assignments = ["homework 01", "homework 02", "lab 01"]
+            points_earned = pd.DataFrame(
+                [[10, np.nan, np.nan], [np.nan, 10, np.nan], [np.nan, np.nan, 10]],
+                index=students, columns=assignments
+            )
+            points_possible = pd.Series([15, 45, 30], index=assignments)
+            gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+        .. doctest:: with_proportional_weights
+
+            >>> group = GradingGroup.with_proportional_weights(
+            ...     gradebook, ['homework 01', 'homework 02'], 0.5
+            ... )
+            >>> group.assignment_weights
+            {'homework 01': 0.25, 'homework 02': 0.75}
+
+        """
+        total_points_possible = gb.points_possible.loc[assignments].sum()
+
+        assignment_weights = {
+            a: gb.points_possible[a] / total_points_possible for a in assignments
+        }
+
+        return cls(
+            assignment_weights,
+            group_weight=group_weight,
+            cap_total_score_at_100_percent=cap_total_score_at_100_percent,
+        )
+
+    def with_extra_credit_assignments(
+        self, extra_credit: Mapping[str, float]
+    ) -> "GradingGroup":
+        """Add extra credit assignments to the grading group.
+
+        This creates a new grading group with the same assignments as the original
+        group, but with extra credit assignments added.
+
+        Parameters
+        ----------
+        extra_credit : Mapping[str, float]
+            A dictionary mapping assignment names to their weight within the group
+            (as a float between 0 and 1).
+
+        Returns
+        -------
+        GradingGroup
+
+        """
+        new_assignment_weights = copy.deepcopy(self.assignment_weights)
+
+        for extra_credit_assignment, weight in extra_credit.items():
+            if extra_credit_assignment in new_assignment_weights:
+                raise ValueError(
+                    f"Assignment '{extra_credit_assignment}' is already in the group."
+                )
+
+            new_assignment_weights[extra_credit_assignment] = ExtraCredit(weight)
+
+        return GradingGroup(
+            new_assignment_weights,
+            group_weight=self.group_weight,
+            cap_total_score_at_100_percent=self.cap_total_score_at_100_percent,
+        )
 
     def __repr__(self):
         return (
@@ -278,10 +447,59 @@ class GradingGroup:
     def __eq__(self, other):
         return all(getattr(self, attr) == getattr(other, attr) for attr in self._attrs)
 
+    @property
+    def regular_assignment_weights(self) -> dict[str, float]:
+        """Returns a dictionary of the regular (non-extra credit) assignment weights."""
+        return {
+            k: v
+            for k, v in self.assignment_weights.items()
+            if not isinstance(v, ExtraCredit)
+        }
+
+    @property
+    def extra_credit_assignment_weights(self) -> dict[str, float]:
+        """Returns a dictionary of the extra credit assignment weights."""
+        return {
+            k: v.percentage
+            for k, v in self.assignment_weights.items()
+            if isinstance(v, ExtraCredit)
+        }
+
+    def validate(self):
+        """Validate the grading group.
+
+        Makes sure that:
+
+            - The assignment weights are between 0 and 1.
+            - The regular assignment weights sum to one.
+            - The group weight is between 0 and 1.
+            - The group contains at least one non-extra credit assignment.
+
+        Raises a `ValueError` if any of these conditions are not met.
+
+        """
+        if not self.regular_assignment_weights:
+            raise ValueError("Must have at least one regular assignment.")
+
+        if not math.isclose(sum(self.regular_assignment_weights.values()), 1):
+            raise ValueError("Regular assignment weights must sum to one.")
+
+        if not all(
+            0 <= _coerce_extra_credit_to_float(w) <= 1
+            for w in self.assignment_weights.values()
+        ):
+            raise ValueError("Assignment weights must be between 0 and 1.")
+
+        if not 0 <= _coerce_extra_credit_to_float(self.group_weight) <= 1:
+            raise ValueError("Group weight must be between 0 and 1.")
+
 
 # type alias for the multiple valid ways to specify a grading group
 GradingGroupDefinition = Union[
-    float, Tuple[Sequence[str], float], Tuple[Mapping[str, float], float], GradingGroup
+    float,
+    ExtraCredit,
+    Tuple[Mapping[str, float | ExtraCredit], float | ExtraCredit],
+    GradingGroup,
 ]
 
 
@@ -469,20 +687,17 @@ class Gradebook:
 
         This attribute should be set directly. The value should be a dict
         mapping group names to *grading group definitions*. A group definition
-        can be any of the following:
+        can be either of the following:
 
             - A single number. In this case, the group name is treated as an
               assignment name.
-            - A tuple of the form ``(assignments, group_weight)``, where
-              ``assignments`` is an iterable of assignment names or a dict mapping
-              assignment names to weights. If ``assignments`` is an iterable, the
-              weights are inferred to be proportional to the points possible for each
-              assignment. If ``assignments`` is a dict, the weights are taken directly
-              from the dict.
+            - A tuple of the form ``(assignments, group_weight)``, where ``assignments``
+              is a dict mapping assignment names to weights.
             - A :class:`GradingGroup` instance.
 
         To normalize the weights of assignments (so that they are all weighed the same)
-        use the :func:`gradelib.normalize` function.
+        use :meth:`GradingGroup.with_equal_weights`. To set the weights proportionally,
+        use :meth:`GradingGroup.with_proportional_weights`.
 
         Example
         -------
@@ -499,23 +714,22 @@ class Gradebook:
                 np.random.randint(0, 10, size=(len(students), len(assignments))),
                 index=students, columns=assignments
             )
-            points_possible = pd.Series([10, 10, 10], index=assignments)
+            points_possible = pd.Series([10, 10, 10, 20, 15, 20], index=assignments)
             gradebook = gradelib.Gradebook(points_earned, points_possible)
 
         .. doctest:: grading_groups
 
             >>> gradebook.grading_groups = {
-            ...     # list of assignments, followed by group weight. assignment weights
-            ...     # are inferred to be proportional to points possible
-            ...     "homeworks": (['hw 01', 'hw 02', 'hw 03'], 0.25),
-            ...
             ...     # dictionary of assignment weights, followed by group weight.
             ...     "labs": ({"lab 01": .25, "lab 02": .75}, 0.25),
             ...
             ...     # a single number. the key is interpreted as an assignment name,
             ...     # and an assignment group consisting only of that assignment is
             ...     # created.
-            ...     "exam": 0.5
+            ...     "exam": 0.5,
+            ...
+            ...     # use equal weights for all assignments
+            ...     "homework": gradelib.GradingGroup.with_equal_weights(["hw 01", "hw 02", "hw 03"], 0.25)
             ... }
 
         """
@@ -531,16 +745,25 @@ class Gradebook:
 
         def _make_group(g: GradingGroupDefinition, name: str) -> GradingGroup:
             if isinstance(g, GradingGroup):
+                # validate the grading group
+                g.validate()
                 return g
             if isinstance(g, Real):
                 # should be a number. this form defines a group with a single assignment
-                assignment_weights = [name]
+                # whose weight within the group is 100%
+                assignment_weights = {name: 1}
                 group_weight = float(g)
-            elif (
-                isinstance(g, tuple)
-                and isinstance(g[0], Mapping)
-                and isinstance(g[1], Real)
-            ):
+            elif isinstance(g, ExtraCredit):
+                assignment_weights = {name: 1}
+                group_weight = g
+            elif isinstance(g, tuple):
+                if not isinstance(g[0], Mapping):
+                    raise TypeError(
+                        f"Invalid grading group definition: {g}. "
+                        "When a grading group definition is a (Mapping, Number) tuple, "
+                        "the first element must be a mapping from assignment names to "
+                        "weights."
+                    )
                 if not all(isinstance(k, str) for k in g[0].keys()):
                     raise TypeError(
                         f"Invalid grading group definition: {g}. "
@@ -558,49 +781,32 @@ class Gradebook:
                     str(a_name): float(a_weight) for a_name, a_weight in g[0].items()
                 }
                 group_weight = float(g[1])
-            elif (
-                isinstance(g, tuple)
-                and isinstance(g[0], Sequence)
-                and isinstance(g[1], Real)
-            ):
-                if not all(isinstance(a, str) for a in g[0]):
-                    raise TypeError(
-                        f"Invalid grading group definition: {g}. "
-                        "When a grading group definition is a (Sequence, Number) tuple, "
-                        "the entries of the sequence must be strings representing "
-                        "assignment names."
-                    )
-                assignment_weights = g[0]
-                group_weight = float(g[1])
             else:
                 raise TypeError("Unexpected type in grading group definition.")
 
             if not assignment_weights:
                 raise ValueError(f'Grading group "{name}" is empty.')
 
-            if not isinstance(assignment_weights, dict):
-                # an iterable of assignments that we need to turn into a dict
-                total_points_possible = sum(
-                    self.points_possible[a] for a in assignment_weights
-                )
-                assignment_weights = {
-                    a: self.points_possible[a] / total_points_possible
-                    for a in assignment_weights
-                }
-
-            return GradingGroup(assignment_weights, float(group_weight))
+            return GradingGroup(assignment_weights, group_weight)
 
         new_groups = {name: _make_group(g, name) for name, g in value.items()}
 
         if new_groups:
-            total_weight = sum(g.group_weight for g in new_groups.values())
-            if self.options.allow_extra_credit:
-                if total_weight < 1:
-                    raise ValueError("Group weights must sum to >= 1.")
-            elif not math.isclose(total_weight, 1):
+
+            def _coerce_extra_credit_to_zero(v: float | ExtraCredit) -> float:
+                """Converts an ExtraCredit object to zero."""
+                if isinstance(v, ExtraCredit):
+                    return 0
+                return v
+
+            total_weight = sum(
+                _coerce_extra_credit_to_zero(g.group_weight)
+                for g in new_groups.values()
+            )
+
+            if not math.isclose(total_weight, 1):
                 raise ValueError(
-                    "Group weights must sum to one unless the 'allow_extra_credit' "
-                    "option is enabled."
+                    "Group weights must sum to one (excluding extra credit)."
                 )
 
         self._groups = new_groups
@@ -611,21 +817,23 @@ class Gradebook:
     def weight_in_group(self) -> pd.DataFrame:
         """A table of assignment weights relative to their assignment group.
 
-        If :attr:`grading_groups` is set, this computes a table of the same
-        size as :attr:`points_earned` containing for each student and
-        assignment, the weight of that assignment relative to the assignment
-        group.
+        If :attr:`grading_groups` is set, this computes a table of the same size as
+        :attr:`points_earned` containing for each student and assignment, the weight of
+        that assignment relative to the assignment group.
 
-        If an assignment is not in an assignment group, the weight for that
-        assignment is `NaN`. If no grading groups have been defined, all
-        weights are `Nan`.
+        If an assignment is not in an assignment group, the weight for that assignment
+        is `NaN`. If no grading groups have been defined, all weights are `Nan`.
 
-        If the assignment is dropped for that student, the weight is zero.
-        If *all* assignments in a group have been dropped, `ValueError` is
-        raised.
+        If the assignment is dropped for that student, the weight is zero. If *all*
+        assignments in a group have been dropped, `ValueError` is raised.
 
-        Note that this is **not** the overall weight towards to the overall
-        score. That is computed in :attr:`overall_weight`.
+        An extra credit assignment (denoted by a weight wrapped in :class:`ExtraCredit`)
+        has its weight converted to a float between 0 and 1, and is treated as a regular
+        assignment, however, summing all of the weights in a group will add up to more
+        than 1.
+
+        Note that this is **not** the overall weight towards to the overall score. That
+        is computed in :attr:`overall_weight`.
 
         This is a derived attribute; it should not be modified.
 
@@ -636,17 +844,70 @@ class Gradebook:
             the weights are undefined.
 
         """
-        result = self.points_possible / self._by_grading_group_to_by_assignment(
-            self._points_possible_in_grading_group_after_drops
-        )
+        # the result is an (n_students, n_grading_groups) dataframe
+        result = pd.DataFrame({}, index=pd.Index(self.students))
 
-        for _, group in self.grading_groups.items():
-            if isinstance(group.assignment_weights, dict):
-                weights = pd.Series(group.assignment_weights)
-                weights = self._everyone_to_per_student(weights)
-                weights = weights * ~self.dropped[list(group.assignment_weights)]
-                weights = (weights.T / weights.sum(axis=1)).T
-                result.loc[:, list(group.assignment_weights)] = weights
+        def _check_if_all_dropped(group_name: str):
+            """Checks if there are any students whose assignments are all dropped."""
+            group = self.grading_groups[group_name]
+            all_dropped = self.dropped[list(group.assignment_weights)].all(axis=1)
+            assert isinstance(all_dropped, pd.Series)
+            if all_dropped.any():
+                problematic_pids = list(all_dropped.index[all_dropped])  # type: ignore
+                raise ValueError(
+                    f"All assignments are dropped for {problematic_pids} in group '{group_name}'."
+                )
+
+        def _grading_group_weights(group_name: str) -> pd.DataFrame:
+            """Computes a table of weights for assignments in a single grading group.
+
+            The result is an (n_students, n_assignments_in_group) dataframe.
+
+            We do this per-student because different students have different dropped
+            assignments, so each student has a different total weight for the group.
+
+            """
+            _check_if_all_dropped(group_name)
+
+            assignments = list(group.assignment_weights)
+
+            regular_assignments = list(group.regular_assignment_weights)
+            extra_credit_assignments = list(group.extra_credit_assignment_weights)
+
+            assignment_weights = {
+                k: _coerce_extra_credit_to_float(v)
+                for k, v in group.assignment_weights.items()
+            }
+
+            weights = pd.Series(assignment_weights)
+
+            # make `weights` an (n_students, n_assignments_in_group) dataframe
+            weights = self._everyone_to_per_student(weights)
+
+            # compute a total weight for each student. This is a sum of all assignment
+            # weights, excluding dropped assignments and extra credit assignments.
+            # `total_weight` is a Series with one entry per student.
+            total_weight = weights.copy()
+            total_weight[extra_credit_assignments] = 0
+            total_weight[self.dropped[assignments]] = 0
+            total_weight = total_weight.sum(axis=1)
+
+            # set weight of dropped assignments to zero
+            weights = weights * ~self.dropped[assignments]
+
+            # renormalize the weights so that they sum to one for each student. Only
+            # do this for regular assignments! Extra credit assignments are not
+            # renormalized.
+            weights.loc[:, regular_assignments] = (
+                weights.loc[:, regular_assignments].T / total_weight
+            ).T
+
+            return weights
+
+        for group_name, group in self.grading_groups.items():
+            result.loc[:, list(group.assignment_weights)] = _grading_group_weights(
+                group_name
+            )
 
         return result * (~self.dropped)
 
@@ -654,21 +915,22 @@ class Gradebook:
     def overall_weight(self) -> pd.DataFrame:
         """A table of assignment weights relative to all other assignments.
 
-        If :attr:`grading_groups` is set, this computes a table of the same
-        size as :attr:`points_earned` containing for each student and
-        assignment, the overall weight of that assignment relative to all other
-        assignments.
+        Usually, an assignment's weight relative to all other assignments is the weight
+        of its group times the weight of the assignment within the group.
 
-        If an assignment is not in an assignment group, the weight for that
-        assignment is `NaN`. If no grading groups have been defined, all
-        weights are `Nan`.
+        If :attr:`grading_groups` is set, this computes a table of the same size as
+        :attr:`points_earned` containing for each student and assignment, the overall
+        weight of that assignment relative to all other assignments.
 
-        If the assignment is dropped for that student, the weight is zero. If
-        *all* assignments in a group have been dropped, `ValueError` is raised.
+        If an assignment is not in an assignment group, the weight for that assignment
+        is `NaN`. If no grading groups have been defined, all weights are `Nan`.
 
-        Note that this is **not** the weight of the assignment relative to the
-        total weight of the assignment group it is in. That is computed in
-        :attr:`weight`.
+        If the assignment is dropped for that student, the weight is zero. If *all*
+        assignments in a group have been dropped, `ValueError` is raised.
+
+
+        Note that this is **not** the weight of the assignment relative to the total
+        weight of the assignment group it is in. That is computed in :attr:`weight`.
 
         This is a derived attribute; it should not be modified.
 
@@ -680,31 +942,35 @@ class Gradebook:
 
         """
 
-        group_weight = pd.Series(
-            {
-                group_name: assignment_group.group_weight
-                for group_name, assignment_group in self.grading_groups.items()
-            },
-            dtype=float,
+        group_weight = self._by_grading_group_to_by_assignment(
+            pd.Series(
+                {
+                    group_name: _coerce_extra_credit_to_float(
+                        assignment_group.group_weight
+                    )
+                    for group_name, assignment_group in self.grading_groups.items()
+                },
+                dtype=float,
+            )
         )
-        return self.weight_in_group * self._by_grading_group_to_by_assignment(
-            group_weight
-        )
+        return self.weight_in_group * group_weight
 
     @property
     def value(self) -> pd.DataFrame:
         """A table containing the value of each assignment for each student.
 
-        This produces a table of the same size as :attr:`points_earned` where
-        each entry contains the value of an assignment for a given student. The
-        "value" of an assignment is the amount that it contributes to the
-        student's overall score in the class. In short, it is the product of
-        that assignment's score with its overall weight.
+        The "value" of an assignment is the amount that it contributes to the student's
+        overall score in the class. In short, it is the product of that assignment's
+        score with its overall weight. The total of a student's assignment values equals
+        their score in the class, with one caveat: if extra credit is allowed and a
+        group's score is capped at 100%, the sum of the values in that group may exceed
+        a student's actual score.
+
+        This produces a table of the same size as :attr:`points_earned` where each entry
+        contains the value of an assignment for a given student.
 
         If :attr:`grading_groups` is not set, all entries are `NaN`.
 
-        The total of a student's assignment values equals their score in the
-        class.
 
         This is a derived attribute; it should not be modified.
 
@@ -720,46 +986,6 @@ class Gradebook:
     # properties: scores ---------------------------------------------------------------
 
     @property
-    def _points_possible_in_grading_group_after_drops(self) -> pd.DataFrame:
-        """A table of the number of points possible in an assignment group, after drops.
-
-        Produces a table with one row per student, and one column per assignment group,
-        containing the number of points possible in that group after dropped assignments
-        have been removed.
-
-        This is a derived attribute; it should not be modified.
-
-        Raises
-        ------
-        ValueError
-            If all assignments in an assignment group have been dropped for a student.
-
-        """
-        result = {}
-        for group_name, group in self.grading_groups.items():
-            possible = pd.DataFrame(
-                np.tile(
-                    self.points_possible[list(group.assignment_weights)],
-                    (self.points_earned.shape[0], 1),
-                ),
-                index=pd.Index(self.students),
-                columns=list(group.assignment_weights),
-            )
-
-            possible[self.dropped[list(group.assignment_weights)]] = 0
-            possible = possible.sum(axis=1)
-
-            if (possible == 0).any():
-                problematic_pids = list(possible.index[possible == 0])
-                raise ValueError(
-                    f"All assignments are dropped for {problematic_pids} in group '{group_name}'."
-                )
-
-            result[group_name] = possible
-
-        return pd.DataFrame(result, index=pd.Index(self.students))
-
-    @property
     def grading_group_scores(self) -> pd.DataFrame:
         """A table of the scores earned in each grading group.
 
@@ -767,7 +993,12 @@ class Gradebook:
         grading group in which each entry is the student's score within that
         grading group.
 
-        This takes into account dropped assignments.
+        This takes into account dropped assignments and extra credit. Extra credit
+        assignments do not count towards the total points possible in the group, but do
+        count towards the points earned and thus the score.
+
+        If a grading group has the `cap_total_score_at_100_percent` attribute set to
+        `True`, the total score for that group is capped at 100%.
 
         If an assignment has a score of `NaN`, it is treated as a zero for the
         purposes of computing the grading group score. Conceptually, an
@@ -787,11 +1018,19 @@ class Gradebook:
         )
         group_weight = pd.Series(
             {
-                group_name: group.group_weight
+                group_name: _coerce_extra_credit_to_float(group.group_weight)
                 for group_name, group in self.grading_groups.items()
             }
         )
-        return group_values / group_weight
+
+        group_scores = group_values / group_weight
+
+        # cap the total score at 100% if requested
+        for group_name, group in self.grading_groups.items():
+            if group.cap_total_score_at_100_percent:
+                group_scores[group_name] = group_scores[group_name].clip(upper=1)
+
+        return group_scores
 
     def _by_grading_group_to_by_assignment(self, by_group) -> pd.DataFrame:
         """Creates a students-by-assignments table from a students-by-groups table by tiling.
@@ -904,7 +1143,25 @@ class Gradebook:
                 "Grading groups should be set before calculating letter grades."
             )
 
-        return self.value.sum(axis=1)
+        # we previously used the `value` attribute here by summing the values of all
+        # assignments. However, this does not take into account the fact that grading
+        # group scores can be capped at 100%. Instead, we compute the overall score by
+        # multiplying the weights of each group by the group scores (which does take
+        # into account the cap). This is equivalent to summing the values of all
+        # assignments if there is no cap / extra credit.
+
+        # we don't use the `value` attribute here because it does not take into account
+        # grading groups that are capped at 100%.
+
+        group_weight = pd.Series(
+            {
+                group_name: _coerce_extra_credit_to_float(group.group_weight)
+                for group_name, group in self.grading_groups.items()
+            }
+        )
+
+        # multiply the two together to get the overall score
+        return (group_weight * self.grading_group_scores).sum(axis=1)
 
     # properties: letter grades --------------------------------------------------------
 

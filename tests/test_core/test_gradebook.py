@@ -84,8 +84,8 @@ def test_lateness_fudge_defaults_to_5_minutes():
 
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness)
 
-    assert gradebook.late.loc["A1", "hw01"] == False
-    assert gradebook.late.loc["A2", "hw02"] == True
+    assert not gradebook.late.loc["A1", "hw01"]
+    assert gradebook.late.loc["A2", "hw02"]
 
 
 def test_lateness_fudge_can_be_changed():
@@ -109,13 +109,13 @@ def test_lateness_fudge_can_be_changed():
 
     gradebook = gradelib.Gradebook(points_earned, points_possible, lateness)
 
-    assert gradebook.late.loc["A1", "hw01"] == False
-    assert gradebook.late.loc["A2", "hw02"] == True
+    assert not gradebook.late.loc["A1", "hw01"]
+    assert gradebook.late.loc["A2", "hw02"]
 
     gradebook.options.lateness_fudge = 10
 
-    assert gradebook.late.loc["A1", "hw01"] == True
-    assert gradebook.late.loc["A2", "hw02"] == True
+    assert gradebook.late.loc["A1", "hw01"]
+    assert gradebook.late.loc["A2", "hw02"]
 
 
 # tests: properties ====================================================================
@@ -167,8 +167,12 @@ def test_weight_in_group_defaults_to_being_computed_from_points_possible():
     gb = gradelib.Gradebook(points_earned, points_possible)
 
     gb.grading_groups = {
-        "homeworks": (gb.assignments.starting_with("hw"), 0.75),
-        "labs": (gb.assignments.starting_with("lab"), 0.25),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("hw"), 0.75
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("lab"), 0.25
+        ),
     }
 
     assert gb.weight_in_group.loc["A1", "hw01"] == 20 / 70
@@ -188,7 +192,9 @@ def test_weight_in_group_assignments_not_in_a_group_are_nan():
     gb = gradelib.Gradebook(points_earned, points_possible)
 
     gb.grading_groups = {
-        "homeworks": (gb.assignments.starting_with("hw"), 1),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("hw"), 1
+        ),
     }
 
     assert gb.weight_in_group.loc["A1", "hw01"] == 20 / 70
@@ -215,8 +221,12 @@ def test_weight_in_group_takes_drops_into_account_by_renormalizing():
     gb.dropped.loc["A2", "hw03"] = True
 
     gb.grading_groups = {
-        "homeworks": (gb.assignments.starting_with("hw"), 0.75),
-        "labs": (gb.assignments.starting_with("lab"), 0.25),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("hw"), 0.75
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("lab"), 0.25
+        ),
     }
 
     # then
@@ -242,8 +252,12 @@ def test_weight_in_group_with_all_dropped_in_group_raises():
     gb.dropped.loc["A1", "hw03"] = True
 
     gb.grading_groups = {
-        "homeworks": (gb.assignments.starting_with("hw"), 0.75),
-        "labs": (gb.assignments.starting_with("lab"), 0.25),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("hw"), 0.75
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("lab"), 0.25
+        ),
     }
 
     # then
@@ -262,12 +276,12 @@ def test_weight_in_group_with_normalization():
     gb = gradelib.Gradebook(points_earned, points_possible)
 
     gb.grading_groups = {
-        "homeworks": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("hw")),
+        "homeworks": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("hw"),
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -292,12 +306,12 @@ def test_weight_in_group_with_normalization_and_drops():
     gb.dropped.loc["A2", "hw03"] = True
 
     gb.grading_groups = {
-        "homeworks": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("hw")),
+        "homeworks": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("hw"),
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -326,8 +340,8 @@ def test_weight_in_group_with_custom_weights():
             },
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -360,8 +374,8 @@ def test_weight_in_group_with_custom_weights_and_drops():
             },
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -372,10 +386,48 @@ def test_weight_in_group_with_custom_weights_and_drops():
     assert gb.weight_in_group.loc["A2", "hw02"] == 1.0
 
 
+def test_weight_in_group_with_extra_credit():
+    # extra credit assignments do not contribute to the total points possible within
+    # a group, but they have a nonzero weight within the group
+    columns = ["hw01", "hw02", "hw03", "extra credit"]
+    p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
+
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 30, 40], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    gb.dropped.loc["A1", "hw02"] = True
+    gb.dropped.loc["A2", "hw01"] = True
+    gb.dropped.loc["A2", "hw03"] = True
+
+    hw_group = gradelib.GradingGroup(
+        {
+            "hw01": 0.3,
+            "hw02": 0.5,
+            "hw03": 0.2,
+        },
+        1,
+    )
+
+    hw_group.assignment_weights["extra credit"] = gradelib.ExtraCredit(0.1)
+
+    gb.grading_groups = {
+        "homeoworks": hw_group,
+    }
+
+    assert gb.weight_in_group.loc["A1", "hw01"] == 0.3 / 0.5
+    assert gb.weight_in_group.loc["A1", "hw02"] == 0.0
+    assert gb.weight_in_group.loc["A1", "hw03"] == 0.2 / 0.5
+    assert gb.weight_in_group.loc["A2", "hw02"] == 1.0
+    assert gb.weight_in_group.loc["A1", "extra credit"] == 0.1
+
+
 # overall_weight -----------------------------------------------------------------------
 
 
-def test_overall_weight_defaults_to_being_computed_from_points_possible():
+def test_overall_weight_simple_example():
     columns = ["hw01", "hw02", "lab01", "lab02"]
     p1 = pd.Series(data=[10, 30, 20, 25], index=columns, name="A1")
     p2 = pd.Series(data=[20, 40, 30, 10], index=columns, name="A2")
@@ -386,8 +438,12 @@ def test_overall_weight_defaults_to_being_computed_from_points_possible():
     gb = gradelib.Gradebook(points_earned, points_possible)
 
     gb.grading_groups = {
-        "homeworks": (gb.assignments.starting_with("hw"), 0.75),
-        "labs": (gb.assignments.starting_with("lab"), 0.25),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("hw"), 0.75
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("lab"), 0.25
+        ),
     }
 
     assert gb.overall_weight.loc["A1", "hw01"] == 20 / 70 * 0.75
@@ -407,7 +463,9 @@ def test_overall_weight_assignments_not_in_a_group_are_nan():
     gb = gradelib.Gradebook(points_earned, points_possible)
 
     gb.grading_groups = {
-        "homeworks": (gb.assignments.starting_with("hw"), 1),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("hw"), 1
+        ),
     }
 
     assert gb.overall_weight.loc["A1", "hw01"] == 20 / 70 * 1
@@ -434,8 +492,12 @@ def test_overall_weight_takes_drops_into_account():
     gb.dropped.loc["A2", "hw03"] = True
 
     gb.grading_groups = {
-        "homeworks": (gb.assignments.starting_with("hw"), 0.75),
-        "labs": (gb.assignments.starting_with("lab"), 0.25),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("hw"), 0.75
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("lab"), 0.25
+        ),
     }
 
     assert gb.overall_weight.loc["A1", "hw01"] == 0.0 * 0.75
@@ -455,12 +517,12 @@ def test_overall_weight_with_normalization():
     gb = gradelib.Gradebook(points_earned, points_possible)
 
     gb.grading_groups = {
-        "homeworks": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("hw")),
+        "homeworks": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("hw"),
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -468,6 +530,33 @@ def test_overall_weight_with_normalization():
     assert gb.overall_weight.loc["A1", "hw01"] == 1 / 3 * 0.75
     assert gb.overall_weight.loc["A1", "hw02"] == 1 / 3 * 0.75
     assert gb.overall_weight.loc["A2", "lab01"] == 1.0 * 0.25
+
+
+def test_overall_weight_with_extra_credit_group():
+    columns = ["hw01", "hw02", "lab01", "lab02", "extra credit"]
+    p1 = pd.Series(data=[10, 30, 20, 25, 4], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 30, 10, 5], index=columns, name="A2")
+
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 30, 40, 5], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    gb.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("hw"), 0.75
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("lab"), 0.25
+        ),
+        "extra credit": gradelib.ExtraCredit(0.1),
+    }
+
+    assert gb.overall_weight.loc["A1", "hw01"] == 20 / 70 * 0.75
+    assert gb.overall_weight.loc["A1", "hw02"] == 50 / 70 * 0.75
+    assert gb.overall_weight.loc["A2", "hw01"] == 20 / 70 * 0.75
+    assert gb.overall_weight.loc["A2", "hw02"] == 50 / 70 * 0.75
+    assert gb.overall_weight.loc["A1", "extra credit"] == 0.1
 
 
 def test_overall_weight_with_normalization_and_drops():
@@ -485,12 +574,12 @@ def test_overall_weight_with_normalization_and_drops():
     gb.dropped.loc["A2", "hw03"] = True
 
     gb.grading_groups = {
-        "homeworks": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("hw")),
+        "homeworks": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("hw"),
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -519,8 +608,8 @@ def test_overall_weight_with_custom_weights():
             },
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -553,8 +642,8 @@ def test_overall_weight_with_custom_weights_and_drops():
             },
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -579,9 +668,11 @@ def test_value_with_default_weights():
     gb = gradelib.Gradebook(points_earned, points_possible)
 
     gb.grading_groups = {
-        "homeworks": (gb.assignments.starting_with("hw"), 0.75),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("hw"), 0.75
+        ),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -605,9 +696,11 @@ def test_value_with_drops():
     gb.dropped.loc["A2", "hw03"] = True
 
     gb.grading_groups = {
-        "homeworks": (gb.assignments.starting_with("hw"), 0.75),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gb, gb.assignments.starting_with("hw"), 0.75
+        ),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -636,8 +729,8 @@ def test_value_with_custom_assignment_weights():
             },
             0.75,
         ),
-        "labs": gradelib.GradingGroup(
-            gradelib.normalize(gb.assignments.starting_with("lab")),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            gb.assignments.starting_with("lab"),
             0.25,
         ),
     }
@@ -662,8 +755,12 @@ def test_overall_score_respects_group_weighting():
     HOMEWORKS = gradebook.assignments.starting_with("hw")
 
     gradebook.grading_groups = {
-        "homeworks": (HOMEWORKS, 0.6),
-        "labs": (["lab01"], 0.4),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, HOMEWORKS, 0.6
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.4
+        ),
     }
 
     # then
@@ -703,8 +800,12 @@ def test_overall_score_respects_dropped_assignments():
     HOMEWORKS = gradebook.assignments.starting_with("hw")
 
     gradebook.grading_groups = {
-        "homeworks": (HOMEWORKS, 0.6),
-        "labs": (["lab01"], 0.4),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, HOMEWORKS, 0.6
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.4
+        ),
     }
 
     # then
@@ -748,8 +849,10 @@ def test_letter_grades_respects_scale():
     HOMEWORKS = gradebook.assignments.starting_with("hw")
 
     gradebook.grading_groups = {
-        "homeworks": gradelib.GradingGroup(gradelib.normalize(HOMEWORKS), 0.6),
-        "labs": (["lab01"], 0.4),
+        "homeworks": gradelib.GradingGroup.with_equal_weights(HOMEWORKS, 0.6),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.4
+        ),
     }
 
     # then
@@ -794,30 +897,7 @@ def test_letter_grades_raises_if_groups_not_set():
 # groups -------------------------------------------------------------------------------
 
 
-def test_groups_setter_allows_three_tuple_form():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01"]
-    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-
-    gradebook.grading_groups = {
-        "homeworks": (["hw01", "hw02", "hw03"], 0.5),
-        "labs": (["lab01"], 0.5),
-    }
-
-    # then
-    hw_weights = {"hw01": 2 / 152, "hw02": 50 / 152, "hw03": 100 / 152}
-    lab_weights = {"lab01": 1}
-    assert gradebook.grading_groups == {
-        "homeworks": gradelib.GradingGroup(hw_weights, group_weight=0.5),
-        "labs": gradelib.GradingGroup(lab_weights, group_weight=0.5),
-    }
-
-
-def test_groups_setter_allows_two_tuple_form():
+def test_groups_setter_allows_two_tuple_form_and_float_form():
     # given
     columns = ["hw01", "hw02", "hw03", "midterm"]
     p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
@@ -827,14 +907,22 @@ def test_groups_setter_allows_two_tuple_form():
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
     gradebook.grading_groups = {
-        "homeworks": (["hw01", "hw02", "hw03"], 0.5),
-        "midterm": (0.5),
+        "homeworks": (
+            {
+                "hw01": 0.2,
+                "hw02": 0.5,
+                "hw03": 0.3,
+            },
+            0.5,
+        ),
+        "midterm": 0.5,
     }
 
     # then
-    hw_weights = {"hw01": 2 / 152, "hw02": 50 / 152, "hw03": 100 / 152}
     assert gradebook.grading_groups == {
-        "homeworks": gradelib.GradingGroup(hw_weights, group_weight=0.5),
+        "homeworks": gradelib.GradingGroup(
+            {"hw01": 0.2, "hw02": 0.5, "hw03": 0.3}, group_weight=0.5
+        ),
         "midterm": gradelib.GradingGroup({"midterm": 1}, group_weight=0.5),
     }
 
@@ -853,33 +941,13 @@ def test_groups_setter_raises_by_default_if_group_weights_do_not_sum_to_one():
 
     with pytest.raises(ValueError):
         gradebook.grading_groups = {
-            "homeworks": (HOMEWORKS, 0.25),
-            "labs": (LABS, 0.5),
+            "homeworks": gradelib.GradingGroup.with_proportional_weights(
+                gradebook, HOMEWORKS, 0.25
+            ),
+            "labs": gradelib.GradingGroup.with_proportional_weights(
+                gradebook, LABS, 0.5
+            ),
         }
-
-
-def test_groups_setter_allows_extra_credit_if_option_set():
-    # given
-    columns = ["hw01", "hw02", "hw03", "lab01", "ec"]
-    p1 = pd.Series(data=[2, 50, 100, 20, 3], index=columns, name="A1")
-    p2 = pd.Series(data=[2, 7, 15, 20, 2], index=columns, name="A2")
-    points_earned = pd.DataFrame([p1, p2])
-    points_possible = pd.Series([2, 50, 100, 20, 4], index=columns)
-    gradebook = gradelib.Gradebook(points_earned, points_possible)
-
-    gradebook.options.allow_extra_credit = True
-
-    HOMEWORKS = gradebook.assignments.starting_with("hw")
-    LABS = gradebook.assignments.starting_with("lab")
-
-    gradebook.grading_groups = {
-        "homeworks": (HOMEWORKS, 0.5),
-        "labs": (LABS, 0.5),
-        "ec": 0.1,
-    }
-
-    # then
-    assert gradebook.overall_score.loc["A1"] == 1.075
 
 
 def test_groups_setter_raises_if_group_is_empty():
@@ -893,11 +961,13 @@ def test_groups_setter_raises_if_group_is_empty():
 
     with pytest.raises(ValueError) as exc:
         gradebook.grading_groups = {
-            "homeworks": ([], 0.5),
-            "labs": (["lab01"], 0.5),
+            "homeworks": gradelib.GradingGroup.with_equal_weights([], 0.5),
+            "labs": gradelib.GradingGroup.with_proportional_weights(
+                gradebook, ["lab01"], 0.5
+            ),
         }
 
-    assert 'Grading group "homeworks" is empty.' in str(exc)
+    assert "Must have at least one regular assignment" in str(exc)
 
 
 # group_scores -------------------------------------------------------------------------
@@ -916,8 +986,12 @@ def test_group_scores_raises_if_all_assignments_in_a_group_are_dropped():
     HOMEWORKS = gradebook.assignments.starting_with("hw")
 
     gradebook.grading_groups = {
-        "homeworks": (HOMEWORKS, 0.5),
-        "labs": (["lab01"], 0.5),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, HOMEWORKS, 0.5
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.5
+        ),
     }
 
     # then
@@ -936,8 +1010,12 @@ def test_group_scores_treats_nans_as_zeros():
     HOMEWORKS = gradebook.assignments.starting_with("hw")
 
     gradebook.grading_groups = {
-        "homeworks": (HOMEWORKS, 0.5),
-        "labs": (["lab01"], 0.5),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, HOMEWORKS, 0.5
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.5
+        ),
     }
 
     # then
@@ -959,8 +1037,12 @@ def test_group_scores_respects_dropped_assignments():
     HOMEWORKS = gradebook.assignments.starting_with("hw")
 
     gradebook.grading_groups = {
-        "homeworks": (HOMEWORKS, 0.5),
-        "labs": (["lab01"], 0.5),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, HOMEWORKS, 0.5
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.5
+        ),
     }
 
     # then
@@ -986,8 +1068,10 @@ def test_group_scores_with_assignment_weights():
     homework_weights = {"hw01": 0.5, "hw02": 0.25, "hw03": 0.25}
 
     gradebook.grading_groups = {
-        "homeworks": (homework_weights, 0.5),
-        "labs": (["lab01"], 0.5),
+        "homeworks": gradelib.GradingGroup(homework_weights, 0.5),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.5
+        ),
     }
 
     # then
@@ -997,6 +1081,34 @@ def test_group_scores_with_assignment_weights():
             [[0.125 + 0.25, 1], [0, 20 / 20]],
             index=list(gradebook.students),
             columns=["homeworks", "labs"],
+        ),
+    )
+
+
+def test_grading_group_scores_with_extra_credit_group():
+    columns = ["ec01", "ec02", "ec03", "lab01"]
+    p1 = pd.Series(data=[0, 15, 30, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[0, 0, 0, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([30, 30, 30, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    ec_weights = {"ec01": 0.5, "ec02": 0.25, "ec03": 0.25}
+
+    gradebook.grading_groups = {
+        "ecs": gradelib.GradingGroup(ec_weights, gradelib.ExtraCredit(0.5)),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 1
+        ),
+    }
+
+    # then
+    pd.testing.assert_frame_equal(
+        gradebook.grading_group_scores,
+        pd.DataFrame(
+            [[0.125 + 0.25, 1], [0, 20 / 20]],
+            index=list(gradebook.students),
+            columns=["ecs", "labs"],
         ),
     )
 
@@ -1036,8 +1148,12 @@ def test_restrict_to_assignments_resets_groups():
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
     gradebook.grading_groups = {
-        "homeworks": ({"hw01": 0.25, "hw02": 0.5, "hw03": 0.25}, 0.5),
-        "labs": (gradebook.assignments.starting_with("lab"), 0.25),
+        "homeworks": gradelib.GradingGroup(
+            {"hw01": 0.25, "hw02": 0.5, "hw03": 0.25}, 0.5
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, gradebook.assignments.starting_with("lab"), 0.25
+        ),
         "midterm": 0.25,
     }
 
@@ -1146,8 +1262,8 @@ def test_add_assignment_default_none_dropped_or_late():
     )
 
     # then
-    assert gradebook.late.loc["A1", "new"] == False
-    assert gradebook.dropped.loc["A1", "new"] == False
+    assert not gradebook.late.loc["A1", "new"]
+    assert not gradebook.dropped.loc["A1", "new"]
 
 
 def test_add_assignment_raises_on_missing_student():
@@ -1280,7 +1396,7 @@ def test_rename_assignments_allows_swapping_names():
     assert_gradebook_is_sound(gradebook)
 
 
-# test: misc. methods ==================================================================
+# tests: misc. methods ==================================================================
 
 
 # restrict_to_students ---------------------------------------------------------------------
@@ -1355,11 +1471,19 @@ def test_combine_gradebooks_resets_groups():
     ex_2 = CANVAS_WITHOUT_LAB_EXAMPLE.copy()
 
     ex_1.grading_groups = {
-        "homeworks": (ex_1.assignments.starting_with("home"), 0.5),
-        "labs": (ex_1.assignments.starting_with("lab"), 0.5),
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            ex_1, ex_1.assignments.starting_with("home"), 0.5
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            ex_1, ex_1.assignments.starting_with("lab"), 0.5
+        ),
     }
 
-    ex_2.grading_groups = {"exams": (["midterm exam", "final exam"], 1)}
+    ex_2.grading_groups = {
+        "exams": gradelib.GradingGroup.with_proportional_weights(
+            ex_2, ["midterm exam", "final exam"], 1
+        )
+    }
 
     combined = gradelib.combine_gradebooks(
         [ex_1, ex_2],
@@ -1456,20 +1580,152 @@ def test_combine_gradebooks_concatenates_notes():
     }
 
 
-# normalize ----------------------------------------------------------------------------
+# tests: extra credit ==================================================================
+
+# There are several ways of offering extra credit:
+#
+# 1. As a separate assignment.
+#   a) in an existing grading group (e.g., in homeworks)
+#   b) in a grading group that contains only extra credit assignments
+#   c) not in any grading group, added to the overall score in the class
+# 2. Within an assignment, so that the assignment's score is over 100%.
 
 
-def test_normalize_works_when_given_a_dict():
-    # given
-    homeworks = {"hw01": 0.1, "hw02": 0.4, "hw03": 0.1, "hw04": 0.4}
+# approach 1a
+def test_extra_credit_assignment_in_existing_grading_group():
+    columns = ["hw01", "hw02", "hw03", "extra credit", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20, 10], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 15, 8], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20, 10], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
 
-    # when
-    result = gradelib.normalize(homeworks)
+    hw_group = gradelib.GradingGroup.with_proportional_weights(
+        gradebook, ["hw01", "hw02", "hw03"], 0.5
+    )
 
-    # then
-    assert result == {
-        "hw01": 0.25,
-        "hw02": 0.25,
-        "hw03": 0.25,
-        "hw04": 0.25,
+    hw_group.assignment_weights["extra credit"] = gradelib.ExtraCredit(0.1)
+
+    gradebook.grading_groups = {
+        "homeworks": hw_group,
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.5
+        ),
     }
+
+    assert np.isclose(
+        gradebook.grading_group_scores.loc["A1", "homeworks"],
+        (1 + 30 + 90) / (2 + 50 + 100) + 0.1,
+    )
+    assert gradebook.grading_group_scores.loc["A2", "homeworks"] == (2 + 7 + 15) / (
+        2 + 50 + 100
+    ) + 0.1 * (15 / 20)
+
+
+# approach 1(b)
+def test_extra_credit_assignment_in_group_for_extra_credit_only():
+    columns = ["hw01", "hw02", "hw03", "extra credit 01", "extra credit 02"]
+    p1 = pd.Series(data=[2, 50, 100, 20, 10], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 15, 5], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20, 10], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["hw01", "hw02", "hw03"], 1
+        ),
+        "extra credit": gradelib.GradingGroup.with_equal_weights(
+            gradebook.assignments.starting_with("extra credit"),
+            gradelib.ExtraCredit(0.25),
+        ),
+    }
+
+    assert gradebook.grading_group_scores.loc["A1", "extra credit"] == 1
+    assert gradebook.grading_group_scores.loc["A2", "extra credit"] == (
+        0.5 * 15 / 20 + 0.5 * 5 / 10
+    )
+
+    assert gradebook.overall_score.loc["A1"] == 1 + 0.25
+    assert gradebook.overall_score.loc["A2"] == (
+        (2 + 7 + 15) / (2 + 50 + 100)
+    ) + 0.25 * (0.5 * 15 / 20 + 0.5 * 5 / 10)
+
+
+# approach 1(c)
+def test_extra_credit_in_a_separate_assignment_not_in_any_grading_group():
+    columns = ["lab01", "hw01", "hw02", "extra credit"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 10], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["hw01", "hw02"], 0.5
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.5
+        ),
+        "extra credit": gradelib.ExtraCredit(0.1),
+    }
+
+    assert np.isclose(
+        gradebook.overall_score.loc["A1"],
+        0.5 * (1 / 2) + 0.5 * (30 + 90) / (50 + 100) + 0.1,
+    )
+    assert np.isclose(
+        gradebook.overall_score.loc["A2"],
+        0.5 * 2 / 2 + 0.5 * (7 + 15) / (50 + 100) + 0.1 * (10 / 20),
+    )
+
+
+# approach 2
+def test_extra_credit_within_an_assignment_is_permitted():
+    columns = ["lab01", "hw01", "hw02"]
+    p1 = pd.Series(data=[1, 60, 100], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["hw01", "hw02"], 0.5
+        ),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.5
+        ),
+    }
+
+    assert gradebook.score.loc["A1", "hw01"] == 60 / 50
+    assert np.isclose(
+        gradebook.grading_group_scores.loc["A1", "homeworks"], (60 + 100) / 150
+    )
+    assert np.isclose(
+        gradebook.overall_score.loc["A1"], 0.5 * (160 / 150) + 0.5 * (1 / 2)
+    )
+
+
+def test_cap_group_score_at_100_percent():
+    columns = ["lab01", "hw01", "hw02"]
+    p1 = pd.Series(data=[3, 60, 100], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["hw01", "hw02"], 0.5, cap_total_score_at_100_percent=True
+        ),
+        "labs": gradelib.GradingGroup.with_equal_weights(
+            ["lab01"], 0.5, cap_total_score_at_100_percent=True
+        ),
+    }
+
+    assert gradebook.score.loc["A1", "hw01"] == 60 / 50
+    assert np.isclose(gradebook.grading_group_scores.loc["A1", "homeworks"], 1)
+    assert np.isclose(gradebook.grading_group_scores.loc["A1", "labs"], 1)
+    assert np.isclose(gradebook.overall_score.loc["A1"], 1)

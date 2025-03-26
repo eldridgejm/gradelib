@@ -67,7 +67,7 @@ def test_rank():
     homeworks = gradebook.assignments.starting_with("hw")
 
     gradebook.grading_groups = {
-        "homeworks": (gradelib.normalize(homeworks), 0.75),
+        "homeworks": gradelib.GradingGroup.with_equal_weights(homeworks, 0.75),
         "lab01": 0.25,
     }
 
@@ -94,7 +94,7 @@ def test_percentile():
     homeworks = gradebook.assignments.starting_with("hw")
 
     gradebook.grading_groups = {
-        "homeworks": (gradelib.normalize(homeworks), 0.75),
+        "homeworks": gradelib.GradingGroup.with_equal_weights(homeworks, 0.75),
         "lab01": 0.25,
     }
 
@@ -121,7 +121,7 @@ def test_outcomes():
     homeworks = gradebook.assignments.starting_with("hw")
 
     gradebook.grading_groups = {
-        "homeworks": (gradelib.normalize(homeworks), 0.75),
+        "homeworks": gradelib.GradingGroup.with_equal_weights(homeworks, 0.75),
         "lab01": 0.25,
     }
 

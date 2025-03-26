@@ -112,6 +112,7 @@
 <li class="toctree-l2"><a class="reference internal" href="tutorial/loading.html">Loading Grades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/preprocessing.html">Preprocessing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/groups.html">Grading Groups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/extra_credit.html">Extra Credit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/policies.html">Grading Policies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/scales.html">Setting Letter Grade Scales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/reviewing.html">Reviewing and Distributing Grades</a></li>
@@ -122,6 +123,7 @@
 <li class="toctree-l1"><a class="reference internal" href="api/index.html">API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/core.html"><code class="docutils literal notranslate"><span class="pre">gradelib</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api/core-gradebook.html"><code class="docutils literal notranslate"><span class="pre">Gradebook</span></code> et al.</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/core-groups.html"><code class="docutils literal notranslate"><span class="pre">Grading</span> <span class="pre">Groups</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/core-assignments.html"><code class="docutils literal notranslate"><span class="pre">Assignments</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/core-students.html"><code class="docutils literal notranslate"><span class="pre">Student</span></code> and <code class="docutils literal notranslate"><span class="pre">Students</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/core-amounts.html"><code class="docutils literal notranslate"><span class="pre">Points</span></code> and <code class="docutils literal notranslate"><span class="pre">Percentage</span></code></a></li>
@@ -199,11 +201,9 @@
 </li>
       <li><a href="api/core-gradebook.html#gradelib.Gradebook.add_note">add_note() (gradelib.Gradebook method)</a>
 </li>
-      <li><a href="api/core-gradebook.html#gradelib.GradebookOptions.allow_extra_credit">allow_extra_credit (gradelib.GradebookOptions attribute)</a>
-</li>
       <li><a href="api/policies-lates.html#gradelib.policies.lates.LateInfo.assignment">assignment (gradelib.policies.lates.LateInfo attribute)</a>
 </li>
-      <li><a href="api/core-gradebook.html#gradelib.GradingGroup.assignment_weights">assignment_weights (gradelib.GradingGroup attribute)</a>
+      <li><a href="api/core-gradebook.html#gradelib.GradingGroup.assignment_weights">assignment_weights (gradelib.GradingGroup attribute)</a>, <a href="api/core-groups.html#gradelib.GradingGroup.assignment_weights">[1]</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
@@ -212,7 +212,7 @@
       <li><a href="api/core-gradebook.html#gradelib.Gradebook.assignments">assignments (gradelib.Gradebook property)</a>
 
       <ul style="list-style-type:none">
-        <li><a href="api/core-gradebook.html#gradelib.GradingGroup.assignments">(gradelib.GradingGroup property)</a>
+        <li><a href="api/core-gradebook.html#gradelib.GradingGroup.assignments">(gradelib.GradingGroup property)</a>, <a href="api/core-groups.html#gradelib.GradingGroup.assignments">[1]</a>
 </li>
       </ul></li>
       <li><a href="api/core-gradebook.html#gradelib.Gradebook.attempted">attempted (gradelib.Gradebook property)</a>
@@ -240,6 +240,8 @@
   <h2 id="C">C</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="api/core-gradebook.html#gradelib.GradingGroup.cap_total_score_at_100_percent">cap_total_score_at_100_percent (gradelib.GradingGroup attribute)</a>, <a href="api/core-groups.html#gradelib.GradingGroup.cap_total_score_at_100_percent">[1]</a>
+</li>
       <li><a href="api/preprocessing.html#gradelib.preprocessing.combine_assignment_parts">combine_assignment_parts() (in module gradelib.preprocessing)</a>
 </li>
       <li><a href="api/preprocessing.html#gradelib.preprocessing.combine_assignment_versions">combine_assignment_versions() (in module gradelib.preprocessing)</a>
@@ -277,6 +279,12 @@
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="api/core-assignments.html#gradelib.Assignments.ending_with">ending_with() (gradelib.Assignments method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="api/core-gradebook.html#gradelib.GradingGroup.extra_credit_assignment_weights">extra_credit_assignment_weights (gradelib.GradingGroup property)</a>, <a href="api/core-groups.html#gradelib.GradingGroup.extra_credit_assignment_weights">[1]</a>
+</li>
+      <li><a href="api/core-groups.html#gradelib.ExtraCredit">ExtraCredit (class in gradelib)</a>
 </li>
   </ul></td>
   </tr>
@@ -383,13 +391,13 @@
 </li>
       <li><a href="api/core-gradebook.html#gradelib.Gradebook.grading_groups">grading_groups (gradelib.Gradebook property)</a>
 </li>
-      <li><a href="api/core-gradebook.html#gradelib.GradingGroup">GradingGroup (class in gradelib)</a>
+      <li><a href="api/core-gradebook.html#gradelib.GradingGroup">GradingGroup (class in gradelib)</a>, <a href="api/core-groups.html#gradelib.GradingGroup">[1]</a>
 </li>
       <li><a href="api/core-assignments.html#gradelib.Assignments.group_by">group_by() (gradelib.Assignments method)</a>
 </li>
       <li><a href="api/core-assignments.html#gradelib.Assignments.group_by_splitting_on">group_by_splitting_on() (gradelib.Assignments method)</a>
 </li>
-      <li><a href="api/core-gradebook.html#gradelib.GradingGroup.group_weight">group_weight (gradelib.GradingGroup attribute)</a>
+      <li><a href="api/core-gradebook.html#gradelib.GradingGroup.group_weight">group_weight (gradelib.GradingGroup attribute)</a>, <a href="api/core-groups.html#gradelib.GradingGroup.group_weight">[1]</a>
 </li>
   </ul></td>
   </tr>
@@ -453,12 +461,10 @@
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="api/core-students.html#gradelib.Student.name">name (gradelib.Student attribute)</a>
 </li>
-      <li><a href="api/core.html#gradelib.normalize">normalize() (in module gradelib)</a>
+      <li><a href="api/core-assignments.html#gradelib.Assignments.not_containing">not_containing() (gradelib.Assignments method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
-      <li><a href="api/core-assignments.html#gradelib.Assignments.not_containing">not_containing() (gradelib.Assignments method)</a>
-</li>
       <li><a href="api/core-gradebook.html#gradelib.Gradebook.notes">notes (gradelib.Gradebook attribute)</a>
 </li>
       <li><a href="api/policies-lates.html#gradelib.policies.lates.LateInfo.number">number (gradelib.policies.lates.LateInfo attribute)</a>
@@ -518,6 +524,8 @@
         <li><a href="api/io.html#gradelib.io.gradescope.read">(in module gradelib.io.gradescope)</a>
 </li>
       </ul></li>
+      <li><a href="api/core-gradebook.html#gradelib.GradingGroup.regular_assignment_weights">regular_assignment_weights (gradelib.GradingGroup property)</a>, <a href="api/core-groups.html#gradelib.GradingGroup.regular_assignment_weights">[1]</a>
+</li>
       <li><a href="api/core-gradebook.html#gradelib.Gradebook.remove_assignments">remove_assignments() (gradelib.Gradebook method)</a>
 </li>
   </ul></td>
@@ -571,6 +579,10 @@
   <h2 id="V">V</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="api/core-gradebook.html#gradelib.GradingGroup.validate">validate() (gradelib.GradingGroup method)</a>, <a href="api/core-groups.html#gradelib.GradingGroup.validate">[1]</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="api/core-gradebook.html#gradelib.Gradebook.value">value (gradelib.Gradebook property)</a>
 </li>
   </ul></td>
@@ -581,6 +593,14 @@
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="api/core-gradebook.html#gradelib.Gradebook.weight_in_group">weight_in_group (gradelib.Gradebook property)</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.GradingGroup.with_equal_weights">with_equal_weights() (gradelib.GradingGroup class method)</a>, <a href="api/core-groups.html#gradelib.GradingGroup.with_equal_weights">[1]</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="api/core-gradebook.html#gradelib.GradingGroup.with_extra_credit_assignments">with_extra_credit_assignments() (gradelib.GradingGroup method)</a>, <a href="api/core-groups.html#gradelib.GradingGroup.with_extra_credit_assignments">[1]</a>
+</li>
+      <li><a href="api/core-gradebook.html#gradelib.GradingGroup.with_proportional_weights">with_proportional_weights() (gradelib.GradingGroup class method)</a>, <a href="api/core-groups.html#gradelib.GradingGroup.with_proportional_weights">[1]</a>
 </li>
   </ul></td>
   </tr>

@@ -15,7 +15,7 @@
 <link href="../search.html" rel="search" title="Search"/>
 <link href="../genindex.html" rel="index" title="Index"/>
 <link href="core-students.html" rel="next" title="Student and Students"/>
-<link href="core-gradebook.html" rel="prev" title="Gradebook et al."/>
+<link href="core-groups.html" rel="prev" title="Grading Groups"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
       const userPreference = localStorage.getItem('darkMode');
@@ -79,6 +79,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/loading.html">Loading Grades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/preprocessing.html">Preprocessing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/groups.html">Grading Groups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorial/extra_credit.html">Extra Credit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/policies.html">Grading Policies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/scales.html">Setting Letter Grade Scales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/reviewing.html">Reviewing and Distributing Grades</a></li>
@@ -89,6 +90,7 @@
 <li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="index.html">API<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l2 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="core.html"><code class="docutils literal notranslate"><span class="pre">gradelib</span></code><button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l3"><a class="reference internal" href="core-gradebook.html"><code class="docutils literal notranslate"><span class="pre">Gradebook</span></code> et al.</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core-groups.html"><code class="docutils literal notranslate"><span class="pre">Grading</span> <span class="pre">Groups</span></code></a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">Assignments</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="core-students.html"><code class="docutils literal notranslate"><span class="pre">Student</span></code> and <code class="docutils literal notranslate"><span class="pre">Students</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="core-amounts.html"><code class="docutils literal notranslate"><span class="pre">Points</span></code> and <code class="docutils literal notranslate"><span class="pre">Percentage</span></code></a></li>
@@ -287,11 +289,11 @@ part.</p>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 <div class="mr-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="core-gradebook.html">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="core-groups.html">
 <svg class="mr-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="15 18 9 12 15 6"></polyline>
 </svg>
-        Gradebook et al.
+        Grading Groups
       </a>
 </div>
 <div class="ml-auto">

@@ -14,7 +14,7 @@
 <link href="../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../search.html" rel="search" title="Search"/>
 <link href="../genindex.html" rel="index" title="Index"/>
-<link href="policies.html" rel="next" title="Grading Policies"/>
+<link href="extra_credit.html" rel="next" title="Extra Credit"/>
 <link href="preprocessing.html" rel="prev" title="Preprocessing"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
@@ -79,6 +79,7 @@
 <li class="toctree-l2"><a class="reference internal" href="loading.html">Loading Grades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="preprocessing.html">Preprocessing</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Grading Groups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extra_credit.html">Extra Credit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="policies.html">Grading Policies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="scales.html">Setting Letter Grade Scales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reviewing.html">Reviewing and Distributing Grades</a></li>
@@ -89,6 +90,7 @@
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../api/index.html">API<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l2" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../api/core.html"><code class="docutils literal notranslate"><span class="pre">gradelib</span></code><button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l3"><a class="reference internal" href="../api/core-gradebook.html"><code class="docutils literal notranslate"><span class="pre">Gradebook</span></code> et al.</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/core-groups.html"><code class="docutils literal notranslate"><span class="pre">Grading</span> <span class="pre">Groups</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/core-assignments.html"><code class="docutils literal notranslate"><span class="pre">Assignments</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/core-students.html"><code class="docutils literal notranslate"><span class="pre">Student</span></code> and <code class="docutils literal notranslate"><span class="pre">Students</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/core-amounts.html"><code class="docutils literal notranslate"><span class="pre">Points</span></code> and <code class="docutils literal notranslate"><span class="pre">Percentage</span></code></a></li>
@@ -137,41 +139,106 @@
 <h1>Grading Groups<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#grading-groups"><span>#</span></a></h1>
 <p>In a typical class, assignments are organized into groups (e.g., “homeworks”,
 “labs”, etc.), and a student’s overall score in the course is determined by a
-weighted average of their score in each group. This is done in <cite>gradelib</cite> by
-setting the <code class="docutils literal notranslate"><span class="pre">.grading_groups</span></code> attribute of the <a class="reference internal" href="../api/core-gradebook.html#gradelib.Gradebook" title="gradelib.Gradebook"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gradebook</span></code></a> object.</p>
-<p>The <a class="reference internal" href="../api/core-gradebook.html#gradelib.Gradebook.grading_groups" title="gradelib.Gradebook.grading_groups"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Gradebook.grading_groups</span></code></a> attribute can be set in several different
-ways. The value should be a dict mapping group names to <em>grading group
-definitions</em>. A group definition can be any of the following:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>A single number. In this case, the group name is treated as an
-assignment name.</p></li>
-<li><p>A tuple of the form <code class="docutils literal notranslate"><span class="pre">(assignments,</span> <span class="pre">group_weight)</span></code>, where
-<code class="docutils literal notranslate"><span class="pre">assignments</span></code> is an iterable of assignment names or a dict mapping
-assignment names to weights. If <code class="docutils literal notranslate"><span class="pre">assignments</span></code> is an iterable, the
-weights are inferred to be proportional to the points possible for each
-assignment. If <code class="docutils literal notranslate"><span class="pre">assignments</span></code> is a dict, the weights are taken directly
-from the dict.</p></li>
-<li><p>A <a class="reference internal" href="../api/core-gradebook.html#gradelib.GradingGroup" title="gradelib.GradingGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradingGroup</span></code></a> instance.</p></li>
+weighted average of their score in each group. Grading groups are defined in
+<cite>gradelib</cite> by setting the <code class="docutils literal notranslate"><span class="pre">.grading_groups</span></code> attribute on a <a class="reference internal" href="../api/core-gradebook.html#gradelib.Gradebook" title="gradelib.Gradebook"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gradebook</span></code></a>
+object. <cite>gradelib</cite> provides several ways to define grading groups conveniently, outlined
+below.</p>
+<p>To motivate the discussion, let’s consider an example. Let’s say we have a class with
+four types of assignments: homeworks, labs, quizzes, and an exam. The grading scheme
+is as follows:</p>
+<ul class="simple">
+<li><p><strong>Homeworks</strong> are worth 25% of the overall grade. Each homework is weight according
+to the number of points possible: 20% for Homework 01, 30% for Homework 02, and
+50% for Homework 03.</p></li>
+<li><p><strong>Labs</strong> are worth 25% of the overall grade. Each of the three labs is worth 1/3 of
+the lab grade.</p></li>
+<li><p><strong>Quizzes</strong> are worth 30% of the overall grade. Quiz 01 is worth 40% of the quiz
+grade, and Quiz 02 is worth 60%.</p></li>
+<li><p>The <strong>exam</strong> is worth 20% of the overall grade.</p></li>
 </ul>
-</div></blockquote>
-<p>To normalize the weights of assignments (so that they are all weighed the same)
-use the <a class="reference internal" href="../api/core.html#gradelib.normalize" title="gradelib.normalize"><code class="xref py py-func docutils literal notranslate"><span class="pre">gradelib.normalize()</span></code></a> function.</p>
-<section id="example">
-<h2>Example<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#example" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#example'"><span>#</span></a></h2>
-<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="gp">&gt;&gt;&gt; </span><span class="n">gradebook</span><span class="o">.</span><span class="n">grading_groups</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="line-2"><span class="gp">... </span>    <span class="c1"># list of assignments, followed by group weight. assignment weights</span>
-</span><span id="line-3"><span class="gp">... </span>    <span class="c1"># are inferred to be proportional to points possible</span>
-</span><span id="line-4"><span class="gp">... </span>    <span class="s2">"homeworks"</span><span class="p">:</span> <span class="p">([</span><span class="s1">'hw 01'</span><span class="p">,</span> <span class="s1">'hw 02'</span><span class="p">,</span> <span class="s1">'hw 03'</span><span class="p">],</span> <span class="mf">0.25</span><span class="p">),</span>
-</span><span id="line-5"><span class="gp">...</span>
-</span><span id="line-6"><span class="gp">... </span>    <span class="c1"># dictionary of assignment weights, followed by group weight.</span>
-</span><span id="line-7"><span class="gp">... </span>    <span class="s2">"labs"</span><span class="p">:</span> <span class="p">({</span><span class="s2">"lab 01"</span><span class="p">:</span> <span class="mf">.25</span><span class="p">,</span> <span class="s2">"lab 02"</span><span class="p">:</span> <span class="mf">.75</span><span class="p">},</span> <span class="mf">0.25</span><span class="p">),</span>
-</span><span id="line-8"><span class="gp">...</span>
-</span><span id="line-9"><span class="gp">... </span>    <span class="c1"># a single number. the key is interpreted as an assignment name,</span>
-</span><span id="line-10"><span class="gp">... </span>    <span class="c1"># and an assignment group consisting only of that assignment is</span>
-</span><span id="line-11"><span class="gp">... </span>    <span class="c1"># created.</span>
-</span><span id="line-12"><span class="gp">... </span>    <span class="s2">"exam"</span><span class="p">:</span> <span class="mf">0.5</span>
-</span><span id="line-13"><span class="gp">... </span><span class="p">}</span>
+<section id="general-approach">
+<h2>General approach<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#general-approach" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#general-approach'"><span>#</span></a></h2>
+<p>Most generally, the <cite>.grading_groups</cite> attribute should be set to a dictionary
+mapping group names to <a class="reference internal" href="../api/core-groups.html#gradelib.GradingGroup" title="gradelib.GradingGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradingGroup</span></code></a> objects. The <a class="reference internal" href="../api/core-groups.html#gradelib.GradingGroup" title="gradelib.GradingGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradingGroup</span></code></a>
+objects define the assignments in the group and their weights, as well as the
+weight of the group in the overall grade calculation.</p>
+<p>The example scheme can be defined as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">gradebook</span><span class="o">.</span><span class="n">grading_groups</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-2">    <span class="s2">"homeworks"</span><span class="p">:</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">GradingGroup</span><span class="p">(</span>
+</span><span id="line-3">        <span class="p">{</span>
+</span><span id="line-4">            <span class="s2">"Homework 01"</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span>
+</span><span id="line-5">            <span class="s2">"Homework 02"</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span>
+</span><span id="line-6">            <span class="s2">"Homework 03"</span><span class="p">:</span> <span class="mf">0.5</span>
+</span><span id="line-7">        <span class="p">},</span>
+</span><span id="line-8">        <span class="n">group_weight</span><span class="o">=</span><span class="mf">0.25</span>
+</span><span id="line-9">    <span class="p">),</span>
+</span><span id="line-10">    <span class="s2">"labs"</span><span class="p">:</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">GradingGroup</span><span class="p">(</span>
+</span><span id="line-11">        <span class="p">{</span>
+</span><span id="line-12">            <span class="s2">"Lab 01"</span><span class="p">:</span> <span class="mi">1</span><span class="o">/</span><span class="mi">3</span><span class="p">,</span>
+</span><span id="line-13">            <span class="s2">"Lab 02"</span><span class="p">:</span> <span class="mi">1</span><span class="o">/</span><span class="mi">3</span><span class="p">,</span>
+</span><span id="line-14">            <span class="s2">"Lab 03"</span><span class="p">:</span> <span class="mi">1</span><span class="o">/</span><span class="mi">3</span>
+</span><span id="line-15">        <span class="p">},</span>
+</span><span id="line-16">        <span class="n">group_weight</span><span class="o">=</span><span class="mf">0.25</span>
+</span><span id="line-17">    <span class="p">),</span>
+</span><span id="line-18">    <span class="s2">"quizzes"</span><span class="p">:</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">GradingGroup</span><span class="p">(</span>
+</span><span id="line-19">        <span class="p">{</span>
+</span><span id="line-20">            <span class="s2">"Quiz 01"</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">,</span>
+</span><span id="line-21">            <span class="s2">"Quiz 02"</span><span class="p">:</span> <span class="mf">0.6</span>
+</span><span id="line-22">        <span class="p">},</span>
+</span><span id="line-23">        <span class="n">group_weight</span><span class="o">=</span><span class="mf">0.3</span>
+</span><span id="line-24">    <span class="p">),</span>
+</span><span id="line-25">    <span class="s2">"exam"</span><span class="p">:</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">GradingGroup</span><span class="p">(</span>
+</span><span id="line-26">        <span class="p">{</span><span class="s2">"Exam"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+</span><span id="line-27">        <span class="n">group_weight</span><span class="o">=</span><span class="mf">0.2</span>
+</span><span id="line-28">    <span class="p">)</span>
+</span><span id="line-29"><span class="p">}</span>
+</span></code></pre></div>
+</div>
+<p>This approach can be used to define any grading group configuration. However,
+<cite>gradelib</cite> provides several conveniences for making common
+configurations easier to define.</p>
+</section>
+<section id="conveniences">
+<h2>Conveniences<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#conveniences" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#conveniences'"><span>#</span></a></h2>
+<p>A common pattern is to create a grading group where each assignment is equally-weighted,
+or weighed according to the nuber of points possible. <cite>gradelib</cite> provides two
+convenience methods for defining these types of grading groups: <a class="reference internal" href="../api/core-groups.html#gradelib.GradingGroup.with_equal_weights" title="gradelib.GradingGroup.with_equal_weights"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GradingGroup.with_equal_weights()</span></code></a>
+and <a class="reference internal" href="../api/core-groups.html#gradelib.GradingGroup.with_proportional_weights" title="gradelib.GradingGroup.with_proportional_weights"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GradingGroup.with_proportional_weights()</span></code></a>.</p>
+<p>To make it easier to define a grading group with only one assignment, the <cite>.grading_groups</cite>
+dictionary may contain keys mapped to a single float, which is interpreted as the weight
+of the assignment in the overall grade calculation.</p>
+<p>Finally, the <cite>.grading_groups</cite> dictionary may also contain keys mapped to a tuple of
+two elements: a dictionary of assignment weights, followed by the group weight. This
+saves some typing over the general approach.</p>
+<p>Altogether, the example scheme can be defined as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">gradebook</span><span class="o">.</span><span class="n">grading_groups</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-2">    <span class="c1"># each assignment is given a weight proportional to the</span>
+</span><span id="line-3">    <span class="c1"># number of points possible</span>
+</span><span id="line-4">    <span class="s2">"homeworks"</span><span class="p">:</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">GradingGroup</span><span class="o">.</span><span class="n">with_proportional_weights</span><span class="p">(</span>
+</span><span id="line-5">        <span class="n">gradebook</span><span class="p">,</span>
+</span><span id="line-6">        <span class="n">gradebook</span><span class="o">.</span><span class="n">assignments</span><span class="o">.</span><span class="n">starting_with</span><span class="p">(</span><span class="s2">"Homework"</span><span class="p">),</span>
+</span><span id="line-7">        <span class="n">group_weight</span><span class="o">=</span><span class="mf">0.25</span>
+</span><span id="line-8">    <span class="p">),</span>
+</span><span id="line-9">
+</span><span id="line-10">    <span class="c1"># each assignment is equally weighted</span>
+</span><span id="line-11">    <span class="s2">"labs"</span><span class="p">:</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">GradingGroup</span><span class="o">.</span><span class="n">with_equal_weights</span><span class="p">(</span>
+</span><span id="line-12">        <span class="n">gradebook</span><span class="o">.</span><span class="n">assignments</span><span class="o">.</span><span class="n">starting_with</span><span class="p">(</span><span class="s2">"lab"</span><span class="p">),</span>
+</span><span id="line-13">        <span class="n">group_weight</span><span class="o">=</span><span class="mf">0.25</span>
+</span><span id="line-14">    <span class="p">),</span>
+</span><span id="line-15">
+</span><span id="line-16">    <span class="c1"># the 2-tuple format is used to save some typing</span>
+</span><span id="line-17">    <span class="s2">"quizzes"</span><span class="p">:</span> <span class="p">(</span>
+</span><span id="line-18">        <span class="p">{</span>
+</span><span id="line-19">            <span class="s2">"quiz 1"</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">,</span>
+</span><span id="line-20">            <span class="s2">"quiz 2"</span><span class="p">:</span> <span class="mf">0.6</span>
+</span><span id="line-21">        <span class="p">},</span>
+</span><span id="line-22">        <span class="mf">0.3</span>
+</span><span id="line-23">    <span class="p">),</span>
+</span><span id="line-24">
+</span><span id="line-25">    <span class="c1"># a single assignment can be given a weight directly without creating</span>
+</span><span id="line-26">    <span class="c1"># a GradingGroup object</span>
+</span><span id="line-27">    <span class="s2">"exam"</span><span class="p">:</span> <span class="mf">0.2</span>
+</span><span id="line-28"><span class="p">}</span>
 </span></code></pre></div>
 </div>
 </section>
@@ -186,8 +253,8 @@ use the <a class="reference internal" href="../api/core.html#gradelib.normalize"
       </a>
 </div>
 <div class="ml-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="policies.html">
-        Grading Policies
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="extra_credit.html">
+        Extra Credit
         <svg class="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="9 18 15 12 9 6"></polyline>
 </svg>
@@ -196,7 +263,8 @@ use the <a class="reference internal" href="../api/core.html#gradelib.normalize"
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
-<li><a :data-current="activeSection === '#example'" class="reference internal" href="#example">Example</a></li>
+<li><a :data-current="activeSection === '#general-approach'" class="reference internal" href="#general-approach">General approach</a></li>
+<li><a :data-current="activeSection === '#conveniences'" class="reference internal" href="#conveniences">Conveniences</a></li>
 </ul>
 </div>
 </aside>

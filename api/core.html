@@ -79,6 +79,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/loading.html">Loading Grades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/preprocessing.html">Preprocessing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/groups.html">Grading Groups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorial/extra_credit.html">Extra Credit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/policies.html">Grading Policies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/scales.html">Setting Letter Grade Scales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorial/reviewing.html">Reviewing and Distributing Grades</a></li>
@@ -89,6 +90,7 @@
 <li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="index.html">API<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l2 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="current reference internal expandable" href="#"><code class="docutils literal notranslate"><span class="pre">gradelib</span></code><button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l3"><a class="reference internal" href="core-gradebook.html"><code class="docutils literal notranslate"><span class="pre">Gradebook</span></code> et al.</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core-groups.html"><code class="docutils literal notranslate"><span class="pre">Grading</span> <span class="pre">Groups</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="core-assignments.html"><code class="docutils literal notranslate"><span class="pre">Assignments</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="core-students.html"><code class="docutils literal notranslate"><span class="pre">Student</span></code> and <code class="docutils literal notranslate"><span class="pre">Students</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="core-amounts.html"><code class="docutils literal notranslate"><span class="pre">Points</span></code> and <code class="docutils literal notranslate"><span class="pre">Percentage</span></code></a></li>
@@ -142,7 +144,13 @@
 <li><dl class="simple">
 <dt><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook" title="gradelib.Gradebook"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gradebook</span></code></a> - The core data structure for managing grades.</dt><dd><ul>
 <li><p><a class="reference internal" href="core-gradebook.html#gradelib.GradebookOptions" title="gradelib.GradebookOptions"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradebookOptions</span></code></a> - Options for configuring the gradebook.</p></li>
-<li><p><a class="reference internal" href="core-gradebook.html#gradelib.GradingGroup" title="gradelib.GradingGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradingGroup</span></code></a> - Represents a group of students and their assignments.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a class="reference internal" href="core-groups.html#gradelib.GradingGroup" title="gradelib.GradingGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradingGroup</span></code></a> - Represents a group of assignments and their weights.</dt><dd><ul>
+<li><p><a class="reference internal" href="core-groups.html#gradelib.ExtraCredit" title="gradelib.ExtraCredit"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtraCredit</span></code></a> - Represents extra credit assignments.</p></li>
 </ul>
 </dd>
 </dl>
@@ -155,7 +163,6 @@
 </section>
 <section id="functions">
 <h2>Functions<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#functions" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#functions'"><span>#</span></a></h2>
-<p>There are two top-level functions:</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gradelib.combine_gradebooks">
 <span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">combine_gradebooks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gradebooks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Collection</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook" title="gradelib.core._gradebook.Gradebook"><span class="pre">Gradebook</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restrict_to_students</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Collection</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="core-students.html#gradelib.Student" title="gradelib.core._student.Student"><span class="pre">Student</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="core-gradebook.html#gradelib.Gradebook" title="gradelib.core._gradebook.Gradebook"><span class="pre">Gradebook</span></a></span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#gradelib.combine_gradebooks" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#gradelib.combine_gradebooks'"><span>#</span></a></dt>
@@ -190,36 +197,6 @@ Default: None</p></li>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="gradelib.normalize">
-<span class="sig-prename descclassname"><span class="pre">gradelib.</span></span><span class="sig-name descname"><span class="pre">normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assignments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Collection</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#gradelib.normalize" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#gradelib.normalize'"><span>#</span></a></dt>
-<dd><p>Normalize assignment weights.</p>
-<p>When given a collection, such as a list of assignment names, the return value is a
-dictionary mapping assignment names to the same, normalized weight.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>assignments</strong> (<em>Collection</em><em>[</em><em>str</em><em>]</em>) – The assignments to normalize.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>An assignment weight dictionary in which each assignment is weighed equally.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict[str, float]</p>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="gp">&gt;&gt;&gt; </span><span class="n">normalize</span><span class="p">([</span><span class="s1">'foo'</span><span class="p">,</span> <span class="s1">'bar'</span><span class="p">,</span> <span class="s1">'baz'</span><span class="p">,</span> <span class="s1">'quux'</span><span class="p">])</span>
-</span><span id="line-2"><span class="go">{'foo': 0.25, 'bar': 0.25, 'baz': 0.25, 'quux': 0.25}</span>
-</span></code></pre></div>
-</div>
-<p>Useful when creating grading groups. For instance:</p>
-<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="gp">&gt;&gt;&gt; </span><span class="n">gradebook</span><span class="o">.</span><span class="n">grading_groups</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="line-2"><span class="gp">... </span>    <span class="s1">'homework'</span><span class="p">:</span> <span class="p">(</span><span class="n">normalize</span><span class="p">(</span><span class="n">gradebook</span><span class="o">.</span><span class="n">assignments</span><span class="o">.</span><span class="n">starting_with</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)),</span> <span class="mf">0.5</span><span class="p">),</span>
-</span><span id="line-3"><span class="gp">... </span>    <span class="s1">'labs'</span><span class="p">:</span> <span class="p">(</span><span class="n">normalize</span><span class="p">(</span><span class="n">gradebook</span><span class="o">.</span><span class="n">assignments</span><span class="o">.</span><span class="n">starting_with</span><span class="p">(</span><span class="s1">'lab'</span><span class="p">)),</span> <span class="mf">0.5</span><span class="p">)</span>
-</span><span id="line-4"><span class="gp">... </span><span class="p">}</span>
-</span></code></pre></div>
-</div>
-</dd></dl>
 </section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
@@ -245,7 +222,6 @@ dictionary mapping assignment names to the same, normalized weight.</p>
 <li><a :data-current="activeSection === '#core-types'" class="reference internal" href="#core-types">Core Types</a></li>
 <li><a :data-current="activeSection === '#functions'" class="reference internal" href="#functions">Functions</a><ul>
 <li><a :data-current="activeSection === '#gradelib.combine_gradebooks'" class="reference internal" href="#gradelib.combine_gradebooks"><code class="docutils literal notranslate"><span class="pre">combine_gradebooks()</span></code></a></li>
-<li><a :data-current="activeSection === '#gradelib.normalize'" class="reference internal" href="#gradelib.normalize"><code class="docutils literal notranslate"><span class="pre">normalize()</span></code></a></li>
 </ul>
 </li>
 </ul>

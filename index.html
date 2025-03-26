@@ -78,6 +78,7 @@
 <li class="toctree-l2"><a class="reference internal" href="tutorial/loading.html">Loading Grades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/preprocessing.html">Preprocessing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/groups.html">Grading Groups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/extra_credit.html">Extra Credit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/policies.html">Grading Policies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/scales.html">Setting Letter Grade Scales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/reviewing.html">Reviewing and Distributing Grades</a></li>
@@ -88,6 +89,7 @@
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="api/index.html">API<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l2" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="api/core.html"><code class="docutils literal notranslate"><span class="pre">gradelib</span></code><button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l3"><a class="reference internal" href="api/core-gradebook.html"><code class="docutils literal notranslate"><span class="pre">Gradebook</span></code> et al.</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/core-groups.html"><code class="docutils literal notranslate"><span class="pre">Grading</span> <span class="pre">Groups</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/core-assignments.html"><code class="docutils literal notranslate"><span class="pre">Assignments</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/core-students.html"><code class="docutils literal notranslate"><span class="pre">Student</span></code> and <code class="docutils literal notranslate"><span class="pre">Students</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/core-amounts.html"><code class="docutils literal notranslate"><span class="pre">Points</span></code> and <code class="docutils literal notranslate"><span class="pre">Percentage</span></code></a></li>
@@ -161,33 +163,37 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 </span><span id="line-12">
 </span><span id="line-13"><span class="c1"># group the assignments and determine their weight in the overall score calculation</span>
 </span><span id="line-14"><span class="n">gb</span><span class="o">.</span><span class="n">grading_groups</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="line-15">    <span class="s1">'homeworks'</span><span class="p">:</span> <span class="p">(</span><span class="n">HOMEWORKS</span><span class="p">,</span> <span class="mf">.25</span><span class="p">),</span>
-</span><span id="line-16">    <span class="s1">'labs'</span><span class="p">:</span> <span class="p">(</span><span class="n">LABS</span><span class="p">,</span> <span class="mf">.25</span><span class="p">),</span>
-</span><span id="line-17">    <span class="s1">'midterm exam'</span><span class="p">:</span> <span class="mf">.25</span><span class="p">,</span>
-</span><span id="line-18">    <span class="s1">'final exam'</span><span class="p">:</span> <span class="mf">.25</span>
-</span><span id="line-19"><span class="p">}</span>
-</span><span id="line-20">
-</span><span id="line-21"><span class="c1"># handle exceptions</span>
-</span><span id="line-22"><span class="n">exceptions</span><span class="o">.</span><span class="n">make_exceptions</span><span class="p">(</span>
-</span><span id="line-23">    <span class="n">gb</span><span class="p">,</span>
-</span><span id="line-24">    <span class="s2">"Justin"</span><span class="p">,</span>
-</span><span id="line-25">    <span class="p">[</span>
-</span><span id="line-26">        <span class="n">exceptions</span><span class="o">.</span><span class="n">Drop</span><span class="p">(</span><span class="s2">"lab 01"</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">"illness"</span><span class="p">),</span>
-</span><span id="line-27">        <span class="n">exceptions</span><span class="o">.</span><span class="n">Replace</span><span class="p">(</span><span class="s2">"homework 01"</span><span class="p">,</span> <span class="n">with_</span><span class="o">=</span><span class="s2">"homework 02"</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">"added late"</span><span class="p">)</span>
-</span><span id="line-28">    <span class="p">]</span>
-</span><span id="line-29"><span class="p">)</span>
-</span><span id="line-30">
-</span><span id="line-31"><span class="c1"># apply grading policies</span>
-</span><span id="line-32"><span class="n">lates</span><span class="o">.</span><span class="n">penalize</span><span class="p">(</span><span class="n">gb</span><span class="p">,</span> <span class="n">policy</span><span class="o">=</span><span class="n">lates</span><span class="o">.</span><span class="n">Forgive</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">within</span><span class="o">=</span><span class="n">HOMEWORKS</span> <span class="o">+</span> <span class="n">LABS</span><span class="p">)</span>
-</span><span id="line-33"><span class="n">drops</span><span class="o">.</span><span class="n">drop_most_favorable</span><span class="p">(</span><span class="n">gb</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">within</span><span class="o">=</span><span class="n">HOMEWORKS</span><span class="p">)</span>
-</span><span id="line-34"><span class="n">drops</span><span class="o">.</span><span class="n">drop_most_favorable</span><span class="p">(</span><span class="n">gb</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">within</span><span class="o">=</span><span class="n">LABS</span><span class="p">)</span>
-</span><span id="line-35">
-</span><span id="line-36"><span class="c1"># find robust letter grade cutoffs by clustering grades</span>
-</span><span id="line-37"><span class="n">gb</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">scales</span><span class="o">.</span><span class="n">find_robust_scale</span><span class="p">(</span><span class="n">gb</span><span class="o">.</span><span class="n">overall_score</span><span class="p">)</span>
-</span><span id="line-38">
-</span><span id="line-39"><span class="c1"># generate student reports, complete with auto-generated grading notes about which</span>
-</span><span id="line-40"><span class="c1"># assignments were dropped, penalized for being late, etc.</span>
-</span><span id="line-41"><span class="n">gradelib</span><span class="o">.</span><span class="n">reports</span><span class="o">.</span><span class="n">generate_latex</span><span class="p">(</span><span class="n">gb</span><span class="p">,</span> <span class="n">output_directory</span><span class="o">=</span><span class="s2">"."</span><span class="p">)</span>
+</span><span id="line-15">    <span class="s1">'homeworks'</span><span class="p">:</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">GradingGroup</span><span class="o">.</span><span class="n">with_proportional_weights</span><span class="p">(</span>
+</span><span id="line-16">        <span class="n">gb</span><span class="p">,</span> <span class="n">HOMEWORKS</span><span class="p">,</span> <span class="n">group_weight</span><span class="o">=</span><span class="mf">.25</span>
+</span><span id="line-17">    <span class="p">),</span>
+</span><span id="line-18">    <span class="s1">'labs'</span><span class="p">:</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">GradingGroup</span><span class="o">.</span><span class="n">with_equal_weights</span><span class="p">(</span>
+</span><span id="line-19">        <span class="n">LABS</span><span class="p">,</span> <span class="n">group_weight</span><span class="o">=</span><span class="mf">.25</span>
+</span><span id="line-20">    <span class="p">),</span>
+</span><span id="line-21">    <span class="s1">'midterm 01'</span><span class="p">:</span> <span class="mf">.25</span><span class="p">,</span>
+</span><span id="line-22">    <span class="s1">'midterm 02'</span><span class="p">:</span> <span class="mf">.25</span>
+</span><span id="line-23"><span class="p">}</span>
+</span><span id="line-24">
+</span><span id="line-25"><span class="c1"># handle exceptions</span>
+</span><span id="line-26"><span class="n">exceptions</span><span class="o">.</span><span class="n">make_exceptions</span><span class="p">(</span>
+</span><span id="line-27">    <span class="n">gb</span><span class="p">,</span>
+</span><span id="line-28">    <span class="s2">"Justin"</span><span class="p">,</span>
+</span><span id="line-29">    <span class="p">[</span>
+</span><span id="line-30">        <span class="n">exceptions</span><span class="o">.</span><span class="n">Drop</span><span class="p">(</span><span class="s2">"lab 01"</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">"illness"</span><span class="p">),</span>
+</span><span id="line-31">        <span class="n">exceptions</span><span class="o">.</span><span class="n">Replace</span><span class="p">(</span><span class="s2">"homework 01"</span><span class="p">,</span> <span class="n">with_</span><span class="o">=</span><span class="s2">"homework 02"</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">"added late"</span><span class="p">)</span>
+</span><span id="line-32">    <span class="p">]</span>
+</span><span id="line-33"><span class="p">)</span>
+</span><span id="line-34">
+</span><span id="line-35"><span class="c1"># apply grading policies</span>
+</span><span id="line-36"><span class="n">lates</span><span class="o">.</span><span class="n">penalize</span><span class="p">(</span><span class="n">gb</span><span class="p">,</span> <span class="n">policy</span><span class="o">=</span><span class="n">lates</span><span class="o">.</span><span class="n">Forgive</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">within</span><span class="o">=</span><span class="n">HOMEWORKS</span> <span class="o">+</span> <span class="n">LABS</span><span class="p">)</span>
+</span><span id="line-37"><span class="n">drops</span><span class="o">.</span><span class="n">drop_most_favorable</span><span class="p">(</span><span class="n">gb</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">within</span><span class="o">=</span><span class="n">HOMEWORKS</span><span class="p">)</span>
+</span><span id="line-38"><span class="n">drops</span><span class="o">.</span><span class="n">drop_most_favorable</span><span class="p">(</span><span class="n">gb</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">within</span><span class="o">=</span><span class="n">LABS</span><span class="p">)</span>
+</span><span id="line-39">
+</span><span id="line-40"><span class="c1"># find robust letter grade cutoffs by clustering grades</span>
+</span><span id="line-41"><span class="n">gb</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">gradelib</span><span class="o">.</span><span class="n">scales</span><span class="o">.</span><span class="n">find_robust_scale</span><span class="p">(</span><span class="n">gb</span><span class="o">.</span><span class="n">overall_score</span><span class="p">)</span>
+</span><span id="line-42">
+</span><span id="line-43"><span class="c1"># generate student reports, complete with auto-generated grading notes about which</span>
+</span><span id="line-44"><span class="c1"># assignments were dropped, penalized for being late, etc.</span>
+</span><span id="line-45"><span class="n">gradelib</span><span class="o">.</span><span class="n">reports</span><span class="o">.</span><span class="n">generate_latex</span><span class="p">(</span><span class="n">gb</span><span class="p">,</span> <span class="n">output_directory</span><span class="o">=</span><span class="s2">"."</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 </section>
@@ -200,6 +206,7 @@ algorithm which finds “robust” thresholds for every letter grade.</p>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/loading.html">Loading Grades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/preprocessing.html">Preprocessing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/groups.html">Grading Groups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/extra_credit.html">Extra Credit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/policies.html">Grading Policies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/scales.html">Setting Letter Grade Scales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/reviewing.html">Reviewing and Distributing Grades</a></li>

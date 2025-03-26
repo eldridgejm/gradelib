@@ -35,20 +35,29 @@ Example
     import numpy as np
 
     students = ["Alice", "Barack", "Charlie"]
-    assignments = ["hw 01", "hw 02", "hw 03", "lab 01", "lab 02", "exam"]
+    assignments = ["hw 01", "hw 02", "hw 03", "lab 01", "lab 02", "quiz 1", "quiz 2", "exam"]
     points_earned = pd.DataFrame(
         np.random.randint(0, 10, size=(len(students), len(assignments))),
         index=students, columns=assignments
     )
-    points_possible = pd.Series([10, 10, 10], index=assignments)
+    points_possible = pd.Series([10, 10, 10, 15, 20, 10, 10, 10], index=assignments)
     gradebook = gradelib.Gradebook(points_earned, points_possible)
 
 .. doctest:: grading_groups
 
     >>> gradebook.grading_groups = {
-    ...     # list of assignments, followed by group weight. assignment weights
-    ...     # are inferred to be proportional to points possible
-    ...     "homeworks": (['hw 01', 'hw 02', 'hw 03'], 0.25),
+    ...     # each assignment is weighed equally
+    ...     "homeworks": gradelib.GradingGroup.with_equal_weights(
+    ...         gradebook.assignments.starting_with("hw"),
+    ...         group_weight=0.25
+    ...     ),
+    ...
+    ...     # each assignment is weighed according to the points possible
+    ...     "quizzes": gradelib.GradingGroup.with_proportional_weights(
+    ...         gradebook,
+    ...         gradebook.assignments.starting_with("quiz"),
+    ...         group_weight=0.25
+    ...     ),
     ...
     ...     # dictionary of assignment weights, followed by group weight.
     ...     "labs": ({"lab 01": .25, "lab 02": .75}, 0.25),
@@ -56,5 +65,5 @@ Example
     ...     # a single number. the key is interpreted as an assignment name,
     ...     # and an assignment group consisting only of that assignment is
     ...     # created.
-    ...     "exam": 0.5
+    ...     "exam": 0.25
     ... }

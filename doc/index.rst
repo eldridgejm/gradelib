@@ -50,10 +50,14 @@ algorithm which finds "robust" thresholds for every letter grade.
 
     # group the assignments and determine their weight in the overall score calculation
     gb.grading_groups = {
-        'homeworks': (HOMEWORKS, .25),
-        'labs': (LABS, .25),
-        'midterm exam': .25,
-        'final exam': .25
+        'homeworks': gradelib.GradingGroup.with_proportional_weights(
+            gb, HOMEWORKS, group_weight=.25
+        ),
+        'labs': gradelib.GradingGroup.with_equal_weights(
+            LABS, group_weight=.25
+        ),
+        'midterm 01': .25,
+        'midterm 02': .25
     }
 
     # handle exceptions

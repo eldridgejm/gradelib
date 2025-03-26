@@ -597,7 +597,7 @@ class Gradebook:
                 np.random.randint(0, 10, size=(len(students), len(assignments))),
                 index=students, columns=assignments
             )
-            points_possible = pd.Series([10, 10, 10], index=assignments)
+            points_possible = pd.Series([10, 10, 10, 20, 15, 20], index=assignments)
             gradebook = gradelib.Gradebook(points_earned, points_possible)
 
         .. doctest:: grading_groups
@@ -609,10 +609,10 @@ class Gradebook:
             ...     # a single number. the key is interpreted as an assignment name,
             ...     # and an assignment group consisting only of that assignment is
             ...     # created.
-            ...     "exam": 0.5
+            ...     "exam": 0.5,
             ...
             ...     # use equal weights for all assignments
-            ...     "homework": GradingGroup.with_equal_weights(["hw 01", "hw 02", "hw 03"], 0.25)
+            ...     "homework": gradelib.GradingGroup.with_equal_weights(["hw 01", "hw 02", "hw 03"], 0.25)
             ... }
 
         """

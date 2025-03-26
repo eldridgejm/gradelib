@@ -890,55 +890,6 @@ class Gradebook:
     # properties: scores ---------------------------------------------------------------
 
     @property
-    def _points_possible_in_grading_group_after_drops(self) -> pd.DataFrame:
-        """A table of the number of points possible in an assignment group, after drops.
-
-        Produces a table with one row per student, and one column per assignment group,
-        containing the number of points possible in that group after dropped assignments
-        have been removed.
-
-        Extra credit is excluded from the total points possible in a group.
-
-        This is a derived attribute; it should not be modified.
-
-        Raises
-        ------
-        ValueError
-            If all assignments in an assignment group have been dropped for a student.
-
-        """
-        result = {}
-        for group_name, group in self.grading_groups.items():
-            # the assignments which are not extra credit
-            regular_assignments = [
-                k
-                for k, v in group.assignment_weights.items()
-                if not isinstance(v, ExtraCredit)
-            ]
-
-            possible = pd.DataFrame(
-                np.tile(
-                    self.points_possible[regular_assignments],
-                    (self.points_earned.shape[0], 1),
-                ),
-                index=pd.Index(self.students),
-                columns=regular_assignments,
-            )
-
-            possible[self.dropped[list(group.assignment_weights)]] = 0
-            possible = possible.sum(axis=1)
-
-            if (possible == 0).any():
-                problematic_pids = list(possible.index[possible == 0])
-                raise ValueError(
-                    f"All assignments are dropped for {problematic_pids} in group '{group_name}'."
-                )
-
-            result[group_name] = possible
-
-        return pd.DataFrame(result, index=pd.Index(self.students))
-
-    @property
     def grading_group_scores(self) -> pd.DataFrame:
         """A table of the scores earned in each grading group.
 

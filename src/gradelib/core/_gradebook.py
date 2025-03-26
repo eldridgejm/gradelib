@@ -473,7 +473,7 @@ class GradingGroup:
             - The assignment weights are between 0 and 1.
             - The regular assignment weights sum to one.
             - The group weight is between 0 and 1.
-            - The group doesn't contain only extra credit assignments.
+            - The group contains at least one non-extra credit assignment.
 
         Raises a `ValueError` if any of these conditions are not met.
 
@@ -495,7 +495,12 @@ class GradingGroup:
 
 
 # type alias for the multiple valid ways to specify a grading group
-GradingGroupDefinition = Union[float, Tuple[Mapping[str, float], float], GradingGroup]
+GradingGroupDefinition = Union[
+    float,
+    ExtraCredit,
+    Tuple[Mapping[str, float | ExtraCredit], float | ExtraCredit],
+    GradingGroup,
+]
 
 
 # Gradebook ============================================================================

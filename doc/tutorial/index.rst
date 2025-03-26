@@ -11,6 +11,7 @@ Tutorial
    loading
    preprocessing
    groups
+   extra_credit
    policies
    scales
    reviewing

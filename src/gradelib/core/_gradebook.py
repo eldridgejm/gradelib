@@ -561,6 +561,12 @@ class Gradebook:
         An ordered mapping from letter grades to score thresholds used to
         determine overall letter grades. If not provided,
         :mod:`gradelib.scales.DEFAULT_SCALE` is used.
+    letter_grade_overrides : Optional[Mapping[Student, str]]
+        A mapping from students to letter grades that override the letter grades
+        computed from the scale. This is useful for cases where a student has a special
+        case that requires a different letter grade than what the scale would normally
+        produce. If not provided, no overrides are set, and the attribute is an empty
+        dictionary.
 
     Attributes
     ----------
@@ -571,6 +577,12 @@ class Gradebook:
     scale : dict
         An ordered mapping from letter grades to score thresholds used to
         determine overall letter grades.
+    letter_grade_overrides : dict[Student, str]
+        A mapping from students to letter grades that override the letter grades
+        computed from the scale. This is useful for cases where a student has a special
+        case that requires a different letter grade than what the scale would normally
+        produce. If not provided, no overrides are set, and the attribute is an empty
+        dictionary.
 
     """
 
@@ -595,6 +607,7 @@ class Gradebook:
         grading_groups: Optional[Mapping[str, GradingGroupDefinition]] = None,
         scale: Optional[Mapping] = None,
         options: Optional[GradebookOptions] = None,
+        letter_grade_overrides: Optional[Mapping[Student, str]] = None,
     ):
         self.options = options if options is not None else GradebookOptions()
         self.points_earned = _cast_index_to_student_objects(points_earned).astype(float)
@@ -608,6 +621,9 @@ class Gradebook:
         self.notes = {} if notes is None else _copy_notes(notes)
         self.grading_groups = {} if grading_groups is None else grading_groups
         self.scale = DEFAULT_SCALE if scale is None else scale
+        self.letter_grade_overrides = (
+            {} if letter_grade_overrides is None else dict(letter_grade_overrides)
+        )
 
     def __repr__(self):
         return (
@@ -1176,10 +1192,15 @@ class Gradebook:
 
         This is a dynamically-computed property; it should not be modified.
 
+        If a student has a letter grade override set in the
+        :attr:`letter_grade_overrides` attribute, that letter grade is used
+        instead of the one computed from the scale.
+
         Raises
         ------
         ValueError
-            If :attr:`grading_groups` has not yet been set.
+            If :attr:`grading_groups` has not yet been set or if one of the students in
+            :attr:`letter_grade_overrides` is not in the gradebook.
 
         """
         if not self.grading_groups:
@@ -1187,7 +1208,19 @@ class Gradebook:
                 "Grading groups should be set before calculating letter grades."
             )
 
-        return map_scores_to_letter_grades(self.overall_score, scale=self.scale)
+        letter_grades = map_scores_to_letter_grades(
+            self.overall_score, scale=self.scale
+        )
+
+        # if there are letter grade overrides, apply them
+        if self.letter_grade_overrides:
+            # create a copy of the letter grades so we don't modify the original
+            for student, override in self.letter_grade_overrides.items():
+                if student not in letter_grades.index:
+                    raise ValueError(f"Student {student} not found in gradebook.")
+                letter_grades[student] = override
+
+        return letter_grades
 
     # copying / replacing --------------------------------------------------------------
 

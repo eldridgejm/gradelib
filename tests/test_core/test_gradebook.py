@@ -891,6 +891,93 @@ def test_letter_grades_raises_if_groups_not_set():
         gradebook.letter_grades
 
 
+def test_letter_grade_overrides():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+    gradebook.dropped.loc["A1", "hw02"] = True
+    gradebook.dropped.loc["A2", "hw03"] = True
+
+    gradebook.scale = {
+        "A+": 0.9,
+        "A": 0.8,
+        "A-": 0.7,
+        "B+": 0.6,
+        "B": 0.5,
+        "B-": 0.4,
+        "C+": 0.35,
+        "C": 0.3,
+        "C-": 0.2,
+        "D": 0.1,
+        "F": 0,
+    }
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_equal_weights(HOMEWORKS, 0.6),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.4
+        ),
+    }
+
+    # then
+    assert gradebook.letter_grades.loc["A1"] == "A"
+    assert gradebook.letter_grades.loc["A2"] == "A-"
+
+    # override A1 to B+
+    gradebook.letter_grade_overrides = {"A1": "B+"}
+
+    # A1's grade is overridden and doesn't follow the scale
+    assert gradebook.letter_grades.loc["A1"] == "B+"
+    # A2 is unchanged
+    assert gradebook.letter_grades.loc["A2"] == "A-"
+
+
+def test_letter_grade_overrides_checks_for_validity():
+    # given
+    columns = ["hw01", "hw02", "hw03", "lab01"]
+    p1 = pd.Series(data=[1, 30, 90, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[2, 7, 15, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([2, 50, 100, 20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.scale = {
+        "A+": 0.9,
+        "A": 0.8,
+        "A-": 0.7,
+        "B+": 0.6,
+        "B": 0.5,
+        "B-": 0.4,
+        "C+": 0.35,
+        "C": 0.3,
+        "C-": 0.2,
+        "D": 0.1,
+        "F": 0,
+    }
+
+    HOMEWORKS = gradebook.assignments.starting_with("hw")
+
+    gradebook.grading_groups = {
+        "homeworks": gradelib.GradingGroup.with_equal_weights(HOMEWORKS, 0.6),
+        "labs": gradelib.GradingGroup.with_proportional_weights(
+            gradebook, ["lab01"], 0.4
+        ),
+    }
+
+    # then
+    gradebook.letter_grade_overrides = {"A5": "A"}
+
+    with pytest.raises(ValueError):
+        # trying to override a letter grade with a non-existent student
+        gradebook.letter_grades
+
+
 # tests: groups ========================================================================
 
 

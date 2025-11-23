@@ -1,10 +1,73 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "gradelib"
 version = "0.6.0"
-dependencies = ["pandas", "numpy", "matplotlib", "bokeh"]
+description = "A Python package for computing overall grades in courses"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Justin Eldridge", email = "jeldridge@ucsd.edu" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Education",
+]
+dependencies = [
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "bokeh",
+]
 
-[options]
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "pre-commit",
+]
+docs = [
+    "sphinx",
+    "sphinxawesome-theme",
+]
+
+[project.urls]
+Documentation = "https://eldridgejm.github.io/gradelib/"
+Repository = "https://github.com/eldridgejm/gradelib"
+Issues = "https://github.com/eldridgejm/gradelib/issues"
+
+[tool.hatch.build.targets.wheel]
 packages = ["src/gradelib"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest",
+    "ruff",
+    "pre-commit",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "UP",     # pyupgrade
+]

@@ -28,6 +28,7 @@ dependencies = [
     "numpy",
     "matplotlib",
     "bokeh",
+    "IPython"
 ]
 
 [project.optional-dependencies]

@@ -1,10 +1,11 @@
 import html
-from typing import Optional
 
+from IPython.display import HTML as _HTML
+from IPython.display import display as _display
+
+from . import plot as _plot
+from . import statistics as _statistics
 from .core import Gradebook
-from . import plot as _plot, statistics as _statistics
-
-from IPython.core.display import display as _display, HTML as _HTML
 
 
 def _item(desc, msg) -> str:
@@ -57,7 +58,7 @@ def _student_overview(gradebook: Gradebook, student_name: str):
         _display_html("</ul>")
 
 
-def overview(gradebook: Gradebook, student: Optional[str] = None):
+def overview(gradebook: Gradebook, student: str | None = None):
     """Display a nicely-formatted overview of a gradebook.
 
     Only availably inside of a jupyter notebook. Can be accessed from the

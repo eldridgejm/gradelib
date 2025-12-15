@@ -232,18 +232,20 @@ policy that penalizes multiple attempts.</p>
 </span><span id="line-4"><span class="go">&lt;Alice&gt;                  0.9                NaN                NaN</span>
 </span><span id="line-5"><span class="go">&lt;Barack&gt;                 0.5               0.70                1.0</span>
 </span><span id="line-6"><span class="go">&lt;Charlie&gt;                0.7               0.85                NaN</span>
-</span><span id="line-7"><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">penalize_10_per_attempt</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">raw_score</span><span class="p">):</span>
-</span><span id="line-8"><span class="gp">... </span>    <span class="k">return</span> <span class="n">raw_score</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">i</span><span class="p">)</span>
-</span><span id="line-9"><span class="gp">&gt;&gt;&gt; </span><span class="n">take_best</span><span class="p">(</span>
-</span><span id="line-10"><span class="gp">... </span>    <span class="n">gradebook</span><span class="p">,</span>
-</span><span id="line-11"><span class="gp">... </span>    <span class="n">attempts</span><span class="o">=</span><span class="n">gradebook</span><span class="o">.</span><span class="n">assignments</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">" - "</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()),</span>
-</span><span id="line-12"><span class="gp">... </span>    <span class="n">policy</span><span class="o">=</span><span class="n">penalize_10_per_attempt</span>
-</span><span id="line-13"><span class="gp">... </span><span class="p">)</span>
-</span><span id="line-14"><span class="gp">&gt;&gt;&gt; </span><span class="n">gradebook</span><span class="o">.</span><span class="n">score</span>
-</span><span id="line-15"><span class="go">            Exam</span>
-</span><span id="line-16"><span class="go">&lt;Alice&gt;    0.900</span>
-</span><span id="line-17"><span class="go">&lt;Barack&gt;   0.800</span>
-</span><span id="line-18"><span class="go">&lt;Charlie&gt;  0.765</span>
+</span><span id="line-7"><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">penalize_10_per_attempt</span><span class="p">(</span><span class="n">scores</span><span class="p">):</span>
+</span><span id="line-8"><span class="gp">... </span><span class="w">    </span><span class="sd">"""Penalize each subsequent attempt by 10% more than the previous."""</span>
+</span><span id="line-9"><span class="gp">... </span>    <span class="n">penalties</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mf">1.0</span> <span class="o">-</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">))],</span> <span class="n">index</span><span class="o">=</span><span class="n">scores</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+</span><span id="line-10"><span class="gp">... </span>    <span class="k">return</span> <span class="n">scores</span> <span class="o">*</span> <span class="n">penalties</span>
+</span><span id="line-11"><span class="gp">&gt;&gt;&gt; </span><span class="n">take_best</span><span class="p">(</span>
+</span><span id="line-12"><span class="gp">... </span>    <span class="n">gradebook</span><span class="p">,</span>
+</span><span id="line-13"><span class="gp">... </span>    <span class="n">attempts</span><span class="o">=</span><span class="n">gradebook</span><span class="o">.</span><span class="n">assignments</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">" - "</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()),</span>
+</span><span id="line-14"><span class="gp">... </span>    <span class="n">policy</span><span class="o">=</span><span class="n">penalize_10_per_attempt</span>
+</span><span id="line-15"><span class="gp">... </span><span class="p">)</span>
+</span><span id="line-16"><span class="gp">&gt;&gt;&gt; </span><span class="n">gradebook</span><span class="o">.</span><span class="n">score</span>
+</span><span id="line-17"><span class="go">            Exam</span>
+</span><span id="line-18"><span class="go">&lt;Alice&gt;    0.900</span>
+</span><span id="line-19"><span class="go">&lt;Barack&gt;   0.800</span>
+</span><span id="line-20"><span class="go">&lt;Charlie&gt;  0.765</span>
 </span></code></pre></div>
 </div>
 </section>

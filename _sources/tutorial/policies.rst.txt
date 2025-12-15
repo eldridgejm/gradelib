@@ -160,8 +160,10 @@ For example, to penalize each attempt by 10%, you can do the following:
     <Alice>                  0.9                NaN                NaN
     <Barack>                 0.5               0.70                1.0
     <Charlie>                0.7               0.85                NaN
-    >>> def penalize_10_per_attempt(i, raw_score):
-    ...     return raw_score * (1 - 0.1 * i)
+    >>> def penalize_10_per_attempt(scores):
+    ...     """Penalize each subsequent attempt by 10% more than the previous."""
+    ...     penalties = pd.Series([1.0 - 0.1 * i for i in range(len(scores))], index=scores.index)
+    ...     return scores * penalties
     >>> take_best(
     ...     gradebook,
     ...     attempts=gradebook.assignments.group_by(lambda s: s.split(" - ")[0].strip()),

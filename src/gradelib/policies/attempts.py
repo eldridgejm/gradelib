@@ -1,22 +1,12 @@
-from typing import Union, Sequence, Callable, Mapping, Optional
+from collections.abc import Callable, Mapping, Sequence
 
 import pandas as _pd
-
 
 from ..core import Gradebook
 
 
 def _fmt_as_pct(f):
     return f"{f * 100:0.2f}%"
-
-
-def _scores_after_penalty(
-    raw_scores: _pd.Series, policy: Callable[[int, float], float]
-):
-    """Apply a penalty policy to a series of scores."""
-    return _pd.Series(
-        [policy(i, score) for i, score in enumerate(raw_scores)], index=raw_scores.index
-    )
 
 
 def _make_notes(raw_scores: _pd.Series, effective_scores: _pd.Series) -> str:
@@ -31,7 +21,8 @@ def _make_notes(raw_scores: _pd.Series, effective_scores: _pd.Series) -> str:
             parts.append(f"{str(assignment).title()} score: {raw_score}.")
         else:
             parts.append(
-                f"{str(assignment).title()} raw score: {raw_score}, after penalty for retrying: {effective_score}."
+                f"{str(assignment).title()} raw score: {raw_score}, "
+                f"after penalty for retrying: {effective_score}."
             )
 
     # if all of a student's attempts are nans (i.e. they didn't attempt any of the
@@ -45,8 +36,8 @@ def _make_notes(raw_scores: _pd.Series, effective_scores: _pd.Series) -> str:
     return " ".join(parts)
 
 
-def _no_penalty_policy(_, score: float) -> float:
-    return score
+def _no_penalty_policy(scores: _pd.Series) -> _pd.Series:
+    return scores
 
 
 def take_best(
@@ -54,8 +45,8 @@ def take_best(
     attempts: Mapping[str, Sequence[str]],
     *,
     remove=True,
-    policy: Optional[Callable[[int, float], float]] = None,
-    points_possible: Union[int, float] = 1.0,
+    policy: Callable[[_pd.Series], _pd.Series] | None = None,
+    points_possible: int | float = 1.0,
 ):
     """Replaces multiple attempts at an assignment with the best.
 
@@ -69,11 +60,11 @@ def take_best(
         the new assignment.
     remove : bool, optional
         Whether to remove the existing assignments, by default True.
-    policy : Optional[Callable[[int, float], float]]
-        A function that takes an attempt number (with 0 being the first
-        attempt) and a score and returns a new score. This can be used to
-        penalize later attempts, for example. By default, the identity
-        function is used.
+    policy : Optional[Callable[[int, float], float]], optional
+        A function that takes a Series of the student's previous scores and returns a
+        Series of the effective scores after applying any penalties. The index of the
+        new Series should match that of the input Series. A value of ``None`` indicates
+        that no penalties should be applied; this is the default.
     points_possible : Union[int, float], optional
         The number of points possible on the new assignment, by default 1.
 
@@ -85,7 +76,7 @@ def take_best(
         best_scores = _pd.Series(dtype="float64")
         for student in gradebook.students:
             raw_attempt_scores = gradebook.score.loc[student, existing_assignments]
-            effective_attempt_scores = _scores_after_penalty(raw_attempt_scores, policy)
+            effective_attempt_scores = policy(raw_attempt_scores)
 
             gradebook.add_note(
                 student,

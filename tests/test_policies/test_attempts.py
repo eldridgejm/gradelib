@@ -1,10 +1,9 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+from util import assert_gradebook_is_sound
 
 import gradelib
 from gradelib.policies.attempts import take_best
-
-from util import assert_gradebook_is_sound
 
 
 def test_returns_maximum():
@@ -75,12 +74,14 @@ def test_adds_note():
     assert gradebook.notes == {
         "A1": {
             "attempts": [
-                "Mt01 score: 95.00%. Mt01 - Retry score: 100.00%. Mt01 - Retry score (100.00%) used.",
+                "Mt01 score: 95.00%. Mt01 - Retry score: 100.00%. "
+                "Mt01 - Retry score (100.00%) used.",
             ]
         },
         "A2": {
             "attempts": [
-                "Mt01 score: 92.00%. Mt01 - Retry score: 60.00%. Mt01 score (92.00%) used.",
+                "Mt01 score: 92.00%. Mt01 - Retry score: 60.00%. "
+                "Mt01 score (92.00%) used.",
             ]
         },
     }
@@ -164,23 +165,29 @@ def test_points_possible():
 
 def test_with_penalty_policy():
     # given
-    columns = ["mt01", "mt01 - retry"]
-    p1 = pd.Series(data=[95, 100], index=columns, name="A1")
-    p2 = pd.Series(data=[60, 100], index=columns, name="A2")
+    columns = ["mt01", "mt01 - retry 01", "mt01 - retry 02"]
+    p1 = pd.Series(data=[95, 100, 85], index=columns, name="A1")
+    p2 = pd.Series(data=[60, 85, 100], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([100, 100], index=columns)
+    maximums = pd.Series([100, 100, 100], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
 
-    def cap_at_90(i, score):
-        if i > 0:
-            return min(score, 0.9)
-        else:
-            return score
+    def cap_at_90(original_scores):
+        """A policy that caps all but the first attempt at 90%."""
+        return pd.Series(
+            np.concatenate(
+                [
+                    original_scores.values[:1],
+                    np.minimum(original_scores.values[1:], 0.9),
+                ]
+            ),
+            index=original_scores.index,
+        )
 
     # when
     take_best(
         gradebook,
-        {"mt01 with retry": ["mt01", "mt01 - retry"]},
+        {"mt01 with retry": ["mt01", "mt01 - retry 01", "mt01 - retry 02"]},
         policy=cap_at_90,
     )
 
@@ -191,23 +198,29 @@ def test_with_penalty_policy():
 
 def test_with_penalty_policy_adds_notes():
     # given
-    columns = ["mt01", "mt01 - retry"]
-    p1 = pd.Series(data=[95, 100], index=columns, name="A1")
-    p2 = pd.Series(data=[60, 100], index=columns, name="A2")
+    columns = ["mt01", "mt01 - retry 01", "mt01 - retry 02"]
+    p1 = pd.Series(data=[95, 100, 85], index=columns, name="A1")
+    p2 = pd.Series(data=[60, 85, 100], index=columns, name="A2")
     points = pd.DataFrame([p1, p2])
-    maximums = pd.Series([100, 100], index=columns)
+    maximums = pd.Series([100, 100, 100], index=columns)
     gradebook = gradelib.Gradebook(points, maximums)
 
-    def cap_at_90(i, score):
-        if i > 0:
-            return min(score, 0.9)
-        else:
-            return score
+    def cap_at_90(original_scores):
+        """A policy that caps all but the first attempt at 90%."""
+        return pd.Series(
+            np.concatenate(
+                [
+                    original_scores.values[:1],
+                    np.minimum(original_scores.values[1:], 0.9),
+                ]
+            ),
+            index=original_scores.index,
+        )
 
     # when
     take_best(
         gradebook,
-        {"mt01 with retry": ["mt01", "mt01 - retry"]},
+        {"mt01 with retry": ["mt01", "mt01 - retry 01", "mt01 - retry 02"]},
         policy=cap_at_90,
     )
 
@@ -215,12 +228,17 @@ def test_with_penalty_policy_adds_notes():
     assert gradebook.notes == {
         "A1": {
             "attempts": [
-                "Mt01 score: 95.00%. Mt01 - Retry raw score: 100.00%, after penalty for retrying: 90.00%. Mt01 score (95.00%) used.",
+                "Mt01 score: 95.00%. Mt01 - Retry 01 raw score: 100.00%, "
+                "after penalty for retrying: 90.00%. Mt01 - Retry 02 score: 85.00%. "
+                "Mt01 score (95.00%) used.",
             ]
         },
         "A2": {
             "attempts": [
-                "Mt01 score: 60.00%. Mt01 - Retry raw score: 100.00%, after penalty for retrying: 90.00%. Mt01 - Retry score (90.00%) used.",
+                "Mt01 score: 60.00%. Mt01 - Retry 01 score: 85.00%. "
+                "Mt01 - Retry 02 raw score: 100.00%, "
+                "after penalty for retrying: 90.00%. "
+                "Mt01 - Retry 02 score (90.00%) used.",
             ]
         },
     }

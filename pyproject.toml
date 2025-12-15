@@ -50,8 +50,8 @@ Issues = "https://github.com/eldridgejm/gradelib/issues"
 [tool.hatch.build.targets.wheel]
 packages = ["src/gradelib"]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest",
     "ruff",
     "pre-commit",

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gradelib"
-version = "0.7.0"
+version = "0.8.0"
 description = "A Python package for computing overall grades in courses"
 readme = "README.md"
 license = { text = "MIT" }

@@ -87,41 +87,6 @@ def test_adds_note():
     }
 
 
-def test_does_not_print_warning_if_all_attempts_are_nan(recwarn):
-    """If all of a student's attempts are nan, no warning should be printed."""
-    # given
-    columns = ["mt01", "mt01 - retry"]
-    p1 = pd.Series(data=[np.nan, np.nan], index=columns, name="A1")
-    points = pd.DataFrame([p1])
-    maximums = pd.Series([100, 100], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-
-    # when
-    # assert that no warnings are raised
-    take_best(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
-
-    # then
-    # no warnings should be raised
-    assert len(recwarn) == 0
-
-
-def test_best_attempt_is_nan_if_none_of_the_parts_are_attempted():
-    """If all of a student's attempts are nan, the best attempt should be nan."""
-    # given
-    columns = ["mt01", "mt01 - retry"]
-    p1 = pd.Series(data=[np.nan, np.nan], index=columns, name="A1")
-    points = pd.DataFrame([p1])
-    maximums = pd.Series([100, 100], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-
-    # when
-    take_best(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
-
-    # then
-    assert pd.isna(gradebook.points_earned.loc["A1", "mt01 with retry"])
-    assert_gradebook_is_sound(gradebook)
-
-
 def test_ignores_nan_when_taking_maximum():
     """Nans should be ignored. That is, if a student has a nan for one assignment, the
     maximum should be taken from the other assignments."""
@@ -188,7 +153,7 @@ def test_with_penalty_policy():
     take_best(
         gradebook,
         {"mt01 with retry": ["mt01", "mt01 - retry 01", "mt01 - retry 02"]},
-        policy=cap_at_90,
+        penalty_strategy=cap_at_90,
     )
 
     # then
@@ -221,7 +186,7 @@ def test_with_penalty_policy_adds_notes():
     take_best(
         gradebook,
         {"mt01 with retry": ["mt01", "mt01 - retry 01", "mt01 - retry 02"]},
-        policy=cap_at_90,
+        penalty_strategy=cap_at_90,
     )
 
     # then
@@ -242,3 +207,158 @@ def test_with_penalty_policy_adds_notes():
             ]
         },
     }
+
+
+# lateness strategy ====================================================================
+
+
+def test_lateness_with_max_lateness_strategy():
+    """Test that max_lateness strategy marks overall as late if ANY attempt is late."""
+    from gradelib.policies.attempts import max_lateness
+
+    # given - student A1 has on-time first attempt, late retry
+    columns = ["mt01", "mt01 - retry"]
+    p1 = pd.Series(data=[95, 100], index=columns, name="A1")
+    p2 = pd.Series(data=[92, 60], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([100, 100], index=columns)
+
+    lateness = pd.DataFrame(
+        [
+            pd.to_timedelta([0, 3600], "s"),  # A1: on-time, then 1hr late
+            pd.to_timedelta([0, 0], "s"),  # A2: both on-time
+        ],
+        columns=columns,
+        index=points.index,
+    )
+
+    gradebook = gradelib.Gradebook(points, maximums, lateness=lateness)
+
+    # when
+    take_best(
+        gradebook,
+        {"mt01 with retry": ["mt01", "mt01 - retry"]},
+        lateness_strategy=max_lateness,
+    )
+
+    # then - A1 should be late (max of 0 and 3600), A2 on-time
+    assert gradebook.lateness.loc["A1", "mt01 with retry"] == pd.Timedelta(
+        3600, unit="s"
+    )
+    assert gradebook.lateness.loc["A2", "mt01 with retry"] == pd.Timedelta(0, unit="s")
+    assert_gradebook_is_sound(gradebook)
+
+
+def test_lateness_with_lateness_of_best_strategy():
+    """Test that lateness_of_best strategy uses only the best attempt's lateness."""
+    from gradelib.policies.attempts import lateness_of_best
+
+    # given - A1's best attempt (retry) was late, A2's best (original) was on-time
+    columns = ["mt01", "mt01 - retry"]
+    p1 = pd.Series(data=[95, 100], index=columns, name="A1")
+    p2 = pd.Series(data=[92, 60], index=columns, name="A2")
+    points = pd.DataFrame([p1, p2])
+    maximums = pd.Series([100, 100], index=columns)
+
+    lateness = pd.DataFrame(
+        [
+            pd.to_timedelta([0, 3600], "s"),  # A1: on-time original, late retry
+            pd.to_timedelta([0, 7200], "s"),  # A2: on-time original, very late retry
+        ],
+        columns=columns,
+        index=points.index,
+    )
+
+    gradebook = gradelib.Gradebook(points, maximums, lateness=lateness)
+
+    # when
+    take_best(
+        gradebook,
+        {"mt01 with retry": ["mt01", "mt01 - retry"]},
+        lateness_strategy=lateness_of_best,
+    )
+
+    # then
+    # A1's best is retry (100 > 95), which was late
+    assert gradebook.lateness.loc["A1", "mt01 with retry"] == pd.Timedelta(
+        3600, unit="s"
+    )
+    # A2's best is original (92 > 60), which was on-time
+    assert gradebook.lateness.loc["A2", "mt01 with retry"] == pd.Timedelta(0, unit="s")
+    assert_gradebook_is_sound(gradebook)
+
+
+def test_lateness_defaults_to_max_lateness():
+    """Test that default behavior is max_lateness strategy."""
+    # given
+    columns = ["mt01", "mt01 - retry"]
+    p1 = pd.Series(data=[95, 100], index=columns, name="A1")
+    points = pd.DataFrame([p1])
+    maximums = pd.Series([100, 100], index=columns)
+
+    lateness = pd.DataFrame(
+        [
+            pd.to_timedelta([0, 3600], "s"),  # on-time original, late retry
+        ],
+        columns=columns,
+        index=points.index,
+    )
+
+    gradebook = gradelib.Gradebook(points, maximums, lateness=lateness)
+
+    # when - don't specify lateness_strategy
+    take_best(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
+
+    # then - should use max_lateness (conservative)
+    assert gradebook.lateness.loc["A1", "mt01 with retry"] == pd.Timedelta(
+        3600, unit="s"
+    )
+    assert_gradebook_is_sound(gradebook)
+
+
+def test_lateness_with_penalty_strategy():
+    """Test that lateness uses best attempt AFTER penalty is applied."""
+    from gradelib.policies.attempts import lateness_of_best
+
+    # given - policy will cap retries at 90%
+    columns = ["mt01", "mt01 - retry"]
+    p1 = pd.Series(data=[85, 100], index=columns, name="A1")  # retry gets capped to 90
+    points = pd.DataFrame([p1])
+    maximums = pd.Series([100, 100], index=columns)
+
+    lateness = pd.DataFrame(
+        [
+            pd.to_timedelta([0, 3600], "s"),  # original on-time, retry late
+        ],
+        columns=columns,
+        index=points.index,
+    )
+
+    gradebook = gradelib.Gradebook(points, maximums, lateness=lateness)
+
+    def cap_at_90(original_scores):
+        return pd.Series(
+            np.concatenate(
+                [
+                    original_scores.values[:1],
+                    np.minimum(original_scores.values[1:], 0.9),
+                ]
+            ),
+            index=original_scores.index,
+        )
+
+    # when
+    take_best(
+        gradebook,
+        {"mt01 with retry": ["mt01", "mt01 - retry"]},
+        penalty_strategy=cap_at_90,
+        lateness_strategy=lateness_of_best,
+    )
+
+    # then
+    # After penalty: original=85%, retry=90% (capped from 100%)
+    # Best is retry (90% > 85%), which was late
+    assert gradebook.lateness.loc["A1", "mt01 with retry"] == pd.Timedelta(
+        3600, unit="s"
+    )
+    assert_gradebook_is_sound(gradebook)

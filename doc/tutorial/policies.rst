@@ -132,7 +132,7 @@ Giving multiple chances at an assignment
 The :func:`gradelib.policies.attempts.take_best`
 function allows you to give students multiple chances at an assignment. By
 default, it takes the maximum score of all attempts, but you can specify a
-policy that penalizes multiple attempts.
+penalty strategy that penalizes multiple attempts.
 
 For example, to penalize each attempt by 10%, you can do the following:
 
@@ -167,13 +167,34 @@ For example, to penalize each attempt by 10%, you can do the following:
     >>> take_best(
     ...     gradebook,
     ...     attempts=gradebook.assignments.group_by(lambda s: s.split(" - ")[0].strip()),
-    ...     policy=penalize_10_per_attempt
+    ...     penalty_strategy=penalize_10_per_attempt
     ... )
     >>> gradebook.score
                 Exam
     <Alice>    0.900
     <Barack>   0.800
     <Charlie>  0.765
+
+Controlling lateness for multiple attempts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When combining multiple attempts, you can control how lateness is determined for
+the overall assignment using the ``lateness_strategy`` parameter. The lateness
+value is a time duration (Timedelta), not just a boolean flag.
+
+Three built-in strategies are available:
+
+- ``max_lateness`` (default): The overall lateness is the maximum lateness across
+  all attempts. This is conservative: if any attempt is late, the overall
+  assignment takes that maximum lateness amount.
+
+- ``lateness_of_best``: The overall lateness is taken from whichever attempt
+  scored the best (after applying any penalty strategy).
+
+- ``min_lateness``: The overall lateness is the minimum lateness across all
+  attempts. If any attempt is on-time (lateness = 0), the overall will be
+  on-time. Only if all attempts are late will the overall be late, using the
+  smallest lateness amount.
 
 Tracking exceptions
 -------------------

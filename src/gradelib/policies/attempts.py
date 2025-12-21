@@ -44,20 +44,23 @@ def _no_penalty_policy(scores: _pd.Series) -> _pd.Series:
 
 
 def max_lateness(latenesses: _pd.Series, _: str) -> _pd.Timedelta:
-    """Returns the maximum lateness.
+    """Returns the maximum lateness across all attempts.
 
-    In essence, this means that the overall assignment will be late if any of the
-    attempts is late.
+    The overall assignment's lateness will be the largest lateness value among all
+    attempts. This is the most conservative approach: if any attempt is late, the
+    overall assignment will be considered late with that maximum lateness amount.
 
     """
     return latenesses.max()
 
 
 def min_lateness(latenesses: _pd.Series, _: str) -> _pd.Timedelta:
-    """Returns the minimum lateness.
+    """Returns the minimum lateness across all attempts.
 
-    This essentially means that the overall assignment will be late only if all of the
-    attempts are late.
+    The overall assignment's lateness will be the smallest lateness value among all
+    attempts. If any attempt is on-time (lateness = 0), the overall will be on-time.
+    The overall assignment will only be considered late if all attempts are late, in
+    which case it takes the smallest lateness amount.
 
     """
     return latenesses.min()
@@ -106,9 +109,9 @@ def take_best(
 
         Built-in strategies:
 
-        - :func:`max_lateness` (default): Overall is late if ANY attempt is late
-        - :func:`lateness_of_best`: Overall is late only if the BEST attempt is late
-        - :func:`min_lateness`: Overall is late only if ALL attempts are late
+        - :func:`max_lateness` (default): Returns the maximum lateness across all attempts
+        - :func:`lateness_of_best`: Returns the lateness of whichever attempt scored best
+        - :func:`min_lateness`: Returns the minimum lateness across all attempts
 
         Default: :func:`max_lateness`
     points_possible : Union[int, float], optional

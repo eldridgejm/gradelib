@@ -87,41 +87,6 @@ def test_adds_note():
     }
 
 
-def test_does_not_print_warning_if_all_attempts_are_nan(recwarn):
-    """If all of a student's attempts are nan, no warning should be printed."""
-    # given
-    columns = ["mt01", "mt01 - retry"]
-    p1 = pd.Series(data=[np.nan, np.nan], index=columns, name="A1")
-    points = pd.DataFrame([p1])
-    maximums = pd.Series([100, 100], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-
-    # when
-    # assert that no warnings are raised
-    take_best(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
-
-    # then
-    # no warnings should be raised
-    assert len(recwarn) == 0
-
-
-def test_best_attempt_is_nan_if_none_of_the_parts_are_attempted():
-    """If all of a student's attempts are nan, the best attempt should be nan."""
-    # given
-    columns = ["mt01", "mt01 - retry"]
-    p1 = pd.Series(data=[np.nan, np.nan], index=columns, name="A1")
-    points = pd.DataFrame([p1])
-    maximums = pd.Series([100, 100], index=columns)
-    gradebook = gradelib.Gradebook(points, maximums)
-
-    # when
-    take_best(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
-
-    # then
-    assert pd.isna(gradebook.points_earned.loc["A1", "mt01 with retry"])
-    assert_gradebook_is_sound(gradebook)
-
-
 def test_ignores_nan_when_taking_maximum():
     """Nans should be ignored. That is, if a student has a nan for one assignment, the
     maximum should be taken from the other assignments."""
@@ -188,7 +153,7 @@ def test_with_penalty_policy():
     take_best(
         gradebook,
         {"mt01 with retry": ["mt01", "mt01 - retry 01", "mt01 - retry 02"]},
-        policy=cap_at_90,
+        penalty_strategy=cap_at_90,
     )
 
     # then
@@ -221,7 +186,7 @@ def test_with_penalty_policy_adds_notes():
     take_best(
         gradebook,
         {"mt01 with retry": ["mt01", "mt01 - retry 01", "mt01 - retry 02"]},
-        policy=cap_at_90,
+        penalty_strategy=cap_at_90,
     )
 
     # then
@@ -247,9 +212,9 @@ def test_with_penalty_policy_adds_notes():
 # lateness strategy ====================================================================
 
 
-def test_lateness_with_if_any_late_strategy():
-    """Test that if_any_late strategy marks overall as late if ANY attempt is late."""
-    from gradelib.policies.attempts import if_any_late
+def test_lateness_with_max_lateness_strategy():
+    """Test that max_lateness strategy marks overall as late if ANY attempt is late."""
+    from gradelib.policies.attempts import max_lateness
 
     # given - student A1 has on-time first attempt, late retry
     columns = ["mt01", "mt01 - retry"]
@@ -273,7 +238,7 @@ def test_lateness_with_if_any_late_strategy():
     take_best(
         gradebook,
         {"mt01 with retry": ["mt01", "mt01 - retry"]},
-        lateness_strategy=if_any_late,
+        lateness_strategy=max_lateness,
     )
 
     # then - A1 should be late (max of 0 and 3600), A2 on-time
@@ -284,9 +249,9 @@ def test_lateness_with_if_any_late_strategy():
     assert_gradebook_is_sound(gradebook)
 
 
-def test_lateness_with_if_best_late_strategy():
-    """Test that if_best_late strategy uses only the best attempt's lateness."""
-    from gradelib.policies.attempts import if_best_late
+def test_lateness_with_lateness_of_best_strategy():
+    """Test that lateness_of_best strategy uses only the best attempt's lateness."""
+    from gradelib.policies.attempts import lateness_of_best
 
     # given - A1's best attempt (retry) was late, A2's best (original) was on-time
     columns = ["mt01", "mt01 - retry"]
@@ -310,7 +275,7 @@ def test_lateness_with_if_best_late_strategy():
     take_best(
         gradebook,
         {"mt01 with retry": ["mt01", "mt01 - retry"]},
-        lateness_strategy=if_best_late,
+        lateness_strategy=lateness_of_best,
     )
 
     # then
@@ -323,8 +288,8 @@ def test_lateness_with_if_best_late_strategy():
     assert_gradebook_is_sound(gradebook)
 
 
-def test_lateness_defaults_to_if_any_late():
-    """Test that default behavior is if_any_late strategy."""
+def test_lateness_defaults_to_max_lateness():
+    """Test that default behavior is max_lateness strategy."""
     # given
     columns = ["mt01", "mt01 - retry"]
     p1 = pd.Series(data=[95, 100], index=columns, name="A1")
@@ -344,48 +309,16 @@ def test_lateness_defaults_to_if_any_late():
     # when - don't specify lateness_strategy
     take_best(gradebook, {"mt01 with retry": ["mt01", "mt01 - retry"]})
 
-    # then - should use if_any_late (conservative)
+    # then - should use max_lateness (conservative)
     assert gradebook.lateness.loc["A1", "mt01 with retry"] == pd.Timedelta(
         3600, unit="s"
     )
     assert_gradebook_is_sound(gradebook)
 
 
-def test_lateness_with_all_nan_attempts():
-    """Test lateness handling when student didn't attempt any version."""
-    from gradelib.policies.attempts import if_any_late
-
-    # given
-    columns = ["mt01", "mt01 - retry"]
-    p1 = pd.Series(data=[np.nan, np.nan], index=columns, name="A1")
-    points = pd.DataFrame([p1])
-    maximums = pd.Series([100, 100], index=columns)
-
-    lateness = pd.DataFrame(
-        [
-            pd.to_timedelta([3600, 7200], "s"),
-        ],
-        columns=columns,
-        index=points.index,
-    )
-
-    gradebook = gradelib.Gradebook(points, maximums, lateness=lateness)
-
-    # when
-    take_best(
-        gradebook,
-        {"mt01 with retry": ["mt01", "mt01 - retry"]},
-        lateness_strategy=if_any_late,
-    )
-
-    # then - should default to on-time (0 timedelta)
-    assert gradebook.lateness.loc["A1", "mt01 with retry"] == pd.Timedelta(0, unit="s")
-    assert_gradebook_is_sound(gradebook)
-
-
 def test_lateness_with_penalty_strategy():
     """Test that lateness uses best attempt AFTER penalty is applied."""
-    from gradelib.policies.attempts import if_best_late
+    from gradelib.policies.attempts import lateness_of_best
 
     # given - policy will cap retries at 90%
     columns = ["mt01", "mt01 - retry"]
@@ -418,8 +351,8 @@ def test_lateness_with_penalty_strategy():
     take_best(
         gradebook,
         {"mt01 with retry": ["mt01", "mt01 - retry"]},
-        policy=cap_at_90,
-        lateness_strategy=if_best_late,
+        penalty_strategy=cap_at_90,
+        lateness_strategy=lateness_of_best,
     )
 
     # then

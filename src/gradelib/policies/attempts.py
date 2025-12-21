@@ -40,12 +40,44 @@ def _no_penalty_policy(scores: _pd.Series) -> _pd.Series:
     return scores
 
 
+# lateness policies ====================================================================
+
+
+def max_lateness(latenesses: _pd.Series, _: str) -> _pd.Timedelta:
+    """Returns the maximum lateness.
+
+    In essence, this means that the overall assignment will be late if any of the
+    attempts is late.
+
+    """
+    return latenesses.max()
+
+
+def min_lateness(latenesses: _pd.Series, _: str) -> _pd.Timedelta:
+    """Returns the minimum lateness.
+
+    This essentially means that the overall assignment will be late only if all of the
+    attempts are late.
+
+    """
+    return latenesses.min()
+
+
+def lateness_of_best(latenesses: _pd.Series, best_attempt: str) -> _pd.Timedelta:
+    """Returns the lateness of the best attempt."""
+    return latenesses.loc[best_attempt]
+
+
+# take_best() ==========================================================================
+
+
 def take_best(
     gradebook: Gradebook,
     attempts: Mapping[str, Sequence[str]],
     *,
     remove=True,
-    policy: Callable[[_pd.Series], _pd.Series] | None = None,
+    penalty_strategy: Callable[[_pd.Series], _pd.Series] | None = None,
+    lateness_strategy: Callable[[_pd.Series, str], _pd.Timedelta] = max_lateness,
     points_possible: int | float = 1.0,
 ):
     """Replaces multiple attempts at an assignment with the best.
@@ -60,23 +92,38 @@ def take_best(
         the new assignment.
     remove : bool, optional
         Whether to remove the existing assignments, by default True.
-    policy : Optional[Callable[[int, float], float]], optional
+    penalty_strategy : Optional[Callable[[pd.Series], pd.Series]], optional
         A function that takes a Series of the student's previous scores and returns a
         Series of the effective scores after applying any penalties. The index of the
         new Series should match that of the input Series. A value of ``None`` indicates
         that no penalties should be applied; this is the default.
+    lateness_strategy : Callable[[pd.Series, str], pd.Timedelta], optional
+        A function that determines the overall lateness of the new assignment based on
+        the lateness of individual attempts. The function takes two arguments: a Series
+        of Timedelta objects (one per attempt) and a string indicating which attempt was
+        selected as best. It returns a single Timedelta representing the overall
+        lateness.
+
+        Built-in strategies:
+
+        - :func:`max_lateness` (default): Overall is late if ANY attempt is late
+        - :func:`lateness_of_best`: Overall is late only if the BEST attempt is late
+        - :func:`min_lateness`: Overall is late only if ALL attempts are late
+
+        Default: :func:`max_lateness`
     points_possible : Union[int, float], optional
         The number of points possible on the new assignment, by default 1.
 
     """
-    if policy is None:
-        policy = _no_penalty_policy
+    if penalty_strategy is None:
+        penalty_strategy = _no_penalty_policy
 
     for new_assignment, existing_assignments in attempts.items():
         best_scores = _pd.Series(dtype="float64")
+        latenesses = _pd.Series(dtype="timedelta64[s]")
         for student in gradebook.students:
             raw_attempt_scores = gradebook.score.loc[student, existing_assignments]
-            effective_attempt_scores = policy(raw_attempt_scores)
+            effective_attempt_scores = penalty_strategy(raw_attempt_scores)
 
             gradebook.add_note(
                 student,
@@ -84,10 +131,21 @@ def take_best(
                 _make_notes(raw_attempt_scores, effective_attempt_scores),
             )
 
-            best_scores[student] = effective_attempt_scores.max()
+            # best_attempt will be the name of the assignment representing the best
+            # attempt
+            best_attempt = effective_attempt_scores.idxmax()
+            assert isinstance(best_attempt, str)
+
+            best_scores[student] = effective_attempt_scores.loc[best_attempt]
+
+            latenesses.loc[student] = lateness_strategy(
+                gradebook.lateness.loc[student, existing_assignments], best_attempt
+            )
 
         points_earned = best_scores * points_possible
-        gradebook.add_assignment(new_assignment, points_earned, points_possible)
+        gradebook.add_assignment(
+            new_assignment, points_earned, points_possible, lateness=latenesses
+        )
 
         if remove:
             gradebook.remove_assignments(existing_assignments)

@@ -47,8 +47,8 @@ def max_lateness(latenesses: _pd.Series, _: str) -> _pd.Timedelta:
     """Returns the maximum lateness across all attempts.
 
     The overall assignment's lateness will be the largest lateness value among all
-    attempts. This is the most conservative approach: if any attempt is late, the
-    overall assignment will be considered late with that maximum lateness amount.
+    attempts. This means the overall assignment is considered late if any attempt
+    is late (lateness > 0), and it will take that maximum lateness amount.
 
     """
     return latenesses.max()
@@ -58,9 +58,10 @@ def min_lateness(latenesses: _pd.Series, _: str) -> _pd.Timedelta:
     """Returns the minimum lateness across all attempts.
 
     The overall assignment's lateness will be the smallest lateness value among all
-    attempts. If any attempt is on-time (lateness = 0), the overall will be on-time.
-    The overall assignment will only be considered late if all attempts are late, in
-    which case it takes the smallest lateness amount.
+    attempts. This means the overall assignment is considered late only if all
+    attempts are late (all have lateness > 0), and it will take the smallest
+    lateness amount. If any attempt is on-time (lateness = 0), the overall will
+    be on-time.
 
     """
     return latenesses.min()
@@ -109,9 +110,9 @@ def take_best(
 
         Built-in strategies:
 
-        - :func:`max_lateness` (default): Returns the maximum lateness across all attempts
-        - :func:`lateness_of_best`: Returns the lateness of whichever attempt scored best
-        - :func:`min_lateness`: Returns the minimum lateness across all attempts
+        - :func:`max_lateness` (default): Overall is considered late if any attempt is late
+        - :func:`lateness_of_best`: Overall is considered late if the best attempt is late
+        - :func:`min_lateness`: Overall is considered late only if all attempts are late
 
         Default: :func:`max_lateness`
     points_possible : Union[int, float], optional

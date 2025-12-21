@@ -184,17 +184,18 @@ value is a time duration (Timedelta), not just a boolean flag.
 
 Three built-in strategies are available:
 
-- ``max_lateness`` (default): The overall lateness is the maximum lateness across
-  all attempts. This is conservative: if any attempt is late, the overall
-  assignment takes that maximum lateness amount.
+- ``max_lateness`` (default): The overall assignment is considered late if any
+  attempt is late. The overall lateness will be the maximum lateness across all
+  attempts. Use this when you want to penalize any late submission.
 
-- ``lateness_of_best``: The overall lateness is taken from whichever attempt
-  scored the best (after applying any penalty strategy).
+- ``lateness_of_best``: The overall assignment is considered late if the best
+  attempt is late. The overall lateness is taken from whichever attempt scored
+  the best (after applying any penalty strategy).
 
-- ``min_lateness``: The overall lateness is the minimum lateness across all
-  attempts. If any attempt is on-time (lateness = 0), the overall will be
-  on-time. Only if all attempts are late will the overall be late, using the
-  smallest lateness amount.
+- ``min_lateness``: The overall assignment is considered late only if all attempts
+  are late. The overall lateness will be the minimum lateness across all attempts.
+  Use this when you want to give students credit for having at least one on-time
+  submission.
 
 Tracking exceptions
 -------------------

@@ -224,7 +224,7 @@ increase their overall score the most.</p>
 <p>The <a class="reference internal" href="../api/policies-attempts.html#gradelib.policies.attempts.take_best" title="gradelib.policies.attempts.take_best"><code class="xref py py-func docutils literal notranslate"><span class="pre">gradelib.policies.attempts.take_best()</span></code></a>
 function allows you to give students multiple chances at an assignment. By
 default, it takes the maximum score of all attempts, but you can specify a
-policy that penalizes multiple attempts.</p>
+penalty strategy that penalizes multiple attempts.</p>
 <p>For example, to penalize each attempt by 10%, you can do the following:</p>
 <div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">gradelib.policies.attempts</span><span class="w"> </span><span class="kn">import</span> <span class="n">take_best</span>
 </span><span id="line-2"><span class="gp">&gt;&gt;&gt; </span><span class="n">gradebook</span><span class="o">.</span><span class="n">score</span>
@@ -239,7 +239,7 @@ policy that penalizes multiple attempts.</p>
 </span><span id="line-11"><span class="gp">&gt;&gt;&gt; </span><span class="n">take_best</span><span class="p">(</span>
 </span><span id="line-12"><span class="gp">... </span>    <span class="n">gradebook</span><span class="p">,</span>
 </span><span id="line-13"><span class="gp">... </span>    <span class="n">attempts</span><span class="o">=</span><span class="n">gradebook</span><span class="o">.</span><span class="n">assignments</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">" - "</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()),</span>
-</span><span id="line-14"><span class="gp">... </span>    <span class="n">policy</span><span class="o">=</span><span class="n">penalize_10_per_attempt</span>
+</span><span id="line-14"><span class="gp">... </span>    <span class="n">penalty_strategy</span><span class="o">=</span><span class="n">penalize_10_per_attempt</span>
 </span><span id="line-15"><span class="gp">... </span><span class="p">)</span>
 </span><span id="line-16"><span class="gp">&gt;&gt;&gt; </span><span class="n">gradebook</span><span class="o">.</span><span class="n">score</span>
 </span><span id="line-17"><span class="go">            Exam</span>
@@ -248,6 +248,24 @@ policy that penalizes multiple attempts.</p>
 </span><span id="line-20"><span class="go">&lt;Charlie&gt;  0.765</span>
 </span></code></pre></div>
 </div>
+<section id="controlling-lateness-for-multiple-attempts">
+<h3>Controlling lateness for multiple attempts<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#controlling-lateness-for-multiple-attempts" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#controlling-lateness-for-multiple-attempts'"><span>#</span></a></h3>
+<p>When combining multiple attempts, you can control how lateness is determined for
+the overall assignment using the <code class="docutils literal notranslate"><span class="pre">lateness_strategy</span></code> parameter. The lateness
+value is a time duration (Timedelta), not just a boolean flag.</p>
+<p>Three built-in strategies are available:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">max_lateness</span></code> (default): The overall lateness is the maximum lateness across
+all attempts. This is conservative: if any attempt is late, the overall
+assignment takes that maximum lateness amount.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lateness_of_best</span></code>: The overall lateness is taken from whichever attempt
+scored the best (after applying any penalty strategy).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">min_lateness</span></code>: The overall lateness is the minimum lateness across all
+attempts. If any attempt is on-time (lateness = 0), the overall will be
+on-time. Only if all attempts are late will the overall be late, using the
+smallest lateness amount.</p></li>
+</ul>
+</section>
 </section>
 <section id="tracking-exceptions">
 <h2>Tracking exceptions<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#tracking-exceptions" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#tracking-exceptions'"><span>#</span></a></h2>
@@ -279,7 +297,10 @@ student.</p>
 <ul>
 <li><a :data-current="activeSection === '#handling-late-assignments'" class="reference internal" href="#handling-late-assignments">Handling late assignments</a></li>
 <li><a :data-current="activeSection === '#dropping-low-scores'" class="reference internal" href="#dropping-low-scores">Dropping low scores</a></li>
-<li><a :data-current="activeSection === '#giving-multiple-chances-at-an-assignment'" class="reference internal" href="#giving-multiple-chances-at-an-assignment">Giving multiple chances at an assignment</a></li>
+<li><a :data-current="activeSection === '#giving-multiple-chances-at-an-assignment'" class="reference internal" href="#giving-multiple-chances-at-an-assignment">Giving multiple chances at an assignment</a><ul>
+<li><a :data-current="activeSection === '#controlling-lateness-for-multiple-attempts'" class="reference internal" href="#controlling-lateness-for-multiple-attempts">Controlling lateness for multiple attempts</a></li>
+</ul>
+</li>
 <li><a :data-current="activeSection === '#tracking-exceptions'" class="reference internal" href="#tracking-exceptions">Tracking exceptions</a></li>
 </ul>
 </div>

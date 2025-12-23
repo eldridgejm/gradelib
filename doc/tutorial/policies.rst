@@ -180,13 +180,13 @@ Controlling lateness for multiple attempts
 
 When combining multiple attempts, you can control how lateness is determined for
 the overall assignment using the ``lateness_strategy`` parameter. The lateness
-value is a time duration (Timedelta), not just a boolean flag.
+value is a time duration (Timedelta) indicating how late the assignment was turned in.
 
 Three built-in strategies are available:
 
 - ``max_lateness`` (default): The overall lateness is the maximum lateness across
-  all attempts. This is conservative: if any attempt is late, the overall
-  assignment takes that maximum lateness amount.
+  all attempts. This has the effect of considering the resulting assignment late
+  if any attempt is late.
 
 - ``lateness_of_best``: The overall lateness is taken from whichever attempt
   scored the best (after applying any penalty strategy).

@@ -252,12 +252,12 @@ penalty strategy that penalizes multiple attempts.</p>
 <h3>Controlling lateness for multiple attempts<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#controlling-lateness-for-multiple-attempts" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#controlling-lateness-for-multiple-attempts'"><span>#</span></a></h3>
 <p>When combining multiple attempts, you can control how lateness is determined for
 the overall assignment using the <code class="docutils literal notranslate"><span class="pre">lateness_strategy</span></code> parameter. The lateness
-value is a time duration (Timedelta), not just a boolean flag.</p>
+value is a time duration (Timedelta) indicating how late the assignment was turned in.</p>
 <p>Three built-in strategies are available:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">max_lateness</span></code> (default): The overall lateness is the maximum lateness across
-all attempts. This is conservative: if any attempt is late, the overall
-assignment takes that maximum lateness amount.</p></li>
+all attempts. This has the effect of considering the resulting assignment late
+if any attempt is late.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">lateness_of_best</span></code>: The overall lateness is taken from whichever attempt
 scored the best (after applying any penalty strategy).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">min_lateness</span></code>: The overall lateness is the minimum lateness across all

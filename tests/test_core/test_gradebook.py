@@ -2,13 +2,13 @@
 
 import pathlib
 
-import pytest  # pyright: ignore
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest  # pyright: ignore
 
 import gradelib
-import gradelib.io.gradescope
 import gradelib.io.canvas
+import gradelib.io.gradescope
 from gradelib import Student
 
 # examples setup -----------------------------------------------------------------------
@@ -424,6 +424,58 @@ def test_weight_in_group_with_extra_credit():
     assert gb.weight_in_group.loc["A1", "extra credit"] == 0.1
 
 
+def test_weight_in_group_with_per_student_groups():
+    columns = ["hw01", "hw02", "lab01"]
+    p1 = pd.Series(data=[10, 30, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 30], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 30], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    gb.grading_groups = {
+        Student("A1"): {
+            "hw": gradelib.GradingGroup({"hw01": 0.5, "hw02": 0.5}, 0.6),
+            "labs": gradelib.GradingGroup({"lab01": 1}, 0.4),
+        },
+        Student("A2"): {
+            "hw": gradelib.GradingGroup({"hw01": 0.3, "hw02": 0.7}, 0.6),
+            "labs": gradelib.GradingGroup({"lab01": 1}, 0.4),
+        },
+    }
+
+    assert gb.weight_in_group.loc["A1", "hw01"] == 0.5
+    assert gb.weight_in_group.loc["A1", "hw02"] == 0.5
+    assert gb.weight_in_group.loc["A2", "hw01"] == 0.3
+    assert gb.weight_in_group.loc["A2", "hw02"] == 0.7
+
+
+def test_weight_in_group_assignment_not_in_student_groups_is_nan():
+    columns = ["hw01", "hw02", "project"]
+    p1 = pd.Series(data=[10, 30, 80], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 90], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 100], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    gb.grading_groups = {
+        Student("A1"): {
+            "hw": gradelib.GradingGroup({"hw01": 0.5, "hw02": 0.5}, 1.0),
+        },
+        Student("A2"): {
+            "project": gradelib.GradingGroup({"project": 1}, 1.0),
+        },
+    }
+
+    # A1 has hw01 in groups, but not project
+    assert gb.weight_in_group.loc["A1", "hw01"] == 0.5
+    assert np.isnan(gb.weight_in_group.loc["A1", "project"])
+    # A2 has project in groups, but not hw01
+    assert gb.weight_in_group.loc["A2", "project"] == 1.0
+    assert np.isnan(gb.weight_in_group.loc["A2", "hw01"])
+
+
 # overall_weight -----------------------------------------------------------------------
 
 
@@ -654,6 +706,33 @@ def test_overall_weight_with_custom_weights_and_drops():
     assert gb.overall_weight.loc["A2", "hw02"] == 1.0 * 0.75
 
 
+def test_overall_weight_with_per_student_groups():
+    columns = ["hw01", "hw02", "lab01"]
+    p1 = pd.Series(data=[10, 30, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 30], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 30], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    gb.grading_groups = {
+        Student("A1"): {
+            "hw": gradelib.GradingGroup({"hw01": 0.5, "hw02": 0.5}, 0.6),
+            "labs": gradelib.GradingGroup({"lab01": 1}, 0.4),
+        },
+        Student("A2"): {
+            "hw": gradelib.GradingGroup({"hw01": 0.5, "hw02": 0.5}, 0.4),
+            "labs": gradelib.GradingGroup({"lab01": 1}, 0.6),
+        },
+    }
+
+    # A1: hw weight = 0.6, A2: hw weight = 0.4
+    assert gb.overall_weight.loc["A1", "hw01"] == 0.5 * 0.6
+    assert gb.overall_weight.loc["A1", "lab01"] == 1.0 * 0.4
+    assert gb.overall_weight.loc["A2", "hw01"] == 0.5 * 0.4
+    assert gb.overall_weight.loc["A2", "lab01"] == 1.0 * 0.6
+
+
 # value --------------------------------------------------------------------------------
 
 
@@ -818,6 +897,39 @@ def test_overall_score_respects_dropped_assignments():
     )
 
 
+def test_overall_score_with_per_student_groups():
+    columns = ["hw01", "hw02", "lab01"]
+    p1 = pd.Series(data=[10, 30, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 30], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 30], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    gb.grading_groups = {
+        Student("A1"): {
+            "hw": gradelib.GradingGroup({"hw01": 0.5, "hw02": 0.5}, 0.6),
+            "labs": gradelib.GradingGroup({"lab01": 1}, 0.4),
+        },
+        Student("A2"): {
+            "hw": gradelib.GradingGroup({"hw01": 0.5, "hw02": 0.5}, 1.0),
+        },
+    }
+
+    # A1: hw score = 0.5*(10/20) + 0.5*(30/50) = 0.55
+    #     lab score = 20/30
+    #     overall = 0.55*0.6 + (20/30)*0.4
+    a1_hw_score = 0.5 * (10 / 20) + 0.5 * (30 / 50)
+    a1_expected = a1_hw_score * 0.6 + (20 / 30) * 0.4
+
+    # A2: hw score = 0.5*(20/20) + 0.5*(40/50) = 0.9
+    #     overall = 0.9 * 1.0
+    a2_expected = (0.5 * (20 / 20) + 0.5 * (40 / 50)) * 1.0
+
+    assert abs(gb.overall_score.loc["A1"] - a1_expected) < 1e-10
+    assert abs(gb.overall_score.loc["A2"] - a2_expected) < 1e-10
+
+
 # letter_grades ------------------------------------------------------------------------
 
 
@@ -978,6 +1090,43 @@ def test_letter_grade_overrides_checks_for_validity():
         gradebook.letter_grades
 
 
+def test_letter_grades_with_per_student_groups():
+    columns = ["hw01", "lab01"]
+    p1 = pd.Series(data=[18, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[18, 20], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 30], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    gb.scale = {
+        "A+": 0.97,
+        "A": 0.9,
+        "A-": 0.88,
+        "B+": 0.85,
+        "B": 0.8,
+        "B-": 0.75,
+        "C+": 0.7,
+        "C": 0.6,
+        "C-": 0.55,
+        "D": 0.5,
+        "F": 0,
+    }
+
+    # same raw scores, but A1's grade comes from hw; A2's from labs
+    gb.grading_groups = {
+        Student("A1"): {
+            "hw": gradelib.GradingGroup({"hw01": 1}, 1.0),
+        },
+        Student("A2"): {
+            "labs": gradelib.GradingGroup({"lab01": 1}, 1.0),
+        },
+    }
+
+    assert gb.letter_grades.loc["A1"] == "A"  # 18/20 = 0.9
+    assert gb.letter_grades.loc["A2"] == "C"  # 20/30 ≈ 0.667
+
+
 # tests: groups ========================================================================
 
 
@@ -1005,13 +1154,161 @@ def test_groups_setter_allows_two_tuple_form_and_float_form():
         "midterm": 0.5,
     }
 
-    # then
-    assert gradebook.grading_groups == {
+    # then — getter returns per-student form
+    expected_groups = {
         "homeworks": gradelib.GradingGroup(
             {"hw01": 0.2, "hw02": 0.5, "hw03": 0.3}, group_weight=0.5
         ),
         "midterm": gradelib.GradingGroup({"midterm": 1}, group_weight=0.5),
     }
+    result = gradebook.grading_groups
+    assert set(result.keys()) == {Student("A1"), Student("A2")}
+    for student in result:
+        assert result[student] == expected_groups
+
+
+def test_groups_setter_shared_dict_expands_to_per_student_form():
+    # given
+    columns = ["hw01", "hw02", "lab01"]
+    p1 = pd.Series(data=[10, 30, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 30], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 30], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    shared_groups = {
+        "homeworks": gradelib.GradingGroup.with_equal_weights(["hw01", "hw02"], 0.75),
+        "labs": gradelib.GradingGroup({"lab01": 1}, 0.25),
+    }
+    gradebook.grading_groups = shared_groups
+
+    # then
+    result = gradebook.grading_groups
+    assert isinstance(result, dict)
+    assert set(result.keys()) == {Student("A1"), Student("A2")}
+    for student in result:
+        assert result[student] == shared_groups
+
+
+def test_groups_setter_per_student_dict_stored_directly():
+    # given
+    columns = ["hw01", "hw02", "lab01"]
+    p1 = pd.Series(data=[10, 30, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 30], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 30], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    per_student = {
+        Student("A1"): {
+            "homeworks": gradelib.GradingGroup.with_equal_weights(
+                ["hw01", "hw02"], 0.75
+            ),
+            "labs": gradelib.GradingGroup({"lab01": 1}, 0.25),
+        },
+        Student("A2"): {
+            "homeworks": gradelib.GradingGroup.with_equal_weights(
+                ["hw01", "hw02"], 0.75
+            ),
+            "labs": gradelib.GradingGroup({"lab01": 1}, 0.25),
+        },
+    }
+    gradebook.grading_groups = per_student
+
+    # then
+    result = gradebook.grading_groups
+    assert set(result.keys()) == {Student("A1"), Student("A2")}
+    assert result[Student("A1")] == per_student[Student("A1")]
+    assert result[Student("A2")] == per_student[Student("A2")]
+
+
+def test_groups_setter_per_student_dict_with_different_groups():
+    # given
+    columns = ["hw01", "hw02", "project"]
+    p1 = pd.Series(data=[10, 30, 80], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 90], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 100], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    per_student = {
+        Student("A1"): {
+            "hw": gradelib.GradingGroup({"hw01": 0.4, "hw02": 0.6}, 0.6),
+            "labs": gradelib.GradingGroup({"project": 1}, 0.4),
+        },
+        Student("A2"): {
+            "hw": gradelib.GradingGroup({"hw01": 0.5, "hw02": 0.5}, 0.5),
+            "project": gradelib.GradingGroup({"project": 1}, 0.5),
+        },
+    }
+    gradebook.grading_groups = per_student
+
+    # then
+    result = gradebook.grading_groups
+    assert result[Student("A1")]["hw"].assignment_weights == {"hw01": 0.4, "hw02": 0.6}
+    assert result[Student("A2")]["project"].assignment_weights == {"project": 1}
+
+
+def test_groups_setter_rejects_mixed_keys():
+    # given
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    with pytest.raises(ValueError, match="mix"):
+        gradebook.grading_groups = {
+            Student("A1"): {"hw": gradelib.GradingGroup({"hw01": 1}, 1.0)},
+            "hw": gradelib.GradingGroup({"hw01": 1}, 1.0),
+        }
+
+
+def test_groups_setter_rejects_missing_student():
+    # given
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    with pytest.raises(ValueError, match="missing"):
+        gradebook.grading_groups = {
+            Student("A1"): {"hw": gradelib.GradingGroup({"hw01": 1}, 1.0)},
+            # A2 is missing
+        }
+
+
+def test_groups_setter_rejects_extra_student():
+    # given
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    with pytest.raises(ValueError, match="extra"):
+        gradebook.grading_groups = {
+            Student("A1"): {"hw": gradelib.GradingGroup({"hw01": 1}, 1.0)},
+            Student("A2"): {"hw": gradelib.GradingGroup({"hw01": 1}, 1.0)},
+            Student("A3"): {"hw": gradelib.GradingGroup({"hw01": 1}, 1.0)},
+        }
+
+
+def test_groups_setter_empty_dict_stays_empty():
+    # given
+    columns = ["hw01"]
+    p1 = pd.Series(data=[10], index=columns, name="A1")
+    points_earned = pd.DataFrame([p1])
+    points_possible = pd.Series([20], index=columns)
+    gradebook = gradelib.Gradebook(points_earned, points_possible)
+
+    gradebook.grading_groups = {}
+
+    assert gradebook.grading_groups == {}
 
 
 def test_groups_setter_raises_by_default_if_group_weights_do_not_sum_to_one():
@@ -1198,6 +1495,70 @@ def test_grading_group_scores_with_extra_credit_group():
             columns=["ecs", "labs"],
         ),
     )
+
+
+def test_grading_group_scores_with_per_student_different_groups():
+    columns = ["hw01", "hw02", "project"]
+    p1 = pd.Series(data=[10, 30, 80], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40, 90], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50, 100], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    gb.grading_groups = {
+        Student("A1"): {
+            "hw": gradelib.GradingGroup({"hw01": 0.5, "hw02": 0.5}, 0.6),
+            "labs": gradelib.GradingGroup({"project": 1}, 0.4),
+        },
+        Student("A2"): {
+            "hw": gradelib.GradingGroup({"hw01": 0.5, "hw02": 0.5}, 0.5),
+            "project": gradelib.GradingGroup({"project": 1}, 0.5),
+        },
+    }
+
+    scores = gb.grading_group_scores
+
+    # columns should be the union of all group names
+    assert set(scores.columns) == {"hw", "labs", "project"}
+
+    # A1 has "hw" and "labs", not "project"
+    # group score = sum of (score * weight_in_group) for assignments in the group
+    a1_hw = 0.5 * (10 / 20) + 0.5 * (30 / 50)
+    assert np.isclose(scores.loc["A1", "hw"], a1_hw)
+    assert np.isclose(scores.loc["A1", "labs"], 80 / 100)
+    assert np.isnan(scores.loc["A1", "project"])
+
+    # A2 has "hw" and "project", not "labs"
+    a2_hw = 0.5 * (20 / 20) + 0.5 * (40 / 50)
+    assert np.isclose(scores.loc["A2", "hw"], a2_hw)
+    assert np.isclose(scores.loc["A2", "project"], 90 / 100)
+    assert np.isnan(scores.loc["A2", "labs"])
+
+
+def test_grading_group_scores_same_name_different_weights():
+    columns = ["hw01", "hw02"]
+    p1 = pd.Series(data=[10, 30], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 40], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 50], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    gb.grading_groups = {
+        Student("A1"): {
+            "hw": gradelib.GradingGroup({"hw01": 0.3, "hw02": 0.7}, 1.0),
+        },
+        Student("A2"): {
+            "hw": gradelib.GradingGroup({"hw01": 0.8, "hw02": 0.2}, 1.0),
+        },
+    }
+
+    scores = gb.grading_group_scores
+    a1_hw = 0.3 * (10 / 20) + 0.7 * (30 / 50)
+    a2_hw = 0.8 * (20 / 20) + 0.2 * (40 / 50)
+    assert np.isclose(scores.loc["A1", "hw"], a1_hw)
+    assert np.isclose(scores.loc["A2", "hw"], a2_hw)
 
 
 # tests: add/remove assignments ========================================================
@@ -1483,10 +1844,10 @@ def test_rename_assignments_allows_swapping_names():
     assert_gradebook_is_sound(gradebook)
 
 
-# tests: misc. methods ==================================================================
+# tests: misc. methods =====================================================
 
 
-# restrict_to_students ---------------------------------------------------------------------
+# restrict_to_students -------------------------------------------------
 
 
 def test_restrict_to_students():
@@ -1816,3 +2177,54 @@ def test_cap_group_score_at_100_percent():
     assert np.isclose(gradebook.grading_group_scores.loc["A1", "homeworks"], 1)
     assert np.isclose(gradebook.grading_group_scores.loc["A1", "labs"], 1)
     assert np.isclose(gradebook.overall_score.loc["A1"], 1)
+
+
+# copy / replace -----------------------------------------------------------------------
+
+
+def test_copy_preserves_per_student_groups():
+    columns = ["hw01", "lab01"]
+    p1 = pd.Series(data=[10, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 30], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 30], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    gb.grading_groups = {
+        Student("A1"): {
+            "hw": gradelib.GradingGroup({"hw01": 1}, 1.0),
+        },
+        Student("A2"): {
+            "labs": gradelib.GradingGroup({"lab01": 1}, 1.0),
+        },
+    }
+
+    gb2 = gb.copy()
+    assert gb2.grading_groups == gb.grading_groups
+
+    # mutating the copy does not affect the original
+    gb2.grading_groups = {}
+    assert gb.grading_groups != {}
+
+
+def test_replace_with_per_student_groups():
+    columns = ["hw01", "lab01"]
+    p1 = pd.Series(data=[10, 20], index=columns, name="A1")
+    p2 = pd.Series(data=[20, 30], index=columns, name="A2")
+    points_earned = pd.DataFrame([p1, p2])
+    points_possible = pd.Series([20, 30], index=columns)
+
+    gb = gradelib.Gradebook(points_earned, points_possible)
+
+    new_groups = {
+        Student("A1"): {
+            "hw": gradelib.GradingGroup({"hw01": 1}, 1.0),
+        },
+        Student("A2"): {
+            "labs": gradelib.GradingGroup({"lab01": 1}, 1.0),
+        },
+    }
+
+    gb2 = gb._replace(grading_groups=new_groups)
+    assert gb2.grading_groups == new_groups

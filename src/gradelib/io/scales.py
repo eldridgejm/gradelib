@@ -6,13 +6,12 @@ order of the rows matters!
 
 """
 
-from collections.abc import Mapping
-from collections import OrderedDict
-from typing import Union
 import pathlib as _pathlib
+from collections import OrderedDict
+from collections.abc import Mapping
 
 
-def write(path: Union[str, _pathlib.Path], scale: Mapping):
+def write(path: str | _pathlib.Path, scale: Mapping):
     """Writes a grading scale to disk.
 
     Parameters
@@ -35,7 +34,7 @@ def write(path: Union[str, _pathlib.Path], scale: Mapping):
             fileobj.write(f"{letter},{cutoff}\n")
 
 
-def read(path: Union[str, _pathlib.Path]) -> OrderedDict:
+def read(path: str | _pathlib.Path) -> OrderedDict:
     """Reads a grading scale from the file.
 
     Parameters

@@ -1,7 +1,7 @@
 """Read grades exported from Gradescope."""
 
 import pathlib as _pathlib
-from typing import Union, Sequence
+from collections.abc import Sequence
 
 import pandas as _pd
 
@@ -74,7 +74,7 @@ def _lateness_in_seconds(lateness: _pd.Series) -> _pd.Series:
 
 
 def read(
-    path: Union[str, _pathlib.Path], standardize_pids=True, standardize_assignments=True
+    path: str | _pathlib.Path, standardize_pids=True, standardize_assignments=True
 ) -> Gradebook:
     """Read a CSV exported from Gradescope into a :class:`gradelib.Gradebook`.
 

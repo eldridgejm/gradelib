@@ -109,8 +109,10 @@ def take_best(
 
         Built-in strategies:
 
-        - :func:`max_lateness` (default): Returns the maximum lateness across all attempts
-        - :func:`lateness_of_best`: Returns the lateness of whichever attempt scored best
+        - :func:`max_lateness` (default): Returns the maximum
+          lateness across all attempts
+        - :func:`lateness_of_best`: Returns the lateness of whichever
+          attempt scored best
         - :func:`min_lateness`: Returns the minimum lateness across all attempts
 
         Default: :func:`max_lateness`

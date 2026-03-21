@@ -2,9 +2,8 @@
 
 import collections as _collections
 
-import pandas as _pd
 import numpy as _np
-
+import pandas as _pd
 
 # helper functions =====================================================================
 
@@ -74,7 +73,8 @@ def map_scores_to_letter_grades(scores, scale=None) -> _pd.Series:
     else:
         if list(scale) != list(DEFAULT_SCALE):
             raise ValueError(
-                f"Scale has invalid letter grades. Must be in {set(DEFAULT_SCALE.keys())}"
+                "Scale has invalid letter grades. "
+                f"Must be in {set(DEFAULT_SCALE.keys())}"
             )
         _check_that_scale_monotonically_decreases(scale)
 

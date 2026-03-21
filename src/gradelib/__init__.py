@@ -1,26 +1,19 @@
+# ruff: noqa: I001
 """A package for computing overall grades in courses @ UCSD."""
 
 from .core import (
-    combine_gradebooks,
+    Assignments,
+    ExtraCredit,
     Gradebook,
     GradebookOptions,
-    Assignments,
+    GradingGroup,
+    Percentage,
+    Points,
     Student,
     Students,
-    Points,
-    Percentage,
-    GradingGroup,
-    ExtraCredit,
+    combine_gradebooks,
 )
-
-from . import io
-from . import plot
-from . import policies
-from . import preprocessing
-from . import reports
-from . import scales
-from . import statistics
-from . import _util
+from . import _util, io, plot, policies, preprocessing, reports, scales, statistics
 
 if _util.in_jupyter_notebook():
     from .overview import overview  # type: ignore
@@ -40,7 +33,7 @@ __all__ = [
     "plot",
     "reports",
     "GradingGroup",
-    "ExtaCredit",
+    "ExtraCredit",
     "statistics",
     "scales",
     "overview",

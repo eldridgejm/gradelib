@@ -1,5 +1,5 @@
-from typing import Tuple, Sequence, Optional, Union, Callable
 import pathlib
+from collections.abc import Callable, Sequence
 
 import bokeh.io
 import bokeh.models
@@ -8,12 +8,14 @@ import matplotlib.animation
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .statistics import (
-    outcomes as _outcomes,
-    letter_grade_distribution as _letter_grade_distribution,
-)
 from ._util import in_jupyter_notebook as _in_jupyter_notebook
 from .core import Gradebook
+from .statistics import (
+    letter_grade_distribution as _letter_grade_distribution,
+)
+from .statistics import (
+    outcomes as _outcomes,
+)
 
 # grade_distribution -------------------------------------------------------------------
 
@@ -148,16 +150,16 @@ def _grade_shift_animation_2d_setup_figure():
 
 
 def grade_shift_animation_2d(
-    scores: Tuple[
-        Tuple[Sequence[float], Sequence[float]], Tuple[Sequence[float], Sequence[float]]
+    scores: tuple[
+        tuple[Sequence[float], Sequence[float]], tuple[Sequence[float], Sequence[float]]
     ],
-    filepath: Optional[Union[str, pathlib.Path]] = None,
-    title: Optional[Union[str, tuple[str, str]]] = None,
-    xlabel: Optional[Union[str, tuple[str, str]]] = None,
-    ylabel: Optional[Union[str, tuple[str, str]]] = None,
+    filepath: str | pathlib.Path | None = None,
+    title: str | tuple[str, str] | None = None,
+    xlabel: str | tuple[str, str] | None = None,
+    ylabel: str | tuple[str, str] | None = None,
     color: str = "#007aff",
     alpha: float = 0.5,
-    setup_figure: Optional[Callable] = None,
+    setup_figure: Callable | None = None,
 ) -> matplotlib.animation.FuncAnimation:
     """Visualize the shift in scores as an animated scatter plot.
 
@@ -172,7 +174,8 @@ def grade_shift_animation_2d(
 
     Parameters
     ----------
-    scores : Tuple[Tuple[Sequence[float], Sequence[float]], Tuple[Sequence[float], Sequence[float]]]
+    scores : Tuple[Tuple[Sequence[float], Sequence[float]], \
+        Tuple[Sequence[float], Sequence[float]]]
         A tuple containing two tuples, each with two sequences of floats. The first
         tuple contains the before and after scores for all students on Assignment A,
         and the second tuple contains the before and after scores for all students on
@@ -182,17 +185,20 @@ def grade_shift_animation_2d(
     title : Optional[Union[str, tuple[str, str]]]
         The title of the plot. If a tuple is provided, the first element will be
         displayed at the start of the animation and the second element at the end.
-        If a string is provided, it will be used for both the start and end of the animation.
-        If nothing is provided, no title will be displayed.
+        If a string is provided, it will be used for both the start
+        and end of the animation. If nothing is provided, no title
+        will be displayed.
     xlabel : Optional[Union[str, tuple[str, str]]]
-        The label for the x-axis. If a tuple is provided, the first element will be
-        displayed at the start of the animation and the second element at the end.
-        If a string is provided, it will be used for both the start and end of the animation.
+        The label for the x-axis. If a tuple is provided, the first
+        element will be displayed at the start of the animation and
+        the second element at the end. If a string is provided, it
+        will be used for both the start and end of the animation.
         If nothing is provided, no label will be displayed.
     ylabel : Optional[Union[str, tuple[str, str]]]
-        The label for the y-axis. If a tuple is provided, the first element will be
-        displayed at the start of the animation and the second element at the end.
-        If a string is provided, it will be used for both the start and end of the animation.
+        The label for the y-axis. If a tuple is provided, the first
+        element will be displayed at the start of the animation and
+        the second element at the end. If a string is provided, it
+        will be used for both the start and end of the animation.
         If nothing is provided, no label will be displayed.
     color : str
         The color of the points in the scatter plot. Default: "#007aff".

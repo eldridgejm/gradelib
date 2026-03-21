@@ -1,15 +1,15 @@
-from ._gradebook import (
-    Gradebook,
-    GradebookOptions,
-    GradingGroup,
-    ExtraCredit,
-    combine_gradebooks,
-)
+from ._amounts import Percentage, Points
 from ._assignments import (
     Assignments,
 )
+from ._gradebook import (
+    ExtraCredit,
+    Gradebook,
+    GradebookOptions,
+    GradingGroup,
+    combine_gradebooks,
+)
 from ._student import Student, Students
-from ._amounts import Points, Percentage
 
 __all__ = [
     "Gradebook",

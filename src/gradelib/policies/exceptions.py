@@ -1,10 +1,9 @@
 from collections.abc import Sequence
-from typing import Union, Optional
+from typing import Union
 
 import pandas as _pd
 
-
-from ..core import Percentage, Points, Gradebook, Student
+from ..core import Gradebook, Percentage, Points, Student
 
 # private helpers ======================================================================
 
@@ -30,7 +29,7 @@ def _convert_amount_to_absolute_points(amount, gradebook, assignment):
 
 def make_exceptions(
     gradebook: Gradebook,
-    student: Union[Student, str],
+    student: Student | str,
     exceptions: Sequence[Union["ForgiveLate", "Drop", "Replace"]],
 ):
     """Make policy exceptions for individual students.
@@ -96,7 +95,7 @@ class ForgiveLate:
 
     """
 
-    def __init__(self, assignment: str, reason: Optional[str] = None):
+    def __init__(self, assignment: str, reason: str | None = None):
         self.assignment = assignment
         self.reason = reason
 
@@ -125,7 +124,7 @@ class Drop:
 
     """
 
-    def __init__(self, assignment: str, reason: Optional[str] = None):
+    def __init__(self, assignment: str, reason: str | None = None):
         self.assignment = assignment
         self.reason = reason
 
@@ -141,7 +140,9 @@ class Drop:
 
 
 class Replace:
-    """Replace a student's score on an assignment. To be used with :func:`make_exceptions`.
+    """Replace a student's score on an assignment.
+
+    To be used with :func:`make_exceptions`.
 
     Parameters
     ----------
@@ -163,8 +164,8 @@ class Replace:
     def __init__(
         self,
         assignment: str,
-        with_: Union[str, Points, Percentage],
-        reason: Optional[str] = None,
+        with_: str | Points | Percentage,
+        reason: str | None = None,
     ):
         self.assignment = assignment
         self.with_ = with_
@@ -177,7 +178,10 @@ class Replace:
                 / gradebook.points_possible.loc[self.with_]
             )
             amount = Percentage(other_assignment_score * 100)
-            msg = f"Replacing score on {self.assignment.title()} with score on {self.with_.title()}."
+            msg = (
+                f"Replacing score on {self.assignment.title()} "
+                f"with score on {self.with_.title()}."
+            )
         else:
             # the amount has been explicitly given
             amount = self.with_

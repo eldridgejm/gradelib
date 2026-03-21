@@ -1,5 +1,5 @@
 import itertools
-from typing import Optional, Collection
+from collections.abc import Collection
 
 import pandas as _pd
 
@@ -7,7 +7,7 @@ from ..core import Gradebook
 
 
 def drop_most_favorable(
-    gradebook: Gradebook, n: int, within: Optional[Collection[str]] = None
+    gradebook: Gradebook, n: int, within: Collection[str] | None = None
 ):
     """Drop the lowest `n` grades within a group of assignments.
 

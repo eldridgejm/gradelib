@@ -1,6 +1,6 @@
 """Represent a student in the class."""
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 
 class Student:
@@ -35,7 +35,7 @@ class Student:
 
     """
 
-    def __init__(self, pid: str, name: Optional[str] = None):
+    def __init__(self, pid: str, name: str | None = None):
         self.pid = pid
         self.name = name
 

@@ -1,11 +1,11 @@
 """Tools for preprocessing Gradebooks before grading."""
 
-from collections.abc import Mapping, Collection
-from .core import Gradebook
-from ._util import empty_mask_like as _empty_mask_like
+from collections.abc import Collection, Mapping
 
 import pandas as _pd
 
+from ._util import empty_mask_like as _empty_mask_like
+from .core import Gradebook
 
 # public functions =====================================================================
 
@@ -87,7 +87,10 @@ def combine_assignment_parts(gb, parts: Mapping[str, Collection[str]]):
         import numpy as np
 
         students = ["Alice", "Barack", "Charlie"]
-        assignments = ["homework 01", "homework 01 - programming", "homework 02", "homework 02 - programming"]
+        assignments = [
+            "homework 01", "homework 01 - programming",
+            "homework 02", "homework 02 - programming",
+        ]
         points_earned = pd.DataFrame(
             np.random.randint(0, 10, size=(len(students), len(assignments))),
             index=students, columns=assignments
@@ -200,7 +203,11 @@ def combine_assignment_versions(gb, versions: Mapping[str, Collection[str]]):
         import numpy as np
 
         students = ["Alice", "Barack", "Charlie"]
-        assignments = ["midterm - version a", "midterm - version b", "midterm - version c"]
+        assignments = [
+            "midterm - version a",
+            "midterm - version b",
+            "midterm - version c",
+        ]
         points_earned = pd.DataFrame(
             [[10, np.nan, np.nan], [np.nan, 10, np.nan], [np.nan, np.nan, 10]],
             index=students, columns=assignments
@@ -215,7 +222,8 @@ def combine_assignment_versions(gb, versions: Mapping[str, Collection[str]]):
     .. doctest:: versions
 
         >>> gradelib.preprocessing.combine_assignment_versions(gradebook,
-        ...     {'midterm': ['midterm - version a', 'midterm - version b', 'midterm - version c']}
+        ...     {'midterm': ['midterm - version a',
+        ...         'midterm - version b', 'midterm - version c']}
         ... )
 
     or, equivalently:

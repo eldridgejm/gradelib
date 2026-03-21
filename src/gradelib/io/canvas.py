@@ -1,12 +1,10 @@
 """Read Canvas gradebooks."""
 
-import re as _re
 import pathlib as _pathlib
-from typing import Union
+import re as _re
 
-
-import pandas as _pd
 import numpy as _np
+import pandas as _pd
 
 from gradelib import Gradebook, Student
 
@@ -17,7 +15,7 @@ def _remove_assignment_id(s: str) -> str:
 
 
 def read(
-    path: Union[str, _pathlib.Path],
+    path: str | _pathlib.Path,
     *,
     standardize_pids=True,
     standardize_assignments=True,

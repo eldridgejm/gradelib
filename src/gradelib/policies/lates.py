@@ -1,7 +1,7 @@
 import typing
-from typing import Optional, Sequence, Union, Callable
+from collections.abc import Callable, Sequence
 
-from ..core import Percentage, Points, Gradebook, Student
+from ..core import Gradebook, Percentage, Points, Student
 
 
 class LateInfo(typing.NamedTuple):
@@ -27,7 +27,7 @@ class LateInfo(typing.NamedTuple):
     number: int
 
 
-Penalty = Optional[Union[Points, Percentage]]
+Penalty = Points | Percentage | None
 """A type alias for a penalty returned by a late policy.
 
 This can be a fixed number of points (:class:`gradelib.Points`), a percentage of the
@@ -48,7 +48,7 @@ class Deduct:
 
     """
 
-    def __init__(self, amount: Union[Points, Percentage]):
+    def __init__(self, amount: Points | Percentage):
         self.amount = amount
 
     def __call__(self, _: LateInfo) -> Penalty:
@@ -80,7 +80,8 @@ class Forgive:
             forgiveness_left = self.number - info.number
             message = (
                 f"Late forgiveness #{info.number} used on "
-                f"{info.assignment.title()}. Late forgiveness remaining: {forgiveness_left}."
+                f"{info.assignment.title()}. "
+                f"Late forgiveness remaining: {forgiveness_left}."
             )
             info.gradebook.add_note(info.student, "lates", message)
             return None
@@ -90,11 +91,10 @@ class Forgive:
 
 def penalize(
     gradebook: Gradebook,
-    within: Optional[Sequence[str]] = None,
+    within: Sequence[str] | None = None,
     policy: Callable[[LateInfo], Penalty] = Deduct(Percentage(100)),
-    order_by: Union[
-        str, Callable[[Gradebook, Student, Sequence[str]], Sequence[str]]
-    ] = "value",
+    order_by: str
+    | Callable[[Gradebook, Student, Sequence[str]], Sequence[str]] = "value",
 ):
     """Penalize late assignments.
 
@@ -163,7 +163,7 @@ def _apply_penalty(
     gradebook: Gradebook,
     student: Student,
     assignment: str,
-    deduction: Union[Points, Percentage],
+    deduction: Points | Percentage,
 ):
     """A helper function that applies a penalty to a late assignment."""
     pts = gradebook.points_earned.loc[student, assignment]
@@ -175,7 +175,10 @@ def _apply_penalty(
     else:
         raise TypeError("Unknown deduction type.")
 
-    message = f"{assignment.title()} late. Deduction: {deduction}. Points earned: {new_point_total}"
+    message = (
+        f"{assignment.title()} late. Deduction: {deduction}. "
+        f"Points earned: {new_point_total}"
+    )
     gradebook.add_note(student, "lates", message)
 
     gradebook.points_earned.loc[student, assignment] = new_point_total

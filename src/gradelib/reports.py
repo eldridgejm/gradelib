@@ -1,10 +1,9 @@
 import pathlib as _pathlib
 import re as _re
 import textwrap as _textwrap
-from typing import Optional
 
-from .core import Gradebook, Student
 from . import statistics as _statistics
+from .core import Gradebook, Student
 
 
 def _tex_escape(text):
@@ -114,7 +113,8 @@ def _student_latex_report(
         \end{{itemize}}
 
         \begin{{itemize}}
-            \item \textbf{{Overall Score}}: {gradebook.overall_score.loc[student] * 100:0.1f}\%
+            \item \textbf{{Overall Score}}: \
+{gradebook.overall_score.loc[student] * 100:0.1f}\%
             \item \textbf{{Letter Grade}}: {gradebook.letter_grades.loc[student]}
     """
     )
@@ -211,7 +211,7 @@ def generate_latex(
         """
     )
 
-    def make_student_report_file(student: Optional[Student]):
+    def make_student_report_file(student: Student | None):
         """Create a LaTeX file for a student."""
         body = _student_latex_report(
             gradebook, student, show_percentile=show_percentile

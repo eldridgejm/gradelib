@@ -1,5 +1,3 @@
-from . import gradescope
-from . import canvas
-from . import scales
+from . import canvas, gradescope, scales
 
 __all__ = ["gradescope", "canvas", "scales"]

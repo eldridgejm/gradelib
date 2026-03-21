@@ -1,7 +1,7 @@
 """Represents a collection of assignments."""
 
-from collections.abc import Sequence
 import typing
+from collections.abc import Sequence
 
 
 class Assignments(Sequence[str]):
@@ -139,12 +139,16 @@ class Assignments(Sequence[str]):
             ... "homework 01", "homework 01 - programming", "homework 02",
             ... "homework 03", "homework 03 - programming", "lab 01", "lab 02"
             ... ])
-            >>> assignments.group_by(lambda s: s.split('-')[0].strip())
-            {'homework 01': Assignments(names=['homework 01', 'homework 01 - programming']),
-             'homework 02': Assignments(names=['homework 02']),
-             'homework 03': Assignments(names=['homework 03', 'homework 03 - programming']),
-             'lab 01': Assignments(names=['lab 01']),
-             'lab 02': Assignments(names=['lab 02'])}
+            >>> result = assignments.group_by(
+            ...     lambda s: s.split('-')[0].strip()
+            ... )
+            >>> for k, v in result.items():
+            ...     print(f"{k}: {v}")
+            homework 01: Assignments(names=['homework 01', 'homework 01 - programming'])
+            homework 02: Assignments(names=['homework 02'])
+            homework 03: Assignments(names=['homework 03', 'homework 03 - programming'])
+            lab 01: Assignments(names=['lab 01'])
+            lab 02: Assignments(names=['lab 02'])
 
         See Also
         --------
@@ -193,12 +197,14 @@ class Assignments(Sequence[str]):
             ... "homework 01", "homework 01 - programming", "homework 02",
             ... "homework 03", "homework 03 - programming", "lab 01", "lab 02"
             ... ])
-            >>> assignments.group_by_splitting_on('-')
-            {'homework 01': Assignments(names=['homework 01', 'homework 01 - programming']),
-             'homework 02': Assignments(names=['homework 02']),
-             'homework 03': Assignments(names=['homework 03', 'homework 03 - programming']),
-             'lab 01': Assignments(names=['lab 01']),
-             'lab 02': Assignments(names=['lab 02'])}
+            >>> result = assignments.group_by_splitting_on('-')
+            >>> for k, v in result.items():
+            ...     print(f"{k}: {v}")
+            homework 01: Assignments(names=['homework 01', 'homework 01 - programming'])
+            homework 02: Assignments(names=['homework 02'])
+            homework 03: Assignments(names=['homework 03', 'homework 03 - programming'])
+            lab 01: Assignments(names=['lab 01'])
+            lab 02: Assignments(names=['lab 02'])
 
         See Also
         --------

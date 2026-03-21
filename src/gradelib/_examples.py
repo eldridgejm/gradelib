@@ -1,8 +1,8 @@
 """Examples that are used in the documentation."""
 
-import gradelib
-
 import pandas as pd
+
+import gradelib
 
 
 def with_lates():
